@@ -26,6 +26,6 @@ export class ByzantineNode implements Node {
         return this.latestBlock;
     }
     private onNewBlock(block: string): void {
-        this.latestBlock = block;
+        this.latestBlock = "I do what I want";
     }
 }

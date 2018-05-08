@@ -38,7 +38,7 @@ describe("PBFT", () => {
         expect(node4.getLatestBlock()).to.equal(block);
     });
 
-    it("should reach consensus, the leader is byzantine the other 3 nodes are loyal", () => {
+    it("should reach consensus, in a network of 4 nodes, where the leader is byzantine and the other 3 nodes are loyal", () => {
         const gossip: Gossip = new InMemoryGossip();
         const leader = new ByzantineNode(4, "leader", gossip);
         const node1 = new LoyalNode(4, "node1", gossip);
@@ -54,5 +54,42 @@ describe("PBFT", () => {
         expect(node1.getLatestBlock()).to.equal(block2);
         expect(node2.getLatestBlock()).to.equal(block2);
         expect(node3.getLatestBlock()).to.equal(block2);
+    });
+
+    it("should reach consensus, in a network of 4 nodes, where one of the nodes is byzantine and the others are loyal", () => {
+        const gossip: Gossip = new InMemoryGossip();
+        const leader = new LoyalNode(4, "leader", gossip);
+        const node1 = new LoyalNode(4, "node1", gossip);
+        const node2 = new LoyalNode(4, "node2", gossip);
+        const node3 = new ByzantineNode(4, "node3", gossip);
+        connectAllNodes([leader, node1, node2, node3]);
+
+        const block = Math.random().toString();
+        leader.appendBlock(block);
+
+        expect(leader.getLatestBlock()).to.equal(block);
+        expect(node1.getLatestBlock()).to.equal(block);
+        expect(node2.getLatestBlock()).to.equal(block);
+    });
+
+    it("should reach consensus, in a network of 7 nodes, where two of the nodes is byzantine and the others are loyal", () => {
+        const gossip: Gossip = new InMemoryGossip();
+        const leader = new LoyalNode(7, "leader", gossip);
+        const node1 = new LoyalNode(7, "node1", gossip);
+        const node2 = new LoyalNode(7, "node2", gossip);
+        const node3 = new LoyalNode(7, "node3", gossip);
+        const node4 = new LoyalNode(7, "node4", gossip);
+        const node5 = new ByzantineNode(7, "node5", gossip);
+        const node6 = new ByzantineNode(7, "node6", gossip);
+        connectAllNodes([leader, node1, node2, node3, node4, node5, node6]);
+
+        const block = Math.random().toString();
+        leader.appendBlock(block);
+
+        expect(leader.getLatestBlock()).to.equal(block);
+        expect(node1.getLatestBlock()).to.equal(block);
+        expect(node2.getLatestBlock()).to.equal(block);
+        expect(node3.getLatestBlock()).to.equal(block);
+        expect(node4.getLatestBlock()).to.equal(block);
     });
 });
