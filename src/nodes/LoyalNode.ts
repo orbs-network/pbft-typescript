@@ -1,19 +1,21 @@
 import { PBFT } from "../PBFT";
 import { Gossip } from "../gossip/Gossip";
+import { InMemoryGossip } from "../gossip/InMemoryGossip";
 import { Node } from "./Node";
 
 export class LoyalNode implements Node {
-    public publicKey: string = Math.random().toString();
+    public gossip: Gossip;
 
     private latestBlock: string;
     private pbft: PBFT;
 
-    constructor(totalNodes: number, public id: string, public gossip: Gossip) {
-        this.pbft = new PBFT(totalNodes, gossip, block => this.onNewBlock(block));
+    constructor(totalNodes: number, public publicKey: string) {
+        this.gossip = new InMemoryGossip();
+        this.pbft = new PBFT(publicKey, totalNodes, this.gossip, block => this.onNewBlock(block));
     }
 
-    public appendBlock(block: string): void {
-        this.pbft.appendBlock({ senderPublicKey: this.publicKey, block });
+    public suggestBlock(block: string): void {
+        this.pbft.suggestBlock(block);
     }
 
     public getLatestBlock(): string {

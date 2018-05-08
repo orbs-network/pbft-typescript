@@ -5,20 +5,36 @@ export class PBFT {
     private blocksSuggestionLog: { [block: string]: string[] } = {};
     private f: number;
 
-    constructor(private totalNodes: number, private gossip: Gossip, private onNewBlock: (block: string) => void) {
+    constructor(private publicKey: string, private totalNodes: number, private gossip: Gossip, private onNewBlock: (block: string) => void) {
         this.f = Math.floor((totalNodes - 1) / 3);
-        this.gossip.subscribe("suggest-block", payload => this.onSuggestedBlock(payload));
+        this.gossip.subscribe("suggest-block", payload => this.onLeaderSuggestedBlock(payload));
+        this.gossip.subscribe("leader-suggested-block", payload => this.onLeaderSuggestedToOthers(payload));
     }
 
-    public appendBlock(payload: SuggestedBlockPayload): void {
-        this.gossip.broadcast("suggest-block", payload);
+    public suggestBlock(block: string): void {
+        this.gossip.broadcast("suggest-block", {block, senderPublicKey: this.publicKey});
     }
 
-    private onSuggestedBlock(payload: SuggestedBlockPayload): void {
+    public informOthersAboutSuggestBlock(block: string): void {
+        this.gossip.broadcast("leader-suggested-block", {block, senderPublicKey: this.publicKey});
+    }
+
+    private onLeaderSuggestedBlock(payload: SuggestedBlockPayload): void {
+        this.countSuggestedBlock(payload);
+        this.informOthersAboutSuggestBlock(payload.block);
+    }
+
+    private onLeaderSuggestedToOthers(payload: SuggestedBlockPayload): void {
+        this.countSuggestedBlock(payload);
+    }
+
+    private countSuggestedBlock(payload: SuggestedBlockPayload): void {
         if (this.blocksSuggestionLog[payload.block] === undefined) {
             this.blocksSuggestionLog[payload.block] = [payload.senderPublicKey];
         } else {
-            this.blocksSuggestionLog[payload.block].push(payload.senderPublicKey);
+            if (this.blocksSuggestionLog[payload.block].indexOf(payload.senderPublicKey) === -1) {
+                this.blocksSuggestionLog[payload.block].push(payload.senderPublicKey);
+            }
         }
 
         if (this.blocksSuggestionLog[payload.block].length >= this.f * 2) {
