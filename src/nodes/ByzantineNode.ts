@@ -8,8 +8,8 @@ export class ByzantineNode implements Node {
     private latestBlock: string;
     private pbft: PBFT;
 
-    constructor(public id: string, public gossip: Gossip) {
-        this.pbft = new PBFT(gossip, block => this.onNewBlock(block));
+    constructor(totalNodes: number, public id: string, public gossip: Gossip) {
+        this.pbft = new PBFT(totalNodes, gossip, block => this.onNewBlock(block));
     }
 
     public appendBlock(block: string): void {
@@ -18,7 +18,7 @@ export class ByzantineNode implements Node {
 
     public appendBlockTo(block: string, ...nodes: Node[]): void {
         nodes.forEach(node => {
-            this.gossip.unicast(node.id, "commit", { senderPublicKey: this.publicKey, block });
+            this.gossip.unicast(node.id, "suggest-block", { senderPublicKey: this.publicKey, block });
         });
     }
 

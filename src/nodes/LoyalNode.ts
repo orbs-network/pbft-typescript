@@ -8,8 +8,8 @@ export class LoyalNode implements Node {
     private latestBlock: string;
     private pbft: PBFT;
 
-    constructor(public id: string, public gossip: Gossip) {
-        this.pbft = new PBFT(gossip, block => this.onNewBlock(block));
+    constructor(totalNodes: number, public id: string, public gossip: Gossip) {
+        this.pbft = new PBFT(totalNodes, gossip, block => this.onNewBlock(block));
     }
 
     public appendBlock(block: string): void {

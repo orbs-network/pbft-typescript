@@ -1,4 +1,4 @@
-export interface CommitPayload {
+export interface SuggestedBlockPayload {
     block: string;
     senderPublicKey: string;
 }
