@@ -1,13 +1,15 @@
 import { Block } from "./Block";
 import { Gossip } from "./gossip/Gossip";
 import { SuggestedBlockPayload } from "./gossip/Payload";
+import { Network } from "./nodes/Network";
 
 export class PBFT {
     private blocksSuggestionLog: { [blockHash: string]: string[] } = {};
     private confirmedBlocksHash: string[];
     private f: number;
 
-    constructor(private genesisBlockHash: string, private publicKey: string, private totalNodes: number, private gossip: Gossip, private onNewBlock: (block: Block) => void) {
+    constructor(private genesisBlockHash: string, private publicKey: string, private network: Network, private gossip: Gossip, private onNewBlock: (block: Block) => void) {
+        const totalNodes = network.nodes.length;
         this.f = Math.floor((totalNodes - 1) / 3);
         this.confirmedBlocksHash = [genesisBlockHash];
         this.gossip.subscribe("suggest-block", payload => this.onSuggestedBlock(payload));
@@ -15,11 +17,13 @@ export class PBFT {
     }
 
     public suggestBlock(block: Block): void {
-        this.gossip.broadcast("suggest-block", { block, senderPublicKey: this.publicKey });
+        const payload: SuggestedBlockPayload = { block, senderPublicKey: this.publicKey };
+        this.gossip.broadcast("suggest-block", payload);
     }
 
     public informOthersAboutSuggestBlock(block: Block): void {
-        this.gossip.broadcast("leader-suggested-block", { block, senderPublicKey: this.publicKey });
+        const payload: SuggestedBlockPayload = { block, senderPublicKey: this.publicKey };
+        this.gossip.broadcast("leader-suggested-block", payload);
     }
 
     private onSuggestedBlock(payload: SuggestedBlockPayload): void {
@@ -36,7 +40,7 @@ export class PBFT {
     private getLatestConfirmedBlockHash(): string {
         return this.confirmedBlocksHash[this.confirmedBlocksHash.length - 1];
     }
-    
+
     private isBlockPointingToPreviousBlock(block: Block): boolean {
         return this.getLatestConfirmedBlockHash() === block.previousBlockHash;
     }

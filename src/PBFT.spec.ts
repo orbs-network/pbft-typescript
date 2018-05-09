@@ -5,6 +5,7 @@ import { aBlock, theGenesisBlock } from "./BlockBuilder";
 import { InMemoryGossip } from "./gossip/InMemoryGossip";
 import { ByzantineNode } from "./nodes/ByzantineNode";
 import { LoyalNode } from "./nodes/LoyalNode";
+import { Network } from "./nodes/Network";
 import { Node } from "./nodes/Node";
 chai.use(sinonChai);
 
@@ -25,12 +26,16 @@ describe("PBFT", () => {
     }
 
     it("should start a network, append a block, and make sure that all nodes recived it", () => {
-        const leader = new LoyalNode(5, "leader");
-        const node1 = new LoyalNode(5, "node1");
-        const node2 = new LoyalNode(5, "node2");
-        const node3 = new LoyalNode(5, "node3");
-        const node4 = new LoyalNode(5, "node4");
+        const network = new Network();
+        const leader = new LoyalNode(network, "leader");
+        const node1 = new LoyalNode(network, "node1");
+        const node2 = new LoyalNode(network, "node2");
+        const node3 = new LoyalNode(network, "node3");
+        const node4 = new LoyalNode(network, "node4");
+        network.registerNodes([leader, node1, node2, node3, node4]);
+        network.initAllNodes();
         connectAllNodes([leader, node1, node2, node3, node4]);
+
         const block = aBlock(theGenesisBlock);
         leader.suggestBlock(block);
 
@@ -42,10 +47,13 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, in a network of 4 nodes, where the leader is byzantine and the other 3 nodes are loyal", () => {
-        const leader = new ByzantineNode(4, "leader");
-        const node1 = new LoyalNode(4, "node1");
-        const node2 = new LoyalNode(4, "node2");
-        const node3 = new LoyalNode(4, "node3");
+        const network = new Network();
+        const leader = new ByzantineNode(network, "leader");
+        const node1 = new LoyalNode(network, "node1");
+        const node2 = new LoyalNode(network, "node2");
+        const node3 = new LoyalNode(network, "node3");
+        network.registerNodes([leader, node1, node2, node3]);
+        network.initAllNodes();
         connectAllNodes([leader, node1, node2, node3]);
 
         const block1 = aBlock(theGenesisBlock);
@@ -59,10 +67,13 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, in a network of 4 nodes, where one of the nodes is byzantine and the others are loyal", () => {
-        const leader = new LoyalNode(4, "leader");
-        const node1 = new LoyalNode(4, "node1");
-        const node2 = new LoyalNode(4, "node2");
-        const node3 = new ByzantineNode(4, "node3");
+        const network = new Network();
+        const leader = new LoyalNode(network, "leader");
+        const node1 = new LoyalNode(network, "node1");
+        const node2 = new LoyalNode(network, "node2");
+        const node3 = new ByzantineNode(network, "node3");
+        network.registerNodes([leader, node1, node2, node3]);
+        network.initAllNodes();
         connectAllNodes([leader, node1, node2, node3]);
 
         const block = aBlock(theGenesisBlock);
@@ -74,10 +85,13 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, even when a byzantine node is sending a bad block several times", () => {
-        const leader = new LoyalNode(4, "leader");
-        const node1 = new LoyalNode(4, "node1");
-        const node2 = new LoyalNode(4, "node2");
-        const node3 = new ByzantineNode(4, "node3");
+        const network = new Network();
+        const leader = new LoyalNode(network, "leader");
+        const node1 = new LoyalNode(network, "node1");
+        const node2 = new LoyalNode(network, "node2");
+        const node3 = new ByzantineNode(network, "node3");
+        network.registerNodes([leader, node1, node2, node3]);
+        network.initAllNodes();
         connectAllNodes([leader, node1, node2, node3]);
 
         const block = aBlock(theGenesisBlock);
@@ -94,13 +108,16 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, in a network of 7 nodes, where two of the nodes is byzantine and the others are loyal", () => {
-        const leader = new LoyalNode(7, "leader");
-        const node1 = new LoyalNode(7, "node1");
-        const node2 = new LoyalNode(7, "node2");
-        const node3 = new LoyalNode(7, "node3");
-        const node4 = new LoyalNode(7, "node4");
-        const node5 = new ByzantineNode(7, "node5");
-        const node6 = new ByzantineNode(7, "node6");
+        const network = new Network();
+        const leader = new LoyalNode(network, "leader");
+        const node1 = new LoyalNode(network, "node1");
+        const node2 = new LoyalNode(network, "node2");
+        const node3 = new LoyalNode(network, "node3");
+        const node4 = new LoyalNode(network, "node4");
+        const node5 = new ByzantineNode(network, "node5");
+        const node6 = new ByzantineNode(network, "node6");
+        network.registerNodes([leader, node1, node2, node3, node4, node5, node6]);
+        network.initAllNodes();
         connectAllNodes([leader, node1, node2, node3, node4, node5, node6]);
 
         const block = aBlock(theGenesisBlock);
@@ -114,10 +131,13 @@ describe("PBFT", () => {
     });
 
     it("should fire onNewBlock only once per block, even if there were more confirmations", () => {
-        const leader = new LoyalNode(4, "leader");
-        const node1 = new LoyalNode(4, "node1");
-        const node2 = new LoyalNode(4, "node2");
-        const node3 = new LoyalNode(4, "node3");
+        const network = new Network();
+        const leader = new LoyalNode(network, "leader");
+        const node1 = new LoyalNode(network, "node1");
+        const node2 = new LoyalNode(network, "node2");
+        const node3 = new LoyalNode(network, "node3");
+        network.registerNodes([leader, node1, node2, node3]);
+        network.initAllNodes();
         connectAllNodes([leader, node1, node2, node3]);
 
         const block1 = aBlock(theGenesisBlock);
@@ -129,10 +149,13 @@ describe("PBFT", () => {
     });
 
     it("should not accept a block if it is not pointing to the previous block", () => {
-        const leader = new LoyalNode(4, "leader");
-        const node1 = new LoyalNode(4, "node1");
-        const node2 = new LoyalNode(4, "node2");
-        const node3 = new LoyalNode(4, "node3");
+        const network = new Network();
+        const leader = new LoyalNode(network, "leader");
+        const node1 = new LoyalNode(network, "node1");
+        const node2 = new LoyalNode(network, "node2");
+        const node3 = new LoyalNode(network, "node3");
+        network.registerNodes([leader, node1, node2, node3]);
+        network.initAllNodes();
         connectAllNodes([leader, node1, node2, node3]);
 
         const block1 = aBlock(theGenesisBlock);
