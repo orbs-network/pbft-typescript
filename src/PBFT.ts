@@ -45,6 +45,7 @@ export class PBFT {
         if (this.isBlockPointingToPreviousBlock(payload.block)) {
             if (this.isFromCurrentLeader(payload.view, payload.senderPublicKey)) {
                 this.leaderSuggestedBlock = payload.block;
+                this.logPrepare(payload);
                 this.broadcastPrepare(payload.block);
                 if (this.hasConsensus(payload.block.hash)) {
                     this.commitBlock(payload.block);
@@ -80,7 +81,7 @@ export class PBFT {
     }
 
     private hasConsensus(blockHash: string): boolean {
-        return (this.prepareLog[blockHash] !== undefined && this.prepareLog[blockHash].length >= this.f * 2 - 1);
+        return (this.prepareLog[blockHash] !== undefined && this.prepareLog[blockHash].length >= this.f * 2);
     }
 
     private commitBlock(block: Block): void {
