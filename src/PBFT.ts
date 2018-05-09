@@ -4,8 +4,8 @@ import { SuggestedBlockPayload } from "./gossip/Payload";
 import { Network } from "./nodes/Network";
 
 export class PBFT {
-    private blocksSuggestionLog: { [blockHash: string]: string[] } = {};
-    private confirmedBlocksHash: string[];
+    private prepareLog: { [blockHash: string]: string[] } = {};
+    private committedBlocksHash: string[];
     private leaderSuggestedBlock: Block;
     private f: number;
     private currentView: number = 0;
@@ -13,35 +13,39 @@ export class PBFT {
     constructor(private genesisBlockHash: string, private publicKey: string, private network: Network, private gossip: Gossip, private onNewBlock: (block: Block) => void) {
         const totalNodes = network.nodes.length;
         this.f = Math.floor((totalNodes - 1) / 3);
-        this.confirmedBlocksHash = [genesisBlockHash];
-        this.gossip.subscribe("leader-suggest-block", payload => this.onLeaderSuggestedBlock(payload));
-        this.gossip.subscribe("node-suggest-block", payload => this.onNodeSuggestedBlock(payload));
+        this.committedBlocksHash = [genesisBlockHash];
+        this.gossip.subscribe("preprepare", payload => this.onPrePrepare(payload));
+        this.gossip.subscribe("prepare", payload => this.onPrepare(payload));
     }
 
     public suggestBlockAsLeader(block: Block): void {
         this.leaderSuggestedBlock = block;
+        this.broadcastPrePrepare(block);
+    }
+
+    private broadcastPrePrepare(block: Block): void {
         const payload: SuggestedBlockPayload = {
             block,
             senderPublicKey: this.publicKey,
             view: this.currentView
         };
-        this.gossip.broadcast("leader-suggest-block", payload);
+        this.gossip.broadcast("preprepare", payload);
     }
 
-    public informOthersAboutSuggestBlock(block: Block): void {
+    public broadcastPrepare(block: Block): void {
         const payload: SuggestedBlockPayload = {
             block,
             senderPublicKey: this.publicKey,
             view: this.currentView
         };
-        this.gossip.broadcast("node-suggest-block", payload);
+        this.gossip.broadcast("prepare", payload);
     }
 
-    private onLeaderSuggestedBlock(payload: SuggestedBlockPayload): void {
+    private onPrePrepare(payload: SuggestedBlockPayload): void {
         if (this.isBlockPointingToPreviousBlock(payload.block)) {
             if (this.isFromCurrentLeader(payload.view, payload.senderPublicKey)) {
                 this.leaderSuggestedBlock = payload.block;
-                this.informOthersAboutSuggestBlock(payload.block);
+                this.broadcastPrepare(payload.block);
                 if (this.hasConsensus(payload.block.hash)) {
                     this.commitBlock(payload.block);
                 }
@@ -49,8 +53,8 @@ export class PBFT {
         }
     }
 
-    private onNodeSuggestedBlock(payload: SuggestedBlockPayload): void {
-        this.countSuggestedBlock(payload);
+    private onPrepare(payload: SuggestedBlockPayload): void {
+        this.logPrepare(payload);
         if (this.isBlockMatchLeaderBlock(payload.block.hash)) {
             if (this.hasConsensus(payload.block.hash)) {
                 this.commitBlock(payload.block);
@@ -59,7 +63,7 @@ export class PBFT {
     }
 
     private getLatestConfirmedBlockHash(): string {
-        return this.confirmedBlocksHash[this.confirmedBlocksHash.length - 1];
+        return this.committedBlocksHash[this.committedBlocksHash.length - 1];
     }
 
     private isBlockPointingToPreviousBlock(block: Block): boolean {
@@ -76,26 +80,26 @@ export class PBFT {
     }
 
     private hasConsensus(blockHash: string): boolean {
-        return (this.blocksSuggestionLog[blockHash] !== undefined && this.blocksSuggestionLog[blockHash].length >= this.f * 2 - 1);
+        return (this.prepareLog[blockHash] !== undefined && this.prepareLog[blockHash].length >= this.f * 2 - 1);
     }
 
     private commitBlock(block: Block): void {
         const blockHash = block.hash;
-        if (this.confirmedBlocksHash.indexOf(blockHash) === -1) {
-            this.confirmedBlocksHash.push(blockHash);
+        if (this.committedBlocksHash.indexOf(blockHash) === -1) {
+            this.committedBlocksHash.push(blockHash);
             this.onNewBlock(block);
         }
     }
 
-    private countSuggestedBlock(payload: SuggestedBlockPayload): void {
+    private logPrepare(payload: SuggestedBlockPayload): void {
         const { block, senderPublicKey } = payload;
         const blockHash = block.hash;
 
-        if (this.blocksSuggestionLog[blockHash] === undefined) {
-            this.blocksSuggestionLog[blockHash] = [senderPublicKey];
+        if (this.prepareLog[blockHash] === undefined) {
+            this.prepareLog[blockHash] = [senderPublicKey];
         } else {
-            if (this.blocksSuggestionLog[blockHash].indexOf(senderPublicKey) === -1) {
-                this.blocksSuggestionLog[blockHash].push(senderPublicKey);
+            if (this.prepareLog[blockHash].indexOf(senderPublicKey) === -1) {
+                this.prepareLog[blockHash].push(senderPublicKey);
             }
         }
 

@@ -32,7 +32,7 @@ export class ByzantineNode implements Node {
                 senderPublicKey: this.publicKey,
                 view: 0
             };
-            this.gossip.unicast(node.publicKey, "leader-suggest-block", payload);
+            this.gossip.unicast(node.publicKey, "preprepare", payload);
         });
     }
 
