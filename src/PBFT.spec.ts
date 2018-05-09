@@ -121,9 +121,11 @@ describe("PBFT", () => {
         const node3 = new LoyalNode(4, "node3");
         connectAllNodes([leader, node1, node2, node3]);
 
-        const block = Math.random().toString();
-        leader.suggestBlock(block);
+        const block1 = Math.random().toString();
+        const block2 = Math.random().toString();
+        leader.suggestBlock(block1);
+        leader.suggestBlock(block2);
 
-        expect(node1.blockLog.length).to.equal(1);
+        expect(node1.blockLog.length).to.equal(2);
     });
 });
