@@ -1,4 +1,5 @@
+import { Block } from "../Block";
 export interface SuggestedBlockPayload {
-    block: string;
+    block: Block;
     senderPublicKey: string;
 }

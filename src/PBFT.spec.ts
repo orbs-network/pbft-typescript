@@ -1,6 +1,7 @@
 import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
+import { Block } from "./Block";
 import { InMemoryGossip } from "./gossip/InMemoryGossip";
 import { ByzantineNode } from "./nodes/ByzantineNode";
 import { LoyalNode } from "./nodes/LoyalNode";
@@ -10,9 +11,24 @@ chai.use(sinonChai);
 
 //////////////
 // Missing tests:
-// * Nodes can send the same node several times, causing others to count it as another vote
 // * Nodes can pretend to be other nodes => use sig
 //////////////
+
+function aBlock(previousBlock: Block, content?: string): Block {
+    return {
+        previousBlockHash: previousBlock.hash,
+        hash: Math.random().toString(),
+        content: content || Math.random().toString()
+    };
+}
+
+function aGenesisBlock(): Block {
+    return {
+        previousBlockHash: "0",
+        hash: Math.random().toString(),
+        content: ""
+    };
+}
 
 describe("PBFT", () => {
     function connectAllNodes(nodes: Node[]): void {
@@ -32,7 +48,7 @@ describe("PBFT", () => {
         const node3 = new LoyalNode(5, "node3");
         const node4 = new LoyalNode(5, "node4");
         connectAllNodes([leader, node1, node2, node3, node4]);
-        const block = Math.random().toString();
+        const block = aBlock(aGenesisBlock());
         leader.suggestBlock(block);
 
         expect(leader.getLatestBlock()).to.equal(block);
@@ -49,8 +65,8 @@ describe("PBFT", () => {
         const node3 = new LoyalNode(4, "node3");
         connectAllNodes([leader, node1, node2, node3]);
 
-        const block1 = Math.random().toString();
-        const block2 = Math.random().toString();
+        const block1 = aBlock(aGenesisBlock());
+        const block2 = aBlock(aGenesisBlock());
         leader.suggestBlockTo(block2, node2, node3);
         leader.suggestBlockTo(block1, node1);
 
@@ -66,7 +82,7 @@ describe("PBFT", () => {
         const node3 = new ByzantineNode(4, "node3");
         connectAllNodes([leader, node1, node2, node3]);
 
-        const block = Math.random().toString();
+        const block = aBlock(aGenesisBlock());
         leader.suggestBlock(block);
 
         expect(leader.getLatestBlock()).to.equal(block);
@@ -81,8 +97,8 @@ describe("PBFT", () => {
         const node3 = new ByzantineNode(4, "node3");
         connectAllNodes([leader, node1, node2, node3]);
 
-        const block = Math.random().toString();
-        const badBlock = Math.random().toString();
+        const block = aBlock(aGenesisBlock());
+        const badBlock = aBlock(aGenesisBlock());
         leader.suggestBlock(block);
         node3.suggestBlockTo(badBlock, node1);
         node3.suggestBlockTo(badBlock, node1);
@@ -104,7 +120,7 @@ describe("PBFT", () => {
         const node6 = new ByzantineNode(7, "node6");
         connectAllNodes([leader, node1, node2, node3, node4, node5, node6]);
 
-        const block = Math.random().toString();
+        const block = aBlock(aGenesisBlock());
         leader.suggestBlock(block);
 
         expect(leader.getLatestBlock()).to.equal(block);
@@ -121,8 +137,23 @@ describe("PBFT", () => {
         const node3 = new LoyalNode(4, "node3");
         connectAllNodes([leader, node1, node2, node3]);
 
-        const block1 = Math.random().toString();
-        const block2 = Math.random().toString();
+        const block1 = aBlock(aGenesisBlock());
+        const block2 = aBlock(aGenesisBlock());
+        leader.suggestBlock(block1);
+        leader.suggestBlock(block2);
+
+        expect(node1.blockLog.length).to.equal(2);
+    });
+
+    it("should not accept a block if it is not pointing to the previous block", () => {
+        const leader = new LoyalNode(4, "leader");
+        const node1 = new LoyalNode(4, "node1");
+        const node2 = new LoyalNode(4, "node2");
+        const node3 = new LoyalNode(4, "node3");
+        connectAllNodes([leader, node1, node2, node3]);
+
+        const block1 = aBlock(aGenesisBlock());
+        const block2 = aBlock(aGenesisBlock());
         leader.suggestBlock(block1);
         leader.suggestBlock(block2);
 

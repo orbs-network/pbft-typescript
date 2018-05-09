@@ -1,3 +1,4 @@
+import { Block } from "../Block";
 import { PBFT } from "../PBFT";
 import { Gossip } from "../gossip/Gossip";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
@@ -6,7 +7,7 @@ import { Node } from "./Node";
 export class ByzantineNode implements Node {
     public gossip: Gossip;
 
-    private latestBlock: string;
+    private latestBlock: Block;
     private pbft: PBFT;
 
     constructor(totalNodes: number, public publicKey: string) {
@@ -14,20 +15,20 @@ export class ByzantineNode implements Node {
         this.pbft = new PBFT(this.publicKey, totalNodes, this.gossip, block => this.onNewBlock(block));
     }
 
-    public suggestBlock(block: string): void {
+    public suggestBlock(block: Block): void {
         this.pbft.suggestBlock(block);
     }
 
-    public suggestBlockTo(block: string, ...nodes: Node[]): void {
+    public suggestBlockTo(block: Block, ...nodes: Node[]): void {
         nodes.forEach(node => {
             this.gossip.unicast(node.publicKey, "suggest-block", { senderPublicKey: this.publicKey, block });
         });
     }
 
-    public getLatestBlock(): string {
+    public getLatestBlock(): Block {
         return this.latestBlock;
     }
-    private onNewBlock(block: string): void {
-        this.latestBlock = "I do what I want";
+    private onNewBlock(block: Block): void {
+        this.latestBlock = { content: "FOO BAR", hash: "DUMMY", previousBlockHash: "NOTHING" };
     }
 }

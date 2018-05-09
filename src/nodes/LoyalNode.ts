@@ -1,3 +1,4 @@
+import { Block } from "../Block";
 import { PBFT } from "../PBFT";
 import { Gossip } from "../gossip/Gossip";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
@@ -5,7 +6,7 @@ import { Node } from "./Node";
 
 export class LoyalNode implements Node {
     public gossip: Gossip;
-    public blockLog: string[] = [];
+    public blockLog: Block[] = [];
 
     private pbft: PBFT;
 
@@ -14,14 +15,14 @@ export class LoyalNode implements Node {
         this.pbft = new PBFT(publicKey, totalNodes, this.gossip, block => this.onNewBlock(block));
     }
 
-    public suggestBlock(block: string): void {
+    public suggestBlock(block: Block): void {
         this.pbft.suggestBlock(block);
     }
 
-    public getLatestBlock(): string {
+    public getLatestBlock(): Block {
         return this.blockLog[this.blockLog.length - 1];
     }
-    public onNewBlock(block: string): void {
+    public onNewBlock(block: Block): void {
         this.blockLog.push(block);
     }
 }
