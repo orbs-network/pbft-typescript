@@ -3,6 +3,7 @@ import { theGenesisBlock } from "../BlockBuilder";
 import { PBFT } from "../PBFT";
 import { Gossip } from "../gossip/Gossip";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
+import { SuggestedBlockPayload } from "../gossip/Payload";
 import { Network } from "./Network";
 import { Node } from "./Node";
 
@@ -21,12 +22,17 @@ export class ByzantineNode implements Node {
     }
 
     public suggestBlock(block: Block): void {
-        this.pbft.suggestBlock(block);
+        this.pbft.suggestBlockAsLeader(block);
     }
 
     public suggestBlockTo(block: Block, ...nodes: Node[]): void {
         nodes.forEach(node => {
-            this.gossip.unicast(node.publicKey, "suggest-block", { senderPublicKey: this.publicKey, block });
+            const payload: SuggestedBlockPayload = {
+                block,
+                senderPublicKey: this.publicKey,
+                view: 0
+            };
+            this.gossip.unicast(node.publicKey, "leader-suggest-block", payload);
         });
     }
 

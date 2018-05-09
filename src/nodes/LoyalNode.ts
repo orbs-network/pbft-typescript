@@ -21,7 +21,7 @@ export class LoyalNode implements Node {
     }
 
     public suggestBlock(block: Block): void {
-        this.pbft.suggestBlock(block);
+        this.pbft.suggestBlockAsLeader(block);
     }
 
     public getLatestBlock(): Block {

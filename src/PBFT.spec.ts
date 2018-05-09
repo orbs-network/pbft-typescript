@@ -10,8 +10,11 @@ import { Node } from "./nodes/Node";
 chai.use(sinonChai);
 
 //////////////
-// Missing tests:
+// Todos:
+// * Add logs
 // * Nodes can pretend to be other nodes => use sig
+// * The node can recive messages in unexpected order, and should handle it
+//
 //////////////
 
 describe("PBFT", () => {
@@ -46,6 +49,24 @@ describe("PBFT", () => {
         expect(node4.getLatestBlock()).to.equal(block);
     });
 
+    it("should ignore suggested block if they are not from the leader", () => {
+        const network = new Network();
+        const leader = new LoyalNode(network, "leader");
+        const node1 = new LoyalNode(network, "node1");
+        const node2 = new LoyalNode(network, "node2");
+        const node3 = new ByzantineNode(network, "node3");
+        network.registerNodes([leader, node1, node2, node3]);
+        network.initAllNodes();
+        connectAllNodes([leader, node1, node2, node3]);
+
+        const block = aBlock(theGenesisBlock);
+        node3.suggestBlock(block);
+
+        expect(leader.getLatestBlock()).to.be.undefined;
+        expect(node1.getLatestBlock()).to.be.undefined;
+        expect(node2.getLatestBlock()).to.be.undefined;
+    });
+
     it("should reach consensus, in a network of 4 nodes, where the leader is byzantine and the other 3 nodes are loyal", () => {
         const network = new Network();
         const leader = new ByzantineNode(network, "leader");
@@ -56,14 +77,14 @@ describe("PBFT", () => {
         network.initAllNodes();
         connectAllNodes([leader, node1, node2, node3]);
 
-        const block1 = aBlock(theGenesisBlock);
-        const block2 = aBlock(theGenesisBlock);
-        leader.suggestBlockTo(block2, node2, node3);
-        leader.suggestBlockTo(block1, node1);
+        const block1 = aBlock(theGenesisBlock, "block1");
+        const block2 = aBlock(theGenesisBlock, "block2");
+        leader.suggestBlockTo(block1, node1, node2);
+        leader.suggestBlockTo(block2, node3);
 
-        expect(node1.getLatestBlock()).to.equal(block2);
-        expect(node2.getLatestBlock()).to.equal(block2);
-        expect(node3.getLatestBlock()).to.equal(block2);
+        expect(node1.getLatestBlock()).to.equal(block1);
+        expect(node2.getLatestBlock()).to.equal(block1);
+        expect(node3.getLatestBlock()).to.be.undefined;
     });
 
     it("should reach consensus, in a network of 4 nodes, where one of the nodes is byzantine and the others are loyal", () => {
