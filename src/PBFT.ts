@@ -10,7 +10,7 @@ export class PBFT {
     constructor(private genesisBlockHash: string, private publicKey: string, private totalNodes: number, private gossip: Gossip, private onNewBlock: (block: Block) => void) {
         this.f = Math.floor((totalNodes - 1) / 3);
         this.confirmedBlocksHash = [genesisBlockHash];
-        this.gossip.subscribe("suggest-block", payload => this.onLeaderSuggestedBlock(payload));
+        this.gossip.subscribe("suggest-block", payload => this.onSuggestedBlock(payload));
         this.gossip.subscribe("leader-suggested-block", payload => this.onLeaderSuggestedToOthers(payload));
     }
 
@@ -22,9 +22,11 @@ export class PBFT {
         this.gossip.broadcast("leader-suggested-block", { block, senderPublicKey: this.publicKey });
     }
 
-    private onLeaderSuggestedBlock(payload: SuggestedBlockPayload): void {
-        this.countSuggestedBlock(payload);
-        this.informOthersAboutSuggestBlock(payload.block);
+    private onSuggestedBlock(payload: SuggestedBlockPayload): void {
+        if (this.isBlockPointingToPreviousBlock(payload.block)) {
+            this.countSuggestedBlock(payload);
+            this.informOthersAboutSuggestBlock(payload.block);
+        }
     }
 
     private onLeaderSuggestedToOthers(payload: SuggestedBlockPayload): void {
@@ -34,17 +36,14 @@ export class PBFT {
     private getLatestConfirmedBlockHash(): string {
         return this.confirmedBlocksHash[this.confirmedBlocksHash.length - 1];
     }
-    private checkBlock(block: Block): boolean {
+    
+    private isBlockPointingToPreviousBlock(block: Block): boolean {
         return this.getLatestConfirmedBlockHash() === block.previousBlockHash;
     }
 
     private countSuggestedBlock(payload: SuggestedBlockPayload): void {
         const { block, senderPublicKey } = payload;
         const blockHash = block.hash;
-
-        if (this.checkBlock(block) === false) {
-            return;
-        }
 
         if (this.blocksSuggestionLog[blockHash] === undefined) {
             this.blocksSuggestionLog[blockHash] = [senderPublicKey];
