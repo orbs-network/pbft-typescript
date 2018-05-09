@@ -5,8 +5,8 @@ import { Node } from "./Node";
 
 export class LoyalNode implements Node {
     public gossip: Gossip;
+    public blockLog: string[] = [];
 
-    private latestBlock: string;
     private pbft: PBFT;
 
     constructor(totalNodes: number, public publicKey: string) {
@@ -19,9 +19,9 @@ export class LoyalNode implements Node {
     }
 
     public getLatestBlock(): string {
-        return this.latestBlock;
+        return this.blockLog[this.blockLog.length - 1];
     }
-    private onNewBlock(block: string): void {
-        this.latestBlock = block;
+    public onNewBlock(block: string): void {
+        this.blockLog.push(block);
     }
 }

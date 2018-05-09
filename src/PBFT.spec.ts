@@ -10,9 +10,8 @@ chai.use(sinonChai);
 
 //////////////
 // Missing tests:
-// * Don't get onNewBlock more than once per block
 // * Nodes can send the same node several times, causing others to count it as another vote
-// * Nodes can pretend to be other nodes
+// * Nodes can pretend to be other nodes => use sig
 //////////////
 
 describe("PBFT", () => {
@@ -113,5 +112,18 @@ describe("PBFT", () => {
         expect(node2.getLatestBlock()).to.equal(block);
         expect(node3.getLatestBlock()).to.equal(block);
         expect(node4.getLatestBlock()).to.equal(block);
+    });
+
+    it("should fire onNewBlock only once per block, even if there were more confirmations", () => {
+        const leader = new LoyalNode(4, "leader");
+        const node1 = new LoyalNode(4, "node1");
+        const node2 = new LoyalNode(4, "node2");
+        const node3 = new LoyalNode(4, "node3");
+        connectAllNodes([leader, node1, node2, node3]);
+
+        const block = Math.random().toString();
+        leader.suggestBlock(block);
+
+        expect(node1.blockLog.length).to.equal(1);
     });
 });

@@ -3,6 +3,7 @@ import { SuggestedBlockPayload } from "./gossip/Payload";
 
 export class PBFT {
     private blocksSuggestionLog: { [block: string]: string[] } = {};
+    private confirmedBlocks: string[] = [];
     private f: number;
 
     constructor(private publicKey: string, private totalNodes: number, private gossip: Gossip, private onNewBlock: (block: string) => void) {
@@ -29,16 +30,20 @@ export class PBFT {
     }
 
     private countSuggestedBlock(payload: SuggestedBlockPayload): void {
-        if (this.blocksSuggestionLog[payload.block] === undefined) {
-            this.blocksSuggestionLog[payload.block] = [payload.senderPublicKey];
+        const {block, senderPublicKey} = payload;
+        if (this.blocksSuggestionLog[block] === undefined) {
+            this.blocksSuggestionLog[block] = [senderPublicKey];
         } else {
-            if (this.blocksSuggestionLog[payload.block].indexOf(payload.senderPublicKey) === -1) {
-                this.blocksSuggestionLog[payload.block].push(payload.senderPublicKey);
+            if (this.blocksSuggestionLog[block].indexOf(senderPublicKey) === -1) {
+                this.blocksSuggestionLog[block].push(senderPublicKey);
             }
         }
 
-        if (this.blocksSuggestionLog[payload.block].length >= this.f * 2) {
-            this.onNewBlock(payload.block);
+        if (this.blocksSuggestionLog[block].length >= this.f * 2) {
+            if (this.confirmedBlocks.indexOf(block) === -1) {
+                this.confirmedBlocks.push(block);
+                this.onNewBlock(block);
+            }
         }
     }
 }
