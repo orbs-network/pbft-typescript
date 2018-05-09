@@ -3,6 +3,7 @@ import { PBFT } from "../PBFT";
 import { Gossip } from "../gossip/Gossip";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
 import { Node } from "./Node";
+import { theGenesisBlock } from "../BlockBuilder";
 
 export class ByzantineNode implements Node {
     public gossip: Gossip;
@@ -12,7 +13,7 @@ export class ByzantineNode implements Node {
 
     constructor(totalNodes: number, public publicKey: string) {
         this.gossip = new InMemoryGossip();
-        this.pbft = new PBFT(this.publicKey, totalNodes, this.gossip, block => this.onNewBlock(block));
+        this.pbft = new PBFT(theGenesisBlock.hash, this.publicKey, totalNodes, this.gossip, block => this.onNewBlock(block));
     }
 
     public suggestBlock(block: Block): void {

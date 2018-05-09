@@ -1,34 +1,17 @@
 import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
-import { Block } from "./Block";
+import { aBlock, theGenesisBlock } from "./BlockBuilder";
 import { InMemoryGossip } from "./gossip/InMemoryGossip";
 import { ByzantineNode } from "./nodes/ByzantineNode";
 import { LoyalNode } from "./nodes/LoyalNode";
 import { Node } from "./nodes/Node";
-
 chai.use(sinonChai);
 
 //////////////
 // Missing tests:
 // * Nodes can pretend to be other nodes => use sig
 //////////////
-
-function aBlock(previousBlock: Block, content?: string): Block {
-    return {
-        previousBlockHash: previousBlock.hash,
-        hash: Math.random().toString(),
-        content: content || Math.random().toString()
-    };
-}
-
-function aGenesisBlock(): Block {
-    return {
-        previousBlockHash: "0",
-        hash: Math.random().toString(),
-        content: ""
-    };
-}
 
 describe("PBFT", () => {
     function connectAllNodes(nodes: Node[]): void {
@@ -48,7 +31,7 @@ describe("PBFT", () => {
         const node3 = new LoyalNode(5, "node3");
         const node4 = new LoyalNode(5, "node4");
         connectAllNodes([leader, node1, node2, node3, node4]);
-        const block = aBlock(aGenesisBlock());
+        const block = aBlock(theGenesisBlock);
         leader.suggestBlock(block);
 
         expect(leader.getLatestBlock()).to.equal(block);
@@ -65,8 +48,8 @@ describe("PBFT", () => {
         const node3 = new LoyalNode(4, "node3");
         connectAllNodes([leader, node1, node2, node3]);
 
-        const block1 = aBlock(aGenesisBlock());
-        const block2 = aBlock(aGenesisBlock());
+        const block1 = aBlock(theGenesisBlock);
+        const block2 = aBlock(theGenesisBlock);
         leader.suggestBlockTo(block2, node2, node3);
         leader.suggestBlockTo(block1, node1);
 
@@ -82,7 +65,7 @@ describe("PBFT", () => {
         const node3 = new ByzantineNode(4, "node3");
         connectAllNodes([leader, node1, node2, node3]);
 
-        const block = aBlock(aGenesisBlock());
+        const block = aBlock(theGenesisBlock);
         leader.suggestBlock(block);
 
         expect(leader.getLatestBlock()).to.equal(block);
@@ -97,8 +80,8 @@ describe("PBFT", () => {
         const node3 = new ByzantineNode(4, "node3");
         connectAllNodes([leader, node1, node2, node3]);
 
-        const block = aBlock(aGenesisBlock());
-        const badBlock = aBlock(aGenesisBlock());
+        const block = aBlock(theGenesisBlock);
+        const badBlock = aBlock(theGenesisBlock);
         leader.suggestBlock(block);
         node3.suggestBlockTo(badBlock, node1);
         node3.suggestBlockTo(badBlock, node1);
@@ -120,7 +103,7 @@ describe("PBFT", () => {
         const node6 = new ByzantineNode(7, "node6");
         connectAllNodes([leader, node1, node2, node3, node4, node5, node6]);
 
-        const block = aBlock(aGenesisBlock());
+        const block = aBlock(theGenesisBlock);
         leader.suggestBlock(block);
 
         expect(leader.getLatestBlock()).to.equal(block);
@@ -137,8 +120,8 @@ describe("PBFT", () => {
         const node3 = new LoyalNode(4, "node3");
         connectAllNodes([leader, node1, node2, node3]);
 
-        const block1 = aBlock(aGenesisBlock());
-        const block2 = aBlock(aGenesisBlock());
+        const block1 = aBlock(theGenesisBlock);
+        const block2 = aBlock(block1);
         leader.suggestBlock(block1);
         leader.suggestBlock(block2);
 
@@ -152,11 +135,13 @@ describe("PBFT", () => {
         const node3 = new LoyalNode(4, "node3");
         connectAllNodes([leader, node1, node2, node3]);
 
-        const block1 = aBlock(aGenesisBlock());
-        const block2 = aBlock(aGenesisBlock());
+        const block1 = aBlock(theGenesisBlock);
+        const notInOrderBlock = aBlock(aBlock(theGenesisBlock));
         leader.suggestBlock(block1);
-        leader.suggestBlock(block2);
+        leader.suggestBlock(notInOrderBlock);
 
-        expect(node1.blockLog.length).to.equal(2);
+        expect(node1.getLatestBlock().hash).to.equal(block1.hash);
+        expect(node2.getLatestBlock().hash).to.equal(block1.hash);
+        expect(node3.getLatestBlock().hash).to.equal(block1.hash);
     });
 });

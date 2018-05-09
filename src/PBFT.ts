@@ -4,11 +4,12 @@ import { SuggestedBlockPayload } from "./gossip/Payload";
 
 export class PBFT {
     private blocksSuggestionLog: { [blockHash: string]: string[] } = {};
-    private confirmedBlocks: string[] = [];
+    private confirmedBlocksHash: string[];
     private f: number;
 
-    constructor(private publicKey: string, private totalNodes: number, private gossip: Gossip, private onNewBlock: (block: Block) => void) {
+    constructor(private genesisBlockHash: string, private publicKey: string, private totalNodes: number, private gossip: Gossip, private onNewBlock: (block: Block) => void) {
         this.f = Math.floor((totalNodes - 1) / 3);
+        this.confirmedBlocksHash = [genesisBlockHash];
         this.gossip.subscribe("suggest-block", payload => this.onLeaderSuggestedBlock(payload));
         this.gossip.subscribe("leader-suggested-block", payload => this.onLeaderSuggestedToOthers(payload));
     }
@@ -30,9 +31,20 @@ export class PBFT {
         this.countSuggestedBlock(payload);
     }
 
+    private getLatestConfirmedBlockHash(): string {
+        return this.confirmedBlocksHash[this.confirmedBlocksHash.length - 1];
+    }
+    private checkBlock(block: Block): boolean {
+        return this.getLatestConfirmedBlockHash() === block.previousBlockHash;
+    }
+
     private countSuggestedBlock(payload: SuggestedBlockPayload): void {
         const { block, senderPublicKey } = payload;
         const blockHash = block.hash;
+
+        if (this.checkBlock(block) === false) {
+            return;
+        }
 
         if (this.blocksSuggestionLog[blockHash] === undefined) {
             this.blocksSuggestionLog[blockHash] = [senderPublicKey];
@@ -43,8 +55,8 @@ export class PBFT {
         }
 
         if (this.blocksSuggestionLog[blockHash].length >= this.f * 2) {
-            if (this.confirmedBlocks.indexOf(blockHash) === -1) {
-                this.confirmedBlocks.push(blockHash);
+            if (this.confirmedBlocksHash.indexOf(blockHash) === -1) {
+                this.confirmedBlocksHash.push(blockHash);
                 this.onNewBlock(block);
             }
         }

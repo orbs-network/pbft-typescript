@@ -1,4 +1,5 @@
 import { Block } from "../Block";
+import { theGenesisBlock } from "../BlockBuilder";
 import { PBFT } from "../PBFT";
 import { Gossip } from "../gossip/Gossip";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
@@ -12,7 +13,7 @@ export class LoyalNode implements Node {
 
     constructor(totalNodes: number, public publicKey: string) {
         this.gossip = new InMemoryGossip();
-        this.pbft = new PBFT(publicKey, totalNodes, this.gossip, block => this.onNewBlock(block));
+        this.pbft = new PBFT(theGenesisBlock.hash, publicKey, totalNodes, this.gossip, block => this.onNewBlock(block));
     }
 
     public suggestBlock(block: Block): void {
