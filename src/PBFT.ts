@@ -1,30 +1,30 @@
 import { Block } from "./Block";
 import { Gossip } from "./gossip/Gossip";
-import { SuggestedBlockPayload } from "./gossip/Payload";
+import { PrePreparePayload, PreparePayload } from "./gossip/Payload";
 import { Network } from "./nodes/Network";
 
 export class PBFT {
     private prepareLog: { [blockHash: string]: string[] } = {};
-    private committedBlocksHash: string[];
-    private leaderSuggestedBlock: Block;
+    private committedBlocksHashs: string[];
+    private prePrepareBlock: Block;
     private f: number;
     private currentView: number = 0;
 
     constructor(private genesisBlockHash: string, private publicKey: string, private network: Network, private gossip: Gossip, private onNewBlock: (block: Block) => void) {
         const totalNodes = network.nodes.length;
         this.f = Math.floor((totalNodes - 1) / 3);
-        this.committedBlocksHash = [genesisBlockHash];
+        this.committedBlocksHashs = [genesisBlockHash];
         this.gossip.subscribe("preprepare", payload => this.onPrePrepare(payload));
         this.gossip.subscribe("prepare", payload => this.onPrepare(payload));
     }
 
     public suggestBlockAsLeader(block: Block): void {
-        this.leaderSuggestedBlock = block;
+        this.prePrepareBlock = block;
         this.broadcastPrePrepare(block);
     }
 
     private broadcastPrePrepare(block: Block): void {
-        const payload: SuggestedBlockPayload = {
+        const payload: PrePreparePayload = {
             block,
             senderPublicKey: this.publicKey,
             view: this.currentView
@@ -33,19 +33,24 @@ export class PBFT {
     }
 
     public broadcastPrepare(block: Block): void {
-        const payload: SuggestedBlockPayload = {
-            block,
+        const payload: PreparePayload = {
+            blockHash: block.hash,
             senderPublicKey: this.publicKey,
             view: this.currentView
         };
         this.gossip.broadcast("prepare", payload);
     }
 
-    private onPrePrepare(payload: SuggestedBlockPayload): void {
+    private onPrePrepare(payload: PrePreparePayload): void {
         if (this.isBlockPointingToPreviousBlock(payload.block)) {
             if (this.isFromCurrentLeader(payload.view, payload.senderPublicKey)) {
-                this.leaderSuggestedBlock = payload.block;
-                this.logPrepare(payload);
+                this.prePrepareBlock = payload.block;
+                const preparePayload: PreparePayload = {
+                    blockHash: payload.block.hash,
+                    senderPublicKey: payload.senderPublicKey,
+                    view: payload.view
+                };
+                this.logPrepare(preparePayload);
                 this.broadcastPrepare(payload.block);
                 if (this.hasConsensus(payload.block.hash)) {
                     this.commitBlock(payload.block);
@@ -54,17 +59,17 @@ export class PBFT {
         }
     }
 
-    private onPrepare(payload: SuggestedBlockPayload): void {
+    private onPrepare(payload: PreparePayload): void {
         this.logPrepare(payload);
-        if (this.isBlockMatchLeaderBlock(payload.block.hash)) {
-            if (this.hasConsensus(payload.block.hash)) {
-                this.commitBlock(payload.block);
+        if (this.isBlockMatchPrePrepareBlock(payload.blockHash)) {
+            if (this.hasConsensus(payload.blockHash)) {
+                this.commitBlock(this.prePrepareBlock);
             }
         }
     }
 
     private getLatestConfirmedBlockHash(): string {
-        return this.committedBlocksHash[this.committedBlocksHash.length - 1];
+        return this.committedBlocksHashs[this.committedBlocksHashs.length - 1];
     }
 
     private isBlockPointingToPreviousBlock(block: Block): boolean {
@@ -76,8 +81,8 @@ export class PBFT {
         return senderIdx === sentView;
     }
 
-    private isBlockMatchLeaderBlock(blockHash: string): boolean {
-        return this.leaderSuggestedBlock !== undefined && this.leaderSuggestedBlock.hash === blockHash;
+    private isBlockMatchPrePrepareBlock(blockHash: string): boolean {
+        return this.prePrepareBlock !== undefined && this.prePrepareBlock.hash === blockHash;
     }
 
     private hasConsensus(blockHash: string): boolean {
@@ -86,15 +91,14 @@ export class PBFT {
 
     private commitBlock(block: Block): void {
         const blockHash = block.hash;
-        if (this.committedBlocksHash.indexOf(blockHash) === -1) {
-            this.committedBlocksHash.push(blockHash);
+        if (this.committedBlocksHashs.indexOf(blockHash) === -1) {
+            this.committedBlocksHashs.push(blockHash);
             this.onNewBlock(block);
         }
     }
 
-    private logPrepare(payload: SuggestedBlockPayload): void {
-        const { block, senderPublicKey } = payload;
-        const blockHash = block.hash;
+    private logPrepare(payload: PreparePayload): void {
+        const { blockHash, senderPublicKey } = payload;
 
         if (this.prepareLog[blockHash] === undefined) {
             this.prepareLog[blockHash] = [senderPublicKey];

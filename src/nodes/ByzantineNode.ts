@@ -3,7 +3,7 @@ import { theGenesisBlock } from "../BlockBuilder";
 import { PBFT } from "../PBFT";
 import { Gossip } from "../gossip/Gossip";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
-import { SuggestedBlockPayload } from "../gossip/Payload";
+import { PrePreparePayload } from "../gossip/Payload";
 import { Network } from "./Network";
 import { Node } from "./Node";
 
@@ -27,7 +27,7 @@ export class ByzantineNode implements Node {
 
     public suggestBlockTo(block: Block, ...nodes: Node[]): void {
         nodes.forEach(node => {
-            const payload: SuggestedBlockPayload = {
+            const payload: PrePreparePayload = {
                 block,
                 senderPublicKey: this.publicKey,
                 view: 0

@@ -13,7 +13,6 @@ chai.use(sinonChai);
 // Todos:
 // * Add logs
 // * Nodes can pretend to be other nodes => use sig
-// * The node can recive messages in unexpected order, and should handle it
 //
 //////////////
 
@@ -34,19 +33,17 @@ describe("PBFT", () => {
         const node1 = new LoyalNode(network, "node1");
         const node2 = new LoyalNode(network, "node2");
         const node3 = new LoyalNode(network, "node3");
-        const node4 = new LoyalNode(network, "node4");
-        network.registerNodes([leader, node1, node2, node3, node4]);
+        network.registerNodes([leader, node1, node2, node3]);
         network.initAllNodes();
-        connectAllNodes([leader, node1, node2, node3, node4]);
+        connectAllNodes([leader, node1, node2, node3]);
 
-        const block = aBlock(theGenesisBlock);
+        const block = aBlock(theGenesisBlock, "block content");
         leader.suggestBlock(block);
 
         expect(leader.getLatestBlock()).to.equal(block);
         expect(node1.getLatestBlock()).to.equal(block);
         expect(node2.getLatestBlock()).to.equal(block);
         expect(node3.getLatestBlock()).to.equal(block);
-        expect(node4.getLatestBlock()).to.equal(block);
     });
 
     it("should ignore suggested block if they are not from the leader", () => {
