@@ -1,4 +1,4 @@
-import { Gossip, GossipCallback } from "./Gossip";
+import { Gossip, GossipCallback } from "../../src/gossip/Gossip";
 
 type SubscriptionsValue = {
     message: string;

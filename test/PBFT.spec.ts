@@ -1,19 +1,18 @@
 import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
+import { Network } from "../src/network/Network";
+import { Node } from "../src/network/Node";
 import { aBlock, theGenesisBlock } from "./BlockBuilder";
 import { InMemoryGossip } from "./gossip/InMemoryGossip";
-import { ByzantineNode } from "./nodes/ByzantineNode";
-import { LoyalNode } from "./nodes/LoyalNode";
-import { Network } from "./nodes/Network";
-import { Node } from "./nodes/Node";
+import { ByzantineNode } from "./network/ByzantineNode";
+import { LoyalNode } from "./network/LoyalNode";
 chai.use(sinonChai);
 
 //////////////
 // Todos:
 // * Nodes can pretend to be other nodes => use sig
 // * timeouts should trigger leader election
-//
 //////////////
 
 describe("PBFT", () => {

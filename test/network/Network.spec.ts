@@ -2,8 +2,8 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
+import { Network } from "../../src/network/Network";
 import { LoyalNode } from "./LoyalNode";
-import { Network } from "./Network";
 
 chai.use(sinonChai);
 

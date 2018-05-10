@@ -1,11 +1,11 @@
-import { Block } from "../Block";
+import { Block } from "../../src/Block";
+import { Config } from "../../src/Config";
+import { PBFT } from "../../src/PBFT";
+import { Gossip } from "../../src/gossip/Gossip";
+import { Network } from "../../src/network/Network";
+import { Node } from "../../src/network/Node";
 import { theGenesisBlock } from "../BlockBuilder";
-import { PBFT } from "../PBFT";
-import { Gossip } from "../gossip/Gossip";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
-import { Network } from "./Network";
-import { Node } from "./Node";
-import { Config } from "../Config";
 
 export class LoyalNode implements Node {
     public gossip: Gossip;

@@ -1,5 +1,5 @@
-import { Gossip } from "../gossip/Gossip";
-import { Block } from "../Block";
+import { Block } from "../../src/Block";
+import { Gossip } from "../../src/gossip/Gossip";
 
 export interface Node {
     publicKey: string;

@@ -1,4 +1,4 @@
-import { Block } from "./Block";
+import { Block } from "../src/Block";
 
 export function aBlock(previousBlock: Block, content?: string): Block {
     return {

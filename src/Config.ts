@@ -1,6 +1,6 @@
 import { Block } from "./Block";
 import { Gossip } from "./gossip/Gossip";
-import { Network } from "./nodes/Network";
+import { Network } from "./network/Network";
 
 export interface Config {
     genesisBlockHash: string;

@@ -1,12 +1,12 @@
-import { Block } from "../Block";
+import { Block } from "../../src/Block";
+import { Config } from "../../src/Config";
+import { PBFT } from "../../src/PBFT";
+import { Gossip } from "../../src/gossip/Gossip";
+import { PrePreparePayload } from "../../src/gossip/Payload";
+import { Network } from "../../src/network/Network";
+import { Node } from "../../src/network/Node";
 import { theGenesisBlock } from "../BlockBuilder";
-import { Config } from "../Config";
-import { PBFT } from "../PBFT";
-import { Gossip } from "../gossip/Gossip";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
-import { PrePreparePayload } from "../gossip/Payload";
-import { Network } from "./Network";
-import { Node } from "./Node";
 
 export class ByzantineNode implements Node {
     public gossip: Gossip;

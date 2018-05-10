@@ -6,7 +6,7 @@
   "scripts": {
     "build": "yarn run tsc",
     "tdd": "tsc-watch -p tsconfig.json --onSuccess \"yarn run test\"",
-    "test": "NODE_ENV=test yarn run mocha dist/*.spec.js dist/**/*.spec.js",
+    "test": "NODE_ENV=test yarn run mocha dist/test/*.spec.js dist/test/**/*.spec.js",
     "lint": "tslint -c tslint.json"
   },
   "author": "Gil Amran",
