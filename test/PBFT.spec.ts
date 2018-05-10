@@ -3,10 +3,8 @@
 import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
-import { Node } from "../src/network/Node";
 import { aBlock, theGenesisBlock } from "./BlockBuilder";
 import { aNetwork } from "./NetworkBuilder";
-import { InMemoryGossip } from "./gossip/InMemoryGossip";
 import { consensusMatcher } from "./matchers/consensusMatcher";
 import { ByzantineNode } from "./network/ByzantineNode";
 import { LoyalNode } from "./network/LoyalNode";
@@ -21,16 +19,6 @@ chai.use(consensusMatcher);
 //////////////
 
 describe("PBFT", () => {
-    function connectAllNodes(nodes: Node[]): void {
-        nodes.map(nodeA => {
-            nodes.map(nodeB => {
-                if (nodeA !== nodeB) {
-                    (nodeA.gossip as InMemoryGossip).registerRemoteMessagesListener(nodeB.publicKey, nodeB.gossip as InMemoryGossip);
-                }
-            });
-        });
-    }
-
     it("should start a network, append a block, and make sure that all nodes recived it", () => {
         const network = aNetwork().with().loyalLeader().with(3).loyalNodes().build();
 
