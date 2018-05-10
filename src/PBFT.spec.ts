@@ -11,8 +11,8 @@ chai.use(sinonChai);
 
 //////////////
 // Todos:
-// * Add logs
 // * Nodes can pretend to be other nodes => use sig
+// * timeouts should trigger leader election
 //
 //////////////
 
