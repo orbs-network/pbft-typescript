@@ -1,4 +1,5 @@
 import { Block } from "./Block";
+import { Config } from "./Config";
 import { Gossip } from "./gossip/Gossip";
 import { PrePreparePayload, PreparePayload } from "./gossip/Payload";
 import { logger } from "./logger/Logger";
@@ -10,13 +11,21 @@ export class PBFT {
     private prePrepareBlock: Block;
     private f: number;
     private currentView: number = 0;
+    private publicKey: string;
+    private network: Network;
+    private gossip: Gossip;
+    private onNewBlock: (block: Block) => void;
 
-    constructor(private genesisBlockHash: string, private publicKey: string, private network: Network, private gossip: Gossip, private onNewBlock: (block: Block) => void) {
-        logger.log(`PBFT instace initiating, publicKey:${publicKey}`);
+    constructor(config: Config) {
+        this.publicKey = config.publicKey;
+        this.network = config.network;
+        this.gossip = config.gossip;
+        this.onNewBlock = config.onNewBlock;
+        logger.log(`PBFT instace initiating, publicKey:${this.publicKey}`);
 
-        const totalNodes = network.nodes.length;
+        const totalNodes = this.network.nodes.length;
         this.f = Math.floor((totalNodes - 1) / 3);
-        this.committedBlocksHashs = [genesisBlockHash];
+        this.committedBlocksHashs = [config.genesisBlockHash];
         this.gossip.subscribe("preprepare", payload => this.onPrePrepare(payload));
         this.gossip.subscribe("prepare", payload => this.onPrepare(payload));
     }

@@ -5,6 +5,7 @@ import { Gossip } from "../gossip/Gossip";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
 import { Network } from "./Network";
 import { Node } from "./Node";
+import { Config } from "../Config";
 
 export class LoyalNode implements Node {
     public gossip: Gossip;
@@ -17,7 +18,14 @@ export class LoyalNode implements Node {
 
     public init(): void {
         this.gossip = new InMemoryGossip();
-        this.pbft = new PBFT(theGenesisBlock.hash, this.publicKey, this.network, this.gossip, block => this.onNewBlock(block));
+        const config: Config = {
+            genesisBlockHash: theGenesisBlock.hash,
+            publicKey: this.publicKey,
+            network: this.network,
+            gossip: this.gossip,
+            onNewBlock: block => this.onNewBlock(block)
+        };
+        this.pbft = new PBFT(config);
     }
 
     public suggestBlock(block: Block): void {
