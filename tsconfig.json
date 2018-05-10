@@ -15,7 +15,7 @@
     "outDir": "dist",
   },
   "include": [
-    "src/index.ts",
-    "**/*.spec.ts"
+    "test/**/*.spec.ts",
+    "test/**/*.d.ts"
   ]
 }

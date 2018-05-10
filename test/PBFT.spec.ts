@@ -1,13 +1,18 @@
+/// <reference path="./matchers/consensusMatcher.d.ts"/>
+
 import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
-import { Network } from "../src/network/Network";
 import { Node } from "../src/network/Node";
 import { aBlock, theGenesisBlock } from "./BlockBuilder";
+import { aNetwork } from "./NetworkBuilder";
 import { InMemoryGossip } from "./gossip/InMemoryGossip";
+import { consensusMatcher } from "./matchers/consensusMatcher";
 import { ByzantineNode } from "./network/ByzantineNode";
 import { LoyalNode } from "./network/LoyalNode";
+
 chai.use(sinonChai);
+chai.use(consensusMatcher);
 
 //////////////
 // Todos:
@@ -27,54 +32,34 @@ describe("PBFT", () => {
     }
 
     it("should start a network, append a block, and make sure that all nodes recived it", () => {
-        const network = new Network();
-        const leader = new LoyalNode(network, "leader");
-        const node1 = new LoyalNode(network, "node1");
-        const node2 = new LoyalNode(network, "node2");
-        const node3 = new LoyalNode(network, "node3");
-        network.registerNodes([leader, node1, node2, node3]);
-        network.initAllNodes();
-        connectAllNodes([leader, node1, node2, node3]);
+        const network = aNetwork().with().loyalLeader().with(3).loyalNodes().build();
 
         const block = aBlock(theGenesisBlock, "block content");
+        const leader = network.nodes[0];
         leader.suggestBlock(block);
 
-        expect(leader.getLatestBlock()).to.equal(block);
-        expect(node1.getLatestBlock()).to.equal(block);
-        expect(node2.getLatestBlock()).to.equal(block);
-        expect(node3.getLatestBlock()).to.equal(block);
+        expect(network).to.reachConsensusOnBlock(block);
     });
 
     it("should ignore suggested block if they are not from the leader", () => {
-        const network = new Network();
-        const leader = new LoyalNode(network, "leader");
-        const node1 = new LoyalNode(network, "node1");
-        const node2 = new LoyalNode(network, "node2");
-        const node3 = new ByzantineNode(network, "node3");
-        network.registerNodes([leader, node1, node2, node3]);
-        network.initAllNodes();
-        connectAllNodes([leader, node1, node2, node3]);
+        const network = aNetwork().with().loyalLeader().with(2).loyalNodes().with(1).byzantineNodes().build();
 
         const block = aBlock(theGenesisBlock);
-        node3.suggestBlock(block);
+        const byzantineNode = network.nodes[3];
+        byzantineNode.suggestBlock(block);
 
-        expect(leader.getLatestBlock()).to.be.undefined;
-        expect(node1.getLatestBlock()).to.be.undefined;
-        expect(node2.getLatestBlock()).to.be.undefined;
+        expect(network).to.not.reachConsensusOnBlock(block);
     });
 
     it("should reach consensus, in a network of 4 nodes, where the leader is byzantine and the other 3 nodes are loyal", () => {
-        const network = new Network();
-        const leader = new ByzantineNode(network, "leader");
-        const node1 = new LoyalNode(network, "node1");
-        const node2 = new LoyalNode(network, "node2");
-        const node3 = new LoyalNode(network, "node3");
-        network.registerNodes([leader, node1, node2, node3]);
-        network.initAllNodes();
-        connectAllNodes([leader, node1, node2, node3]);
+        const n = aNetwork().with().byzantineLeader().with(3).loyalNodes().build();
 
         const block1 = aBlock(theGenesisBlock, "block1");
         const block2 = aBlock(theGenesisBlock, "block2");
+        const leader = n.nodes[0] as ByzantineNode;
+        const node1 = n.nodes[1];
+        const node2 = n.nodes[2];
+        const node3 = n.nodes[3];
         leader.suggestBlockTo(block1, node1, node2);
         leader.suggestBlockTo(block2, node3);
 
@@ -84,104 +69,65 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, in a network of 4 nodes, where one of the nodes is byzantine and the others are loyal", () => {
-        const network = new Network();
-        const leader = new LoyalNode(network, "leader");
-        const node1 = new LoyalNode(network, "node1");
-        const node2 = new LoyalNode(network, "node2");
-        const node3 = new ByzantineNode(network, "node3");
-        network.registerNodes([leader, node1, node2, node3]);
-        network.initAllNodes();
-        connectAllNodes([leader, node1, node2, node3]);
+        const network = aNetwork().with().loyalLeader().with(3).loyalNodes().with(1).byzantineNodes().build();
 
         const block = aBlock(theGenesisBlock);
+        const leader = network.nodes[0];
         leader.suggestBlock(block);
 
-        expect(leader.getLatestBlock()).to.equal(block);
-        expect(node1.getLatestBlock()).to.equal(block);
-        expect(node2.getLatestBlock()).to.equal(block);
+        expect(network).to.reachConsensusOnBlock(block);
     });
 
     it("should reach consensus, even when a byzantine node is sending a bad block several times", () => {
-        const network = new Network();
-        const leader = new LoyalNode(network, "leader");
-        const node1 = new LoyalNode(network, "node1");
-        const node2 = new LoyalNode(network, "node2");
-        const node3 = new ByzantineNode(network, "node3");
-        network.registerNodes([leader, node1, node2, node3]);
-        network.initAllNodes();
-        connectAllNodes([leader, node1, node2, node3]);
+        const network = aNetwork().with().loyalLeader().with(2).loyalNodes().with(1).byzantineNodes().build();
 
-        const block = aBlock(theGenesisBlock);
+        const leader = network.nodes[0];
+        const loyalNode = network.nodes[1];
+        const byzantineNode = network.nodes[3] as ByzantineNode;
+
+        const goodBlock = aBlock(theGenesisBlock);
         const badBlock = aBlock(theGenesisBlock);
-        leader.suggestBlock(block);
-        node3.suggestBlockTo(badBlock, node1);
-        node3.suggestBlockTo(badBlock, node1);
-        node3.suggestBlockTo(badBlock, node1);
-        node3.suggestBlockTo(badBlock, node1);
+        leader.suggestBlock(goodBlock);
+        byzantineNode.suggestBlockTo(badBlock, loyalNode);
+        byzantineNode.suggestBlockTo(badBlock, loyalNode);
+        byzantineNode.suggestBlockTo(badBlock, loyalNode);
+        byzantineNode.suggestBlockTo(badBlock, loyalNode);
 
-        expect(leader.getLatestBlock()).to.equal(block);
-        expect(node1.getLatestBlock()).to.equal(block);
-        expect(node2.getLatestBlock()).to.equal(block);
+        expect(network).to.reachConsensusOnBlock(goodBlock);
     });
 
     it("should reach consensus, in a network of 7 nodes, where two of the nodes is byzantine and the others are loyal", () => {
-        const network = new Network();
-        const leader = new LoyalNode(network, "leader");
-        const node1 = new LoyalNode(network, "node1");
-        const node2 = new LoyalNode(network, "node2");
-        const node3 = new LoyalNode(network, "node3");
-        const node4 = new LoyalNode(network, "node4");
-        const node5 = new ByzantineNode(network, "node5");
-        const node6 = new ByzantineNode(network, "node6");
-        network.registerNodes([leader, node1, node2, node3, node4, node5, node6]);
-        network.initAllNodes();
-        connectAllNodes([leader, node1, node2, node3, node4, node5, node6]);
+        const network = aNetwork().with().loyalLeader().with(4).loyalNodes().with(2).byzantineNodes().build();
 
         const block = aBlock(theGenesisBlock);
+        const leader = network.nodes[0];
         leader.suggestBlock(block);
 
-        expect(leader.getLatestBlock()).to.equal(block);
-        expect(node1.getLatestBlock()).to.equal(block);
-        expect(node2.getLatestBlock()).to.equal(block);
-        expect(node3.getLatestBlock()).to.equal(block);
-        expect(node4.getLatestBlock()).to.equal(block);
+        expect(network).to.reachConsensusOnBlock(block);
     });
 
     it("should fire onNewBlock only once per block, even if there were more confirmations", () => {
-        const network = new Network();
-        const leader = new LoyalNode(network, "leader");
-        const node1 = new LoyalNode(network, "node1");
-        const node2 = new LoyalNode(network, "node2");
-        const node3 = new LoyalNode(network, "node3");
-        network.registerNodes([leader, node1, node2, node3]);
-        network.initAllNodes();
-        connectAllNodes([leader, node1, node2, node3]);
+        const network = aNetwork().with().loyalLeader().with(3).loyalNodes().build();
 
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(block1);
+        const leader = network.nodes[0];
+        const node = network.nodes[1] as LoyalNode;
         leader.suggestBlock(block1);
         leader.suggestBlock(block2);
 
-        expect(node1.blockLog.length).to.equal(2);
+        expect(node.blockLog.length).to.equal(2);
     });
 
     it("should not accept a block if it is not pointing to the previous block", () => {
-        const network = new Network();
-        const leader = new LoyalNode(network, "leader");
-        const node1 = new LoyalNode(network, "node1");
-        const node2 = new LoyalNode(network, "node2");
-        const node3 = new LoyalNode(network, "node3");
-        network.registerNodes([leader, node1, node2, node3]);
-        network.initAllNodes();
-        connectAllNodes([leader, node1, node2, node3]);
+        const network = aNetwork().with().loyalLeader().with(3).loyalNodes().build();
 
         const block1 = aBlock(theGenesisBlock);
         const notInOrderBlock = aBlock(aBlock(theGenesisBlock));
+        const leader = network.nodes[0];
         leader.suggestBlock(block1);
         leader.suggestBlock(notInOrderBlock);
 
-        expect(node1.getLatestBlock().hash).to.equal(block1.hash);
-        expect(node2.getLatestBlock().hash).to.equal(block1.hash);
-        expect(node3.getLatestBlock().hash).to.equal(block1.hash);
+        expect(network).to.reachConsensusOnBlock(block1);
     });
 });
