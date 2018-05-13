@@ -10,8 +10,8 @@ import { InMemoryGossip } from "../gossip/InMemoryGossip";
 
 export class ByzantineNode implements Node {
     public gossip: Gossip;
-    public pbft: PBFT;
 
+    private pbft: PBFT;
     private latestBlock: Block;
 
     constructor(private network: Network, public publicKey: string) {
@@ -47,6 +47,11 @@ export class ByzantineNode implements Node {
     public getLatestBlock(): Block {
         return this.latestBlock;
     }
+
+    public isLeader(): boolean {
+        return this.pbft.isLeader();
+    }
+
     private onNewBlock(block: Block): void {
         this.latestBlock = { content: "FOO BAR", hash: "DUMMY", previousBlockHash: "NOTHING" };
     }

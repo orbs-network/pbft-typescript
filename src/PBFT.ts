@@ -1,9 +1,9 @@
-import { Network } from "./network/Network";
 import { Block } from "./Block";
 import { Config } from "./Config";
 import { Gossip } from "./gossip/Gossip";
 import { PrePreparePayload, PreparePayload } from "./gossip/Payload";
 import { logger } from "./logger/Logger";
+import { Network } from "./network/Network";
 
 export class PBFT {
     private prepareLog: { [blockHash: string]: string[] } = {};
@@ -45,7 +45,7 @@ export class PBFT {
         this.gossip.broadcast("preprepare", payload);
     }
 
-    public broadcastPrepare(block: Block): void {
+    private broadcastPrepare(block: Block): void {
         logger.log(`[${this.publicKey}], broadcastPrepare blockHash:${block.hash}, view:${this.currentView}`);
         const payload: PreparePayload = {
             blockHash: block.hash,
@@ -53,6 +53,11 @@ export class PBFT {
             view: this.currentView
         };
         this.gossip.broadcast("prepare", payload);
+    }
+
+    public isLeader(): boolean {
+        const myIdx = this.network.getNodeIdxByPublicKey(this.publicKey);
+        return myIdx === this.currentView;
     }
 
     private onPrePrepare(payload: PrePreparePayload): void {

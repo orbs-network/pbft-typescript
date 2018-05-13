@@ -5,7 +5,7 @@ import { PBFT } from "../PBFT";
 export interface Node {
     publicKey: string;
     gossip: Gossip;
-    pbft: PBFT;
+    isLeader(): boolean;
     init(): void;
     suggestBlock(block: Block): void;
     getLatestBlock(): Block;

@@ -8,9 +8,10 @@ import { theGenesisBlock } from "../BlockBuilder";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
 
 export class LoyalNode implements Node {
+    private pbft: PBFT;
+
     public gossip: Gossip;
     public blockLog: Block[] = [];
-    public pbft: PBFT;
 
     constructor(private network: Network, public publicKey: string) {
     }
@@ -34,7 +35,12 @@ export class LoyalNode implements Node {
     public getLatestBlock(): Block {
         return this.blockLog[this.blockLog.length - 1];
     }
+
     public onNewBlock(block: Block): void {
         this.blockLog.push(block);
+    }
+
+    public isLeader(): boolean {
+        return this.pbft.isLeader();
     }
 }
