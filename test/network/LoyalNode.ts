@@ -10,8 +10,7 @@ import { InMemoryGossip } from "../gossip/InMemoryGossip";
 export class LoyalNode implements Node {
     public gossip: Gossip;
     public blockLog: Block[] = [];
-
-    private pbft: PBFT;
+    public pbft: PBFT;
 
     constructor(private network: Network, public publicKey: string) {
     }

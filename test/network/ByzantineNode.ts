@@ -10,9 +10,9 @@ import { InMemoryGossip } from "../gossip/InMemoryGossip";
 
 export class ByzantineNode implements Node {
     public gossip: Gossip;
+    public pbft: PBFT;
 
     private latestBlock: Block;
-    private pbft: PBFT;
 
     constructor(private network: Network, public publicKey: string) {
     }
