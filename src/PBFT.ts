@@ -9,6 +9,7 @@ export class PBFT {
     private prepareLog: { [blockHash: string]: string[] } = {};
     private committedBlocksHashs: string[];
     private prePrepareBlock: Block;
+    private leaderChangeTimer: NodeJS.Timer;
     private f: number;
     private currentView: number = 0;
     private publicKey: string;
@@ -23,6 +24,7 @@ export class PBFT {
         this.onNewBlock = config.onNewBlock;
         logger.log(`PBFT instace initiating, publicKey:${this.publicKey}`);
 
+        this.resetLeaderChangeTimer();
         const totalNodes = this.network.nodes.length;
         this.f = Math.floor((totalNodes - 1) / 3);
         this.committedBlocksHashs = [config.genesisBlockHash];
@@ -33,6 +35,22 @@ export class PBFT {
     public suggestBlockAsLeader(block: Block): void {
         this.prePrepareBlock = block;
         this.broadcastPrePrepare(block);
+    }
+
+    public isLeader(): boolean {
+        return this.network.getNodeIdxByPublicKey(this.publicKey) === this.currentView;
+    }
+
+    private resetLeaderChangeTimer(): void {
+        if (this.leaderChangeTimer) {
+            clearTimeout(this.leaderChangeTimer);
+        }
+        this.leaderChangeTimer = setTimeout(() => this.onLeaderChangeTimeout(), 300);
+    }
+
+    private onLeaderChangeTimeout(): void {
+        this.currentView++;
+        logger.log(`[${this.publicKey}], onLeaderChangeTimeout, new view:${this.currentView}`);
     }
 
     private broadcastPrePrepare(block: Block): void {
@@ -114,6 +132,7 @@ export class PBFT {
     }
 
     private commitBlock(block: Block): void {
+        this.resetLeaderChangeTimer();
         const blockHash = block.hash;
         if (this.committedBlocksHashs.indexOf(blockHash) === -1) {
             this.committedBlocksHashs.push(blockHash);

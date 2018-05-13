@@ -48,6 +48,10 @@ export class ByzantineNode implements Node {
         return this.latestBlock;
     }
 
+    public isLeader(): boolean {
+        return this.pbft.isLeader();
+    }
+
     private onNewBlock(block: Block): void {
         this.latestBlock = { content: "FOO BAR", hash: "DUMMY", previousBlockHash: "NOTHING" };
     }

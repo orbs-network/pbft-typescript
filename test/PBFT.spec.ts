@@ -8,6 +8,7 @@ import { aNetwork } from "./NetworkBuilder";
 import { consensusMatcher } from "./matchers/consensusMatcher";
 import { ByzantineNode } from "./network/ByzantineNode";
 import { LoyalNode } from "./network/LoyalNode";
+import { every, wait } from "./timeUtils";
 
 chai.use(sinonChai);
 chai.use(consensusMatcher);
@@ -117,5 +118,35 @@ describe("PBFT", () => {
         leader.suggestBlock(notInOrderBlock);
 
         expect(network).to.reachConsensusOnBlock(block1);
+    });
+
+    it("should change the leader on timeout (no commits for too long)", (done) => {
+        const network = aNetwork().with().loyalLeader().with(3).loyalNodes().build();
+
+        const leader = network.nodes[0];
+        const node1 = network.nodes[1];
+        const node2 = network.nodes[2];
+        const node3 = network.nodes[3];
+
+        expect(leader.isLeader()).to.be.true;
+        expect(node1.isLeader()).to.be.false;
+        expect(node2.isLeader()).to.be.false;
+        expect(node3.isLeader()).to.be.false;
+
+        // leader is not sending a block, we time out, and node1 should be the leader
+        let currentBlock = theGenesisBlock;
+        const stop = every(100, 400, () => {
+            currentBlock = aBlock(currentBlock);
+            node1.suggestBlock(currentBlock);
+        });
+
+        wait(700).then(() => {
+            stop();
+            expect(leader.isLeader()).to.be.false;
+            expect(node1.isLeader()).to.be.true;
+            expect(node2.isLeader()).to.be.false;
+            expect(node3.isLeader()).to.be.false;
+            done();
+        });
     });
 });

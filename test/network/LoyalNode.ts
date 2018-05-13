@@ -36,6 +36,10 @@ export class LoyalNode implements Node {
         return this.blockLog[this.blockLog.length - 1];
     }
 
+    public isLeader(): boolean {
+        return this.pbft.isLeader();
+    }
+
     public onNewBlock(block: Block): void {
         this.blockLog.push(block);
     }
