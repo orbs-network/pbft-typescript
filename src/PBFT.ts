@@ -55,11 +55,6 @@ export class PBFT {
         this.gossip.broadcast("prepare", payload);
     }
 
-    public isLeader(): boolean {
-        const myIdx = this.network.getNodeIdxByPublicKey(this.publicKey);
-        return myIdx === this.currentView;
-    }
-
     private onPrePrepare(payload: PrePreparePayload): void {
         logger.log(`[${this.publicKey}], onPrePrepare blockHash:${payload.block.hash}, senderPublicKey:${payload.senderPublicKey}, view:${payload.view}`);
         if (this.isBlockPointingToPreviousBlock(payload.block)) {
