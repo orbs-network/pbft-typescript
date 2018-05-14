@@ -10,3 +10,12 @@ export interface PreparePayload {
     senderPublicKey: string;
     view: number;
 }
+
+export interface ViewChangePayload {
+    newView: number;
+    senderPublicKey: string;
+}
+
+export interface NewViewPayload {
+    view: number;
+}

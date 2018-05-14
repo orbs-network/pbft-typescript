@@ -1,12 +1,13 @@
 import { Block } from "./Block";
 import { Config } from "./Config";
 import { Gossip } from "./gossip/Gossip";
-import { PrePreparePayload, PreparePayload } from "./gossip/Payload";
+import { NewViewPayload, PrePreparePayload, PreparePayload, ViewChangePayload } from "./gossip/Payload";
 import { logger } from "./logger/Logger";
 import { Network } from "./network/Network";
 
 export class PBFT {
     private prepareLog: { [blockHash: string]: string[] } = {};
+    private viewChangeLog: { [view: number]: string[] } = {};
     private committedBlocksHashs: string[];
     private prePrepareBlock: Block;
     private leaderChangeTimer: NodeJS.Timer;
@@ -25,11 +26,11 @@ export class PBFT {
         logger.log(`PBFT instace initiating, publicKey:${this.publicKey}`);
 
         this.resetLeaderChangeTimer();
-        const totalNodes = this.network.nodes.length;
-        this.f = Math.floor((totalNodes - 1) / 3);
+        this.f = Math.floor((this.network.getNodesCount() - 1) / 3);
         this.committedBlocksHashs = [config.genesisBlockHash];
         this.gossip.subscribe("preprepare", payload => this.onPrePrepare(payload));
         this.gossip.subscribe("prepare", payload => this.onPrepare(payload));
+        this.gossip.subscribe("view-change", payload => this.onViewChange(payload));
     }
 
     public suggestBlockAsLeader(block: Block): void {
@@ -51,6 +52,10 @@ export class PBFT {
     private onLeaderChangeTimeout(): void {
         this.currentView++;
         logger.log(`[${this.publicKey}], onLeaderChangeTimeout, new view:${this.currentView}`);
+        const payload: ViewChangePayload = { newView: this.currentView, senderPublicKey: this.publicKey };
+        const nextLeader = this.network.getNodeByIdx(this.currentView % this.network.getNodesCount());
+        this.gossip.unicast(nextLeader.publicKey, "view-change", payload);
+        this.resetLeaderChangeTimer();
     }
 
     private broadcastPrePrepare(block: Block): void {
@@ -85,7 +90,7 @@ export class PBFT {
                 };
                 this.logPrepare(preparePayload);
                 this.broadcastPrepare(payload.block);
-                if (this.hasConsensus(payload.block.hash)) {
+                if (this.isPrepared(payload.block.hash)) {
                     logger.log(`[${this.publicKey}], onPrePrepare, found enough votes, there's consensus. commtting block (${this.prePrepareBlock.hash})`);
                     this.commitBlock(this.prePrepareBlock);
                 }
@@ -97,11 +102,20 @@ export class PBFT {
         }
     }
 
+    private onViewChange(payload: ViewChangePayload): void {
+        logger.log(`[${this.publicKey}], onViewChange senderPublicKey:${payload.senderPublicKey}, newView:${payload.newView}`);
+        this.logViewChange(payload);
+        if (this.isElected(payload.newView)) {
+            const newViewPayload: NewViewPayload = { view: payload.newView };
+            this.gossip.broadcast("new-view", newViewPayload);
+        }
+    }
+
     private onPrepare(payload: PreparePayload): void {
         logger.log(`[${this.publicKey}], onPrepare blockHash:${payload.blockHash}, senderPublicKey:${payload.senderPublicKey}, view:${payload.view}`);
         this.logPrepare(payload);
         if (this.isBlockMatchPrePrepareBlock(payload.blockHash)) {
-            if (this.hasConsensus(payload.blockHash)) {
+            if (this.isPrepared(payload.blockHash)) {
                 logger.log(`[${this.publicKey}], onPrepare, found enough votes, there's consensus. commtting block (${this.prePrepareBlock.hash})`);
                 this.commitBlock(this.prePrepareBlock);
             }
@@ -127,7 +141,11 @@ export class PBFT {
         return this.prePrepareBlock !== undefined && this.prePrepareBlock.hash === blockHash;
     }
 
-    private hasConsensus(blockHash: string): boolean {
+    private isElected(newView: number): boolean {
+        return (this.viewChangeLog[newView] !== undefined && this.viewChangeLog[newView].length >= this.f * 2);
+    }
+
+    private isPrepared(blockHash: string): boolean {
         return (this.prepareLog[blockHash] !== undefined && this.prepareLog[blockHash].length >= this.f * 2);
     }
 
@@ -138,6 +156,19 @@ export class PBFT {
             this.committedBlocksHashs.push(blockHash);
             this.onNewBlock(block);
         }
+    }
+
+    private logViewChange(payload: ViewChangePayload): void {
+        const { newView, senderPublicKey } = payload;
+
+        if (this.viewChangeLog[newView] === undefined) {
+            this.viewChangeLog[newView] = [senderPublicKey];
+        } else {
+            if (this.viewChangeLog[newView].indexOf(senderPublicKey) === -1) {
+                this.viewChangeLog[newView].push(senderPublicKey);
+            }
+        }
+        logger.log(`[${this.publicKey}], logViewChange, view change logged. [${this.viewChangeLog[newView]}] votes so far.`);
     }
 
     private logPrepare(payload: PreparePayload): void {

@@ -3,16 +3,12 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { Network } from "../../src/network/Network";
+import { aNetwork } from "../NetworkBuilder";
 import { LoyalNode } from "./LoyalNode";
 
 chai.use(sinonChai);
 
 describe("Network", () => {
-    it("should allow to create a network", () => {
-        const network = new Network();
-        expect(network).not.to.be.undefined;
-    });
-
     it("should be able to register nodes", () => {
         const network = new Network();
         const node1 = new LoyalNode(network, "node1");
@@ -33,36 +29,20 @@ describe("Network", () => {
     });
 
     it("should return the node index by its publicKey", () => {
-        const network = new Network();
-        const node1 = new LoyalNode(network, "node1");
-        const node2 = new LoyalNode(network, "node2");
-        const node3 = new LoyalNode(network, "node3");
-        network.registerNode(node1);
-        network.registerNode(node2);
-        network.registerNode(node3);
-        const result = network.getNodeIdxByPublicKey("node2");
+        const network = aNetwork().with().loyalLeader().with(2).loyalNodes().build();
+        const node2 = network.nodes[1];
+        const result = network.getNodeIdxByPublicKey(node2.publicKey);
         expect(result).to.equal(1);
     });
 
     it("should return the total number of nodes when calling getNodesCount", () => {
-        const network = new Network();
-        const node1 = new LoyalNode(network, "node1");
-        const node2 = new LoyalNode(network, "node2");
-        const node3 = new LoyalNode(network, "node3");
-        network.registerNode(node1);
-        network.registerNode(node2);
-        network.registerNode(node3);
-        expect(network.getNodesCount()).to.equal(network.nodes.length);
+        const network = aNetwork().with().loyalLeader().with(2).loyalNodes().build();
+        expect(network.getNodesCount()).to.equal(3);
     });
 
     it("should return a node by index", () => {
-        const network = new Network();
-        const node1 = new LoyalNode(network, "node1");
-        const node2 = new LoyalNode(network, "node2");
-        network.registerNode(node1);
-        network.registerNode(node2);
-        network.initAllNodes();
-
+        const network = aNetwork().with().loyalLeader().with(2).loyalNodes().build();
+        const node2 = network.nodes[1];
         const result = network.getNodeByIdx(1);
 
         expect(result).to.equal(node2);

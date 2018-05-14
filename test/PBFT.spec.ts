@@ -17,6 +17,8 @@ chai.use(consensusMatcher);
 // Todos:
 // * Nodes can pretend to be other nodes => use sig
 // * timeouts should trigger leader election
+// * Should I use senderPublicKey or view?
+// * Why do we need the term
 //////////////
 
 describe("PBFT", () => {
@@ -41,14 +43,14 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, in a network of 4 nodes, where the leader is byzantine and the other 3 nodes are loyal", () => {
-        const n = aNetwork().with().byzantineLeader().with(3).loyalNodes().build();
+        const network = aNetwork().with().byzantineLeader().with(3).loyalNodes().build();
 
         const block1 = aBlock(theGenesisBlock, "block1");
         const block2 = aBlock(theGenesisBlock, "block2");
-        const leader = n.nodes[0] as ByzantineNode;
-        const node1 = n.nodes[1];
-        const node2 = n.nodes[2];
-        const node3 = n.nodes[3];
+        const leader = network.nodes[0] as ByzantineNode;
+        const node1 = network.nodes[1];
+        const node2 = network.nodes[2];
+        const node3 = network.nodes[3];
         leader.suggestBlockTo(block1, node1, node2);
         leader.suggestBlockTo(block2, node3);
 
