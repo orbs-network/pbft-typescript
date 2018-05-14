@@ -19,6 +19,10 @@ chai.use(consensusMatcher);
 // * timeouts should trigger leader election
 // * Should I use senderPublicKey or view?
 // * Why do we need the term
+// * timeout should be configurable
+// * should call validate(block) on onPreprepare
+// * Do we have to sign the message type as well? is it a must?
+// * Currently the prepare logs are using the blockHash and senderPublicKey, convert it to v & r.
 //////////////
 
 describe("PBFT", () => {
@@ -122,7 +126,7 @@ describe("PBFT", () => {
         expect(network).to.reachConsensusOnBlock(block1);
     });
 
-    it("should change the leader on timeout (no commits for too long)", (done) => {
+    it("should change the leader on timeout (no commits for too long)", async () => {
         const network = aNetwork().with().loyalLeader().with(3).loyalNodes().build();
 
         const leader = network.nodes[0];
@@ -142,13 +146,11 @@ describe("PBFT", () => {
             node1.suggestBlock(currentBlock);
         });
 
-        wait(700).then(() => {
-            stop();
-            expect(leader.isLeader()).to.be.false;
-            expect(node1.isLeader()).to.be.true;
-            expect(node2.isLeader()).to.be.false;
-            expect(node3.isLeader()).to.be.false;
-            done();
-        });
+        await wait(700);
+        stop();
+        expect(leader.isLeader()).to.be.false;
+        expect(node1.isLeader()).to.be.true;
+        expect(node2.isLeader()).to.be.false;
+        expect(node3.isLeader()).to.be.false;
     });
 });
