@@ -8,4 +8,5 @@ export interface Config {
     network: Network;
     gossip: Gossip;
     onNewBlock: (block: Block) => void;
+    validateBlock?: (block: Block) => Promise<boolean>;
 }

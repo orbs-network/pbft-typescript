@@ -18,7 +18,7 @@ export class PBFT {
     private gossip: Gossip;
     private onNewBlock: (block: Block) => void;
 
-    constructor(config: Config) {
+    constructor(private config: Config) {
         this.publicKey = config.publicKey;
         this.network = config.network;
         this.gossip = config.gossip;
@@ -82,10 +82,17 @@ export class PBFT {
         this.gossip.broadcast("prepare", payload);
     }
 
-    private onPrePrepare(payload: PrePreparePayload): void {
+    private async onPrePrepare(payload: PrePreparePayload): Promise<void> {
         logger.log(`[${this.publicKey}], onPrePrepare blockHash:${payload.block.hash}, senderPublicKey:${payload.senderPublicKey}, view:${payload.view}`);
         if (this.isBlockPointingToPreviousBlock(payload.block)) {
             if (this.isFromCurrentLeader(payload.senderPublicKey)) {
+                if (this.config.validateBlock !== undefined) {
+                    const isValidBlock = await this.config.validateBlock(payload.block);
+                    if (!isValidBlock) {
+                        logger.log(`[${this.publicKey}], onPrePrepare, block is invalid`);
+                        return;
+                    }
+                }
                 this.prePrepareBlock = payload.block;
                 const preparePayload: PreparePayload = {
                     blockHash: payload.block.hash,

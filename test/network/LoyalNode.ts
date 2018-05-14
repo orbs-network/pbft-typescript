@@ -12,20 +12,21 @@ export class LoyalNode implements Node {
 
     public gossip: Gossip;
     public blockLog: Block[] = [];
+    public config: Config;
 
     constructor(private network: Network, public publicKey: string) {
     }
 
     public init(): void {
         this.gossip = new InMemoryGossip();
-        const config: Config = {
+        this.config = {
             genesisBlockHash: theGenesisBlock.hash,
             publicKey: this.publicKey,
             network: this.network,
             gossip: this.gossip,
             onNewBlock: block => this.onNewBlock(block)
         };
-        this.pbft = new PBFT(config);
+        this.pbft = new PBFT(this.config);
     }
 
     public suggestBlock(block: Block): void {
