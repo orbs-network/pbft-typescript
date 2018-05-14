@@ -49,12 +49,16 @@ export class PBFT {
         this.leaderChangeTimer = setTimeout(() => this.onLeaderChangeTimeout(), 300);
     }
 
+    private leaderPublicKey(): string {
+        const idx = this.currentView % this.network.getNodesCount();
+        return this.network.getNodeByIdx(idx).publicKey;
+    }
+
     private onLeaderChangeTimeout(): void {
         this.currentView++;
         logger.log(`[${this.publicKey}], onLeaderChangeTimeout, new view:${this.currentView}`);
         const payload: ViewChangePayload = { newView: this.currentView, senderPublicKey: this.publicKey };
-        const nextLeader = this.network.getNodeByIdx(this.currentView % this.network.getNodesCount());
-        this.gossip.unicast(nextLeader.publicKey, "view-change", payload);
+        this.gossip.unicast(this.leaderPublicKey(), "view-change", payload);
         this.resetLeaderChangeTimer();
     }
 
@@ -133,8 +137,7 @@ export class PBFT {
     }
 
     private isFromCurrentLeader(senderPublicKey: string): boolean {
-        const senderIdx = this.network.getNodeIdxByPublicKey(senderPublicKey);
-        return senderIdx === this.currentView;
+        return this.leaderPublicKey() === senderPublicKey;
     }
 
     private isBlockMatchPrePrepareBlock(blockHash: string): boolean {
@@ -142,7 +145,7 @@ export class PBFT {
     }
 
     private isElected(newView: number): boolean {
-        return (this.viewChangeLog[newView] !== undefined && this.viewChangeLog[newView].length >= this.f * 2);
+        return (this.viewChangeLog[newView] !== undefined && this.viewChangeLog[newView].length >= this.f * 2 + 1);
     }
 
     private isPrepared(blockHash: string): boolean {
