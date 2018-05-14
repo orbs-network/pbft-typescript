@@ -44,6 +44,30 @@ describe("Network", () => {
         expect(result).to.equal(1);
     });
 
+    it("should return the total number of nodes when calling getNodesCount", () => {
+        const network = new Network();
+        const node1 = new LoyalNode(network, "node1");
+        const node2 = new LoyalNode(network, "node2");
+        const node3 = new LoyalNode(network, "node3");
+        network.registerNode(node1);
+        network.registerNode(node2);
+        network.registerNode(node3);
+        expect(network.getNodesCount()).to.equal(network.nodes.length);
+    });
+
+    it("should return a node by index", () => {
+        const network = new Network();
+        const node1 = new LoyalNode(network, "node1");
+        const node2 = new LoyalNode(network, "node2");
+        network.registerNode(node1);
+        network.registerNode(node2);
+        network.initAllNodes();
+
+        const result = network.getNodeByIdx(1);
+
+        expect(result).to.equal(node2);
+    });
+
     it("should call init on all the nodes when calling initAllNodes", () => {
         const network = new Network();
         const node1 = new LoyalNode(network, "node1");

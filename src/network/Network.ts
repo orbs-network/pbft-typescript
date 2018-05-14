@@ -15,7 +15,15 @@ export class Network {
         return this.nodes.findIndex(node => node.publicKey === publicKey);
     }
 
+    getNodeByIdx(index: number): Node {
+        return this.nodes[index];
+    }
+
     initAllNodes(): void {
         this.nodes.forEach(node => node.init());
+    }
+
+    getNodesCount(): number {
+        return this.nodes.length;
     }
 }
