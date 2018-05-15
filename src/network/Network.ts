@@ -26,4 +26,8 @@ export class Network {
     getNodesCount(): number {
         return this.nodes.length;
     }
+
+    shutDown(): void {
+        this.nodes.forEach(node => node.dispose());
+    }
 }

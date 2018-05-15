@@ -2,13 +2,8 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
-import { Config } from "../src/Config";
-import { PBFT } from "../src/PBFT";
-import { InMemoryPBFTStorage } from "../src/storage/InMemoryPBFTStorage";
-import { theGenesisBlock } from "./builders/BlockBuilder";
 import { aNetwork } from "./builders/NetworkBuilder";
 import { InMemoryGossip } from "./gossip/InMemoryGossip";
-import { SilentLogger } from "./logger/SilentLogger";
 import { wait } from "./timeUtils";
 chai.use(sinonChai);
 
@@ -21,6 +16,7 @@ describe("Leader Election", () => {
         const unicastSpy = sinon.spy(node1.gossip, "unicast");
         await wait(500);
         expect(unicastSpy).to.have.been.calledWith(nextLeader.publicKey, "view-change", { newView: 1, senderPublicKey: node1.publicKey });
+        network.shutDown();
     });
 
     it("should cycle to the first node when the current leader is the last node", async () => {
@@ -31,6 +27,7 @@ describe("Leader Election", () => {
         const unicastSpy = sinon.spy(node2.gossip, "unicast");
         await wait(700);
         expect(unicastSpy).to.have.been.calledWith(node1.publicKey, "view-change", { newView: 2, senderPublicKey: node2.publicKey });
+        network.shutDown();
     });
 
     it("should count 2f+1 view-change to be elected", async () => {
@@ -46,6 +43,7 @@ describe("Leader Election", () => {
         gossip.onRemoteMessage("view-change", { newView: 1, senderPublicKey: node2.publicKey });
         gossip.onRemoteMessage("view-change", { newView: 1, senderPublicKey: node3.publicKey });
         expect(broadcastSpy).to.have.been.calledWith("new-view", { view: 1 });
+        network.shutDown();
     });
 
     it("should not fire new-view if count of view-change is less than 2f+1", async () => {
@@ -60,30 +58,20 @@ describe("Leader Election", () => {
         gossip.onRemoteMessage("view-change", { newView: 1, senderPublicKey: leader.publicKey });
         gossip.onRemoteMessage("view-change", { newView: 1, senderPublicKey: node2.publicKey });
         expect(broadcastSpy).to.not.have.been.called;
+        network.shutDown();
     });
 
     it("should not count view-change votes from the same node", async () => {
         const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
         const leader = network.nodes[0];
         const node1 = network.nodes[1];
-        const gossip = new InMemoryGossip();
-        const pbftStorage = new InMemoryPBFTStorage();
-        const logger = new SilentLogger();
-        const config: Config = {
-            genesisBlockHash: theGenesisBlock.hash,
-            publicKey: Math.random().toString(),
-            network,
-            gossip,
-            pbftStorage,
-            logger,
-            onNewBlock: () => { }
-        };
 
-        const pbft: PBFT = new PBFT(config);
+        const gossip = node1.gossip as InMemoryGossip;
         const broadcastSpy = sinon.spy(gossip, "broadcast");
         gossip.onRemoteMessage("view-change", { newView: 1, senderPublicKey: leader.publicKey });
         gossip.onRemoteMessage("view-change", { newView: 1, senderPublicKey: leader.publicKey });
         gossip.onRemoteMessage("view-change", { newView: 1, senderPublicKey: leader.publicKey });
         expect(broadcastSpy).to.not.have.been.called;
+        network.shutDown();
     });
 });

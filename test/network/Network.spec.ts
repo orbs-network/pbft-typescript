@@ -17,6 +17,7 @@ describe("Network", () => {
         network.registerNode(node2);
         expect(network.nodes[0]).to.equal(node1);
         expect(network.nodes[1]).to.equal(node2);
+        network.shutDown();
     });
 
     it("should be able to register several nodes in the same call", () => {
@@ -26,6 +27,7 @@ describe("Network", () => {
         network.registerNodes([node1, node2]);
         expect(network.nodes[0]).to.equal(node1);
         expect(network.nodes[1]).to.equal(node2);
+        network.shutDown();
     });
 
     it("should return the node index by its publicKey", () => {
@@ -33,11 +35,13 @@ describe("Network", () => {
         const node2 = network.nodes[1];
         const result = network.getNodeIdxByPublicKey(node2.publicKey);
         expect(result).to.equal(1);
+        network.shutDown();
     });
 
     it("should return the total number of nodes when calling getNodesCount", () => {
         const network = aNetwork().leadBy.a.loyalLeader.with(2).loyalNodes.build();
         expect(network.getNodesCount()).to.equal(3);
+        network.shutDown();
     });
 
     it("should return a node by index", () => {
@@ -46,6 +50,7 @@ describe("Network", () => {
         const result = network.getNodeByIdx(1);
 
         expect(result).to.equal(node2);
+        network.shutDown();
     });
 
     it("should call init on all the nodes when calling initAllNodes", () => {
@@ -66,6 +71,7 @@ describe("Network", () => {
         expect(spy1).to.have.been.calledOnce;
         expect(spy2).to.have.been.calledOnce;
         expect(spy3).to.have.been.calledOnce;
+        network.shutDown();
     });
 
 });

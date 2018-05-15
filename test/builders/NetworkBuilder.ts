@@ -20,10 +20,6 @@ class NetworkBuilder {
     public and = this;
     public a = this;
 
-    constructor() {
-        this.network = new Network();
-    }
-
     public thatLogsTo(logger: Logger): this {
         this.logger = logger;
         return this;
@@ -66,6 +62,7 @@ class NetworkBuilder {
         };
     }
     public build(): Network {
+        this.network = new Network();
         this.createNodes();
         return this.network;
     }

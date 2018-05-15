@@ -8,4 +8,5 @@ export interface Node {
     init(): void;
     suggestBlock(block: Block): void;
     getLatestBlock(): Block;
+    dispose(): void;
 }

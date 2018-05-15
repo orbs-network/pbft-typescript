@@ -23,6 +23,7 @@ describe("Block Validation", () => {
         await wait(10);
         expect(spy).to.have.been.calledWith(block);
         expect(network).to.reachConsensusOnBlock(block);
+        network.shutDown();
     });
 
     it("should not reach consensus if validateBlock returned false", async () => {
@@ -36,5 +37,6 @@ describe("Block Validation", () => {
 
         await wait(10);
         expect(network).to.not.reachConsensusOnBlock(block);
+        network.shutDown();
     });
 });

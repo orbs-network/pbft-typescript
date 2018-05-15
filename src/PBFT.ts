@@ -45,10 +45,18 @@ export class PBFT {
         return this.network.getNodeIdxByPublicKey(this.publicKey) === this.currentView;
     }
 
-    private resetLeaderChangeTimer(): void {
+    public stopLeaderChangeTimer(): any {
         if (this.leaderChangeTimer) {
             clearTimeout(this.leaderChangeTimer);
         }
+    }
+
+    public dispose(): any {
+        this.stopLeaderChangeTimer();
+    }
+
+    private resetLeaderChangeTimer(): void {
+        this.stopLeaderChangeTimer();
         this.leaderChangeTimer = setTimeout(() => this.onLeaderChangeTimeout(), 300);
     }
 

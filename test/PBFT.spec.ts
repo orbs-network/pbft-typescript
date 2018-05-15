@@ -35,6 +35,7 @@ describe("PBFT", () => {
         leader.suggestBlock(block);
 
         expect(network).to.reachConsensusOnBlock(block);
+        network.shutDown();
     });
 
     it("should ignore suggested block if they are not from the leader", () => {
@@ -45,6 +46,7 @@ describe("PBFT", () => {
         byzantineNode.suggestBlock(block);
 
         expect(network).to.not.reachConsensusOnBlock(block);
+        network.shutDown();
     });
 
     it("should reach consensus, in a network of 4 nodes, where the leader is byzantine and the other 3 nodes are loyal", () => {
@@ -62,6 +64,7 @@ describe("PBFT", () => {
         expect(node1.getLatestBlock()).to.equal(block1);
         expect(node2.getLatestBlock()).to.equal(block1);
         expect(node3.getLatestBlock()).to.be.undefined;
+        network.shutDown();
     });
 
     it("should reach consensus, in a network of 4 nodes, where one of the nodes is byzantine and the others are loyal", () => {
@@ -72,6 +75,7 @@ describe("PBFT", () => {
         leader.suggestBlock(block);
 
         expect(network).to.reachConsensusOnBlock(block);
+        network.shutDown();
     });
 
     it("should reach consensus, even when a byzantine node is sending a bad block several times", () => {
@@ -90,6 +94,7 @@ describe("PBFT", () => {
         byzantineNode.suggestBlockTo(badBlock, loyalNode);
 
         expect(network).to.reachConsensusOnBlock(goodBlock);
+        network.shutDown();
     });
 
     it("should reach consensus, in a network of 7 nodes, where two of the nodes is byzantine and the others are loyal", () => {
@@ -100,6 +105,7 @@ describe("PBFT", () => {
         leader.suggestBlock(block);
 
         expect(network).to.reachConsensusOnBlock(block);
+        network.shutDown();
     });
 
     it("should fire onNewBlock only once per block, even if there were more confirmations", () => {
@@ -113,6 +119,7 @@ describe("PBFT", () => {
         leader.suggestBlock(block2);
 
         expect(node.blockLog.length).to.equal(2);
+        network.shutDown();
     });
 
     it("should not accept a block if it is not pointing to the previous block", () => {
@@ -125,6 +132,7 @@ describe("PBFT", () => {
         leader.suggestBlock(notInOrderBlock);
 
         expect(network).to.reachConsensusOnBlock(block1);
+        network.shutDown();
     });
 
     it("should change the leader on timeout (no commits for too long)", async () => {
@@ -153,5 +161,6 @@ describe("PBFT", () => {
         expect(node1.isLeader()).to.be.true;
         expect(node2.isLeader()).to.be.false;
         expect(node3.isLeader()).to.be.false;
+        network.shutDown();
     });
 });

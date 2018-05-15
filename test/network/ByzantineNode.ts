@@ -59,4 +59,10 @@ export class ByzantineNode implements Node {
     private onNewBlock(block: Block): void {
         this.latestBlock = { content: "FOO BAR", hash: "DUMMY", previousBlockHash: "NOTHING" };
     }
+
+    public dispose(): void {
+        if (this.pbft) {
+            this.pbft.dispose();
+        }
+    }
 }

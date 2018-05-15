@@ -48,4 +48,10 @@ export class LoyalNode implements Node {
     public onNewBlock(block: Block): void {
         this.blockLog.push(block);
     }
+
+    public dispose(): void {
+        if (this.pbft) {
+            this.pbft.dispose();
+        }
+    }
 }
