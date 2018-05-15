@@ -78,8 +78,8 @@ class NetworkBuilder {
     }
 
     private createNodes(): void {
-        const leaderPBFTStorage: PBFTStorage = new InMemoryPBFTStorage();
         const logger: Logger = this.logger ? this.logger : new SilentLogger();
+        const leaderPBFTStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
 
         const leader = this.isLeaderLoyal ? new LoyalNode(this.network, leaderPBFTStorage, logger, "LoyalLeader") : new ByzantineNode(this.network, leaderPBFTStorage, logger, "Byzantine-Leader");
         const nodes: Node[] = [leader];

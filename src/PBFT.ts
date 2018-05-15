@@ -110,7 +110,7 @@ export class PBFT {
                     senderPublicKey: payload.senderPublicKey,
                     view: payload.view
                 };
-                this.logPrepare(preparePayload);
+                this.pbftStorage.storePrepare(preparePayload.blockHash, preparePayload.senderPublicKey);
                 this.broadcastPrepare(payload.block);
                 if (this.isPrepared(payload.block.hash)) {
                     this.logger.log(`[${this.publicKey}], onPrePrepare, found enough votes, there's consensus. commtting block (${this.prePrepareBlock.hash})`);
@@ -126,7 +126,7 @@ export class PBFT {
 
     private onViewChange(payload: ViewChangePayload): void {
         this.logger.log(`[${this.publicKey}], onViewChange senderPublicKey:${payload.senderPublicKey}, newView:${payload.newView}`);
-        this.logViewChange(payload);
+        this.pbftStorage.storeViewChange(payload.newView, payload.senderPublicKey);
         if (this.isElected(payload.newView)) {
             const newViewPayload: NewViewPayload = { view: payload.newView };
             this.gossip.broadcast("new-view", newViewPayload);
@@ -135,7 +135,7 @@ export class PBFT {
 
     private onPrepare(payload: PreparePayload): void {
         this.logger.log(`[${this.publicKey}], onPrepare blockHash:${payload.blockHash}, senderPublicKey:${payload.senderPublicKey}, view:${payload.view}`);
-        this.logPrepare(payload);
+        this.pbftStorage.storePrepare(payload.blockHash, payload.senderPublicKey);
         if (this.isBlockMatchPrePrepareBlock(payload.blockHash)) {
             if (this.isPrepared(payload.blockHash)) {
                 this.logger.log(`[${this.publicKey}], onPrepare, found enough votes, there's consensus. commtting block (${this.prePrepareBlock.hash})`);
@@ -177,17 +177,5 @@ export class PBFT {
             this.committedBlocksHashs.push(blockHash);
             this.onNewBlock(block);
         }
-    }
-
-    private logViewChange(payload: ViewChangePayload): void {
-        const { newView, senderPublicKey } = payload;
-        this.pbftStorage.storeViewChange(newView, payload.senderPublicKey);
-        this.logger.log(`[${this.publicKey}], logViewChange, view change logged. [${this.pbftStorage.countOfViewChange(newView)}] votes so far.`);
-    }
-
-    private logPrepare(payload: PreparePayload): void {
-        const { blockHash, senderPublicKey } = payload;
-        this.pbftStorage.storePrepare(payload.blockHash, payload.senderPublicKey);
-        this.logger.log(`[${this.publicKey}], logPrepare, block logged. [${this.pbftStorage.countOfPrepared(blockHash)}] votes so far.`);
     }
 }

@@ -1,10 +1,11 @@
+import { Logger } from "../logger/Logger";
 import { PBFTStorage } from "./PBFTStorage";
 
 export class InMemoryPBFTStorage implements PBFTStorage {
     private prepareStorage: { [blockHash: string]: string[] } = {};
     private viewChangeStorage: { [view: number]: string[] } = {};
 
-    constructor() {
+    constructor(private logger: Logger) {
         this.prepareStorage = {};
         this.viewChangeStorage = {};
     }
@@ -17,6 +18,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
                 this.prepareStorage[blockHash].push(senderPublicKey);
             }
         }
+        this.logger.log(`storePrepare, block logged. [${this.countOfPrepared(blockHash)}] votes so far.`);
     }
 
     countOfPrepared(blockHash: string): number {
@@ -31,6 +33,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
                 this.viewChangeStorage[view].push(senderPublicKey);
             }
         }
+        this.logger.log(`storeViewChange, view change logged. [${this.countOfViewChange(view)}] votes so far.`);
     }
 
     countOfViewChange(view: number): number {

@@ -50,8 +50,8 @@ class NodeBuilder {
     }
 
     public build(): Node {
-        const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage();
         const logger: Logger = this.logger ? this.logger : new SilentLogger();
+        const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage(logger);
         if (this.isByzantine) {
             return new ByzantineNode(this.network, pbftStorage, logger, this.name || "Byzantine-Node");
         } else {
