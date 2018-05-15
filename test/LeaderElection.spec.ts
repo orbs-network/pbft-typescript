@@ -4,12 +4,12 @@ import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { Config } from "../src/Config";
 import { PBFT } from "../src/PBFT";
+import { InMemoryPBFTStorage } from "../src/storage/InMemoryPBFTStorage";
 import { theGenesisBlock } from "./builders/BlockBuilder";
 import { aNetwork } from "./builders/NetworkBuilder";
 import { InMemoryGossip } from "./gossip/InMemoryGossip";
+import { SilentLogger } from "./logger/SilentLogger";
 import { wait } from "./timeUtils";
-import { InMemoryPBFTStorage } from "../src/storage/InMemoryPBFTStorage";
-
 chai.use(sinonChai);
 
 describe("Leader Election", () => {
@@ -68,12 +68,14 @@ describe("Leader Election", () => {
         const node1 = network.nodes[1];
         const gossip = new InMemoryGossip();
         const pbftStorage = new InMemoryPBFTStorage();
+        const logger = new SilentLogger();
         const config: Config = {
             genesisBlockHash: theGenesisBlock.hash,
             publicKey: Math.random().toString(),
             network,
             gossip,
             pbftStorage,
+            logger,
             onNewBlock: () => { }
         };
 

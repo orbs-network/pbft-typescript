@@ -3,11 +3,12 @@ import { Config } from "../../src/Config";
 import { PBFT } from "../../src/PBFT";
 import { Gossip } from "../../src/gossip/Gossip";
 import { PrePreparePayload } from "../../src/gossip/Payload";
+import { Logger } from "../../src/logger/Logger";
 import { Network } from "../../src/network/Network";
 import { Node } from "../../src/network/Node";
+import { PBFTStorage } from "../../src/storage/PBFTStorage";
 import { theGenesisBlock } from "../builders/BlockBuilder";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
-import { PBFTStorage } from "../../src/storage/PBFTStorage";
 
 export class ByzantineNode implements Node {
     public gossip: Gossip;
@@ -15,7 +16,7 @@ export class ByzantineNode implements Node {
     private pbft: PBFT;
     private latestBlock: Block;
 
-    constructor(private network: Network, private pbftStorage: PBFTStorage, public publicKey: string) {
+    constructor(private network: Network, private pbftStorage: PBFTStorage, private logger: Logger, public publicKey: string) {
     }
 
     public init(): void {
@@ -25,6 +26,7 @@ export class ByzantineNode implements Node {
             publicKey: this.publicKey,
             network: this.network,
             gossip: this.gossip,
+            logger: this.logger,
             pbftStorage: this.pbftStorage,
             onNewBlock: block => this.onNewBlock(block)
         };

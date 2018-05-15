@@ -1,7 +1,10 @@
+import { Logger } from "../../src/logger/Logger";
 import { Network } from "../../src/network/Network";
 import { Node } from "../../src/network/Node";
 import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 import { PBFTStorage } from "../../src/storage/PBFTStorage";
+import { ConsoleLogger } from "../logger/ConsoleLogger";
+import { SilentLogger } from "../logger/SilentLogger";
 import { ByzantineNode } from "../network/ByzantineNode";
 import { LoyalNode } from "../network/LoyalNode";
 
@@ -10,6 +13,7 @@ class NodeBuilder {
     private network: Network;
     private name: string;
     private pbftStorage: PBFTStorage;
+    private logger: Logger;
 
     public and = this;
 
@@ -26,8 +30,18 @@ class NodeBuilder {
         return this;
     }
 
-    public storingOn(pbftStorage: PBFTStorage): void {
+    public storingOn(pbftStorage: PBFTStorage): this {
         this.pbftStorage = pbftStorage;
+        return this;
+    }
+
+    public thatLogsTo(logger: Logger): this {
+        this.logger = logger;
+        return this;
+    }
+
+    public get thatLogsToConsole(): this {
+        return this.thatLogsTo(new ConsoleLogger());
     }
 
     public get thatIsByzantine(): this {
@@ -36,11 +50,12 @@ class NodeBuilder {
     }
 
     public build(): Node {
-        const pbftStorage: PBFTStorage = this.pbftStorage !== undefined ? this.pbftStorage : new InMemoryPBFTStorage();
+        const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage();
+        const logger: Logger = this.logger ? this.logger : new SilentLogger();
         if (this.isByzantine) {
-            return new ByzantineNode(this.network, pbftStorage, this.name || "Byzantine-Node");
+            return new ByzantineNode(this.network, pbftStorage, logger, this.name || "Byzantine-Node");
         } else {
-            return new LoyalNode(this.network, pbftStorage, this.name || "Loyal-Node");
+            return new LoyalNode(this.network, pbftStorage, logger, this.name || "Loyal-Node");
         }
     }
 }

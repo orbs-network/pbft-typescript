@@ -2,6 +2,7 @@ import { Block } from "../../src/Block";
 import { Config } from "../../src/Config";
 import { PBFT } from "../../src/PBFT";
 import { Gossip } from "../../src/gossip/Gossip";
+import { Logger } from "../../src/logger/Logger";
 import { Network } from "../../src/network/Network";
 import { Node } from "../../src/network/Node";
 import { PBFTStorage } from "../../src/storage/PBFTStorage";
@@ -15,7 +16,7 @@ export class LoyalNode implements Node {
     public blockLog: Block[] = [];
     public config: Config;
 
-    constructor(private network: Network, private pbftStorage: PBFTStorage, public publicKey: string) {
+    constructor(private network: Network, private pbftStorage: PBFTStorage, private logger: Logger, public publicKey: string) {
     }
 
     public init(): void {
@@ -25,6 +26,7 @@ export class LoyalNode implements Node {
             publicKey: this.publicKey,
             network: this.network,
             gossip: this.gossip,
+            logger: this.logger,
             pbftStorage: this.pbftStorage,
             onNewBlock: block => this.onNewBlock(block)
         };
