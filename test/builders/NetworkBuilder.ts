@@ -1,5 +1,7 @@
 import { Network } from "../../src/Network/Network";
 import { Node } from "../../src/network/Node";
+import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
+import { PBFTStorage } from "../../src/storage/PBFTStorage";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
 import { ByzantineNode } from "../network/ByzantineNode";
 import { LoyalNode } from "../network/LoyalNode";
@@ -66,7 +68,8 @@ class NetworkBuilder {
     }
 
     private createNodes(): void {
-        const leader = this.isLeaderLoyal ? new LoyalNode(this.network, "LoyalLeader") : new ByzantineNode(this.network, "Byzantine-Leader");
+        const leaderPBFTStorage: PBFTStorage = new InMemoryPBFTStorage();
+        const leader = this.isLeaderLoyal ? new LoyalNode(this.network, leaderPBFTStorage, "LoyalLeader") : new ByzantineNode(this.network, leaderPBFTStorage, "Byzantine-Leader");
         const nodes: Node[] = [leader];
         for (let i = 0; i < this.countOfLoyalNodes; i++) {
             const node = aLoyalNode().thatIsPartOf(this.network).named(`Loyal-Node${i + 1}`).build();

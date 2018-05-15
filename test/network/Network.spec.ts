@@ -4,15 +4,15 @@ import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { Network } from "../../src/network/Network";
 import { aNetwork } from "../builders/NetworkBuilder";
-import { LoyalNode } from "./LoyalNode";
+import { aLoyalNode } from "../builders/NodeBuilder";
 
 chai.use(sinonChai);
 
 describe("Network", () => {
     it("should be able to register nodes", () => {
         const network = new Network();
-        const node1 = new LoyalNode(network, "node1");
-        const node2 = new LoyalNode(network, "node2");
+        const node1 = aLoyalNode().thatIsPartOf(network).build();
+        const node2 = aLoyalNode().thatIsPartOf(network).build();
         network.registerNode(node1);
         network.registerNode(node2);
         expect(network.nodes[0]).to.equal(node1);
@@ -21,8 +21,8 @@ describe("Network", () => {
 
     it("should be able to register several nodes in the same call", () => {
         const network = new Network();
-        const node1 = new LoyalNode(network, "node1");
-        const node2 = new LoyalNode(network, "node2");
+        const node1 = aLoyalNode().thatIsPartOf(network).build();
+        const node2 = aLoyalNode().thatIsPartOf(network).build();
         network.registerNodes([node1, node2]);
         expect(network.nodes[0]).to.equal(node1);
         expect(network.nodes[1]).to.equal(node2);
@@ -50,9 +50,9 @@ describe("Network", () => {
 
     it("should call init on all the nodes when calling initAllNodes", () => {
         const network = new Network();
-        const node1 = new LoyalNode(network, "node1");
-        const node2 = new LoyalNode(network, "node2");
-        const node3 = new LoyalNode(network, "node3");
+        const node1 = aLoyalNode().thatIsPartOf(network).build();
+        const node2 = aLoyalNode().thatIsPartOf(network).build();
+        const node3 = aLoyalNode().thatIsPartOf(network).build();
         const spy1 = sinon.spy(node1, "init");
         const spy2 = sinon.spy(node2, "init");
         const spy3 = sinon.spy(node3, "init");

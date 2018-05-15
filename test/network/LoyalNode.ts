@@ -4,6 +4,7 @@ import { PBFT } from "../../src/PBFT";
 import { Gossip } from "../../src/gossip/Gossip";
 import { Network } from "../../src/network/Network";
 import { Node } from "../../src/network/Node";
+import { PBFTStorage } from "../../src/storage/PBFTStorage";
 import { theGenesisBlock } from "../builders/BlockBuilder";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
 
@@ -14,7 +15,7 @@ export class LoyalNode implements Node {
     public blockLog: Block[] = [];
     public config: Config;
 
-    constructor(private network: Network, public publicKey: string) {
+    constructor(private network: Network, private pbftStorage: PBFTStorage, public publicKey: string) {
     }
 
     public init(): void {
@@ -24,6 +25,7 @@ export class LoyalNode implements Node {
             publicKey: this.publicKey,
             network: this.network,
             gossip: this.gossip,
+            pbftStorage: this.pbftStorage,
             onNewBlock: block => this.onNewBlock(block)
         };
         this.pbft = new PBFT(this.config);

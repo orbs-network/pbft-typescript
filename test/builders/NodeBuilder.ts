@@ -1,5 +1,7 @@
 import { Network } from "../../src/network/Network";
 import { Node } from "../../src/network/Node";
+import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
+import { PBFTStorage } from "../../src/storage/PBFTStorage";
 import { ByzantineNode } from "../network/ByzantineNode";
 import { LoyalNode } from "../network/LoyalNode";
 
@@ -7,6 +9,7 @@ class NodeBuilder {
     private isByzantine: boolean = false;
     private network: Network;
     private name: string;
+    private pbftStorage: PBFTStorage;
 
     public and = this;
 
@@ -23,16 +26,21 @@ class NodeBuilder {
         return this;
     }
 
+    public storingOn(pbftStorage: PBFTStorage): void {
+        this.pbftStorage = pbftStorage;
+    }
+
     public get thatIsByzantine(): this {
         this.isByzantine = true;
         return this;
     }
 
     public build(): Node {
+        const pbftStorage: PBFTStorage = this.pbftStorage !== undefined ? this.pbftStorage : new InMemoryPBFTStorage();
         if (this.isByzantine) {
-            return new ByzantineNode(this.network, this.name || "Byzantine-Node");
+            return new ByzantineNode(this.network, pbftStorage, this.name || "Byzantine-Node");
         } else {
-            return new LoyalNode(this.network, this.name || "Loyal-Node");
+            return new LoyalNode(this.network, pbftStorage, this.name || "Loyal-Node");
         }
     }
 }

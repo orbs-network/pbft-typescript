@@ -8,6 +8,7 @@ import { theGenesisBlock } from "./builders/BlockBuilder";
 import { aNetwork } from "./builders/NetworkBuilder";
 import { InMemoryGossip } from "./gossip/InMemoryGossip";
 import { wait } from "./timeUtils";
+import { InMemoryPBFTStorage } from "../src/storage/InMemoryPBFTStorage";
 
 chai.use(sinonChai);
 
@@ -66,11 +67,13 @@ describe("Leader Election", () => {
         const leader = network.nodes[0];
         const node1 = network.nodes[1];
         const gossip = new InMemoryGossip();
+        const pbftStorage = new InMemoryPBFTStorage();
         const config: Config = {
             genesisBlockHash: theGenesisBlock.hash,
             publicKey: Math.random().toString(),
-            network: network,
-            gossip: gossip,
+            network,
+            gossip,
+            pbftStorage,
             onNewBlock: () => { }
         };
 

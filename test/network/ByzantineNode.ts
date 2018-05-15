@@ -7,6 +7,7 @@ import { Network } from "../../src/network/Network";
 import { Node } from "../../src/network/Node";
 import { theGenesisBlock } from "../builders/BlockBuilder";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
+import { PBFTStorage } from "../../src/storage/PBFTStorage";
 
 export class ByzantineNode implements Node {
     public gossip: Gossip;
@@ -14,7 +15,7 @@ export class ByzantineNode implements Node {
     private pbft: PBFT;
     private latestBlock: Block;
 
-    constructor(private network: Network, public publicKey: string) {
+    constructor(private network: Network, private pbftStorage: PBFTStorage, public publicKey: string) {
     }
 
     public init(): void {
@@ -24,6 +25,7 @@ export class ByzantineNode implements Node {
             publicKey: this.publicKey,
             network: this.network,
             gossip: this.gossip,
+            pbftStorage: this.pbftStorage,
             onNewBlock: block => this.onNewBlock(block)
         };
         this.pbft = new PBFT(config);

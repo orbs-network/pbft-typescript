@@ -4,10 +4,9 @@ import { Gossip } from "./gossip/Gossip";
 import { NewViewPayload, PrePreparePayload, PreparePayload, ViewChangePayload } from "./gossip/Payload";
 import { logger } from "./logger/Logger";
 import { Network } from "./network/Network";
+import { PBFTStorage } from "./storage/PBFTStorage";
 
 export class PBFT {
-    private prepareLog: { [blockHash: string]: string[] } = {};
-    private viewChangeLog: { [view: number]: string[] } = {};
     private committedBlocksHashs: string[];
     private prePrepareBlock: Block;
     private leaderChangeTimer: NodeJS.Timer;
@@ -16,12 +15,14 @@ export class PBFT {
     private publicKey: string;
     private network: Network;
     private gossip: Gossip;
+    private pbftStorage: PBFTStorage;
     private onNewBlock: (block: Block) => void;
 
     constructor(private config: Config) {
         this.publicKey = config.publicKey;
         this.network = config.network;
         this.gossip = config.gossip;
+        this.pbftStorage = config.pbftStorage;
         this.onNewBlock = config.onNewBlock;
         logger.log(`PBFT instace initiating, publicKey:${this.publicKey}`);
 
@@ -151,12 +152,12 @@ export class PBFT {
         return this.prePrepareBlock !== undefined && this.prePrepareBlock.hash === blockHash;
     }
 
-    private isElected(newView: number): boolean {
-        return (this.viewChangeLog[newView] !== undefined && this.viewChangeLog[newView].length >= this.f * 2 + 1);
+    private isElected(view: number): boolean {
+        return this.pbftStorage.countOfViewChange(view) >= this.f * 2 + 1;
     }
 
     private isPrepared(blockHash: string): boolean {
-        return (this.prepareLog[blockHash] !== undefined && this.prepareLog[blockHash].length >= this.f * 2);
+        return this.pbftStorage.countOfPrepared(blockHash) >= this.f * 2;
     }
 
     private commitBlock(block: Block): void {
@@ -170,27 +171,13 @@ export class PBFT {
 
     private logViewChange(payload: ViewChangePayload): void {
         const { newView, senderPublicKey } = payload;
-
-        if (this.viewChangeLog[newView] === undefined) {
-            this.viewChangeLog[newView] = [senderPublicKey];
-        } else {
-            if (this.viewChangeLog[newView].indexOf(senderPublicKey) === -1) {
-                this.viewChangeLog[newView].push(senderPublicKey);
-            }
-        }
-        logger.log(`[${this.publicKey}], logViewChange, view change logged. [${this.viewChangeLog[newView]}] votes so far.`);
+        this.pbftStorage.storeViewChange(newView, payload.senderPublicKey);
+        logger.log(`[${this.publicKey}], logViewChange, view change logged. [${this.pbftStorage.countOfViewChange(newView)}] votes so far.`);
     }
 
     private logPrepare(payload: PreparePayload): void {
         const { blockHash, senderPublicKey } = payload;
-
-        if (this.prepareLog[blockHash] === undefined) {
-            this.prepareLog[blockHash] = [senderPublicKey];
-        } else {
-            if (this.prepareLog[blockHash].indexOf(senderPublicKey) === -1) {
-                this.prepareLog[blockHash].push(senderPublicKey);
-            }
-        }
-        logger.log(`[${this.publicKey}], logPrepare, block logged. [${this.prepareLog[blockHash]}] votes so far.`);
+        this.pbftStorage.storePrepare(payload.blockHash, payload.senderPublicKey);
+        logger.log(`[${this.publicKey}], logPrepare, block logged. [${this.pbftStorage.countOfPrepared(blockHash)}] votes so far.`);
     }
 }
