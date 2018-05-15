@@ -3,8 +3,8 @@
 import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
-import { aBlock, theGenesisBlock } from "./BlockBuilder";
-import { aNetwork } from "./NetworkBuilder";
+import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
+import { aNetwork } from "./builders/NetworkBuilder";
 import { consensusMatcher } from "./matchers/consensusMatcher";
 import { ByzantineNode } from "./network/ByzantineNode";
 import { LoyalNode } from "./network/LoyalNode";
@@ -15,6 +15,7 @@ chai.use(consensusMatcher);
 
 //////////////
 // Todos:
+// * Nodes should not broadcast prepare if it's not the same term (To avoid DDosig the system)
 // * Nodes can pretend to be other nodes => use sig
 // * timeouts should trigger leader election
 // * Should I use senderPublicKey or view?

@@ -4,7 +4,7 @@ import { PBFT } from "../../src/PBFT";
 import { Gossip } from "../../src/gossip/Gossip";
 import { Network } from "../../src/network/Network";
 import { Node } from "../../src/network/Node";
-import { theGenesisBlock } from "../BlockBuilder";
+import { theGenesisBlock } from "../builders/BlockBuilder";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
 
 export class LoyalNode implements Node {

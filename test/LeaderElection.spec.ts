@@ -4,8 +4,8 @@ import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { Config } from "../src/Config";
 import { PBFT } from "../src/PBFT";
-import { theGenesisBlock } from "./BlockBuilder";
-import { aNetwork } from "./NetworkBuilder";
+import { theGenesisBlock } from "./builders/BlockBuilder";
+import { aNetwork } from "./builders/NetworkBuilder";
 import { InMemoryGossip } from "./gossip/InMemoryGossip";
 import { wait } from "./timeUtils";
 

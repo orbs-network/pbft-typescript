@@ -3,7 +3,7 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { Network } from "../../src/network/Network";
-import { aNetwork } from "../NetworkBuilder";
+import { aNetwork } from "../builders/NetworkBuilder";
 import { LoyalNode } from "./LoyalNode";
 
 chai.use(sinonChai);

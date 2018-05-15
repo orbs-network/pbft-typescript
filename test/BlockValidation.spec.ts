@@ -2,8 +2,8 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
-import { aBlock, theGenesisBlock } from "./BlockBuilder";
-import { aNetwork } from "./NetworkBuilder";
+import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
+import { aNetwork } from "./builders/NetworkBuilder";
 import { LoyalNode } from "./network/LoyalNode";
 import { wait } from "./timeUtils";
 

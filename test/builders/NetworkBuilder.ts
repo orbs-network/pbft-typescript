@@ -1,8 +1,8 @@
-import { Network } from "../src/Network/Network";
-import { Node } from "../src/network/Node";
-import { InMemoryGossip } from "./gossip/InMemoryGossip";
-import { ByzantineNode } from "./network/ByzantineNode";
-import { LoyalNode } from "./network/LoyalNode";
+import { Network } from "../../src/Network/Network";
+import { Node } from "../../src/network/Node";
+import { InMemoryGossip } from "../gossip/InMemoryGossip";
+import { ByzantineNode } from "../network/ByzantineNode";
+import { LoyalNode } from "../network/LoyalNode";
 
 class NetworkBuilder {
     private network: Network;
