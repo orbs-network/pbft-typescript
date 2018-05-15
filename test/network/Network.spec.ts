@@ -29,19 +29,19 @@ describe("Network", () => {
     });
 
     it("should return the node index by its publicKey", () => {
-        const network = aNetwork().with().loyalLeader().with(2).loyalNodes().build();
+        const network = aNetwork().leadBy.a.loyalLeader.with(2).loyalNodes.build();
         const node2 = network.nodes[1];
         const result = network.getNodeIdxByPublicKey(node2.publicKey);
         expect(result).to.equal(1);
     });
 
     it("should return the total number of nodes when calling getNodesCount", () => {
-        const network = aNetwork().with().loyalLeader().with(2).loyalNodes().build();
+        const network = aNetwork().leadBy.a.loyalLeader.with(2).loyalNodes.build();
         expect(network.getNodesCount()).to.equal(3);
     });
 
     it("should return a node by index", () => {
-        const network = aNetwork().with().loyalLeader().with(2).loyalNodes().build();
+        const network = aNetwork().leadBy.a.loyalLeader.with(2).loyalNodes.build();
         const node2 = network.nodes[1];
         const result = network.getNodeByIdx(1);
 

@@ -19,26 +19,37 @@ class NetworkBuilder {
     }
 
     public with(count?: number) {
-        return {
-            loyalLeader: () => {
-                this.isLeaderLoyal = true;
-                return this;
-            },
-            byzantineLeader: () => {
-                this.isLeaderLoyal = false;
-                return this;
-            },
-            loyalNodes: () => {
-                this.countOfLoyalNodes = count;
-                return this;
-            },
-            byzantineNodes: () => {
-                this.countOfByzantineNodes = count;
-                return this;
+        const networkBuilder = this;
+        class With {
+            get loyalNodes() {
+                networkBuilder.countOfLoyalNodes = count;
+                return networkBuilder;
             }
-        };
+            get byzantineNodes() {
+                networkBuilder.countOfByzantineNodes = count;
+                return networkBuilder;
+            }
+        }
+        return new With();
     }
 
+    public get leadBy() {
+        const networkBuilder = this;
+        class A {
+            get loyalLeader() {
+                networkBuilder.isLeaderLoyal = true;
+                return networkBuilder;
+            }
+            get byzantineLeader() {
+                networkBuilder.isLeaderLoyal = false;
+                return networkBuilder;
+            }
+        }
+
+        return {
+            a: new A()
+        };
+    }
     public build(): Network {
         this.createNodes();
         return this.network;

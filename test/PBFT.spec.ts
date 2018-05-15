@@ -28,7 +28,7 @@ chai.use(consensusMatcher);
 
 describe("PBFT", () => {
     it("should start a network, append a block, and make sure that all nodes recived it", () => {
-        const network = aNetwork().with().loyalLeader().with(3).loyalNodes().build();
+        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
 
         const block = aBlock(theGenesisBlock, "block content");
         const leader = network.nodes[0];
@@ -38,7 +38,7 @@ describe("PBFT", () => {
     });
 
     it("should ignore suggested block if they are not from the leader", () => {
-        const network = aNetwork().with().loyalLeader().with(2).loyalNodes().with(1).byzantineNodes().build();
+        const network = aNetwork().leadBy.a.loyalLeader.with(2).loyalNodes.with(1).byzantineNodes.build();
 
         const block = aBlock(theGenesisBlock);
         const byzantineNode = network.nodes[3];
@@ -48,7 +48,7 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, in a network of 4 nodes, where the leader is byzantine and the other 3 nodes are loyal", () => {
-        const network = aNetwork().with().byzantineLeader().with(3).loyalNodes().build();
+        const network = aNetwork().leadBy.a.byzantineLeader.with(3).loyalNodes.build();
 
         const block1 = aBlock(theGenesisBlock, "block1");
         const block2 = aBlock(theGenesisBlock, "block2");
@@ -65,7 +65,7 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, in a network of 4 nodes, where one of the nodes is byzantine and the others are loyal", () => {
-        const network = aNetwork().with().loyalLeader().with(3).loyalNodes().with(1).byzantineNodes().build();
+        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.with(1).byzantineNodes.build();
 
         const block = aBlock(theGenesisBlock);
         const leader = network.nodes[0];
@@ -75,7 +75,7 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, even when a byzantine node is sending a bad block several times", () => {
-        const network = aNetwork().with().loyalLeader().with(2).loyalNodes().with(1).byzantineNodes().build();
+        const network = aNetwork().leadBy.a.loyalLeader.with(2).loyalNodes.with(1).byzantineNodes.build();
 
         const leader = network.nodes[0];
         const loyalNode = network.nodes[1];
@@ -93,7 +93,7 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, in a network of 7 nodes, where two of the nodes is byzantine and the others are loyal", () => {
-        const network = aNetwork().with().loyalLeader().with(4).loyalNodes().with(2).byzantineNodes().build();
+        const network = aNetwork().leadBy.a.loyalLeader.with(4).loyalNodes.with(2).byzantineNodes.build();
 
         const block = aBlock(theGenesisBlock);
         const leader = network.nodes[0];
@@ -103,7 +103,7 @@ describe("PBFT", () => {
     });
 
     it("should fire onNewBlock only once per block, even if there were more confirmations", () => {
-        const network = aNetwork().with().loyalLeader().with(3).loyalNodes().build();
+        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
 
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(block1);
@@ -116,7 +116,7 @@ describe("PBFT", () => {
     });
 
     it("should not accept a block if it is not pointing to the previous block", () => {
-        const network = aNetwork().with().loyalLeader().with(3).loyalNodes().build();
+        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
 
         const block1 = aBlock(theGenesisBlock);
         const notInOrderBlock = aBlock(aBlock(theGenesisBlock));
@@ -128,7 +128,7 @@ describe("PBFT", () => {
     });
 
     it("should change the leader on timeout (no commits for too long)", async () => {
-        const network = aNetwork().with().loyalLeader().with(3).loyalNodes().build();
+        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
 
         const leader = network.nodes[0];
         const node1 = network.nodes[1];

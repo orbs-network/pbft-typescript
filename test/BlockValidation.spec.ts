@@ -11,7 +11,7 @@ chai.use(sinonChai);
 
 describe("Block Validation", () => {
     it("should call validateBlock on onPrepare", async () => {
-        const network = aNetwork().with().loyalLeader().with(3).loyalNodes().build();
+        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
 
         const block = aBlock(theGenesisBlock);
         const leader = network.nodes[0];
@@ -26,7 +26,7 @@ describe("Block Validation", () => {
     });
 
     it("should not reach consensus if validateBlock returned false", async () => {
-        const network = aNetwork().with().loyalLeader().with(3).loyalNodes().build();
+        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
 
         const block = aBlock(theGenesisBlock);
         const leader = network.nodes[0];
