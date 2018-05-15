@@ -3,6 +3,7 @@ import { Node } from "../../src/network/Node";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
 import { ByzantineNode } from "../network/ByzantineNode";
 import { LoyalNode } from "../network/LoyalNode";
+import { aByzantineNode, aLoyalNode } from "./NodeBuilder";
 
 class NetworkBuilder {
     private network: Network;
@@ -11,6 +12,7 @@ class NetworkBuilder {
     private isLeaderLoyal: boolean = true;
 
     public and = this;
+    public a = this;
 
     constructor() {
         this.network = new Network();
@@ -56,12 +58,12 @@ class NetworkBuilder {
         const leader = this.isLeaderLoyal ? new LoyalNode(this.network, "LoyalLeader") : new ByzantineNode(this.network, "Byzantine-Leader");
         const nodes: Node[] = [leader];
         for (let i = 0; i < this.countOfLoyalNodes; i++) {
-            const node = new LoyalNode(this.network, `Loyal-Node${i + 1}`);
+            const node = aLoyalNode().thatIsPartOf(this.network).named(`Loyal-Node${i + 1}`).build();
             nodes.push(node);
         }
 
         for (let i = 0; i < this.countOfByzantineNodes; i++) {
-            const node = new ByzantineNode(this.network, `Byzantine-Node${i + 1}`);
+            const node = aByzantineNode().thatIsPartOf(this.network).named(`Byzantine-Node${i + 1}`).build();
             nodes.push(node);
         }
 
