@@ -8,7 +8,7 @@ import { SilentLogger } from "../logger/SilentLogger";
 import { ByzantineNode } from "../network/ByzantineNode";
 import { LoyalNode } from "../network/LoyalNode";
 
-class NodeBuilder {
+export class NodeBuilder {
     private isByzantine: boolean = false;
     private network: Network;
     private name: string;

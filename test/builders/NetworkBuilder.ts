@@ -1,14 +1,10 @@
 import { Network } from "../../src/Network/Network";
 import { Logger } from "../../src/logger/Logger";
 import { Node } from "../../src/network/Node";
-import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
-import { PBFTStorage } from "../../src/storage/PBFTStorage";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
 import { ConsoleLogger } from "../logger/ConsoleLogger";
 import { SilentLogger } from "../logger/SilentLogger";
-import { ByzantineNode } from "../network/ByzantineNode";
-import { LoyalNode } from "../network/LoyalNode";
-import { aByzantineNode, aLoyalNode } from "./NodeBuilder";
+import { NodeBuilder, aByzantineNode, aLoyalNode } from "./NodeBuilder";
 
 class NetworkBuilder {
     private network: Network;
@@ -16,6 +12,7 @@ class NetworkBuilder {
     private countOfByzantineNodes: number = 0;
     private isLeaderLoyal: boolean = true;
     private logger: Logger;
+    private customNodes: NodeBuilder[] = [];
 
     public and = this;
     public a = this;
@@ -42,6 +39,11 @@ class NetworkBuilder {
             }
         }
         return new With();
+    }
+
+    public withNode(nodeBuilder: NodeBuilder): this {
+        this.customNodes.push(nodeBuilder);
+        return this;
     }
 
     public get leadBy() {
@@ -79,9 +81,14 @@ class NetworkBuilder {
 
     private createNodes(): void {
         const logger: Logger = this.logger ? this.logger : new SilentLogger();
-        const leaderPBFTStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
 
-        const leader = this.isLeaderLoyal ? new LoyalNode(this.network, leaderPBFTStorage, logger, "LoyalLeader") : new ByzantineNode(this.network, leaderPBFTStorage, logger, "Byzantine-Leader");
+        let leader: Node;
+        if (this.isLeaderLoyal) {
+            leader = aLoyalNode().thatIsPartOf(this.network).named("Loyal-Leader").thatLogsTo(logger).build();
+        } else {
+            leader = aByzantineNode().thatIsPartOf(this.network).named("Byzantine-Leader").thatLogsTo(logger).build();
+        }
+
         const nodes: Node[] = [leader];
         for (let i = 0; i < this.countOfLoyalNodes; i++) {
             const node = aLoyalNode().thatIsPartOf(this.network).named(`Loyal-Node${i + 1}`).thatLogsTo(logger).build();
@@ -93,6 +100,8 @@ class NetworkBuilder {
             nodes.push(node);
         }
 
+        const customNodes = this.customNodes.map(nodeBuilder => nodeBuilder.thatIsPartOf(this.network).build());
+        nodes.push(...customNodes);
         this.network.registerNodes(nodes);
         this.network.initAllNodes();
         this.connectAllNodes(nodes);
