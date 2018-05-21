@@ -6,7 +6,7 @@ export const consensusMatcher = (chai: any, utils: any) => {
     chai.Assertion.addMethod("reachConsensusOnBlock", function (block: Block) {
         const network: Network = this._obj;
         const hasConsensus: boolean = network.nodes
-            .filter(node => node instanceof LoyalNode)
+            .filter(node => node.constructor === LoyalNode)
             .every(node => node.getLatestBlock() !== undefined && node.getLatestBlock().hash === block.hash);
 
         this.assert(
