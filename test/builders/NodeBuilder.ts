@@ -59,7 +59,7 @@ export class NodeBuilder {
 
     public build(): Node {
         const logger: Logger = this.logger ? this.logger : new SilentLogger();
-        const electionTrigger: ElectionTrigger = this.electionTrigger ? this.electionTrigger : new TimerBasedElectionTrigger(300);
+        const electionTrigger: ElectionTrigger = this.electionTrigger ? this.electionTrigger : new TimerBasedElectionTrigger(30);
         const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage(logger);
         if (this.isByzantine) {
             return new ByzantineNode(this.network, pbftStorage, logger, electionTrigger, this.name || "Byzantine-Node");

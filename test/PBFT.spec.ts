@@ -16,13 +16,14 @@ chai.use(consensusMatcher);
 //////////////
 // Todos:
 // * refactor the way config is constructed and passed to pbft
+// * timeout should be configurable
+// *
 // * Nodes should not broadcast prepare if it's not the same term (To avoid DDosig the system)
 // * Nodes can pretend to be other nodes => use sig
 // * Unsubscribe gossip on dispose of PBFT
 // * timeouts should trigger leader election
 // * Should I use senderPublicKey or view?
 // * Why do we need the term
-// * timeout should be configurable
 // * should call validate(block) on onPreprepare
 // * Do we have to sign the message type as well? is it a must?
 // * Currently the prepare logs are using the blockHash and senderPublicKey, convert it to v & r.
@@ -151,14 +152,14 @@ describe("PBFT", () => {
         expect(node3.isLeader()).to.be.false;
 
         // leader is not sending a block, we time out, and node1 should be the leader
+        await wait(40);
+
         let currentBlock = theGenesisBlock;
-        const stop = every(100, 400, () => {
+        await every(10, 2, () => {
             currentBlock = aBlock(currentBlock);
             node1.suggestBlock(currentBlock);
         });
 
-        await wait(700);
-        stop();
         expect(leader.isLeader()).to.be.false;
         expect(node1.isLeader()).to.be.true;
         expect(node2.isLeader()).to.be.false;
