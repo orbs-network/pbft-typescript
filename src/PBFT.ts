@@ -1,5 +1,6 @@
 import { Block } from "./Block";
 import { Config } from "./Config";
+import { ElectionTrigger } from "./electionTrigger/ElectionTrigger";
 import { Gossip } from "./gossip/Gossip";
 import { NewViewPayload, PrePreparePayload, PreparePayload, ViewChangePayload } from "./gossip/Payload";
 import { Logger } from "./logger/Logger";
@@ -9,7 +10,6 @@ import { PBFTStorage } from "./storage/PBFTStorage";
 export class PBFT {
     private committedBlocksHashs: string[];
     private prePrepareBlock: Block;
-    private leaderChangeTimer: NodeJS.Timer;
     private f: number;
     private currentView: number = 0;
     private publicKey: string;
@@ -17,6 +17,7 @@ export class PBFT {
     private gossip: Gossip;
     private pbftStorage: PBFTStorage;
     private logger: Logger;
+    private electionTrigger: ElectionTrigger;
     private onNewBlock: (block: Block) => void;
 
     constructor(private config: Config) {
@@ -26,9 +27,11 @@ export class PBFT {
         this.pbftStorage = config.pbftStorage;
         this.onNewBlock = config.onNewBlock;
         this.logger = config.logger;
+        this.electionTrigger = config.electionTrigger;
         this.logger.log(`PBFT instace initiating, publicKey:${this.publicKey}`);
 
-        this.resetLeaderChangeTimer();
+        this.electionTrigger.register(() => this.onLeaderChange());
+        this.electionTrigger.start();
         this.f = Math.floor((this.network.getNodesCount() - 1) / 3);
         this.committedBlocksHashs = [config.genesisBlockHash];
         this.gossip.subscribe("preprepare", payload => this.onPrePrepare(payload));
@@ -45,19 +48,8 @@ export class PBFT {
         return this.network.getNodeIdxByPublicKey(this.publicKey) === this.currentView;
     }
 
-    public stopLeaderChangeTimer(): any {
-        if (this.leaderChangeTimer) {
-            clearTimeout(this.leaderChangeTimer);
-        }
-    }
-
     public dispose(): any {
-        this.stopLeaderChangeTimer();
-    }
-
-    private resetLeaderChangeTimer(): void {
-        this.stopLeaderChangeTimer();
-        this.leaderChangeTimer = setTimeout(() => this.onLeaderChangeTimeout(), 300);
+        this.electionTrigger.stop();
     }
 
     private leaderPublicKey(): string {
@@ -65,12 +57,11 @@ export class PBFT {
         return this.network.getNodeByIdx(idx).publicKey;
     }
 
-    private onLeaderChangeTimeout(): void {
+    private onLeaderChange(): void {
         this.currentView++;
         this.logger.log(`[${this.publicKey}], onLeaderChangeTimeout, new view:${this.currentView}`);
         const payload: ViewChangePayload = { newView: this.currentView, senderPublicKey: this.publicKey };
         this.gossip.unicast(this.leaderPublicKey(), "view-change", payload);
-        this.resetLeaderChangeTimer();
     }
 
     private broadcastPrePrepare(block: Block): void {
@@ -171,7 +162,7 @@ export class PBFT {
     }
 
     private commitBlock(block: Block): void {
-        this.resetLeaderChangeTimer();
+        this.electionTrigger.snooze();
         const blockHash = block.hash;
         if (this.committedBlocksHashs.indexOf(blockHash) === -1) {
             this.committedBlocksHashs.push(blockHash);

@@ -1,6 +1,7 @@
 import { Block } from "../../src/Block";
 import { Config } from "../../src/Config";
 import { PBFT } from "../../src/PBFT";
+import { ElectionTrigger } from "../../src/electionTrigger/ElectionTrigger";
 import { Gossip } from "../../src/gossip/Gossip";
 import { PrePreparePayload } from "../../src/gossip/Payload";
 import { Logger } from "../../src/logger/Logger";
@@ -16,7 +17,12 @@ export class ByzantineNode implements Node {
     private pbft: PBFT;
     private latestBlock: Block;
 
-    constructor(private network: Network, private pbftStorage: PBFTStorage, private logger: Logger, public publicKey: string) {
+    constructor(
+        private network: Network,
+        private pbftStorage: PBFTStorage,
+        private logger: Logger,
+        private electionTrigger: ElectionTrigger,
+        public publicKey: string) {
     }
 
     public init(): void {
@@ -28,6 +34,7 @@ export class ByzantineNode implements Node {
             gossip: this.gossip,
             logger: this.logger,
             pbftStorage: this.pbftStorage,
+            electionTrigger: this.electionTrigger,
             onNewBlock: block => this.onNewBlock(block)
         };
         this.pbft = new PBFT(config);

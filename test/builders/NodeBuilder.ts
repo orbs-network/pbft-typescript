@@ -1,3 +1,5 @@
+import { ElectionTrigger } from "../../src/electionTrigger/ElectionTrigger";
+import { TimerBasedElectionTrigger } from "../../src/electionTrigger/TimerBasedElectionTrigger";
 import { Logger } from "../../src/logger/Logger";
 import { Network } from "../../src/network/Network";
 import { Node } from "../../src/network/Node";
@@ -51,11 +53,12 @@ export class NodeBuilder {
 
     public build(): Node {
         const logger: Logger = this.logger ? this.logger : new SilentLogger();
+        const electionTrigger: ElectionTrigger = new TimerBasedElectionTrigger(300);
         const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage(logger);
         if (this.isByzantine) {
-            return new ByzantineNode(this.network, pbftStorage, logger, this.name || "Byzantine-Node");
+            return new ByzantineNode(this.network, pbftStorage, logger, electionTrigger, this.name || "Byzantine-Node");
         } else {
-            return new LoyalNode(this.network, pbftStorage, logger, this.name || "Loyal-Node");
+            return new LoyalNode(this.network, pbftStorage, logger, electionTrigger, this.name || "Loyal-Node");
         }
     }
 }

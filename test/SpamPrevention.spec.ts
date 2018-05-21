@@ -11,7 +11,7 @@ import { ByzantineNode } from "./network/ByzantineNode";
 
 chai.use(sinonChai);
 
-describe.only("Spam Prevention", () => {
+describe("Spam Prevention", () => {
     it("should store the PREPARE on the same term only one time", () => {
         const logger = new ConsoleLogger();
         const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);

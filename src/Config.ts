@@ -1,4 +1,5 @@
 import { Block } from "./Block";
+import { ElectionTrigger } from "./electionTrigger/ElectionTrigger";
 import { Gossip } from "./gossip/Gossip";
 import { Logger } from "./logger/Logger";
 import { Network } from "./network/Network";
@@ -11,6 +12,7 @@ export interface Config {
     gossip: Gossip;
     pbftStorage: PBFTStorage;
     logger: Logger;
+    electionTrigger: ElectionTrigger;
     onNewBlock: (block: Block) => void;
     validateBlock?: (block: Block) => Promise<boolean>;
 }
