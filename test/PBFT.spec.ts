@@ -15,8 +15,8 @@ chai.use(consensusMatcher);
 
 //////////////
 // Todos:
+// * timeout should be configurable, currently values are hardcoded in the tests and builder
 // * refactor the way config is constructed and passed to pbft
-// * timeout should be configurable
 // *
 // * Nodes should not broadcast prepare if it's not the same term (To avoid DDosig the system)
 // * Nodes can pretend to be other nodes => use sig
@@ -151,9 +151,10 @@ describe("PBFT", () => {
         expect(node2.isLeader()).to.be.false;
         expect(node3.isLeader()).to.be.false;
 
-        // leader is not sending a block, we time out, and node1 should be the leader
+        // leader is not sending a block, we time out
         await wait(40);
 
+        // node1 is the new leader, all other nodes should accept blocks offered by him
         let currentBlock = theGenesisBlock;
         await every(10, 2, () => {
             currentBlock = aBlock(currentBlock);
@@ -164,6 +165,8 @@ describe("PBFT", () => {
         expect(node1.isLeader()).to.be.true;
         expect(node2.isLeader()).to.be.false;
         expect(node3.isLeader()).to.be.false;
+
+        expect(network).to.reachConsensusOnBlock(currentBlock);
         network.shutDown();
     });
 });
