@@ -15,8 +15,10 @@ chai.use(consensusMatcher);
 
 //////////////
 // Todos:
+// * refactor the way config is constructed and passed to pbft
 // * Nodes should not broadcast prepare if it's not the same term (To avoid DDosig the system)
 // * Nodes can pretend to be other nodes => use sig
+// * Unsubscribe gossip on dispose of PBFT
 // * timeouts should trigger leader election
 // * Should I use senderPublicKey or view?
 // * Why do we need the term

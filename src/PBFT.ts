@@ -21,6 +21,8 @@ export class PBFT {
 
     constructor(private config: Config) {
         config.logger.log(`PBFT instace initiating`);
+
+        // config
         this.network = config.network;
         this.gossip = config.gossip;
         this.pbftStorage = config.pbftStorage;
@@ -28,10 +30,17 @@ export class PBFT {
         this.logger = config.logger;
         this.electionTrigger = config.electionTrigger;
 
+        // leader election
         this.electionTrigger.register(() => this.onLeaderChange());
         this.electionTrigger.start();
+
+        // init f
         this.f = Math.floor((this.network.getNodesCount() - 1) / 3);
+
+        // init committedBlocks
         this.committedBlocksHashs = [config.genesisBlockHash];
+
+        // gossip subscriptions
         this.gossip.subscribe("preprepare", (senderId, payload) => this.onPrePrepare(senderId, payload));
         this.gossip.subscribe("prepare", (senderId, payload) => this.onPrepare(senderId, payload));
         this.gossip.subscribe("view-change", (senderId, payload) => this.onViewChange(senderId, payload));
@@ -52,7 +61,7 @@ export class PBFT {
 
     private onLeaderChange(): void {
         this.currentView++;
-        this.logger.log(`onLeaderChangeTimeout, new view:${this.currentView}`);
+        this.logger.log(`onLeaderChange, new view:${this.currentView}`);
         const payload: ViewChangePayload = { newView: this.currentView };
         this.gossip.unicast(this.leaderId(), "view-change", payload);
     }
@@ -105,15 +114,6 @@ export class PBFT {
         }
     }
 
-    private onViewChange(senderId: string, payload: ViewChangePayload): void {
-        this.logger.log(`onViewChange, newView:${payload.newView}`);
-        this.pbftStorage.storeViewChange(payload.newView, senderId);
-        if (this.isElected(payload.newView)) {
-            const newViewPayload: NewViewPayload = { view: payload.newView };
-            this.gossip.broadcast("new-view", newViewPayload);
-        }
-    }
-
     private onPrepare(senderId: string, payload: PreparePayload): void {
         this.logger.log(`onPrepare blockHash:${payload.blockHash}, view:${payload.view}`);
         this.pbftStorage.storePrepare(payload.blockHash, senderId);
@@ -124,6 +124,15 @@ export class PBFT {
             }
         } else {
             this.logger.log(`onPrepare, block rejected because it does not match the onPrePare block`);
+        }
+    }
+
+    private onViewChange(senderId: string, payload: ViewChangePayload): void {
+        this.logger.log(`onViewChange, newView:${payload.newView}`);
+        this.pbftStorage.storeViewChange(payload.newView, senderId);
+        if (this.isElected(payload.newView)) {
+            const newViewPayload: NewViewPayload = { view: payload.newView };
+            this.gossip.broadcast("new-view", newViewPayload);
         }
     }
 
