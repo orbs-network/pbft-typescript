@@ -16,6 +16,7 @@ export class NodeBuilder {
     private name: string;
     private pbftStorage: PBFTStorage;
     private logger: Logger;
+    private electionTrigger: ElectionTrigger;
 
     public and = this;
 
@@ -42,6 +43,11 @@ export class NodeBuilder {
         return this;
     }
 
+    public electingLeaderUsing(electionTrigger: ElectionTrigger): this {
+        this.electionTrigger = electionTrigger;
+        return this;
+    }
+
     public get thatLogsToConsole(): this {
         return this.thatLogsTo(new ConsoleLogger());
     }
@@ -53,7 +59,7 @@ export class NodeBuilder {
 
     public build(): Node {
         const logger: Logger = this.logger ? this.logger : new SilentLogger();
-        const electionTrigger: ElectionTrigger = new TimerBasedElectionTrigger(300);
+        const electionTrigger: ElectionTrigger = this.electionTrigger ? this.electionTrigger : new TimerBasedElectionTrigger(300);
         const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage(logger);
         if (this.isByzantine) {
             return new ByzantineNode(this.network, pbftStorage, logger, electionTrigger, this.name || "Byzantine-Node");

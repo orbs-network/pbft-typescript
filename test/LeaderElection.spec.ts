@@ -3,34 +3,44 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { aNetwork } from "./builders/NetworkBuilder";
+import { aLoyalNode } from "./builders/NodeBuilder";
+import { ElectionTriggerMock } from "./electionTrigger/ElectionTriggerMock";
 import { InMemoryGossip } from "./gossip/InMemoryGossip";
-import { wait } from "./timeUtils";
+
 chai.use(sinonChai);
 
 describe("Leader Election", () => {
-    it("should notify the next leader when the timeout expired", async () => {
-        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
-        const node1 = network.nodes[0];
+    it("should notify the next leader when the timeout expired", () => {
+        const electionTriggerMock = new ElectionTriggerMock();
+        const nodeBuilder = aLoyalNode().electingLeaderUsing(electionTriggerMock);
+        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.withNode(nodeBuilder).build();
+        const testedNode = network.nodes[4];
         const nextLeader = network.nodes[1];
 
-        const unicastSpy = sinon.spy(node1.gossip, "unicast");
-        await wait(500);
+        const unicastSpy = sinon.spy(testedNode.gossip, "unicast");
+        electionTriggerMock.trigger();
         expect(unicastSpy).to.have.been.calledWith(nextLeader.publicKey, "view-change", { newView: 1 });
         network.shutDown();
     });
 
-    it("should cycle to the first node when the current leader is the last node", async () => {
-        const network = aNetwork().leadBy.a.loyalLeader.with(1).loyalNodes.build();
+    it("should cycle to the first node when the current leader is the last node", () => {
+        const electionTriggerMock = new ElectionTriggerMock();
+        const nodeBuilder = aLoyalNode().named("Loyal-Node").electingLeaderUsing(electionTriggerMock);
+        const network = aNetwork().leadBy.a.loyalLeader.withNode(nodeBuilder).build();
         const node1 = network.nodes[0];
         const node2 = network.nodes[1];
 
         const unicastSpy = sinon.spy(node2.gossip, "unicast");
-        await wait(700);
+        electionTriggerMock.trigger();
+        expect(unicastSpy).to.have.been.calledWith(node2.publicKey, "view-change", { newView: 1 });
+        electionTriggerMock.trigger();
         expect(unicastSpy).to.have.been.calledWith(node1.publicKey, "view-change", { newView: 2 });
+        electionTriggerMock.trigger();
+        expect(unicastSpy).to.have.been.calledWith(node2.publicKey, "view-change", { newView: 3 });
         network.shutDown();
     });
 
-    it("should count 2f+1 view-change to be elected", async () => {
+    it("should count 2f+1 view-change to be elected", () => {
         const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
         const node0 = network.nodes[0];
         const node1 = network.nodes[1];
@@ -46,7 +56,7 @@ describe("Leader Election", () => {
         network.shutDown();
     });
 
-    it("should not fire new-view if count of view-change is less than 2f+1", async () => {
+    it("should not fire new-view if count of view-change is less than 2f+1", () => {
         const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
         const leader = network.nodes[0];
         const node1 = network.nodes[1];
@@ -61,7 +71,7 @@ describe("Leader Election", () => {
         network.shutDown();
     });
 
-    it("should not count view-change votes from the same node", async () => {
+    it("should not count view-change votes from the same node", () => {
         const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
         const leader = network.nodes[0];
         const node1 = network.nodes[1];

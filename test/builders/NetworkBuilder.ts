@@ -1,4 +1,6 @@
 import { Network } from "../../src/Network/Network";
+import { ElectionTrigger } from "../../src/electionTrigger/ElectionTrigger";
+import { TimerBasedElectionTrigger } from "../../src/electionTrigger/TimerBasedElectionTrigger";
 import { Logger } from "../../src/logger/Logger";
 import { Node } from "../../src/network/Node";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
@@ -84,19 +86,35 @@ class NetworkBuilder {
 
         let leader: Node;
         if (this.isLeaderLoyal) {
-            leader = aLoyalNode().thatIsPartOf(this.network).named("Loyal-Leader").thatLogsTo(logger).build();
+            leader = aLoyalNode()
+                .thatIsPartOf(this.network)
+                .named("Loyal-Leader")
+                .thatLogsTo(logger)
+                .build();
         } else {
-            leader = aByzantineNode().thatIsPartOf(this.network).named("Byzantine-Leader").thatLogsTo(logger).build();
+            leader = aByzantineNode()
+                .thatIsPartOf(this.network)
+                .named("Byzantine-Leader")
+                .thatLogsTo(logger)
+                .build();
         }
 
         const nodes: Node[] = [leader];
         for (let i = 0; i < this.countOfLoyalNodes; i++) {
-            const node = aLoyalNode().thatIsPartOf(this.network).named(`Loyal-Node${i + 1}`).thatLogsTo(logger).build();
+            const node = aLoyalNode()
+                .thatIsPartOf(this.network)
+                .named(`Loyal-Node${i + 1}`)
+                .thatLogsTo(logger)
+                .build();
             nodes.push(node);
         }
 
         for (let i = 0; i < this.countOfByzantineNodes; i++) {
-            const node = aByzantineNode().thatIsPartOf(this.network).named(`Byzantine-Node${i + 1}`).thatLogsTo(logger).build();
+            const node = aByzantineNode()
+                .thatIsPartOf(this.network)
+                .named(`Byzantine-Node${i + 1}`)
+                .thatLogsTo(logger)
+                .build();
             nodes.push(node);
         }
 
