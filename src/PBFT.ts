@@ -34,9 +34,9 @@ export class PBFT {
         this.electionTrigger.start();
         this.f = Math.floor((this.network.getNodesCount() - 1) / 3);
         this.committedBlocksHashs = [config.genesisBlockHash];
-        this.gossip.subscribe("preprepare", payload => this.onPrePrepare(payload));
-        this.gossip.subscribe("prepare", payload => this.onPrepare(payload));
-        this.gossip.subscribe("view-change", payload => this.onViewChange(payload));
+        this.gossip.subscribe("preprepare", (senderId, payload) => this.onPrePrepare(senderId, payload));
+        this.gossip.subscribe("prepare", (senderId, payload) => this.onPrepare(senderId, payload));
+        this.gossip.subscribe("view-change", (senderId, payload) => this.onViewChange(senderId, payload));
     }
 
     public suggestBlockAsLeader(block: Block): void {
@@ -60,7 +60,7 @@ export class PBFT {
     private onLeaderChange(): void {
         this.currentView++;
         this.logger.log(`[${this.publicKey}], onLeaderChangeTimeout, new view:${this.currentView}`);
-        const payload: ViewChangePayload = { newView: this.currentView, senderPublicKey: this.publicKey };
+        const payload: ViewChangePayload = { newView: this.currentView };
         this.gossip.unicast(this.leaderPublicKey(), "view-change", payload);
     }
 
@@ -68,7 +68,6 @@ export class PBFT {
         this.logger.log(`[${this.publicKey}], broadcastPrePrepare blockHash:${block.hash}, view:${this.currentView}`);
         const payload: PrePreparePayload = {
             block,
-            senderPublicKey: this.publicKey,
             view: this.currentView
         };
         this.gossip.broadcast("preprepare", payload);
@@ -78,16 +77,15 @@ export class PBFT {
         this.logger.log(`[${this.publicKey}], broadcastPrepare blockHash:${block.hash}, view:${this.currentView}`);
         const payload: PreparePayload = {
             blockHash: block.hash,
-            senderPublicKey: this.publicKey,
             view: this.currentView
         };
         this.gossip.broadcast("prepare", payload);
     }
 
-    private async onPrePrepare(payload: PrePreparePayload): Promise<void> {
-        this.logger.log(`[${this.publicKey}], onPrePrepare blockHash:${payload.block.hash}, senderPublicKey:${payload.senderPublicKey}, view:${payload.view}`);
+    private async onPrePrepare(senderId: string, payload: PrePreparePayload): Promise<void> {
+        this.logger.log(`[${this.publicKey}], onPrePrepare blockHash:${payload.block.hash}, view:${payload.view}`);
         if (this.isBlockPointingToPreviousBlock(payload.block)) {
-            if (this.isFromCurrentLeader(payload.senderPublicKey)) {
+            if (this.isFromCurrentLeader(senderId)) {
                 if (this.config.validateBlock !== undefined) {
                     const isValidBlock = await this.config.validateBlock(payload.block);
                     if (!isValidBlock) {
@@ -98,10 +96,9 @@ export class PBFT {
                 this.prePrepareBlock = payload.block;
                 const preparePayload: PreparePayload = {
                     blockHash: payload.block.hash,
-                    senderPublicKey: payload.senderPublicKey,
                     view: payload.view
                 };
-                this.pbftStorage.storePrepare(preparePayload.blockHash, preparePayload.senderPublicKey);
+                this.pbftStorage.storePrepare(preparePayload.blockHash, senderId);
                 this.broadcastPrepare(payload.block);
                 if (this.isPrepared(payload.block.hash)) {
                     this.logger.log(`[${this.publicKey}], onPrePrepare, found enough votes, there's consensus. commtting block (${this.prePrepareBlock.hash})`);
@@ -115,18 +112,18 @@ export class PBFT {
         }
     }
 
-    private onViewChange(payload: ViewChangePayload): void {
-        this.logger.log(`[${this.publicKey}], onViewChange senderPublicKey:${payload.senderPublicKey}, newView:${payload.newView}`);
-        this.pbftStorage.storeViewChange(payload.newView, payload.senderPublicKey);
+    private onViewChange(senderId: string, payload: ViewChangePayload): void {
+        this.logger.log(`[${this.publicKey}], onViewChange, newView:${payload.newView}`);
+        this.pbftStorage.storeViewChange(payload.newView, senderId);
         if (this.isElected(payload.newView)) {
             const newViewPayload: NewViewPayload = { view: payload.newView };
             this.gossip.broadcast("new-view", newViewPayload);
         }
     }
 
-    private onPrepare(payload: PreparePayload): void {
-        this.logger.log(`[${this.publicKey}], onPrepare blockHash:${payload.blockHash}, senderPublicKey:${payload.senderPublicKey}, view:${payload.view}`);
-        this.pbftStorage.storePrepare(payload.blockHash, payload.senderPublicKey);
+    private onPrepare(senderId: string, payload: PreparePayload): void {
+        this.logger.log(`[${this.publicKey}], onPrepare blockHash:${payload.blockHash}, view:${payload.view}`);
+        this.pbftStorage.storePrepare(payload.blockHash, senderId);
         if (this.isBlockMatchPrePrepareBlock(payload.blockHash)) {
             if (this.isPrepared(payload.blockHash)) {
                 this.logger.log(`[${this.publicKey}], onPrepare, found enough votes, there's consensus. commtting block (${this.prePrepareBlock.hash})`);

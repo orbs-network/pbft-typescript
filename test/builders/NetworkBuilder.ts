@@ -73,7 +73,7 @@ class NetworkBuilder {
         nodes.map(nodeA => {
             nodes.map(nodeB => {
                 if (nodeA !== nodeB) {
-                    (nodeA.gossip as InMemoryGossip).registerRemoteMessagesListener(nodeB.publicKey, nodeB.gossip as InMemoryGossip);
+                    (nodeA.gossip as InMemoryGossip).registerRemoteMessagesListener(nodeB.gossip as InMemoryGossip);
                 }
             });
         });

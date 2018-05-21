@@ -6,7 +6,8 @@ type SubscriptionsValue = {
 };
 
 interface RemoteListener {
-    onRemoteMessage(message: string, payload?: any): void;
+    id: string;
+    onRemoteMessage(senderId: string, message: string, payload?: any): void;
 }
 
 export class InMemoryGossip implements Gossip, RemoteListener {
@@ -14,14 +15,17 @@ export class InMemoryGossip implements Gossip, RemoteListener {
     private subscriptions: Map<number, SubscriptionsValue> = new Map();
     private remoteMessagesListeners: Map<string, RemoteListener> = new Map();
 
-    registerRemoteMessagesListener(id: string, listener: RemoteListener): void {
-        this.remoteMessagesListeners.set(id, listener);
+    constructor(public id: string) {
     }
 
-    onRemoteMessage(message: string, payload?: any): void {
+    registerRemoteMessagesListener(listener: RemoteListener): void {
+        this.remoteMessagesListeners.set(listener.id, listener);
+    }
+
+    onRemoteMessage(senderId: string, message: string, payload?: any): void {
         this.subscriptions.forEach(subscription => {
             if (subscription.message === message) {
-                subscription.cb(payload);
+                subscription.cb(senderId, payload);
             }
         });
     }
@@ -37,13 +41,13 @@ export class InMemoryGossip implements Gossip, RemoteListener {
     }
 
     broadcast(message: string, payload?: any): void {
-        this.remoteMessagesListeners.forEach(listener => listener.onRemoteMessage(message, payload));
+        this.remoteMessagesListeners.forEach(listener => listener.onRemoteMessage(this.id, message, payload));
     }
 
     unicast(nodeId: string, message: string, payload?: any): void {
         this.remoteMessagesListeners.forEach((listener, key) => {
             if (key === nodeId) {
-                listener.onRemoteMessage(message, payload);
+                listener.onRemoteMessage(this.id, message, payload);
             }
         });
     }

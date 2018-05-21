@@ -1,4 +1,4 @@
-export type GossipCallback = (payload: any) => void;
+export type GossipCallback = (senderId: string, payload: any) => void;
 
 export interface Gossip {
     subscribe(message: string, cb: GossipCallback): number;

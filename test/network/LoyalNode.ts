@@ -26,7 +26,7 @@ export class LoyalNode implements Node {
     }
 
     public init(): void {
-        this.gossip = new InMemoryGossip();
+        this.gossip = new InMemoryGossip(this.publicKey);
         this.config = {
             genesisBlockHash: theGenesisBlock.hash,
             publicKey: this.publicKey,
