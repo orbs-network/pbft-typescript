@@ -29,7 +29,6 @@ export class LoyalNode implements Node {
         this.gossip = new InMemoryGossip(this.publicKey);
         this.config = {
             genesisBlockHash: theGenesisBlock.hash,
-            publicKey: this.publicKey,
             network: this.network,
             gossip: this.gossip,
             logger: this.logger,
@@ -49,7 +48,7 @@ export class LoyalNode implements Node {
     }
 
     public isLeader(): boolean {
-        return this.pbft.isLeader();
+        return this.pbft.leaderId() === this.publicKey;
     }
 
     public onNewBlock(block: Block): void {
