@@ -55,10 +55,10 @@ describe("Network", () => {
 
     it("should return a node by a given seed (Cycling the nodes using modulo)", () => {
         const network = aNetwork().leadBy.a.loyalLeader.with(2).loyalNodes.build();
-        expect(network.getNodeBySeed(0)).to.equal(network.nodes[0]);
-        expect(network.getNodeBySeed(1)).to.equal(network.nodes[1]);
-        expect(network.getNodeBySeed(2)).to.equal(network.nodes[2]);
-        expect(network.getNodeBySeed(3)).to.equal(network.nodes[0]);
+        expect(network.getNodeIdBySeed(0)).to.equal(network.nodes[0].publicKey);
+        expect(network.getNodeIdBySeed(1)).to.equal(network.nodes[1].publicKey);
+        expect(network.getNodeIdBySeed(2)).to.equal(network.nodes[2].publicKey);
+        expect(network.getNodeIdBySeed(3)).to.equal(network.nodes[0].publicKey);
         network.shutDown();
     });
 

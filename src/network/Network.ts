@@ -15,9 +15,9 @@ export class Network {
         return this.nodes.findIndex(node => node.publicKey === publicKey);
     }
 
-    getNodeBySeed(seed: number): Node {
+    getNodeIdBySeed(seed: number): string {
         const index = seed % this.getNodesCount();
-        return this.nodes[index];
+        return this.nodes[index].publicKey;
     }
 
     getNodeByIdx(index: number): Node {

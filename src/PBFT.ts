@@ -56,7 +56,7 @@ export class PBFT {
     }
 
     public leaderId(): string {
-        return this.network.getNodeBySeed(this.currentView).publicKey;
+        return this.network.getNodeIdBySeed(this.currentView);
     }
 
     private onLeaderChange(): void {
