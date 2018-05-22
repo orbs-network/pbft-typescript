@@ -22,11 +22,11 @@ export class LoyalNode implements Node {
         private pbftStorage: PBFTStorage,
         private logger: Logger,
         private electionTrigger: ElectionTrigger,
-        public publicKey: string) {
+        public id: string) {
     }
 
     public init(): void {
-        this.gossip = new InMemoryGossip(this.publicKey);
+        this.gossip = new InMemoryGossip(this.id);
         this.config = {
             genesisBlockHash: theGenesisBlock.hash,
             network: this.network,
@@ -48,7 +48,7 @@ export class LoyalNode implements Node {
     }
 
     public isLeader(): boolean {
-        return this.pbft.leaderId() === this.publicKey;
+        return this.pbft.leaderId() === this.id;
     }
 
     public onNewBlock(block: Block): void {

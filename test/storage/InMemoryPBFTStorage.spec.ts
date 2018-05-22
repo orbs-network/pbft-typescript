@@ -17,20 +17,20 @@ describe("PBFT In Memory Storage", () => {
     it("stores a prepare on the store", () => {
         const storage = new InMemoryPBFTStorage(logger);
         const blockHash = Math.random().toString();
-        const sender1PublicKey = Math.random().toString();
-        const sender2PublicKey = Math.random().toString();
-        storage.storePrepare(blockHash, sender1PublicKey);
-        storage.storePrepare(blockHash, sender2PublicKey);
+        const sender1Id = Math.random().toString();
+        const sender2Id = Math.random().toString();
+        storage.storePrepare(blockHash, sender1Id);
+        storage.storePrepare(blockHash, sender2Id);
         const actual = storage.countOfPrepared(blockHash);
         expect(actual).to.equal(2);
     });
 
     it("stores a view-change on the store", () => {
         const storage = new InMemoryPBFTStorage(logger);
-        const sender1PublicKey = Math.random().toString();
-        const sender2PublicKey = Math.random().toString();
-        storage.storeViewChange(1, sender1PublicKey);
-        storage.storeViewChange(1, sender2PublicKey);
+        const sender1Id = Math.random().toString();
+        const sender2Id = Math.random().toString();
+        storage.storeViewChange(1, sender1Id);
+        storage.storeViewChange(1, sender2Id);
         const actual = storage.countOfViewChange(1);
         expect(actual).to.equal(2);
     });

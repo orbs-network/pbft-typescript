@@ -30,10 +30,10 @@ describe("Network", () => {
         network.shutDown();
     });
 
-    it("should return the node index by its publicKey", () => {
+    it("should return the node index by its id", () => {
         const network = aNetwork().leadBy.a.loyalLeader.with(2).loyalNodes.build();
         const node2 = network.nodes[1];
-        const result = network.getNodeIdxByPublicKey(node2.publicKey);
+        const result = network.getNodeIndexById(node2.id);
         expect(result).to.equal(1);
         network.shutDown();
     });
@@ -55,10 +55,10 @@ describe("Network", () => {
 
     it("should return a node by a given seed (Cycling the nodes using modulo)", () => {
         const network = aNetwork().leadBy.a.loyalLeader.with(2).loyalNodes.build();
-        expect(network.getNodeIdBySeed(0)).to.equal(network.nodes[0].publicKey);
-        expect(network.getNodeIdBySeed(1)).to.equal(network.nodes[1].publicKey);
-        expect(network.getNodeIdBySeed(2)).to.equal(network.nodes[2].publicKey);
-        expect(network.getNodeIdBySeed(3)).to.equal(network.nodes[0].publicKey);
+        expect(network.getNodeIdBySeed(0)).to.equal(network.nodes[0].id);
+        expect(network.getNodeIdBySeed(1)).to.equal(network.nodes[1].id);
+        expect(network.getNodeIdBySeed(2)).to.equal(network.nodes[2].id);
+        expect(network.getNodeIdBySeed(3)).to.equal(network.nodes[0].id);
         network.shutDown();
     });
 
@@ -76,7 +76,7 @@ describe("Network", () => {
         network.registerNode(node3);
         network.initAllNodes();
 
-        const result = network.getNodeIdxByPublicKey("node2");
+        const result = network.getNodeIndexById("node2");
         expect(spy1).to.have.been.calledOnce;
         expect(spy2).to.have.been.calledOnce;
         expect(spy3).to.have.been.calledOnce;

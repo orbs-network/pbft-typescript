@@ -2,7 +2,7 @@ import { Block } from "../../src/Block";
 import { Gossip } from "../../src/gossip/Gossip";
 
 export interface Node {
-    publicKey: string;
+    id: string;
     gossip: Gossip;
     isLeader(): boolean;
     init(): void;

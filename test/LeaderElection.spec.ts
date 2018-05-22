@@ -19,7 +19,7 @@ describe("Leader Election", () => {
 
         const unicastSpy = sinon.spy(testedNode.gossip, "unicast");
         electionTriggerMock.trigger();
-        expect(unicastSpy).to.have.been.calledWith(nextLeader.publicKey, "view-change", { newView: 1 });
+        expect(unicastSpy).to.have.been.calledWith(nextLeader.id, "view-change", { newView: 1 });
         network.shutDown();
     });
 
@@ -32,11 +32,11 @@ describe("Leader Election", () => {
 
         const unicastSpy = sinon.spy(node2.gossip, "unicast");
         electionTriggerMock.trigger();
-        expect(unicastSpy).to.have.been.calledWith(node2.publicKey, "view-change", { newView: 1 });
+        expect(unicastSpy).to.have.been.calledWith(node2.id, "view-change", { newView: 1 });
         electionTriggerMock.trigger();
-        expect(unicastSpy).to.have.been.calledWith(node1.publicKey, "view-change", { newView: 2 });
+        expect(unicastSpy).to.have.been.calledWith(node1.id, "view-change", { newView: 2 });
         electionTriggerMock.trigger();
-        expect(unicastSpy).to.have.been.calledWith(node2.publicKey, "view-change", { newView: 3 });
+        expect(unicastSpy).to.have.been.calledWith(node2.id, "view-change", { newView: 3 });
         network.shutDown();
     });
 
@@ -49,9 +49,9 @@ describe("Leader Election", () => {
 
         const gossip = node1.gossip as InMemoryGossip;
         const broadcastSpy = sinon.spy(gossip, "broadcast");
-        gossip.onRemoteMessage(node0.publicKey, "view-change", { newView: 1 });
-        gossip.onRemoteMessage(node2.publicKey, "view-change", { newView: 1 });
-        gossip.onRemoteMessage(node3.publicKey, "view-change", { newView: 1 });
+        gossip.onRemoteMessage(node0.id, "view-change", { newView: 1 });
+        gossip.onRemoteMessage(node2.id, "view-change", { newView: 1 });
+        gossip.onRemoteMessage(node3.id, "view-change", { newView: 1 });
         expect(broadcastSpy).to.have.been.calledWith("new-view", { view: 1 });
         network.shutDown();
     });
@@ -65,8 +65,8 @@ describe("Leader Election", () => {
 
         const gossip = node1.gossip as InMemoryGossip;
         const broadcastSpy = sinon.spy(gossip, "broadcast");
-        gossip.onRemoteMessage("view-change", leader.publicKey, { newView: 1 });
-        gossip.onRemoteMessage("view-change", node2.publicKey, { newView: 1 });
+        gossip.onRemoteMessage("view-change", leader.id, { newView: 1 });
+        gossip.onRemoteMessage("view-change", node2.id, { newView: 1 });
         expect(broadcastSpy).to.not.have.been.called;
         network.shutDown();
     });
@@ -78,9 +78,9 @@ describe("Leader Election", () => {
 
         const gossip = node1.gossip as InMemoryGossip;
         const broadcastSpy = sinon.spy(gossip, "broadcast");
-        gossip.onRemoteMessage("view-change", leader.publicKey, { newView: 1 });
-        gossip.onRemoteMessage("view-change", leader.publicKey, { newView: 1 });
-        gossip.onRemoteMessage("view-change", leader.publicKey, { newView: 1 });
+        gossip.onRemoteMessage("view-change", leader.id, { newView: 1 });
+        gossip.onRemoteMessage("view-change", leader.id, { newView: 1 });
+        gossip.onRemoteMessage("view-change", leader.id, { newView: 1 });
         expect(broadcastSpy).to.not.have.been.called;
         network.shutDown();
     });

@@ -11,7 +11,7 @@ export class ByzantineNode extends LoyalNode {
                 block,
                 view: 0
             };
-            this.gossip.unicast(node.publicKey, "preprepare", payload);
+            this.gossip.unicast(node.id, "preprepare", payload);
         });
     }
 

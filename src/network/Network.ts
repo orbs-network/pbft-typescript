@@ -11,13 +11,13 @@ export class Network {
         nodes.forEach(node => this.registerNode(node));
     }
 
-    getNodeIdxByPublicKey(publicKey: string): number {
-        return this.nodes.findIndex(node => node.publicKey === publicKey);
+    getNodeIndexById(nodeId: string): number {
+        return this.nodes.findIndex(node => node.id === nodeId);
     }
 
     getNodeIdBySeed(seed: number): string {
         const index = seed % this.getNodesCount();
-        return this.nodes[index].publicKey;
+        return this.nodes[index].id;
     }
 
     getNodeByIdx(index: number): Node {

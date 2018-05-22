@@ -10,12 +10,12 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         this.viewChangeStorage = {};
     }
 
-    storePrepare(blockHash: string, senderPublicKey: string): void {
+    storePrepare(blockHash: string, senderId: string): void {
         if (this.prepareStorage[blockHash] === undefined) {
-            this.prepareStorage[blockHash] = [senderPublicKey];
+            this.prepareStorage[blockHash] = [senderId];
         } else {
-            if (this.prepareStorage[blockHash].indexOf(senderPublicKey) === -1) {
-                this.prepareStorage[blockHash].push(senderPublicKey);
+            if (this.prepareStorage[blockHash].indexOf(senderId) === -1) {
+                this.prepareStorage[blockHash].push(senderId);
             }
         }
         this.logger.log(`storePrepare, block logged. [${this.countOfPrepared(blockHash)}] votes so far.`);
@@ -25,12 +25,12 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         return this.prepareStorage[blockHash] !== undefined ? this.prepareStorage[blockHash].length : 0;
     }
 
-    storeViewChange(view: number, senderPublicKey: string): void {
+    storeViewChange(view: number, senderId: string): void {
         if (this.viewChangeStorage[view] === undefined) {
-            this.viewChangeStorage[view] = [senderPublicKey];
+            this.viewChangeStorage[view] = [senderId];
         } else {
-            if (this.viewChangeStorage[view].indexOf(senderPublicKey) === -1) {
-                this.viewChangeStorage[view].push(senderPublicKey);
+            if (this.viewChangeStorage[view].indexOf(senderId) === -1) {
+                this.viewChangeStorage[view].push(senderId);
             }
         }
         this.logger.log(`storeViewChange, view change logged. [${this.countOfViewChange(view)}] votes so far.`);

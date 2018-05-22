@@ -22,11 +22,11 @@ chai.use(consensusMatcher);
 // * Nodes can pretend to be other nodes => use sig
 // * Unsubscribe gossip on dispose of PBFT
 // * timeouts should trigger leader election
-// * Should I use senderPublicKey or view?
+// * Should I use nodeId or view?
 // * Why do we need the term
 // * should call validate(block) on onPreprepare
 // * Do we have to sign the message type as well? is it a must?
-// * Currently the prepare logs are using the blockHash and senderPublicKey, convert it to v & r.
+// * Currently the prepare logs are using the blockHash and nodeId, convert it to v & r.
 //////////////
 
 describe("PBFT", () => {
