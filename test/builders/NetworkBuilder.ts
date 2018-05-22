@@ -1,15 +1,13 @@
-import { Network } from "../../src/Network/Network";
-import { ElectionTrigger } from "../../src/electionTrigger/ElectionTrigger";
-import { TimerBasedElectionTrigger } from "../../src/electionTrigger/TimerBasedElectionTrigger";
 import { Logger } from "../../src/logger/Logger";
-import { Node } from "../../src/network/Node";
+import { Node } from "../network/Node";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
 import { ConsoleLogger } from "../logger/ConsoleLogger";
 import { SilentLogger } from "../logger/SilentLogger";
+import { InMemoryNetwork } from "../network/InMemoryNetwork";
 import { NodeBuilder, aByzantineNode, aLoyalNode } from "./NodeBuilder";
 
 class NetworkBuilder {
-    private network: Network;
+    private network: InMemoryNetwork;
     private countOfLoyalNodes: number = 0;
     private countOfByzantineNodes: number = 0;
     private isLeaderLoyal: boolean = true;
@@ -65,8 +63,8 @@ class NetworkBuilder {
             a: new A()
         };
     }
-    public build(): Network {
-        this.network = new Network();
+    public build(): InMemoryNetwork {
+        this.network = new InMemoryNetwork();
         this.createNodes();
         return this.network;
     }

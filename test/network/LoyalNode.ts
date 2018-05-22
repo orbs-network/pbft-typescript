@@ -4,8 +4,8 @@ import { PBFT } from "../../src/PBFT";
 import { ElectionTrigger } from "../../src/electionTrigger/ElectionTrigger";
 import { Gossip } from "../../src/gossip/Gossip";
 import { Logger } from "../../src/logger/Logger";
-import { Network } from "../../src/network/Network";
-import { Node } from "../../src/network/Node";
+import { InMemoryNetwork } from "./InMemoryNetwork";
+import { Node } from "./Node";
 import { PBFTStorage } from "../../src/storage/PBFTStorage";
 import { theGenesisBlock } from "../builders/BlockBuilder";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
@@ -18,7 +18,7 @@ export class LoyalNode implements Node {
     public config: Config;
 
     constructor(
-        private network: Network,
+        private network: InMemoryNetwork,
         private pbftStorage: PBFTStorage,
         private logger: Logger,
         private electionTrigger: ElectionTrigger,

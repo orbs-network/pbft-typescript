@@ -2,7 +2,7 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
-import { Network } from "../../src/network/Network";
+import { InMemoryNetwork } from "./InMemoryNetwork";
 import { aNetwork } from "../builders/NetworkBuilder";
 import { aLoyalNode } from "../builders/NodeBuilder";
 
@@ -10,7 +10,7 @@ chai.use(sinonChai);
 
 describe("Network", () => {
     it("should be able to register nodes", () => {
-        const network = new Network();
+        const network = new InMemoryNetwork();
         const node1 = aLoyalNode().thatIsPartOf(network).build();
         const node2 = aLoyalNode().thatIsPartOf(network).build();
         network.registerNode(node1);
@@ -21,7 +21,7 @@ describe("Network", () => {
     });
 
     it("should be able to register several nodes in the same call", () => {
-        const network = new Network();
+        const network = new InMemoryNetwork();
         const node1 = aLoyalNode().thatIsPartOf(network).build();
         const node2 = aLoyalNode().thatIsPartOf(network).build();
         network.registerNodes([node1, node2]);
@@ -63,7 +63,7 @@ describe("Network", () => {
     });
 
     it("should call init on all the nodes when calling initAllNodes", () => {
-        const network = new Network();
+        const network = new InMemoryNetwork();
         const node1 = aLoyalNode().thatIsPartOf(network).build();
         const node2 = aLoyalNode().thatIsPartOf(network).build();
         const node3 = aLoyalNode().thatIsPartOf(network).build();

@@ -1,6 +1,6 @@
 import { Block } from "../../src/Block";
 import { PrePreparePayload } from "../../src/gossip/Payload";
-import { Node } from "../../src/network/Node";
+import { Node } from "./Node";
 import { LoyalNode } from "./LoyalNode";
 
 export class ByzantineNode extends LoyalNode {

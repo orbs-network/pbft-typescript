@@ -1,8 +1,8 @@
 import { ElectionTrigger } from "../../src/electionTrigger/ElectionTrigger";
 import { TimerBasedElectionTrigger } from "../../src/electionTrigger/TimerBasedElectionTrigger";
 import { Logger } from "../../src/logger/Logger";
-import { Network } from "../../src/network/Network";
-import { Node } from "../../src/network/Node";
+import { InMemoryNetwork } from "../network/InMemoryNetwork";
+import { Node } from "../network/Node";
 import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 import { PBFTStorage } from "../../src/storage/PBFTStorage";
 import { ConsoleLogger } from "../logger/ConsoleLogger";
@@ -12,7 +12,7 @@ import { LoyalNode } from "../network/LoyalNode";
 
 export class NodeBuilder {
     private isByzantine: boolean = false;
-    private network: Network;
+    private network: InMemoryNetwork;
     private name: string;
     private pbftStorage: PBFTStorage;
     private logger: Logger;
@@ -23,7 +23,7 @@ export class NodeBuilder {
     constructor() {
     }
 
-    public thatIsPartOf(network: Network): this {
+    public thatIsPartOf(network: InMemoryNetwork): this {
         this.network = network;
         return this;
     }
