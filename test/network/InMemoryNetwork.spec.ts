@@ -1,10 +1,9 @@
 import * as chai from "chai";
 import { expect } from "chai";
-import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
-import { InMemoryNetwork } from "./InMemoryNetwork";
 import { aNetwork } from "../builders/NetworkBuilder";
 import { aLoyalNode } from "../builders/NodeBuilder";
+import { InMemoryNetwork } from "./InMemoryNetwork";
 
 chai.use(sinonChai);
 
@@ -59,27 +58,6 @@ describe("Network", () => {
         expect(network.getNodeIdBySeed(1)).to.equal(network.nodes[1].id);
         expect(network.getNodeIdBySeed(2)).to.equal(network.nodes[2].id);
         expect(network.getNodeIdBySeed(3)).to.equal(network.nodes[0].id);
-        network.shutDown();
-    });
-
-    it("should call init on all the nodes when calling initAllNodes", () => {
-        const network = new InMemoryNetwork();
-        const node1 = aLoyalNode().thatIsPartOf(network).build();
-        const node2 = aLoyalNode().thatIsPartOf(network).build();
-        const node3 = aLoyalNode().thatIsPartOf(network).build();
-        const spy1 = sinon.spy(node1, "init");
-        const spy2 = sinon.spy(node2, "init");
-        const spy3 = sinon.spy(node3, "init");
-
-        network.registerNode(node1);
-        network.registerNode(node2);
-        network.registerNode(node3);
-        network.initAllNodes();
-
-        const result = network.getNodeIndexById("node2");
-        expect(spy1).to.have.been.calledOnce;
-        expect(spy2).to.have.been.calledOnce;
-        expect(spy3).to.have.been.calledOnce;
         network.shutDown();
     });
 

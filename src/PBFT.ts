@@ -11,7 +11,6 @@ import { PBFTStorage } from "./storage/PBFTStorage";
 export class PBFT {
     private committedBlocksHashs: string[];
     private prePrepareBlock: Block;
-    private f: number;
     private currentView: number = 0;
     private network: Network;
     private gossip: Gossip;
@@ -37,9 +36,6 @@ export class PBFT {
         this.electionTrigger.register(() => this.onLeaderChange());
         this.electionTrigger.start();
 
-        // init f
-        this.f = Math.floor((this.network.getNodesCount() - 1) / 3);
-
         // init committedBlocks
         this.committedBlocksHashs = [config.genesisBlockHash];
 
@@ -60,6 +56,10 @@ export class PBFT {
 
     public leaderId(): string {
         return this.network.getNodeIdBySeed(this.currentView);
+    }
+
+    private getF(): number {
+        return Math.floor((this.network.getNodesCount() - 1) / 3);
     }
 
     private onLeaderChange(): void {
@@ -154,11 +154,11 @@ export class PBFT {
     }
 
     private isElected(view: number): boolean {
-        return this.pbftStorage.countOfViewChange(view) >= this.f * 2 + 1;
+        return this.pbftStorage.countOfViewChange(view) >= this.getF() * 2 + 1;
     }
 
     private isPrepared(blockHash: string): boolean {
-        return this.pbftStorage.countOfPrepared(blockHash) >= this.f * 2;
+        return this.pbftStorage.countOfPrepared(blockHash) >= this.getF() * 2;
     }
 
     private commitBlock(block: Block): void {

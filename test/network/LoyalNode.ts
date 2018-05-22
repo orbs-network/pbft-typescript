@@ -25,9 +25,6 @@ export class LoyalNode implements Node {
         private electionTrigger: ElectionTrigger,
         private blockValidator: BlockValidator,
         public id: string) {
-    }
-
-    public init(): void {
         this.gossip = new InMemoryGossip(this.id);
         this.config = {
             genesisBlockHash: theGenesisBlock.hash,

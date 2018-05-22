@@ -25,10 +25,6 @@ export class InMemoryNetwork implements Network {
         return this.nodes[index];
     }
 
-    initAllNodes(): void {
-        this.nodes.forEach(node => node.init());
-    }
-
     getNodesCount(): number {
         return this.nodes.length;
     }

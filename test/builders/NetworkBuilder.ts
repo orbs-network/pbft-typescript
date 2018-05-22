@@ -1,9 +1,9 @@
 import { Logger } from "../../src/logger/Logger";
-import { Node } from "../network/Node";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
 import { ConsoleLogger } from "../logger/ConsoleLogger";
 import { SilentLogger } from "../logger/SilentLogger";
 import { InMemoryNetwork } from "../network/InMemoryNetwork";
+import { Node } from "../network/Node";
 import { NodeBuilder, aByzantineNode, aLoyalNode } from "./NodeBuilder";
 
 class NetworkBuilder {
@@ -119,7 +119,6 @@ class NetworkBuilder {
         const customNodes = this.customNodes.map(nodeBuilder => nodeBuilder.thatIsPartOf(this.network).build());
         nodes.push(...customNodes);
         this.network.registerNodes(nodes);
-        this.network.initAllNodes();
         this.connectAllNodes(nodes);
     }
 }
