@@ -30,29 +30,29 @@ chai.use(consensusMatcher);
 //////////////
 
 describe("PBFT", () => {
-    it("should start a network, append a block, and make sure that all nodes recived it", () => {
+    it("should start a network, append a block, and make sure that all nodes recived it", async () => {
         const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
 
         const block = aBlock(theGenesisBlock, "block content");
         const leader = network.nodes[0];
-        leader.suggestBlock(block);
+        await leader.suggestBlock(block);
 
         expect(network).to.reachConsensusOnBlock(block);
         network.shutDown();
     });
 
-    it("should ignore suggested block if they are not from the leader", () => {
+    it("should ignore suggested block if they are not from the leader", async () => {
         const network = aNetwork().leadBy.a.loyalLeader.with(2).loyalNodes.with(1).byzantineNodes.build();
 
         const block = aBlock(theGenesisBlock);
         const byzantineNode = network.nodes[3];
-        byzantineNode.suggestBlock(block);
+        await byzantineNode.suggestBlock(block);
 
         expect(network).to.not.reachConsensusOnBlock(block);
         network.shutDown();
     });
 
-    it("should reach consensus, in a network of 4 nodes, where the leader is byzantine and the other 3 nodes are loyal", () => {
+    it("should reach consensus, in a network of 4 nodes, where the leader is byzantine and the other 3 nodes are loyal", async () => {
         const network = aNetwork().leadBy.a.byzantineLeader.with(3).loyalNodes.build();
 
         const block1 = aBlock(theGenesisBlock, "block1");
@@ -61,8 +61,8 @@ describe("PBFT", () => {
         const node1 = network.nodes[1];
         const node2 = network.nodes[2];
         const node3 = network.nodes[3];
-        leader.suggestBlockTo(block1, node1, node2);
-        leader.suggestBlockTo(block2, node3);
+        await leader.suggestBlockTo(block1, node1, node2);
+        await leader.suggestBlockTo(block2, node3);
 
         expect(node1.getLatestBlock()).to.equal(block1);
         expect(node2.getLatestBlock()).to.equal(block1);
@@ -70,18 +70,18 @@ describe("PBFT", () => {
         network.shutDown();
     });
 
-    it("should reach consensus, in a network of 4 nodes, where one of the nodes is byzantine and the others are loyal", () => {
+    it("should reach consensus, in a network of 4 nodes, where one of the nodes is byzantine and the others are loyal", async () => {
         const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.with(1).byzantineNodes.build();
 
         const block = aBlock(theGenesisBlock);
         const leader = network.nodes[0];
-        leader.suggestBlock(block);
+        await leader.suggestBlock(block);
 
         expect(network).to.reachConsensusOnBlock(block);
         network.shutDown();
     });
 
-    it("should reach consensus, even when a byzantine node is sending a bad block several times", () => {
+    it("should reach consensus, even when a byzantine node is sending a bad block several times", async () => {
         const network = aNetwork().leadBy.a.loyalLeader.with(2).loyalNodes.with(1).byzantineNodes.build();
 
         const leader = network.nodes[0];
@@ -90,7 +90,7 @@ describe("PBFT", () => {
 
         const goodBlock = aBlock(theGenesisBlock);
         const badBlock = aBlock(theGenesisBlock);
-        leader.suggestBlock(goodBlock);
+        await leader.suggestBlock(goodBlock);
         byzantineNode.suggestBlockTo(badBlock, loyalNode);
         byzantineNode.suggestBlockTo(badBlock, loyalNode);
         byzantineNode.suggestBlockTo(badBlock, loyalNode);
@@ -100,39 +100,39 @@ describe("PBFT", () => {
         network.shutDown();
     });
 
-    it("should reach consensus, in a network of 7 nodes, where two of the nodes is byzantine and the others are loyal", () => {
+    it("should reach consensus, in a network of 7 nodes, where two of the nodes is byzantine and the others are loyal", async () => {
         const network = aNetwork().leadBy.a.loyalLeader.with(4).loyalNodes.with(2).byzantineNodes.build();
 
         const block = aBlock(theGenesisBlock);
         const leader = network.nodes[0];
-        leader.suggestBlock(block);
+        await leader.suggestBlock(block);
 
         expect(network).to.reachConsensusOnBlock(block);
         network.shutDown();
     });
 
-    it("should fire onNewBlock only once per block, even if there were more confirmations", () => {
+    it("should fire onNewBlock only once per block, even if there were more confirmations", async () => {
         const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
 
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(block1);
         const leader = network.nodes[0];
         const node = network.nodes[1] as LoyalNode;
-        leader.suggestBlock(block1);
-        leader.suggestBlock(block2);
+        await leader.suggestBlock(block1);
+        await leader.suggestBlock(block2);
 
         expect(node.blockLog.length).to.equal(2);
         network.shutDown();
     });
 
-    it("should not accept a block if it is not pointing to the previous block", () => {
+    it("should not accept a block if it is not pointing to the previous block", async () => {
         const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
 
         const block1 = aBlock(theGenesisBlock);
         const notInOrderBlock = aBlock(aBlock(theGenesisBlock));
         const leader = network.nodes[0];
-        leader.suggestBlock(block1);
-        leader.suggestBlock(notInOrderBlock);
+        await leader.suggestBlock(block1);
+        await leader.suggestBlock(notInOrderBlock);
 
         expect(network).to.reachConsensusOnBlock(block1);
         network.shutDown();
@@ -156,9 +156,9 @@ describe("PBFT", () => {
 
         // node1 is the new leader, all other nodes should accept blocks offered by him
         let currentBlock = theGenesisBlock;
-        await every(10, 2, () => {
+        await every(10, 2, async () => {
             currentBlock = aBlock(currentBlock);
-            node1.suggestBlock(currentBlock);
+            await node1.suggestBlock(currentBlock);
         });
 
         expect(leader.isLeader()).to.be.false;

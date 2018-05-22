@@ -1,5 +1,6 @@
 import { Block } from "./Block";
 import { Config } from "./Config";
+import { BlockValidator } from "./blockValidator/BlockValidator";
 import { ElectionTrigger } from "./electionTrigger/ElectionTrigger";
 import { Gossip } from "./gossip/Gossip";
 import { NewViewPayload, PrePreparePayload, PreparePayload, ViewChangePayload } from "./gossip/Payload";
@@ -16,10 +17,11 @@ export class PBFT {
     private gossip: Gossip;
     private pbftStorage: PBFTStorage;
     private logger: Logger;
+    private blockValidator: BlockValidator;
     private electionTrigger: ElectionTrigger;
     private onNewBlock: (block: Block) => void;
 
-    constructor(private config: Config) {
+    constructor(config: Config) {
         config.logger.log(`PBFT instace initiating`);
 
         // config
@@ -29,6 +31,7 @@ export class PBFT {
         this.onNewBlock = config.onNewBlock;
         this.logger = config.logger;
         this.electionTrigger = config.electionTrigger;
+        this.blockValidator = config.blockValidator;
 
         // leader election
         this.electionTrigger.register(() => this.onLeaderChange());
@@ -88,12 +91,10 @@ export class PBFT {
         this.logger.log(`onPrePrepare blockHash:${payload.block.hash}, view:${payload.view}`);
         if (this.isBlockPointingToPreviousBlock(payload.block)) {
             if (this.isFromCurrentLeader(senderId)) {
-                if (this.config.validateBlock !== undefined) {
-                    const isValidBlock = await this.config.validateBlock(payload.block);
-                    if (!isValidBlock) {
-                        this.logger.log(`onPrePrepare, block is invalid`);
-                        return;
-                    }
+                const isValidBlock = await this.blockValidator.validateBlock(payload.block);
+                if (!isValidBlock) {
+                    this.logger.log(`onPrePrepare, block is invalid`);
+                    return;
                 }
                 this.prePrepareBlock = payload.block;
                 const preparePayload: PreparePayload = {

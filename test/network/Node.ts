@@ -6,7 +6,7 @@ export interface Node {
     gossip: Gossip;
     isLeader(): boolean;
     init(): void;
-    suggestBlock(block: Block): void;
+    suggestBlock(block: Block): Promise<void>;
     getLatestBlock(): Block;
     dispose(): void;
 }

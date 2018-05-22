@@ -1,14 +1,16 @@
+import { BlockValidator } from "../../src/blockValidator/BlockValidator";
 import { ElectionTrigger } from "../../src/electionTrigger/ElectionTrigger";
 import { TimerBasedElectionTrigger } from "../../src/electionTrigger/TimerBasedElectionTrigger";
 import { Logger } from "../../src/logger/Logger";
-import { InMemoryNetwork } from "../network/InMemoryNetwork";
-import { Node } from "../network/Node";
 import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 import { PBFTStorage } from "../../src/storage/PBFTStorage";
+import { BlockValidatorMock } from "../blockValidator/BlockValidatorMock";
 import { ConsoleLogger } from "../logger/ConsoleLogger";
 import { SilentLogger } from "../logger/SilentLogger";
 import { ByzantineNode } from "../network/ByzantineNode";
+import { InMemoryNetwork } from "../network/InMemoryNetwork";
 import { LoyalNode } from "../network/LoyalNode";
+import { Node } from "../network/Node";
 
 export class NodeBuilder {
     private isByzantine: boolean = false;
@@ -61,10 +63,11 @@ export class NodeBuilder {
         const logger: Logger = this.logger ? this.logger : new SilentLogger();
         const electionTrigger: ElectionTrigger = this.electionTrigger ? this.electionTrigger : new TimerBasedElectionTrigger(30);
         const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage(logger);
+        const blockValidator: BlockValidator = new BlockValidatorMock();
         if (this.isByzantine) {
-            return new ByzantineNode(this.network, pbftStorage, logger, electionTrigger, this.name || "Byzantine-Node");
+            return new ByzantineNode(this.network, pbftStorage, logger, electionTrigger, blockValidator, this.name || "Byzantine-Node");
         } else {
-            return new LoyalNode(this.network, pbftStorage, logger, electionTrigger, this.name || "Loyal-Node");
+            return new LoyalNode(this.network, pbftStorage, logger, electionTrigger, blockValidator, this.name || "Loyal-Node");
         }
     }
 }

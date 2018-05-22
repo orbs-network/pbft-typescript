@@ -1,14 +1,15 @@
 import { Block } from "../../src/Block";
 import { Config } from "../../src/Config";
 import { PBFT } from "../../src/PBFT";
+import { BlockValidator } from "../../src/blockValidator/BlockValidator";
 import { ElectionTrigger } from "../../src/electionTrigger/ElectionTrigger";
 import { Gossip } from "../../src/gossip/Gossip";
 import { Logger } from "../../src/logger/Logger";
-import { InMemoryNetwork } from "./InMemoryNetwork";
-import { Node } from "./Node";
 import { PBFTStorage } from "../../src/storage/PBFTStorage";
 import { theGenesisBlock } from "../builders/BlockBuilder";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
+import { InMemoryNetwork } from "./InMemoryNetwork";
+import { Node } from "./Node";
 
 export class LoyalNode implements Node {
     private pbft: PBFT;
@@ -22,6 +23,7 @@ export class LoyalNode implements Node {
         private pbftStorage: PBFTStorage,
         private logger: Logger,
         private electionTrigger: ElectionTrigger,
+        private blockValidator: BlockValidator,
         public id: string) {
     }
 
@@ -34,12 +36,13 @@ export class LoyalNode implements Node {
             logger: this.logger,
             pbftStorage: this.pbftStorage,
             electionTrigger: this.electionTrigger,
+            blockValidator: this.blockValidator,
             onNewBlock: block => this.onNewBlock(block)
         };
         this.pbft = new PBFT(this.config);
     }
 
-    public suggestBlock(block: Block): void {
+    public async suggestBlock(block: Block): Promise<void> {
         this.pbft.suggestBlockAsLeader(block);
     }
 

@@ -1,3 +1,5 @@
+export const nextTick = async () => await wait(0);
+
 export function wait(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
