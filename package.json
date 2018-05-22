@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "yarn run tsc",
-    "tdd": "tsc-watch -p tsconfig.json --onSuccess \"yarn run test\"",
-    "test": "NODE_ENV=test yarn run mocha dist/test/*.spec.js dist/test/**/*.spec.js",
+    "tdd": "NODE_ENV=test yarn run mocha --require ts-node/register --watch --watch-extensions ts \"test/**/*.spec.ts\"",
+    "test": "NODE_ENV=test yarn run mocha --exit \"dist/test/**/*.spec.js\"",
     "lint": "tslint -c tslint.json"
   },
   "author": "Gil Amran",
@@ -21,7 +21,7 @@
     "mocha": "^5.1.1",
     "sinon": "^5.0.6",
     "sinon-chai": "^3.0.0",
-    "tsc-watch": "^1.0.21",
+    "ts-node": "^6.0.3",
     "tslint": "^5.10.0",
     "typescript": "^2.8.3"
   }
