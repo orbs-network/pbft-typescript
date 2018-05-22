@@ -1,8 +1,9 @@
-import { Gossip, GossipCallback } from "../../src/gossip/Gossip";
+import { Gossip, NewViewCallback, PrepareCallback, PreprepareCallback, ViewChangeCallback } from "../../src/gossip/Gossip";
 
+type GossipCallback = PreprepareCallback | PrepareCallback | NewViewCallback | ViewChangeCallback;
 type SubscriptionsValue = {
     message: string;
-    cb: GossipCallback;
+    cb: (senderId: string, payload: any) => void;
 };
 
 interface RemoteListener {
