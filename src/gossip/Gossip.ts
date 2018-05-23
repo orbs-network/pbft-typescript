@@ -12,13 +12,13 @@ export interface Gossip {
     subscribe(message: "new-view", cb: NewViewCallback): number;
     unsubscribe(subscriptionToken: number): void;
 
-    broadcast(message: "preprepare", payload: PrePreparePayload): void;
-    broadcast(message: "prepare", payload: PreparePayload): void;
-    broadcast(message: "view-change", payload: ViewChangePayload): void;
-    broadcast(message: "new-view", payload: NewViewPayload): void;
+    broadcast(senderId: string, message: "preprepare", payload: PrePreparePayload): void;
+    broadcast(senderId: string, message: "prepare", payload: PreparePayload): void;
+    broadcast(senderId: string, message: "view-change", payload: ViewChangePayload): void;
+    broadcast(senderId: string, message: "new-view", payload: NewViewPayload): void;
 
-    unicast(nodeId: string, message: "preprepare", payload: PrePreparePayload): void;
-    unicast(nodeId: string, message: "prepare", payload: PreparePayload): void;
-    unicast(nodeId: string, message: "view-change", payload: ViewChangePayload): void;
-    unicast(nodeId: string, message: "new-view", payload: NewViewPayload): void;
+    unicast(senderId: string, targetId: string, message: "preprepare", payload: PrePreparePayload): void;
+    unicast(senderId: string, targetId: string, message: "prepare", payload: PreparePayload): void;
+    unicast(senderId: string, targetId: string, message: "view-change", payload: ViewChangePayload): void;
+    unicast(senderId: string, targetId: string, message: "new-view", payload: NewViewPayload): void;
 }

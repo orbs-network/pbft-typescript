@@ -1,5 +1,6 @@
 import { Logger } from "../../src/logger/Logger";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
+import { InMemoryGossipDiscovery } from "../gossip/InMemoryGossipDiscovery";
 import { ConsoleLogger } from "../logger/ConsoleLogger";
 import { SilentLogger } from "../logger/SilentLogger";
 import { InMemoryNetwork } from "../network/InMemoryNetwork";
@@ -69,57 +70,72 @@ class NetworkBuilder {
         return this.network;
     }
 
-    private connectAllNodes(nodes: Node[]): void {
-        nodes.map(nodeA => {
-            nodes.map(nodeB => {
-                if (nodeA !== nodeB) {
-                    (nodeA.gossip as InMemoryGossip).registerRemoteMessagesListener(nodeB.gossip as InMemoryGossip);
-                }
-            });
-        });
-    }
-
     private createNodes(): void {
+        const discovery = new InMemoryGossipDiscovery();
         const logger: Logger = this.logger ? this.logger : new SilentLogger();
 
         let leader: Node;
         if (this.isLeaderLoyal) {
+            const gossip = new InMemoryGossip(discovery);
+            const id = "Loyal-Leader";
+            discovery.registerGossip(id, gossip);
             leader = aLoyalNode()
                 .thatIsPartOf(this.network)
+                .communicatesVia(gossip)
                 .named("Loyal-Leader")
                 .thatLogsTo(logger)
                 .build();
         } else {
+            const gossip = new InMemoryGossip(discovery);
+            const id = "Byzantine-Leader";
+            discovery.registerGossip(id, gossip);
             leader = aByzantineNode()
                 .thatIsPartOf(this.network)
-                .named("Byzantine-Leader")
+                .communicatesVia(gossip)
+                .named(id)
                 .thatLogsTo(logger)
                 .build();
         }
 
         const nodes: Node[] = [leader];
         for (let i = 0; i < this.countOfLoyalNodes; i++) {
+            const gossip = new InMemoryGossip(discovery);
+            const id = `Loyal-Node${i + 1}`;
+            discovery.registerGossip(id, gossip);
             const node = aLoyalNode()
                 .thatIsPartOf(this.network)
-                .named(`Loyal-Node${i + 1}`)
+                .communicatesVia(gossip)
+                .named(id)
                 .thatLogsTo(logger)
                 .build();
             nodes.push(node);
         }
 
         for (let i = 0; i < this.countOfByzantineNodes; i++) {
+            const gossip = new InMemoryGossip(discovery);
+            const id = `Byzantine-Node${i + 1}`;
+            discovery.registerGossip(id, gossip);
             const node = aByzantineNode()
                 .thatIsPartOf(this.network)
-                .named(`Byzantine-Node${i + 1}`)
+                .communicatesVia(gossip)
+                .named(id)
                 .thatLogsTo(logger)
                 .build();
             nodes.push(node);
         }
 
-        const customNodes = this.customNodes.map(nodeBuilder => nodeBuilder.thatIsPartOf(this.network).build());
+        const customNodes = this.customNodes.map((nodeBuilder, idx) => {
+            const gossip = new InMemoryGossip(discovery);
+            const id = `Custome-Node${idx + 1}`;
+            discovery.registerGossip(id, gossip);
+            return nodeBuilder
+                .named(id)
+                .thatIsPartOf(this.network)
+                .communicatesVia(gossip)
+                .build();
+        });
         nodes.push(...customNodes);
         this.network.registerNodes(nodes);
-        this.connectAllNodes(nodes);
     }
 }
 

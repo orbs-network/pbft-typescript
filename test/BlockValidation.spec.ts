@@ -15,7 +15,7 @@ describe("Block Validation", () => {
         const block = aBlock(theGenesisBlock);
         const leader = network.nodes[0];
         const node1 = network.nodes[1] as LoyalNode;
-        const spy = sinon.spy(node1.config.blockValidator, "validateBlock");
+        const spy = sinon.spy(node1.pbft.blockValidator, "validateBlock");
         await leader.suggestBlock(block);
 
         expect(spy).to.have.been.calledWith(block);
@@ -29,7 +29,7 @@ describe("Block Validation", () => {
         const block = aBlock(theGenesisBlock);
         const leader = network.nodes[0];
         const node1 = network.nodes[1] as LoyalNode;
-        node1.config.blockValidator.validateBlock = async () => false;
+        node1.pbft.blockValidator.validateBlock = async () => false;
         await leader.suggestBlock(block);
 
         expect(network).to.not.reachConsensusOnBlock(block);

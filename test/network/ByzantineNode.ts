@@ -1,7 +1,7 @@
 import { Block } from "../../src/Block";
 import { PrePreparePayload } from "../../src/gossip/Payload";
-import { Node } from "./Node";
 import { LoyalNode } from "./LoyalNode";
+import { Node } from "./Node";
 
 export class ByzantineNode extends LoyalNode {
 
@@ -11,7 +11,7 @@ export class ByzantineNode extends LoyalNode {
                 block,
                 view: 0
             };
-            this.gossip.unicast(node.id, "preprepare", payload);
+            this.pbft.gossip.unicast(this.id, node.id, "preprepare", payload);
         });
     }
 

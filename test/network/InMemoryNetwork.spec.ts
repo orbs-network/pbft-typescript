@@ -3,15 +3,22 @@ import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
 import { aNetwork } from "../builders/NetworkBuilder";
 import { aLoyalNode } from "../builders/NodeBuilder";
+import { InMemoryGossip } from "../gossip/InMemoryGossip";
+import { InMemoryGossipDiscovery } from "../gossip/InMemoryGossipDiscovery";
 import { InMemoryNetwork } from "./InMemoryNetwork";
 
 chai.use(sinonChai);
 
-describe("Network", () => {
+describe("InMemory Network", () => {
     it("should be able to register nodes", () => {
         const network = new InMemoryNetwork();
-        const node1 = aLoyalNode().thatIsPartOf(network).build();
-        const node2 = aLoyalNode().thatIsPartOf(network).build();
+        const discovery = new InMemoryGossipDiscovery();
+        const gossip1 = new InMemoryGossip(discovery);
+        const gossip2 = new InMemoryGossip(discovery);
+        discovery.registerGossip("node1", gossip1);
+        discovery.registerGossip("node2", gossip2);
+        const node1 = aLoyalNode().thatIsPartOf(network).communicatesVia(gossip1).build();
+        const node2 = aLoyalNode().thatIsPartOf(network).communicatesVia(gossip2).build();
         network.registerNode(node1);
         network.registerNode(node2);
         expect(network.nodes[0]).to.equal(node1);
@@ -21,8 +28,13 @@ describe("Network", () => {
 
     it("should be able to register several nodes in the same call", () => {
         const network = new InMemoryNetwork();
-        const node1 = aLoyalNode().thatIsPartOf(network).build();
-        const node2 = aLoyalNode().thatIsPartOf(network).build();
+        const discovery = new InMemoryGossipDiscovery();
+        const gossip1 = new InMemoryGossip(discovery);
+        const gossip2 = new InMemoryGossip(discovery);
+        discovery.registerGossip("node1", gossip1);
+        discovery.registerGossip("node2", gossip2);
+        const node1 = aLoyalNode().thatIsPartOf(network).communicatesVia(gossip1).build();
+        const node2 = aLoyalNode().thatIsPartOf(network).communicatesVia(gossip2).build();
         network.registerNodes([node1, node2]);
         expect(network.nodes[0]).to.equal(node1);
         expect(network.nodes[1]).to.equal(node2);

@@ -16,7 +16,6 @@ chai.use(consensusMatcher);
 //////////////
 // Todos:
 // * timeout should be configurable, currently values are hardcoded in the tests and builder
-// * refactor the way config is constructed and passed to pbft
 // *
 // * Nodes should not broadcast prepare if it's not the same term (To avoid DDosig the system)
 // * Nodes can pretend to be other nodes => use sig
@@ -24,7 +23,6 @@ chai.use(consensusMatcher);
 // * timeouts should trigger leader election
 // * Should I use nodeId or view?
 // * Why do we need the term
-// * should call validate(block) on onPreprepare
 // * Do we have to sign the message type as well? is it a must?
 // * Currently the prepare logs are using the blockHash and nodeId, convert it to v & r.
 //////////////

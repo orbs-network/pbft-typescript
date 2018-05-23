@@ -15,7 +15,7 @@ describe("Spam Prevention", () => {
     it("should store the PREPARE on the same term only one time", async () => {
         const logger = new SilentLogger();
         const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
-        const nodeBuilder = aLoyalNode().named("Loyal-Node").storingOn(inspectedStorage);
+        const nodeBuilder = aLoyalNode().storingOn(inspectedStorage);
         const network = aNetwork().leadBy.a.byzantineLeader.with(3).loyalNodes.withNode(nodeBuilder).build();
 
         const block = aBlock(theGenesisBlock);

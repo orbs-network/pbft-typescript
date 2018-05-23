@@ -1,4 +1,5 @@
 import { Gossip, NewViewCallback, PrepareCallback, PreprepareCallback, ViewChangeCallback } from "../../src/gossip/Gossip";
+import { InMemoryGossipDiscovery } from "./InMemoryGossipDiscovery";
 
 type GossipCallback = PreprepareCallback | PrepareCallback | NewViewCallback | ViewChangeCallback;
 type SubscriptionsValue = {
@@ -7,20 +8,14 @@ type SubscriptionsValue = {
 };
 
 interface RemoteListener {
-    id: string;
     onRemoteMessage(senderId: string, message: string, payload?: any): void;
 }
 
 export class InMemoryGossip implements Gossip, RemoteListener {
     private totalSubscriptions: number = 0;
     private subscriptions: Map<number, SubscriptionsValue> = new Map();
-    private remoteMessagesListeners: Map<string, RemoteListener> = new Map();
 
-    constructor(public id: string) {
-    }
-
-    registerRemoteMessagesListener(listener: RemoteListener): void {
-        this.remoteMessagesListeners.set(listener.id, listener);
+    constructor(private discovery: InMemoryGossipDiscovery) {
     }
 
     onRemoteMessage(senderId: string, message: string, payload?: any): void {
@@ -41,15 +36,18 @@ export class InMemoryGossip implements Gossip, RemoteListener {
         this.subscriptions.delete(subscriptionToken);
     }
 
-    broadcast(message: string, payload?: any): void {
-        this.remoteMessagesListeners.forEach(listener => listener.onRemoteMessage(this.id, message, payload));
-    }
-
-    unicast(nodeId: string, message: string, payload?: any): void {
-        this.remoteMessagesListeners.forEach((listener, key) => {
-            if (key === nodeId) {
-                listener.onRemoteMessage(this.id, message, payload);
+    broadcast(senderId: string, message: string, payload?: any): void {
+        this.discovery.getAllGossips().forEach(gossip => {
+            if (gossip !== this) {
+                gossip.onRemoteMessage(senderId, message, payload);
             }
         });
+    }
+
+    unicast(senderId: string, targetId: string, message: string, payload?: any): void {
+        const targetGossip = this.discovery.getGossipById(targetId);
+        if (targetGossip) {
+            targetGossip.onRemoteMessage(senderId, message, payload);
+        }
     }
 }

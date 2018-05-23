@@ -8,26 +8,32 @@ import { Logger } from "./logger/Logger";
 import { Network } from "./network/Network";
 import { PBFTStorage } from "./storage/PBFTStorage";
 
+export type onNewBlockCB = (block: Block) => void;
+
 export class PBFT {
     private committedBlocksHashs: string[];
     private prePrepareBlock: Block;
     private currentView: number = 0;
     private network: Network;
-    private gossip: Gossip;
     private pbftStorage: PBFTStorage;
     private logger: Logger;
-    private blockValidator: BlockValidator;
     private electionTrigger: ElectionTrigger;
-    private onNewBlock: (block: Block) => void;
+    private onNewBlockListeners: onNewBlockCB[];
+
+    public id: string;
+    public blockValidator: BlockValidator;
+    public gossip: Gossip;
 
     constructor(config: Config) {
         config.logger.log(`PBFT instace initiating`);
 
+        this.onNewBlockListeners = [];
+
         // config
+        this.id = config.id;
         this.network = config.network;
         this.gossip = config.gossip;
         this.pbftStorage = config.pbftStorage;
-        this.onNewBlock = config.onNewBlock;
         this.logger = config.logger;
         this.electionTrigger = config.electionTrigger;
         this.blockValidator = config.blockValidator;
@@ -45,6 +51,10 @@ export class PBFT {
         this.gossip.subscribe("view-change", (senderId, payload) => this.onViewChange(senderId, payload));
     }
 
+    public registerToOnNewBlock(bc: (block: Block) => void): void {
+        this.onNewBlockListeners.push(bc);
+    }
+
     public suggestBlockAsLeader(block: Block): void {
         this.prePrepareBlock = block;
         this.broadcastPrePrepare(block);
@@ -52,6 +62,7 @@ export class PBFT {
 
     public dispose(): any {
         this.electionTrigger.stop();
+        this.onNewBlockListeners = [];
     }
 
     public leaderId(): string {
@@ -66,7 +77,7 @@ export class PBFT {
         this.currentView++;
         this.logger.log(`onLeaderChange, new view:${this.currentView}`);
         const payload: ViewChangePayload = { newView: this.currentView };
-        this.gossip.unicast(this.leaderId(), "view-change", payload);
+        this.gossip.unicast(this.id, this.leaderId(), "view-change", payload);
     }
 
     private broadcastPrePrepare(block: Block): void {
@@ -75,7 +86,7 @@ export class PBFT {
             block,
             view: this.currentView
         };
-        this.gossip.broadcast("preprepare", payload);
+        this.gossip.broadcast(this.id, "preprepare", payload);
     }
 
     private broadcastPrepare(block: Block): void {
@@ -84,7 +95,7 @@ export class PBFT {
             blockHash: block.hash,
             view: this.currentView
         };
-        this.gossip.broadcast("prepare", payload);
+        this.gossip.broadcast(this.id, "prepare", payload);
     }
 
     private async onPrePrepare(senderId: string, payload: PrePreparePayload): Promise<void> {
@@ -133,7 +144,7 @@ export class PBFT {
         this.pbftStorage.storeViewChange(payload.newView, senderId);
         if (this.isElected(payload.newView)) {
             const newViewPayload: NewViewPayload = { view: payload.newView };
-            this.gossip.broadcast("new-view", newViewPayload);
+            this.gossip.broadcast(this.id, "new-view", newViewPayload);
         }
     }
 
@@ -166,7 +177,7 @@ export class PBFT {
         const blockHash = block.hash;
         if (this.committedBlocksHashs.indexOf(blockHash) === -1) {
             this.committedBlocksHashs.push(blockHash);
-            this.onNewBlock(block);
+            this.onNewBlockListeners.forEach(cb => cb(block));
         }
     }
 }

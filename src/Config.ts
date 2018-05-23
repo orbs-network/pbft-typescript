@@ -7,6 +7,7 @@ import { Network } from "./network/Network";
 import { PBFTStorage } from "./storage/PBFTStorage";
 
 export interface Config {
+    id: string;
     genesisBlockHash: string;
     network: Network;
     gossip: Gossip;
@@ -14,5 +15,4 @@ export interface Config {
     logger: Logger;
     electionTrigger: ElectionTrigger;
     blockValidator: BlockValidator;
-    onNewBlock: (block: Block) => void;
 }
