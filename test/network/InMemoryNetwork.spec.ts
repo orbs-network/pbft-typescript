@@ -29,26 +29,9 @@ describe("Network", () => {
         network.shutDown();
     });
 
-    it("should return the node index by its id", () => {
-        const network = aNetwork().leadBy.a.loyalLeader.with(2).loyalNodes.build();
-        const node2 = network.nodes[1];
-        const result = network.getNodeIndexById(node2.id);
-        expect(result).to.equal(1);
-        network.shutDown();
-    });
-
     it("should return the total number of nodes when calling getNodesCount", () => {
         const network = aNetwork().leadBy.a.loyalLeader.with(2).loyalNodes.build();
         expect(network.getNodesCount()).to.equal(3);
-        network.shutDown();
-    });
-
-    it("should return a node by index", () => {
-        const network = aNetwork().leadBy.a.loyalLeader.with(2).loyalNodes.build();
-        const node2 = network.nodes[1];
-        const result = network.getNodeByIdx(1);
-
-        expect(result).to.equal(node2);
         network.shutDown();
     });
 
