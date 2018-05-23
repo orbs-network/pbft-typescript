@@ -1,33 +1,39 @@
-function primary(view: number) { }
-function constructBlock() { }
-function HASH(block) { }
-function Log(term, view, message, senderPublicKey, data) { }
-function isPrePrepared(term, view): any { }
-function getPrepareCount(term, view): any { }
-function getCommitCount(term, view): any { }
-function Multicast(senderPublicKey, message, payload) { }
-function valid(Block) { }
-function sign(privateKey, content) { }
-function decrypt(publicKey, encryptedData): any { }
+type Block = {
+    height: number;
+    previousBlockHash: string;
+};
+
+function primary(view: number): string { return ""; }
+function constructBlock(): Block { return { previousBlockHash: "", height: 0 }; }
+function HASH(block): string { return ""; }
+function Log(term: number, view: number, message: string, senderPublicKey: string, data) { }
+function isPrePrepared(term: number, view: number): boolean { return true; }
+function getPrepareCount(term: number, view: number): number { return 0; }
+function getCommitCount(term: number, view: number): any { return 0; }
+function Multicast(senderPublicKey: string, message: string, payload): void { }
+function Unicast(senderPublicKey: string, targetPublicKey: string, message, payload): void { }
+function valid(block: Block): boolean { return true; }
+function sign(privateKey: string, content): string { return ""; }
+function decrypt(publicKey: string, encryptedData): any { }
 
 class PBFT {
-    private myPublicKey; // my publicKey
-    private privateKey;
-    private lastCommittedBlock;
+    private myPublicKey: string;
+    private privateKey: string;
+    private lastCommittedBlock: Block;
     private timer;
     private term: number;
     private view: number;
-    private CB;
+    private CB: Block;
 
-    constructor(private config: { f, T }) {
+    constructor(private config: { f: number, TIMEOUT: number }) {
     }
 
     init() {
         this.term = this.lastCommittedBlock.height;
         this.view = 0;  // TODO: Is this needed?
         this.CB = undefined;
-        this.timer(this.config.T);
-        if (primary(this.view)) {
+        this.timer(this.config.TIMEOUT);
+        if (primary(this.view) === this.myPublicKey) {
             this.CB = constructBlock();
             const PP = {
                 payload: sign(this.privateKey, {
@@ -42,7 +48,7 @@ class PBFT {
         }
     }
 
-    onReceivePrePrepare(senderPublicKey, PP: { payload, B }) {
+    onReceivePrePrepare(senderPublicKey: string, PP: { payload: string, B: Block }) {
         const { view, term, digest } = decrypt(senderPublicKey, PP.payload);
         const { B } = PP;
 
@@ -51,7 +57,7 @@ class PBFT {
                 term === this.term &&
                 primary(view) === senderPublicKey &&
                 digest === HASH(B) &&
-                B.prevBlock === HASH(this.lastCommittedBlock) &&
+                B.previousBlockHash === HASH(this.lastCommittedBlock) &&
                 valid(B) &&
                 isPrePrepared(term, view) === false) {
 
@@ -85,7 +91,7 @@ class PBFT {
         }
     }
 
-    isPrepared(term, view): boolean {
+    isPrepared(term: number, view: number): boolean {
         if (view === this.view && term === this.term) {
             if (isPrePrepared(term, view)) {
                 if (getPrepareCount(term, view) >= 2 * this.config.f) {
@@ -97,7 +103,7 @@ class PBFT {
         return false;
     }
 
-    onPrepared(view, term, digest) {
+    onPrepared(view: number, term: number, digest: string) {
         const C = {
             payload: sign(this.privateKey, {
                 view,
@@ -109,7 +115,7 @@ class PBFT {
         Multicast(this.myPublicKey, "COMMIT", C);
     }
 
-    onReceiveCommit(senderPublicKey, C: { payload: { view, term, digest, i } }) {
+    onReceiveCommit(senderPublicKey: string, C: { payload }) {
         const { view, term, digest } = decrypt(senderPublicKey, C.payload);
 
         if (senderPublicKey !== this.myPublicKey) {
@@ -122,7 +128,7 @@ class PBFT {
         }
     }
 
-    isCommitted(term, view): boolean {
+    isCommitted(term: number, view: number): boolean {
         if (view === this.view && term === this.term) {
             if (isPrePrepared(term, view)) {
                 if (getCommitCount(term, view) >= 2 * this.config.f + 1) {
@@ -134,7 +140,7 @@ class PBFT {
         return false;
     }
 
-    onCommitted(term, view, digest) {
+    onCommitted(term: number, view: number, digest: string) {
         this.lastCommittedBlock = this.CB;
     }
 }
