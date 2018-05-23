@@ -15,6 +15,8 @@ chai.use(consensusMatcher);
 
 //////////////
 // Todos:
+// * add multicast, and use it instead of broadcast
+// * add isMember, and call it from pbft
 // * timeout should be configurable, currently values are hardcoded in the tests and builder
 // *
 // * Nodes should not broadcast prepare if it's not the same term (To avoid DDosig the system)
