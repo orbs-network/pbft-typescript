@@ -49,6 +49,34 @@ describe("InMemory Gossip", () => {
         expect(spy2).to.have.been.calledOnce;
     });
 
+    it("should be able to unicast a message to the given clients", () => {
+        const discovery = new InMemoryGossipDiscovery();
+        const listener1Id = genId();
+        const listener2Id = genId();
+        const listener3Id = genId();
+        const broadcasterId = genId();
+        const listener1 = new InMemoryGossip(discovery);
+        const listener2 = new InMemoryGossip(discovery);
+        const listener3 = new InMemoryGossip(discovery);
+        const broadcaster = new InMemoryGossip(discovery);
+        discovery.registerGossip(listener1Id, listener1);
+        discovery.registerGossip(listener2Id, listener2);
+        discovery.registerGossip(listener3Id, listener3);
+        discovery.registerGossip(broadcasterId, broadcaster);
+        const spy1 = sinon.spy();
+        const spy2 = sinon.spy();
+        const spy3 = sinon.spy();
+        const message = Math.random().toString();
+        listener1.subscribe(message, spy1);
+        listener2.subscribe(message, spy2);
+        listener3.subscribe(message, spy3);
+
+        broadcaster.multicast(broadcasterId, [listener1Id, listener2Id], message);
+        expect(spy1).to.have.been.calledOnce;
+        expect(spy2).to.have.been.calledOnce;
+        expect(spy3).to.not.have.been.calledOnce;
+    });
+
     it("should get called only for the requested message", () => {
         const discovery = new InMemoryGossipDiscovery();
         const listenerId = genId();

@@ -21,4 +21,9 @@ export interface Gossip {
     unicast(senderId: string, targetId: string, message: "prepare", payload: PreparePayload): void;
     unicast(senderId: string, targetId: string, message: "view-change", payload: ViewChangePayload): void;
     unicast(senderId: string, targetId: string, message: "new-view", payload: NewViewPayload): void;
+
+    multicast(senderId: string, targetsIds: string[], message: "preprepare", payload: PrePreparePayload): void;
+    multicast(senderId: string, targetsIds: string[], message: "prepare", payload: PreparePayload): void;
+    multicast(senderId: string, targetsIds: string[], message: "view-change", payload: ViewChangePayload): void;
+    multicast(senderId: string, targetsIds: string[], message: "new-view", payload: NewViewPayload): void;
 }

@@ -44,6 +44,10 @@ export class InMemoryGossip implements Gossip, RemoteListener {
         });
     }
 
+    multicast(senderId: string, targetsIds: string[], message: string, payload?: any): void {
+        targetsIds.forEach(targetId => this.unicast(senderId, targetId, message, payload));
+    }
+
     unicast(senderId: string, targetId: string, message: string, payload?: any): void {
         const targetGossip = this.discovery.getGossipById(targetId);
         if (targetGossip) {
