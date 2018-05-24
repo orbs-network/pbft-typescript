@@ -13,7 +13,7 @@ describe("Leader Election", () => {
     it("should notify the next leader when the timeout expired", () => {
         const electionTriggerMock = new ElectionTriggerMock();
         const nodeBuilder = aLoyalNode().electingLeaderUsing(electionTriggerMock);
-        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.withNode(nodeBuilder).build();
+        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.withCustomeNode(nodeBuilder).build();
         const testedNode = network.nodes[4];
         const nextLeader = network.nodes[1];
 
@@ -26,7 +26,7 @@ describe("Leader Election", () => {
     it("should cycle to the first node when the current leader is the last node", () => {
         const electionTriggerMock = new ElectionTriggerMock();
         const nodeBuilder = aLoyalNode().electingLeaderUsing(electionTriggerMock);
-        const network = aNetwork().leadBy.a.loyalLeader.withNode(nodeBuilder).build();
+        const network = aNetwork().leadBy.a.loyalLeader.withCustomeNode(nodeBuilder).build();
         const node1 = network.nodes[0];
         const node2 = network.nodes[1];
 

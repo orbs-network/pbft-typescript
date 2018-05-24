@@ -43,7 +43,7 @@ class NetworkBuilder {
         return new With();
     }
 
-    public withNode(nodeBuilder: NodeBuilder): this {
+    public withCustomeNode(nodeBuilder: NodeBuilder): this {
         this.customNodes.push(nodeBuilder);
         return this;
     }

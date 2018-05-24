@@ -132,6 +132,11 @@ export class PBFT {
 
     private onPrepare(senderId: string, payload: PreparePayload): void {
         this.logger.log(`onPrepare blockHash:${payload.blockHash}, view:${payload.view}`);
+        if (senderId === this.id) {
+            this.logger.log(`onPrepare, block rejected because it was pretended to come from this node`);
+            return;
+        }
+
         this.pbftStorage.storePrepare(payload.blockHash, senderId);
         if (this.isBlockMatchPrePrepareBlock(payload.blockHash) === false) {
             this.logger.log(`onPrepare, block rejected because it does not match the onPrePare block`);

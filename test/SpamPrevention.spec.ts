@@ -16,7 +16,7 @@ describe("Spam Prevention", () => {
         const logger = new SilentLogger();
         const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
         const nodeBuilder = aLoyalNode().storingOn(inspectedStorage);
-        const network = aNetwork().leadBy.a.byzantineLeader.with(3).loyalNodes.withNode(nodeBuilder).build();
+        const network = aNetwork().leadBy.a.byzantineLeader.with(3).loyalNodes.withCustomeNode(nodeBuilder).build();
 
         const block = aBlock(theGenesisBlock);
         const leader = network.nodes[0] as ByzantineNode;
