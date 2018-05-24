@@ -13,6 +13,10 @@ export class InMemoryNetwork implements Network {
         return this.nodes.length;
     }
 
+    getAllNodesIds(): string[] {
+        return this.nodes.map(node => node.id);
+    }
+
     registerNode(node: Node): void {
         this.nodes.push(node);
     }

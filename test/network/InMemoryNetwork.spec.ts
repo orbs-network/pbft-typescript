@@ -56,4 +56,11 @@ describe("InMemory Network", () => {
         network.shutDown();
     });
 
+    it("should return a list of all the nodeIds", () => {
+        const network = aNetwork().leadBy.a.loyalLeader.with(2).loyalNodes.build();
+        const result = network.getAllNodesIds();
+        expect(result).to.deep.equal([network.nodes[0].id, network.nodes[1].id, network.nodes[2].id]);
+        network.shutDown();
+    });
+
 });
