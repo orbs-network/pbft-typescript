@@ -14,6 +14,7 @@ class NetworkBuilder {
     private isLeaderLoyal: boolean = true;
     private logger: Logger;
     private customNodes: NodeBuilder[] = [];
+    private customLeader: NodeBuilder;
 
     public and = this;
     public a = this;
@@ -58,6 +59,10 @@ class NetworkBuilder {
                 networkBuilder.isLeaderLoyal = false;
                 return networkBuilder;
             }
+            customLeader(customLeader: NodeBuilder) {
+                networkBuilder.customLeader = customLeader;
+                return networkBuilder;
+            }
         }
 
         return {
@@ -75,26 +80,38 @@ class NetworkBuilder {
         const logger: Logger = this.logger ? this.logger : new SilentLogger();
 
         let leader: Node;
-        if (this.isLeaderLoyal) {
+        if (this.customLeader) {
             const gossip = new InMemoryGossip(discovery);
-            const id = "Loyal-Leader";
+            const id = "Custome-Leader";
             discovery.registerGossip(id, gossip);
-            leader = aLoyalNode()
-                .thatIsPartOf(this.network)
-                .communicatesVia(gossip)
-                .named("Loyal-Leader")
-                .thatLogsTo(logger)
-                .build();
-        } else {
-            const gossip = new InMemoryGossip(discovery);
-            const id = "Byzantine-Leader";
-            discovery.registerGossip(id, gossip);
-            leader = aByzantineNode()
+            leader = this.customLeader
                 .thatIsPartOf(this.network)
                 .communicatesVia(gossip)
                 .named(id)
                 .thatLogsTo(logger)
                 .build();
+        } else {
+            if (this.isLeaderLoyal) {
+                const gossip = new InMemoryGossip(discovery);
+                const id = "Loyal-Leader";
+                discovery.registerGossip(id, gossip);
+                leader = aLoyalNode()
+                    .thatIsPartOf(this.network)
+                    .communicatesVia(gossip)
+                    .named(id)
+                    .thatLogsTo(logger)
+                    .build();
+            } else {
+                const gossip = new InMemoryGossip(discovery);
+                const id = "Byzantine-Leader";
+                discovery.registerGossip(id, gossip);
+                leader = aByzantineNode()
+                    .thatIsPartOf(this.network)
+                    .communicatesVia(gossip)
+                    .named(id)
+                    .thatLogsTo(logger)
+                    .build();
+            }
         }
 
         const nodes: Node[] = [leader];

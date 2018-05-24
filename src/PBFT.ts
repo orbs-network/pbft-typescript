@@ -69,10 +69,6 @@ export class PBFT {
         return this.network.getNodeIdBySeed(this.currentView);
     }
 
-    private getF(): number {
-        return Math.floor((this.network.getNodesCount() - 1) / 3);
-    }
-
     private onLeaderChange(): void {
         this.currentView++;
         this.logger.log(`onLeaderChange, new view:${this.currentView}`);
@@ -100,42 +96,51 @@ export class PBFT {
 
     private async onPrePrepare(senderId: string, payload: PrePreparePayload): Promise<void> {
         this.logger.log(`onPrePrepare blockHash:${payload.block.hash}, view:${payload.view}`);
-        if (this.isBlockPointingToPreviousBlock(payload.block)) {
-            if (this.isFromCurrentLeader(senderId)) {
-                const isValidBlock = await this.blockValidator.validateBlock(payload.block);
-                if (!isValidBlock) {
-                    this.logger.log(`onPrePrepare, block is invalid`);
-                    return;
-                }
-                this.prePrepareBlock = payload.block;
-                const preparePayload: PreparePayload = {
-                    blockHash: payload.block.hash,
-                    view: payload.view
-                };
-                this.pbftStorage.storePrepare(preparePayload.blockHash, senderId);
-                this.broadcastPrepare(payload.block);
-                if (this.isPrepared(payload.block.hash)) {
-                    this.logger.log(`onPrePrepare, found enough votes, there's consensus. commtting block (${this.prePrepareBlock.hash})`);
-                    this.commitBlock(this.prePrepareBlock);
-                }
-            } else {
-                this.logger.log(`onPrePrepare, block rejected because it was not sent by the current leader (${this.currentView})`);
-            }
-        } else {
+        if (senderId === this.id) {
+            this.logger.log(`onPrePrepare, block rejected because it was pretended to come from this node`);
+            return;
+        }
+
+        if (this.isBlockPointingToPreviousBlock(payload.block) === false) {
             this.logger.log(`onPrePrepare, block rejected because it's not pointing to the previous block`);
+            return;
+        }
+
+        if (this.isFromCurrentLeader(senderId) === false) {
+            this.logger.log(`onPrePrepare, block rejected because it was not sent by the current leader (${this.currentView})`);
+            return;
+        }
+
+        const isValidBlock = await this.blockValidator.validateBlock(payload.block);
+        if (!isValidBlock) {
+            this.logger.log(`onPrePrepare, block is invalid`);
+            return;
+        }
+
+        this.prePrepareBlock = payload.block;
+        const preparePayload: PreparePayload = {
+            blockHash: payload.block.hash,
+            view: payload.view
+        };
+        this.pbftStorage.storePrepare(preparePayload.blockHash, senderId);
+        this.broadcastPrepare(payload.block);
+        if (this.isPrepared(payload.block.hash)) {
+            this.logger.log(`onPrePrepare, found enough votes, there's consensus. commtting block (${this.prePrepareBlock.hash})`);
+            this.commitBlock(this.prePrepareBlock);
         }
     }
 
     private onPrepare(senderId: string, payload: PreparePayload): void {
         this.logger.log(`onPrepare blockHash:${payload.blockHash}, view:${payload.view}`);
         this.pbftStorage.storePrepare(payload.blockHash, senderId);
-        if (this.isBlockMatchPrePrepareBlock(payload.blockHash)) {
-            if (this.isPrepared(payload.blockHash)) {
-                this.logger.log(`onPrepare, found enough votes, there's consensus. commtting block (${this.prePrepareBlock.hash})`);
-                this.commitBlock(this.prePrepareBlock);
-            }
-        } else {
+        if (this.isBlockMatchPrePrepareBlock(payload.blockHash) === false) {
             this.logger.log(`onPrepare, block rejected because it does not match the onPrePare block`);
+            return;
+        }
+
+        if (this.isPrepared(payload.blockHash)) {
+            this.logger.log(`onPrepare, found enough votes, there's consensus. commtting block (${this.prePrepareBlock.hash})`);
+            this.commitBlock(this.prePrepareBlock);
         }
     }
 
@@ -146,6 +151,10 @@ export class PBFT {
             const newViewPayload: NewViewPayload = { view: payload.newView };
             this.gossip.multicast(this.id, this.getOtherNodesIds(), "new-view", newViewPayload);
         }
+    }
+
+    private getF(): number {
+        return Math.floor((this.network.getNodesCount() - 1) / 3);
     }
 
     private getOtherNodesIds(): string[] {
