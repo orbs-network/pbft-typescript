@@ -48,11 +48,11 @@ describe("Leader Election", () => {
         const node3 = network.nodes[3];
 
         const gossip = node1.pbft.gossip as InMemoryGossip;
-        const broadcastSpy = sinon.spy(gossip, "broadcast");
+        const multicastSpy = sinon.spy(gossip, "multicast");
         gossip.onRemoteMessage(node0.id, "view-change", { newView: 1 });
         gossip.onRemoteMessage(node2.id, "view-change", { newView: 1 });
         gossip.onRemoteMessage(node3.id, "view-change", { newView: 1 });
-        expect(broadcastSpy).to.have.been.calledWith(node1.id, "new-view", { view: 1 });
+        expect(multicastSpy).to.have.been.calledWith(node1.id, [node0.id, node2.id, node3.id], "new-view", { view: 1 });
         network.shutDown();
     });
 

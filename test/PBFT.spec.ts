@@ -15,7 +15,6 @@ chai.use(consensusMatcher);
 
 //////////////
 // Todos:
-// * add multicast, and use it instead of broadcast
 // * add isMember, and call it from pbft
 // * timeout should be configurable, currently values are hardcoded in the tests and builder
 // *

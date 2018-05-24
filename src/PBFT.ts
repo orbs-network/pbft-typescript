@@ -86,7 +86,7 @@ export class PBFT {
             block,
             view: this.currentView
         };
-        this.gossip.broadcast(this.id, "preprepare", payload);
+        this.gossip.multicast(this.id, this.getOtherNodesIds(), "preprepare", payload);
     }
 
     private broadcastPrepare(block: Block): void {
@@ -95,7 +95,7 @@ export class PBFT {
             blockHash: block.hash,
             view: this.currentView
         };
-        this.gossip.broadcast(this.id, "prepare", payload);
+        this.gossip.multicast(this.id, this.getOtherNodesIds(), "prepare", payload);
     }
 
     private async onPrePrepare(senderId: string, payload: PrePreparePayload): Promise<void> {
@@ -144,8 +144,12 @@ export class PBFT {
         this.pbftStorage.storeViewChange(payload.newView, senderId);
         if (this.isElected(payload.newView)) {
             const newViewPayload: NewViewPayload = { view: payload.newView };
-            this.gossip.broadcast(this.id, "new-view", newViewPayload);
+            this.gossip.multicast(this.id, this.getOtherNodesIds(), "new-view", newViewPayload);
         }
+    }
+
+    private getOtherNodesIds(): string[] {
+        return this.network.getAllNodesIds().filter(id => id !== this.id);
     }
 
     private getLatestConfirmedBlockHash(): string {
