@@ -60,6 +60,13 @@ type NVMessage = {
     payload: DigestTypes.NV;
 };
 
+type NewViewProof = { pk: string, data: VCMessage }[];
+
+type PreparedProof = {
+    preprepare: { pk: string, data: PPMessage },
+    prepares: { pk: string, data: PMessage }[]
+};
+
 type PPPayload = {
     message: "PRE-PREPARE",
     view: number,
@@ -90,13 +97,8 @@ type VCPayload = {
 
 type NVPayload = {
     message: "NEW-VIEW",
-    newViewProof,
+    newViewProof: NewViewProof,
     PP: PPMessage
-};
-
-type PreparedProof = {
-    preprepare: { pk: string, data: PPMessage },
-    prepares: { pk: string, data: PMessage }[]
 };
 
 class PBFT {
@@ -343,11 +345,10 @@ class PBFT {
             CB: this.CB
         };
 
-        const newViewProof = sign(this.myPrivateKey, allViewChanges);
         const NV: NVMessage = {
             payload: sign(this.myPrivateKey, {
                 message: "NEW-VIEW",
-                newViewProof,
+                newViewProof: allViewChanges,
                 PP
             })
         };
