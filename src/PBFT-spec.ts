@@ -8,17 +8,17 @@ function Multicast(senderPublicKey: string, message: string, payload): void { }
 function Unicast(senderPublicKey: string, targetPublicKey: string, message, payload): void { }
 function valid(block: Block): boolean { return true; }
 
-declare function Log(term: number, view: number, message: "PRE-PREPARE", { pk: string, data: PPMessage });
-declare function Log(term: number, view: number, message: "PREPARE", { pk: string, data: PMessage });
-declare function Log(term: number, view: number, message: "COMMIT", { pk: string, data: CMessage });
-declare function Log(term: number, view: number, message: "VIEW-CHANGE", { pk: string, data: VCMessage });
-declare function Log(term: number, view: number, message: "NEW-VIEW", { pk: string, data: NVMessage });
+declare function Log(term: number, view: number, message: "PRE-PREPARE", { pk: string, data: DigestTypes });
+declare function Log(term: number, view: number, message: "PREPARE", { pk: string, data: DigestTypes });
+declare function Log(term: number, view: number, message: "COMMIT", { pk: string, data: DigestTypes });
+declare function Log(term: number, view: number, message: "VIEW-CHANGE", { pk: string, data: DigestTypes });
+declare function Log(term: number, view: number, message: "NEW-VIEW", { pk: string, data: DigestTypes });
 
 declare function fetchFromLog(term: number, view: number, message: "PRE-PREPARE"): { pk: string, data: PPMessage };
-declare function fetchFromLog(term: number, view: number, message: "PREPARE"): { pk: string, data: PMessage }[];
-declare function fetchFromLog(term: number, view: number, message: "COMMIT"): { pk: string, data: CMessage }[];
-declare function fetchFromLog(term: number, view: number, message: "VIEW-CHANGE"): { pk: string, data: VCMessage }[];
-declare function fetchFromLog(term: number, view: number, message: "NEW-VIEW"): { pk: string, data: NVMessage }[];
+declare function fetchFromLog(term: number, view: number, message: "PREPARE"): { pk: string, data: DigestTypes.P }[];
+declare function fetchFromLog(term: number, view: number, message: "COMMIT"): { pk: string, data: DigestTypes.C }[];
+declare function fetchFromLog(term: number, view: number, message: "VIEW-CHANGE"): { pk: string, data: DigestTypes.VC }[];
+declare function fetchFromLog(term: number, view: number, message: "NEW-VIEW"): { pk: string, data: DigestTypes.NV }[];
 
 declare function sign(privateKey: string, content: PPPayload): DigestTypes.PP;
 declare function sign(privateKey: string, content: PPayload): DigestTypes.P;
@@ -44,27 +44,15 @@ type PPMessage = {
     CB: Block;
 };
 
-type PMessage = {
-    payload: DigestTypes.P;
-};
-
-type CMessage = {
-    payload: DigestTypes.C;
-};
-
-type VCMessage = {
-    payload: DigestTypes.VC;
-};
-
-type NVMessage = {
-    payload: DigestTypes.NV;
-};
-
-type NewViewProof = { pk: string, data: VCMessage }[];
+type NewViewProof = { pk: string, data: DigestTypes.VC }[];
 
 type PreparedProof = {
     preprepare: { pk: string, data: PPMessage },
-    prepares: { pk: string, data: PMessage }[]
+    prepares: { pk: string, data: DigestTypes.P }[]
+};
+
+type CommitProof = {
+    commits: { pk: string, data: DigestTypes.C }[]
 };
 
 type PPPayload = {
@@ -160,14 +148,12 @@ class PBFT {
                     this.isPrePrepared(term, view, blockHash) === false) {
 
                     this.CB = B;
-                    const P: PMessage = {
-                        payload: sign(this.myPrivateKey, {
-                            message: "PREPARE",
-                            view,
-                            term,
-                            blockHash,
-                        })
-                    };
+                    const P: DigestTypes.P = sign(this.myPrivateKey, {
+                        message: "PREPARE",
+                        view,
+                        term,
+                        blockHash,
+                    });
                     Log(term, view, "PREPARE", { pk: senderPublicKey, data: P });
                     Log(term, view, "PRE-PREPARE", { pk: senderPublicKey, data: PP });
                     Multicast(this.myPublicKey, "PREPARE", P);
@@ -176,8 +162,8 @@ class PBFT {
         }
     }
 
-    onReceivePrepare(senderPublicKey, P: PMessage) {
-        const { message, view, term, blockHash } = decrypt(senderPublicKey, P.payload);
+    onReceivePrepare(senderPublicKey, P: DigestTypes.P) {
+        const { message, view, term, blockHash } = decrypt(senderPublicKey, P);
 
         if (message === "PREPARE") {
             if (senderPublicKey !== this.myPublicKey) {
@@ -207,20 +193,18 @@ class PBFT {
             prepares: fetchFromLog(this.term, this.view, "PREPARE")
         };
 
-        const C: CMessage = {
-            payload: sign(this.myPrivateKey, {
-                message: "COMMIT",
-                view,
-                term,
-                blockHash
-            })
-        };
+        const C: DigestTypes.C = sign(this.myPrivateKey, {
+            message: "COMMIT",
+            view,
+            term,
+            blockHash
+        });
         Log(term, view, "COMMIT", { pk: this.myPublicKey, data: C });
         Multicast(this.myPublicKey, "COMMIT", C);
     }
 
-    onReceiveCommit(senderPublicKey: string, C: CMessage) {
-        const { message, view, term, blockHash } = decrypt(senderPublicKey, C.payload);
+    onReceiveCommit(senderPublicKey: string, C: DigestTypes.C) {
+        const { message, view, term, blockHash } = decrypt(senderPublicKey, C);
 
         if (message === "COMMIT") {
             if (senderPublicKey !== this.myPublicKey) {
@@ -252,21 +236,19 @@ class PBFT {
 
     onTimeout() {
         this.view++;
-        const VC: VCMessage = {
-            payload: sign(this.myPrivateKey, {
-                message: "VIEW-CHANGE",
-                view: this.view,
-                term: this.term,
-                preparedProof: this.preparedProof
-            })
-        };
+        const VC: DigestTypes.VC = sign(this.myPrivateKey, {
+            message: "VIEW-CHANGE",
+            view: this.view,
+            term: this.term,
+            preparedProof: this.preparedProof
+        });
         Log(this.term, this.view, "VIEW-CHANGE", { pk: this.myPublicKey, data: VC });
         Unicast(this.myPublicKey, primary(this.view), "VIEW-CHANGE", VC);
         this.startTimer();
     }
 
-    onReceiveViewChange(senderPublicKey: string, VC: VCMessage) {
-        const { message, view, term, preparedProof } = decrypt(senderPublicKey, VC.payload);
+    onReceiveViewChange(senderPublicKey: string, VC: DigestTypes.VC) {
+        const { message, view, term, preparedProof } = decrypt(senderPublicKey, VC);
 
         if (message === "VIEW-CHANGE") {
             if (senderPublicKey !== this.myPublicKey) {
@@ -274,20 +256,8 @@ class PBFT {
                     if (primary(view) === this.myPublicKey) {
 
                         if (preparedProof) {
-                            const { preprepare, prepares } = preparedProof;
-                            if (preprepare && prepares && prepares.length >= 2 * this.config.f) {
-                                const { CB } = preprepare.data;
-                                if (CB) {
-                                    const { view, term, blockHash } = decrypt(senderPublicKey, preprepare.data.payload);
-                                    const allPreparesPkAreUnique = prepares.reduce((prev, current) => prev.set(current.pk, true), new Map()).size === prepares.length;
-                                    if (allPreparesPkAreUnique) {
-                                        const isPrepareMatch = prepares
-                                            .map(p => decrypt(p.pk, p.data.payload))
-                                            .findIndex(p => p.view !== view || p.term !== term || p.blockHash !== blockHash) === -1;
-                                        const isValidDigest = HASH(CB) === blockHash;
-                                        // TODO: what do we do with isPrepareMatch and isValidDigest
-                                    }
-                                }
+                            if (this.isPreparedProofValid(preparedProof) === false) {
+                                return; // prepared proof is invalid
                             }
                         }
 
@@ -301,19 +271,71 @@ class PBFT {
         }
     }
 
-    isViewChangeValid(preparedProof) {
+    isViewChangeValid(term: number, view: number, viewChangeProof: { pk: string, data: DigestTypes.VC }): boolean {
+        const vcPayload = decrypt(viewChangeProof.pk, viewChangeProof.data);
+        if (vcPayload.view !== view) {
+            return false;
+        }
+        if (vcPayload.term !== term) {
+            return false;
+        }
+
+        if (vcPayload.preparedProof) {
+            return this.isPreparedProofValid(vcPayload.preparedProof);
+        }
+
+        return true;
     }
 
-    isNewViewValid() {
+    isPreparedProofValid(preparedProof: PreparedProof): boolean {
+        const { preprepare, prepares } = preparedProof;
+        if (!preprepare || prepares) {
+            return false;
+        }
 
+        if (prepares.length < 2 * this.config.f) {
+            return false;
+        }
+
+        const { CB } = preprepare.data;
+        if (!CB) {
+            return false;
+        }
+
+        const { view, term, blockHash } = decrypt(preprepare.pk, preprepare.data.payload);
+        const allPreparesPkAreUnique = prepares.reduce((prev, current) => prev.set(current.pk, true), new Map()).size === prepares.length;
+        if (!allPreparesPkAreUnique) {
+            return false;
+        }
+
+        const isPrepareMatch = prepares
+            .map(p => decrypt(p.pk, p.data))
+            .findIndex(p => p.view !== view || p.term !== term || p.blockHash !== blockHash) === -1;
+        const isValidDigest = HASH(CB) === blockHash;
+        return isValidDigest && isPrepareMatch;
     }
 
-    isPreparedProofValid() {
+    isCommittedProofValid(committedProof: CommitProof) {
+        const { commits } = committedProof;
+        if (!commits) {
+            return false;
+        }
 
-    }
+        if (commits.length < 2 * this.config.f + 1) {
+            return false;
+        }
 
-    isCommittedProofValid() {
+        const allCommitsPkAreUnique = commits.reduce((prev, current) => prev.set(current.pk, true), new Map()).size === commits.length;
+        if (!allCommitsPkAreUnique) {
+            return false;
+        }
 
+        const firstCommit = commits[0];
+        const { view, term, blockHash } = decrypt(firstCommit.pk, firstCommit.data);
+        const isCommitMatch = commits
+            .map(c => decrypt(c.pk, c.data))
+            .findIndex(c => c.view !== view || c.term !== term || c.blockHash !== blockHash) === -1;
+        return isCommitMatch;
     }
 
     isElected(term: number, view: number): boolean {
@@ -322,18 +344,9 @@ class PBFT {
 
     onElected(term: number, view: number) {
         this.view = view;
-        this.CB = undefined;
 
-        const allViewChanges = fetchFromLog(term, view, "VIEW-CHANGE");
-        const preparedProofs = allViewChanges.map(vc => decrypt(vc.pk, vc.data.payload).preparedProof);
-        const filtedPreparedProofs = preparedProofs.filter(preparedProof => preparedProof !== undefined);
-        if (filtedPreparedProofs.length > 0) {
-            const sortedPrepreparedProofs = filtedPreparedProofs.map(pp => decrypt(pp.preprepare.pk, pp.preprepare.data.payload)).sort((a, b) => a.view - b.view);
-            const latestPrereparedProof = filtedPreparedProofs[0];
-            this.CB = latestPrereparedProof.preprepare.data.CB;
-        } else {
-            this.CB = constructBlock();
-        }
+        const newViewProof = fetchFromLog(term, view, "VIEW-CHANGE");
+        this.CB = this.extractBlock(newViewProof) || constructBlock();
 
         const PP: PPMessage = {
             payload: sign(this.myPrivateKey, {
@@ -345,26 +358,60 @@ class PBFT {
             CB: this.CB
         };
 
-        const NV: NVMessage = {
-            payload: sign(this.myPrivateKey, {
-                message: "NEW-VIEW",
-                newViewProof: allViewChanges,
-                PP
-            })
-        };
+        const NV: DigestTypes.NV = sign(this.myPrivateKey, {
+            message: "NEW-VIEW",
+            newViewProof,
+            PP
+        });
 
         Log(term, view, "NEW-VIEW", { pk: this.myPublicKey, data: NV });
         Multicast(this.myPublicKey, "NEW-VIEW", NV);
     }
 
-    onReceiveNewView(senderPublicKey: string, NV: NVMessage) {
-        const { message, newViewProof, PP } = decrypt(senderPublicKey, NV.payload);
-        const { term, view } = decrypt(senderPublicKey, PP.payload);
+    extractBlock(viewChanges: { pk: string, data: DigestTypes.VC }[]): Block {
+        const preparedProofs = viewChanges.map(vc => decrypt(vc.pk, vc.data).preparedProof);
+        const filtedPreparedProofs = preparedProofs.filter(preparedProof => preparedProof !== undefined);
+        if (filtedPreparedProofs.length > 0) {
+            const sortedPrepreparedProofs = filtedPreparedProofs.map(pp => {
+                return { payload: decrypt(pp.preprepare.pk, pp.preprepare.data.payload), CB: pp.preprepare.data.CB };
+            }
+            ).sort((a, b) => a.payload.view - b.payload.view);
+            const latestPrereparedProof = sortedPrepreparedProofs[0];
+            return latestPrereparedProof.CB;
+        } else {
+            return undefined;
+        }
+    }
+
+    onReceiveNewView(senderPublicKey: string, NV: DigestTypes.NV) {
+        const { message, newViewProof, PP } = decrypt(senderPublicKey, NV);
+        const { term, view, blockHash } = decrypt(senderPublicKey, PP.payload);
 
         if (message === "NEW-VIEW") {
             if (senderPublicKey !== this.myPublicKey) {
                 if (view >= this.view && term === this.term) {
-                    this.initView(view);
+                    if (primary(view) === senderPublicKey) {
+                        const invalidProofIndex = newViewProof.findIndex(proof => !this.isViewChangeValid(term, view, proof));
+                        if (invalidProofIndex > -1) {
+                            return; // bad newViewProof at ${invalidProofIndex}
+                        }
+
+                        if (HASH(PP.CB) !== blockHash) {
+                            return; // block hash doen't match
+                        }
+
+                        if (valid(PP.CB) === false) {
+                            return; // block is not valid
+                        }
+
+                        const block = this.extractBlock(newViewProof);
+                        if (block && HASH(block) !== HASH(PP.CB)) {
+                            return; // suggested block doesn't match new view rules
+                        }
+
+                        this.initView(view);
+                        this.onReceivePrePrepare(senderPublicKey, PP);
+                    }
                 }
             }
         }
