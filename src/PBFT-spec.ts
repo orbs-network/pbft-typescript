@@ -1,42 +1,103 @@
 function primary(view: number): string { return ""; }
 function constructBlock(): Block { return { previousBlockHash: "", height: 0 }; }
 function HASH(block): string { return ""; }
-function Log(term: number, view: number, message: string, { pk: string, data: any }) { }
-function fetchFromLog(term: number, view: number, message: string): any { }
-function isPrePrepared(term: number, view: number): boolean { return true; }
-function getPrepareCount(term: number, view: number, digest: string): number { return 0; }
+function getPrepareCount(term: number, view: number, blockHash: string): number { return 0; }
 function getCommitCount(term: number, view: number): any { return 0; }
 function getViewChangeCount(term: number, view: number): any { return 0; }
 function Multicast(senderPublicKey: string, message: string, payload): void { }
 function Unicast(senderPublicKey: string, targetPublicKey: string, message, payload): void { }
 function valid(block: Block): boolean { return true; }
 function sign(privateKey: string, content: any): string { return ""; }
-function decrypt(publicKey: string, encryptedData): any { return undefined; }
+
+function LogPP(term: number, view: number, message: "PRE-PREPARE", { pk: string, data: PPMessage }) { }
+function LogP(term: number, view: number, message: "PREPARE", { pk: string, data: PMessage }) { }
+function LogC(term: number, view: number, message: "COMMIT", { pk: string, data: CMessage }) { }
+function LogVC(term: number, view: number, message: "VIEW-CHANGE", { pk: string, data: VCMessage }) { }
+function LogNV(term: number, view: number, message: "NEW-VIEW", { pk: string, data: NVMessage }) { }
+
+function fetchFromLogPP(term: number, view: number, message: "PRE-PREPARE"): { pk: string, data: PPMessage } { return undefined; }
+function fetchFromLogP(term: number, view: number, message: "PREPARE"): { pk: string, data: PMessage }[] { return undefined; }
+function fetchFromLogC(term: number, view: number, message: "COMMIT"): { pk: string, data: CMessage }[] { return undefined; }
+function fetchFromLogVC(term: number, view: number, message: "VIEW-CHANGE"): { pk: string, data: VCMessage }[] { return undefined; }
+function fetchFromLogNV(term: number, view: number, message: "NEW-VIEW"): { pk: string, data: NVMessage }[] { return undefined; }
+
+function signPP(privateKey: string, content: PPPayload): DigestTypes.PP { return DigestTypes.PP; }
+function signP(privateKey: string, content: PPayload): DigestTypes.P { return DigestTypes.P; }
+function signC(privateKey: string, content: CPayload): DigestTypes.C { return DigestTypes.C; }
+function signVC(privateKey: string, content: VCPayload): DigestTypes.VC { return DigestTypes.VC; }
+function signNV(privateKey: string, content: NVPayload): DigestTypes.NV { return DigestTypes.NV; }
+
+function decryptPP(publicKey: string, encryptedData: DigestTypes.PP): PPPayload { return undefined; }
+function decryptP(publicKey: string, encryptedData: DigestTypes.P): PPayload { return undefined; }
+function decryptC(publicKey: string, encryptedData: DigestTypes.C): CPayload { return undefined; }
+function decryptVC(publicKey: string, encryptedData: DigestTypes.VC): VCPayload { return undefined; }
+function decryptNV(publicKey: string, encryptedData: DigestTypes.NV): NVPayload { return undefined; }
 
 type Block = {
     height: number;
     previousBlockHash: string;
 };
 
-type MessageType = "PRE-PREPARE" | "PREPARE" | "COMMIT";
-type MessageContent = {
-    message: MessageType,
-    view: number,
-    term: number,
-    digest: string
-};
+enum DigestTypes { PP, P, C, VC, NV }
 
 type PPMessage = {
-    payload: string;
+    payload: DigestTypes.PP;
     CB: Block;
 };
 
 type PMessage = {
-    payload: string;
+    payload: DigestTypes.P;
 };
 
 type CMessage = {
-    payload: string;
+    payload: DigestTypes.C;
+};
+
+type VCMessage = {
+    payload: DigestTypes.VC;
+};
+
+type NVMessage = {
+    payload: DigestTypes.NV;
+};
+
+type PPPayload = {
+    message: "PRE-PREPARE",
+    view: number,
+    term: number,
+    blockHash: string
+};
+
+type PPayload = {
+    message: "PREPARE",
+    view: number,
+    term: number,
+    blockHash: string
+};
+
+type CPayload = {
+    message: "COMMIT",
+    view: number,
+    term: number,
+    blockHash: string
+};
+
+type VCPayload = {
+    message: "VIEW-CHANGE"
+    view: number,
+    term: number,
+    preparedProof: PreparedProof
+};
+
+type NVPayload = {
+    message: "NEW-VIEW",
+    newViewProof,
+    PP: PPMessage
+};
+
+type PreparedProof = {
+    preprepare: { pk: string, data: PPMessage },
+    prepares: { pk: string, data: PMessage }[]
 };
 
 class PBFT {
@@ -47,7 +108,7 @@ class PBFT {
     private term: number;
     private view: number;
     private CB: Block;
-    private preparedProof;
+    private preparedProof: PreparedProof;
 
     constructor(private config: { f: number, TIMEOUT: number }) {
         this.initPBFT();
@@ -66,15 +127,15 @@ class PBFT {
         if (primary(this.view) === this.myPublicKey) {
             this.CB = constructBlock();
             const PP: PPMessage = {
-                payload: sign(this.myPrivateKey, {
+                payload: signPP(this.myPrivateKey, {
                     message: "PRE-PREPARE",
                     view: this.view,
                     term: this.term,
-                    digest: HASH(this.CB),
+                    blockHash: HASH(this.CB),
                 }),
                 CB: this.CB
             };
-            Log(this.term, this.view, "PRE-PREPARE", { pk: this.myPublicKey, data: PP });
+            LogPP(this.term, this.view, "PRE-PREPARE", { pk: this.myPublicKey, data: PP });
             Multicast(this.myPublicKey, "PRE-PREPARE", PP);
         }
     }
@@ -84,7 +145,7 @@ class PBFT {
     }
 
     onReceivePrePrepare(senderPublicKey: string, PP: PPMessage) {
-        const { message, view, term, digest } = decrypt(senderPublicKey, PP.payload);
+        const { message, view, term, blockHash } = decryptPP(senderPublicKey, PP.payload);
         const B = PP.CB;
 
         if (message === "PRE-PREPARE") {
@@ -92,22 +153,22 @@ class PBFT {
                 if (view === this.view &&
                     term === this.term &&
                     primary(view) === senderPublicKey &&
-                    digest === HASH(B) &&
+                    blockHash === HASH(B) &&
                     B.previousBlockHash === HASH(this.lastCommittedBlock) &&
                     valid(B) &&
-                    isPrePrepared(term, view) === false) {
+                    this.isPrePrepared(term, view, blockHash) === false) {
 
                     this.CB = B;
                     const P: PMessage = {
-                        payload: sign(this.myPrivateKey, {
+                        payload: signP(this.myPrivateKey, {
                             message: "PREPARE",
                             view,
                             term,
-                            digest,
+                            blockHash,
                         })
                     };
-                    Log(term, view, "PREPARE", { pk: senderPublicKey, data: P });
-                    Log(term, view, "PRE-PREPARE", { pk: senderPublicKey, data: PP });
+                    LogP(term, view, "PREPARE", { pk: senderPublicKey, data: P });
+                    LogPP(term, view, "PRE-PREPARE", { pk: senderPublicKey, data: PP });
                     Multicast(this.myPublicKey, "PREPARE", P);
                 }
             }
@@ -115,76 +176,66 @@ class PBFT {
     }
 
     onReceivePrepare(senderPublicKey, P: PMessage) {
-        const { message, view, term, digest } = decrypt(senderPublicKey, P.payload);
+        const { message, view, term, blockHash } = decryptP(senderPublicKey, P.payload);
 
         if (message === "PREPARE") {
             if (senderPublicKey !== this.myPublicKey) {
                 if (view === this.view &&
                     term === this.term &&
                     primary(view) !== senderPublicKey) {
-                    Log(term, view, "PREPARE", { pk: senderPublicKey, data: P });
-                    if (this.isPrepared(term, view, digest)) {
-                        this.onPrepared(view, term, digest);
+                    LogP(term, view, "PREPARE", { pk: senderPublicKey, data: P });
+                    if (this.isPrePrepared(term, view, blockHash)) {
+                        if (getPrepareCount(term, view, blockHash) >= 2 * this.config.f) {
+                            this.onPrepared(view, term, blockHash);
+                        }
                     }
                 }
             }
         }
     }
 
-    isPrePrepared(term: number, view: number, digest: string): boolean {
-        return fetchFromLog(term, view, "PRE-PREPARE").payload.digest === digest;
+    isPrePrepared(term: number, view: number, blockHash: string): boolean {
+        const PPLog = fetchFromLogPP(term, view, "PRE-PREPARE");
+        const PPPayload = decryptPP(PPLog.pk, PPLog.data.payload);
+        return PPPayload.blockHash === blockHash;
     }
 
-    isPrepared(term: number, view: number, digest: string): boolean {
-        if (view === this.view && term === this.term) {
-            if (this.isPrePrepared(term, view, digest)) {
-                if (getPrepareCount(term, view, digest) >= 2 * this.config.f) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    onPrepared(view: number, term: number, digest: string) {
-        const preprepare = fetchFromLog(term, view, "PRE-PREPARE");
-        const { B } = preprepare;
+    onPrepared(view: number, term: number, blockHash: string) {
         this.preparedProof = {
-            preprepare,
-            prepares: fetchFromLog(this.term, this.view, "PREPARE")
+            preprepare: fetchFromLogPP(term, view, "PRE-PREPARE"),
+            prepares: fetchFromLogP(this.term, this.view, "PREPARE")
         };
 
         const C: CMessage = {
-            payload: sign(this.myPrivateKey, {
+            payload: signC(this.myPrivateKey, {
                 message: "COMMIT",
                 view,
                 term,
-                digest
+                blockHash
             })
         };
-        Log(term, view, "COMMIT", { pk: this.myPublicKey, data: C });
+        LogC(term, view, "COMMIT", { pk: this.myPublicKey, data: C });
         Multicast(this.myPublicKey, "COMMIT", C);
     }
 
     onReceiveCommit(senderPublicKey: string, C: CMessage) {
-        const { message, view, term, digest } = decrypt(senderPublicKey, C.payload);
+        const { message, view, term, blockHash } = decryptC(senderPublicKey, C.payload);
 
         if (message === "COMMIT") {
             if (senderPublicKey !== this.myPublicKey) {
                 if (view >= this.view && term === this.term) {
-                    Log(term, view, "COMMIT", { pk: senderPublicKey, data: C });
-                    if (this.isCommitted(term, view)) {
-                        this.onCommitted(term, view, digest);
+                    LogC(term, view, "COMMIT", { pk: senderPublicKey, data: C });
+                    if (this.hasEnoughCommitVotes(term, view, blockHash)) {
+                        this.commit(term, view, blockHash);
                     }
                 }
             }
         }
     }
 
-    isCommitted(term: number, view: number): boolean {
+    hasEnoughCommitVotes(term: number, view: number, blockHash: string): boolean {
         if (view === this.view && term === this.term) {
-            if (isPrePrepared(term, view)) {
+            if (this.isPrePrepared(term, view, blockHash)) {
                 if (getCommitCount(term, view) >= 2 * this.config.f + 1) {
                     return true;
                 }
@@ -194,35 +245,52 @@ class PBFT {
         return false;
     }
 
-    onCommitted(term: number, view: number, digest: string) {
+    commit(term: number, view: number, blockHash: string) {
         this.lastCommittedBlock = this.CB;
     }
 
     onTimeout() {
         this.view++;
-        const VC = {
-            payload: sign(this.myPrivateKey, {
+        const VC: VCMessage = {
+            payload: signVC(this.myPrivateKey, {
                 message: "VIEW-CHANGE",
                 view: this.view,
                 term: this.term,
                 preparedProof: this.preparedProof
             })
         };
-        Log(this.term, this.view, "VIEW_CHANGE", { pk: this.myPublicKey, data: VC });
-        Unicast(this.myPublicKey, primary(this.view), "VIEW_CHANGE", VC);
+        LogVC(this.term, this.view, "VIEW-CHANGE", { pk: this.myPublicKey, data: VC });
+        Unicast(this.myPublicKey, primary(this.view), "VIEW-CHANGE", VC);
         this.startTimer();
     }
 
-    onReceiveViewChange(senderPublicKey: string, VC) {
-        const { message, view, term, preparedProof } = decrypt(senderPublicKey, VC.payload);
-
-        const { preprepare, prepares } = preparedProof;
+    onReceiveViewChange(senderPublicKey: string, VC: VCMessage) {
+        const { message, view, term, preparedProof } = decryptVC(senderPublicKey, VC.payload);
 
         if (message === "VIEW-CHANGE") {
             if (senderPublicKey !== this.myPublicKey) {
                 if (view >= this.view && term === this.term) {
                     if (primary(view) === this.myPublicKey) {
-                        Log(term, view, "VIEW-CHANGE", { pk: senderPublicKey, data: VC });
+
+                        if (preparedProof) {
+                            const { preprepare, prepares } = preparedProof;
+                            if (preprepare && prepares && prepares.length >= 2 * this.config.f) {
+                                const { CB } = preprepare.data;
+                                if (CB) {
+                                    const { view, term, blockHash } = decryptPP(senderPublicKey, preprepare.data.payload);
+                                    const allPreparesPkAreUnique = prepares.reduce((prev, current) => prev.set(current.pk, true), new Map()).size === prepares.length;
+                                    if (allPreparesPkAreUnique) {
+                                        const isPrepareMatch = prepares
+                                            .map(p => decryptP(p.pk, p.data.payload))
+                                            .findIndex(p => p.view !== view || p.term !== term || p.blockHash !== blockHash) === -1;
+                                        const isValidDigest = HASH(CB) === blockHash;
+                                        // TODO: what do we do with isPrepareMatch and isValidDigest
+                                    }
+                                }
+                            }
+                        }
+
+                        LogVC(term, view, "VIEW-CHANGE", { pk: senderPublicKey, data: VC });
                         if (this.isElected(term, view)) {
                             this.onElected(term, view);
                         }
@@ -232,8 +300,7 @@ class PBFT {
         }
     }
 
-    isViewChangeValid() {
-
+    isViewChangeValid(preparedProof) {
     }
 
     isNewViewValid() {
@@ -256,43 +323,43 @@ class PBFT {
         this.view = view;
         this.CB = undefined;
 
-        const allViewChanges = fetchFromLog(term, view, "VIEW-CHANGE");
-        const preparedProofs = allViewChanges.map(vc => decrypt(vc.pk, vc.data).payload.preparedProof);
+        const allViewChanges = fetchFromLogVC(term, view, "VIEW-CHANGE");
+        const preparedProofs = allViewChanges.map(vc => decryptVC(vc.pk, vc.data.payload).preparedProof);
         const filtedPreparedProofs = preparedProofs.filter(preparedProof => preparedProof !== undefined);
-        const sortedPreparedProofs = filtedPreparedProofs.sort((a, b) => a.preprepare.view - b.preprepare.view);
-        if (preparedProofs.length > 0) {
-            const latestViewPreparedProof = preparedProofs[0];
-            this.CB = latestViewPreparedProof.preprepare.B;
+        if (filtedPreparedProofs.length > 0) {
+            const sortedPrepreparedProofs = filtedPreparedProofs.map(pp => decryptPP(pp.preprepare.pk, pp.preprepare.data.payload)).sort((a, b) => a.view - b.view);
+            const latestPrereparedProof = filtedPreparedProofs[0];
+            this.CB = latestPrereparedProof.preprepare.data.CB;
         } else {
             this.CB = constructBlock();
         }
 
         const PP: PPMessage = {
-            payload: sign(this.myPrivateKey, {
+            payload: signPP(this.myPrivateKey, {
                 message: "PRE-PREPARE",
                 view: this.view,
                 term: this.term,
-                digest: HASH(this.CB),
+                blockHash: HASH(this.CB),
             }),
             CB: this.CB
         };
 
-        const newViewProof = sign(this.myPrivateKey, [allViewChanges]);
-        const NV = {
-            payload: sign(this.myPrivateKey, {
+        const newViewProof = sign(this.myPrivateKey, allViewChanges);
+        const NV: NVMessage = {
+            payload: signNV(this.myPrivateKey, {
                 message: "NEW-VIEW",
                 newViewProof,
                 PP
             })
         };
 
-        Log(term, view, "NEW-VIEW", { pk: this.myPublicKey, data: NV });
+        LogNV(term, view, "NEW-VIEW", { pk: this.myPublicKey, data: NV });
         Multicast(this.myPublicKey, "NEW-VIEW", NV);
     }
 
-    onReceiveNewView(senderPublicKey: string, NV) {
-        const { message, newViewProof, PP } = decrypt(senderPublicKey, NV.payload);
-        const { term, view } = decrypt(senderPublicKey, PP.payload);
+    onReceiveNewView(senderPublicKey: string, NV: NVMessage) {
+        const { message, newViewProof, PP } = decryptNV(senderPublicKey, NV.payload);
+        const { term, view } = decryptPP(senderPublicKey, PP.payload);
 
         if (message === "NEW-VIEW") {
             if (senderPublicKey !== this.myPublicKey) {
