@@ -17,9 +17,8 @@ describe("PBFT In Memory Storage", () => {
     it("stores a preprepare on the storage", () => {
         const storage = new InMemoryPBFTStorage(logger);
         const blockHash = Math.random().toString();
-        const sender1Id = Math.random().toString();
         expect(storage.hasPrePrepare(blockHash)).to.equal(false);
-        storage.storePrePrepare(blockHash, sender1Id);
+        storage.storePrePrepare(blockHash);
         expect(storage.hasPrePrepare(blockHash)).to.equal(true);
     });
 

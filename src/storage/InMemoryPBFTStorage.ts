@@ -2,20 +2,23 @@ import { Logger } from "../logger/Logger";
 import { PBFTStorage } from "./PBFTStorage";
 
 export class InMemoryPBFTStorage implements PBFTStorage {
+    private prePrepareStorage: { [blockHash: string]: boolean } = {};
     private prepareStorage: { [blockHash: string]: string[] } = {};
     private viewChangeStorage: { [view: number]: string[] } = {};
 
     constructor(private logger: Logger) {
+        this.prePrepareStorage = {};
         this.prepareStorage = {};
         this.viewChangeStorage = {};
     }
 
-    storePrePrepare(blockHash: string, senderId: string): void {
+    storePrePrepare(blockHash: string): void {
+        this.prePrepareStorage[blockHash] = true;
         this.logger.log(`storePrePrepare, block logged.`);
     }
 
     hasPrePrepare(blockHash: string): boolean {
-        return false;
+        return this.prePrepareStorage[blockHash] === true;
     }
 
     storePrepare(blockHash: string, senderId: string): void {

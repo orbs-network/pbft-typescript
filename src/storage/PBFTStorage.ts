@@ -1,5 +1,5 @@
 export interface PBFTStorage {
-    storePrePrepare(blockHash: string, senderId: string): void;
+    storePrePrepare(blockHash: string): void;
     hasPrePrepare(blockHash: string): boolean;
     storePrepare(blockHash: string, senderId: string): void;
     countOfPrepared(blockHash: string): number;
