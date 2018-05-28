@@ -134,13 +134,6 @@ export class PBFT {
         this.checkPrepared(payload.block.hash);
     }
 
-    private checkPrepared(blockHash: string) {
-        if (this.isPrePrepared(blockHash) && this.isPrepared(blockHash)) {
-            this.logger.log(`[${this.id}] checkPrepared, found enough votes, there's consensus. commtting block (${blockHash})`);
-            this.commitBlock(blockHash);
-        }
-    }
-
     private onReceivePrepare(senderId: string, payload: PreparePayload): void {
         this.logger.log(`[${this.id}] onReceivePrepare from ${senderId}, blockHash:${payload.blockHash}, view:${payload.view}`);
         if (senderId === this.id) {
@@ -159,6 +152,13 @@ export class PBFT {
         if (this.isElected(payload.newView)) {
             const newViewPayload: NewViewPayload = { view: payload.newView };
             this.gossip.multicast(this.id, this.getOtherNodesIds(), "new-view", newViewPayload);
+        }
+    }
+
+    private checkPrepared(blockHash: string) {
+        if (this.isPrePrepared(blockHash) && this.isPrepared(blockHash)) {
+            this.logger.log(`[${this.id}] checkPrepared, found enough votes, there's consensus. commtting block (${blockHash})`);
+            this.commitBlock(blockHash);
         }
     }
 
