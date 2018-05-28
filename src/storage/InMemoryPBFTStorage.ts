@@ -10,6 +10,14 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         this.viewChangeStorage = {};
     }
 
+    storePrePrepare(blockHash: string, senderId: string): void {
+        this.logger.log(`storePrePrepare, block logged.`);
+    }
+
+    hasPrePrepare(blockHash: string): boolean {
+        return false;
+    }
+
     storePrepare(blockHash: string, senderId: string): void {
         if (this.prepareStorage[blockHash] === undefined) {
             this.prepareStorage[blockHash] = [senderId];

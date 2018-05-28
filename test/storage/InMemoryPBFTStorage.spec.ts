@@ -14,7 +14,16 @@ describe("PBFT In Memory Storage", () => {
         expect(storage).to.not.be.undefined;
     });
 
-    it("stores a prepare on the store", () => {
+    it("stores a preprepare on the storage", () => {
+        const storage = new InMemoryPBFTStorage(logger);
+        const blockHash = Math.random().toString();
+        const sender1Id = Math.random().toString();
+        expect(storage.hasPrePrepare(blockHash)).to.equal(false);
+        storage.storePrePrepare(blockHash, sender1Id);
+        expect(storage.hasPrePrepare(blockHash)).to.equal(true);
+    });
+
+    it("stores a prepare on the storage", () => {
         const storage = new InMemoryPBFTStorage(logger);
         const blockHash = Math.random().toString();
         const sender1Id = Math.random().toString();
@@ -25,7 +34,7 @@ describe("PBFT In Memory Storage", () => {
         expect(actual).to.equal(2);
     });
 
-    it("stores a view-change on the store", () => {
+    it("stores a view-change on the storage", () => {
         const storage = new InMemoryPBFTStorage(logger);
         const sender1Id = Math.random().toString();
         const sender2Id = Math.random().toString();
