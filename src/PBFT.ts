@@ -12,7 +12,7 @@ export type onNewBlockCB = (block: Block) => void;
 
 export class PBFT {
     private committedBlocksHashs: string[];
-    private prePrepareBlock: Block;
+    private CB: Block;
     private currentView: number = 0;
     private network: Network;
     private pbftStorage: PBFTStorage;
@@ -56,7 +56,8 @@ export class PBFT {
     }
 
     public suggestBlockAsLeader(block: Block): void {
-        this.prePrepareBlock = block;
+        this.CB = block;
+        this.pbftStorage.storePrePrepare(this.CB.hash);
         this.broadcastPrePrepare(block);
     }
 
@@ -97,17 +98,17 @@ export class PBFT {
     private async onPrePrepare(senderId: string, payload: PrePreparePayload): Promise<void> {
         this.logger.log(`onPrePrepare blockHash:${payload.block.hash}, view:${payload.view}`);
         if (senderId === this.id) {
-            this.logger.log(`onPrePrepare, block rejected because it was pretended to come from this node`);
-            return;
-        }
-
-        if (this.isBlockPointingToPreviousBlock(payload.block) === false) {
-            this.logger.log(`onPrePrepare, block rejected because it's not pointing to the previous block`);
+            this.logger.log(`onPrePrepare, block rejected because it came from this node`);
             return;
         }
 
         if (this.isFromCurrentLeader(senderId) === false) {
             this.logger.log(`onPrePrepare, block rejected because it was not sent by the current leader (${this.currentView})`);
+            return;
+        }
+
+        if (this.isBlockPointingToPreviousBlock(payload.block) === false) {
+            this.logger.log(`onPrePrepare, block rejected because it's not pointing to the previous block`);
             return;
         }
 
@@ -117,36 +118,39 @@ export class PBFT {
             return;
         }
 
-        this.prePrepareBlock = payload.block;
+        if (this.isPrePrepared(payload.block.hash)) {
+            this.logger.log(`already prepared`);
+            return;
+        }
+
+        this.CB = payload.block;
         const preparePayload: PreparePayload = {
             blockHash: payload.block.hash,
             view: payload.view
         };
         this.pbftStorage.storePrepare(preparePayload.blockHash, senderId);
+        this.pbftStorage.storePrePrepare(preparePayload.blockHash);
         this.broadcastPrepare(payload.block);
-        if (this.isPrepared(payload.block.hash)) {
-            this.logger.log(`onPrePrepare, found enough votes, there's consensus. commtting block (${this.prePrepareBlock.hash})`);
-            this.commitBlock(this.prePrepareBlock);
+        this.checkPrepared(payload.block.hash);
+    }
+
+    private checkPrepared(blockHash: string) {
+        if (this.isPrePrepared(blockHash) && this.isPrepared(blockHash)) {
+            this.logger.log(`checkPrepared, found enough votes, there's consensus. commtting block (${blockHash})`);
+            this.commitBlock(blockHash);
         }
     }
 
     private onPrepare(senderId: string, payload: PreparePayload): void {
         this.logger.log(`onPrepare blockHash:${payload.blockHash}, view:${payload.view}`);
         if (senderId === this.id) {
-            this.logger.log(`onPrepare, block rejected because it was pretended to come from this node`);
+            this.logger.log(`onPrepare, block rejected because it came from this node`);
             return;
         }
 
         this.pbftStorage.storePrepare(payload.blockHash, senderId);
-        if (this.isBlockMatchPrePrepareBlock(payload.blockHash) === false) {
-            this.logger.log(`onPrepare, block rejected because it does not match the onPrePare block`);
-            return;
-        }
 
-        if (this.isPrepared(payload.blockHash)) {
-            this.logger.log(`onPrepare, found enough votes, there's consensus. commtting block (${this.prePrepareBlock.hash})`);
-            this.commitBlock(this.prePrepareBlock);
-        }
+        this.checkPrepared(payload.blockHash);
     }
 
     private onViewChange(senderId: string, payload: ViewChangePayload): void {
@@ -178,10 +182,6 @@ export class PBFT {
         return this.leaderId() === senderId;
     }
 
-    private isBlockMatchPrePrepareBlock(blockHash: string): boolean {
-        return this.prePrepareBlock !== undefined && this.prePrepareBlock.hash === blockHash;
-    }
-
     private isElected(view: number): boolean {
         return this.pbftStorage.countOfViewChange(view) >= this.getF() * 2 + 1;
     }
@@ -190,12 +190,15 @@ export class PBFT {
         return this.pbftStorage.countOfPrepared(blockHash) >= this.getF() * 2;
     }
 
-    private commitBlock(block: Block): void {
-        this.electionTrigger.snooze();
-        const blockHash = block.hash;
+    private isPrePrepared(blockHash: string): boolean {
+        return this.pbftStorage.hasPrePrepare(blockHash);
+    }
+
+    private commitBlock(blockHash: string): void {
         if (this.committedBlocksHashs.indexOf(blockHash) === -1) {
+            this.electionTrigger.snooze();
             this.committedBlocksHashs.push(blockHash);
-            this.onNewBlockListeners.forEach(cb => cb(block));
+            this.onNewBlockListeners.forEach(cb => cb(this.CB));
         }
     }
 }
