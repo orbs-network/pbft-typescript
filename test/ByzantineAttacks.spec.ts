@@ -44,4 +44,21 @@ describe("Byzantine Attacks", () => {
         expect(inspectedStorage.countOfPrepared(block.hash)).to.equal(3);
         network.shutDown();
     });
+
+    it("should ignore prepare that came from the leader, we count the leader only on the preprepare", async () => {
+        const logger = new SilentLogger();
+        const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
+        const nodeBuilder = aLoyalNode().storingOn(inspectedStorage);
+        const network = aNetwork().thatLogsToConsole.leadBy.a.loyalLeader.with(2).loyalNodes.withCustomeNode(nodeBuilder).build();
+
+        const block = aBlock(theGenesisBlock);
+        const leader = network.nodes[0];
+        const node = network.nodes[1];
+        leader.pbft.gossip.unicast(leader.id, node.id, "prepare", { blockHash: block.hash, view: 0 });
+        leader.pbft.gossip.unicast(leader.id, node.id, "preprepare", { block, view: 0 });
+        await nextTick();
+
+        expect(node.getLatestBlock()).to.not.deep.equal(block);
+        network.shutDown();
+    });
 });

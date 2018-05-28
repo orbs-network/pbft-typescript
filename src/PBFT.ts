@@ -128,7 +128,7 @@ export class PBFT {
             blockHash: payload.block.hash,
             view: payload.view
         };
-        this.pbftStorage.storePrepare(preparePayload.blockHash, senderId);
+        this.pbftStorage.storePrepare(preparePayload.blockHash, this.id);
         this.pbftStorage.storePrePrepare(preparePayload.blockHash);
         this.broadcastPrepare(payload.block);
         this.checkPrepared(payload.block.hash);
@@ -138,6 +138,11 @@ export class PBFT {
         this.logger.log(`[${this.id}] onReceivePrepare from ${senderId}, blockHash:${payload.blockHash}, view:${payload.view}`);
         if (senderId === this.id) {
             this.logger.log(`[${this.id}] onReceivePrepare from ${senderId}, block rejected because it came from this node`);
+            return;
+        }
+
+        if (this.isFromCurrentLeader(senderId)) {
+            this.logger.log(`[${this.id}] onReceivePrepare from ${senderId}, prepare not logged as we don't accept prepare from the leader`);
             return;
         }
 
