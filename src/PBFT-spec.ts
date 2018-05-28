@@ -8,11 +8,11 @@ function Multicast(senderPublicKey: string, message: string, payload): void { }
 function Unicast(senderPublicKey: string, targetPublicKey: string, message, payload): void { }
 function valid(block: Block): boolean { return true; }
 
-declare function Log(term: number, view: number, message: "PRE-PREPARE", { pk: string, data: DigestTypes });
-declare function Log(term: number, view: number, message: "PREPARE", { pk: string, data: DigestTypes });
-declare function Log(term: number, view: number, message: "COMMIT", { pk: string, data: DigestTypes });
-declare function Log(term: number, view: number, message: "VIEW-CHANGE", { pk: string, data: DigestTypes });
-declare function Log(term: number, view: number, message: "NEW-VIEW", { pk: string, data: DigestTypes });
+declare function Log(term: number, view: number, message: "PRE-PREPARE", pk: string, data: PPMessage);
+declare function Log(term: number, view: number, message: "PREPARE", pk: string, data: DigestTypes.P);
+declare function Log(term: number, view: number, message: "COMMIT", pk: string, data: DigestTypes.C);
+declare function Log(term: number, view: number, message: "VIEW-CHANGE", pk: string, data: DigestTypes.VC);
+declare function Log(term: number, view: number, message: "NEW-VIEW", pk: string, data: DigestTypes.NV);
 
 declare function fetchFromLog(term: number, view: number, message: "PRE-PREPARE"): { pk: string, data: PPMessage };
 declare function fetchFromLog(term: number, view: number, message: "PREPARE"): { pk: string, data: DigestTypes.P }[];
@@ -124,7 +124,7 @@ class PBFT {
                 }),
                 CB: this.CB
             };
-            Log(this.term, this.view, "PRE-PREPARE", { pk: this.myPublicKey, data: PP });
+            Log(this.term, this.view, "PRE-PREPARE", this.myPublicKey, PP);
             Multicast(this.myPublicKey, "PRE-PREPARE", PP);
         }
     }
@@ -154,8 +154,8 @@ class PBFT {
                         term,
                         blockHash,
                     });
-                    Log(term, view, "PREPARE", { pk: senderPublicKey, data: P });
-                    Log(term, view, "PRE-PREPARE", { pk: senderPublicKey, data: PP });
+                    Log(term, view, "PREPARE", this.myPublicKey, P);
+                    Log(term, view, "PRE-PREPARE", senderPublicKey, PP);
                     Multicast(this.myPublicKey, "PREPARE", P);
                     this.checkPrepared(term, view, blockHash);
                 }
@@ -179,7 +179,7 @@ class PBFT {
                 if (view === this.view &&
                     term === this.term &&
                     primary(view) !== senderPublicKey) {
-                    Log(term, view, "PREPARE", { pk: senderPublicKey, data: P });
+                    Log(term, view, "PREPARE", senderPublicKey, P);
                     this.checkPrepared(term, view, blockHash);
                 }
             }
@@ -204,7 +204,7 @@ class PBFT {
             term,
             blockHash
         });
-        Log(term, view, "COMMIT", { pk: this.myPublicKey, data: C });
+        Log(term, view, "COMMIT", this.myPublicKey, C);
         Multicast(this.myPublicKey, "COMMIT", C);
         this.checkCommit(term, view, blockHash);
     }
@@ -221,7 +221,7 @@ class PBFT {
         if (message === "COMMIT") {
             if (senderPublicKey !== this.myPublicKey) {
                 if (view >= this.view && term === this.term) {
-                    Log(term, view, "COMMIT", { pk: senderPublicKey, data: C });
+                    Log(term, view, "COMMIT", senderPublicKey, C);
                     this.checkCommit(term, view, blockHash);
                 }
             }
@@ -252,7 +252,7 @@ class PBFT {
             term: this.term,
             preparedProof: this.preparedProof
         });
-        Log(this.term, this.view, "VIEW-CHANGE", { pk: this.myPublicKey, data: VC });
+        Log(this.term, this.view, "VIEW-CHANGE", this.myPublicKey, VC);
         Unicast(this.myPublicKey, primary(this.view), "VIEW-CHANGE", VC);
         this.checkElected(this.term, this.view);
         this.startTimer();
@@ -272,7 +272,7 @@ class PBFT {
                             }
                         }
 
-                        Log(term, view, "VIEW-CHANGE", { pk: senderPublicKey, data: VC });
+                        Log(term, view, "VIEW-CHANGE", senderPublicKey, VC);
                         this.checkElected(term, view);
                     }
                 }
@@ -312,6 +312,10 @@ class PBFT {
         }
 
         const { view, term, blockHash } = decrypt(preprepare.pk, preprepare.data.payload);
+        if (primary(view) !== preprepare.pk) {
+            return false;
+        }
+
         const allPreparesPkAreUnique = prepares.reduce((prev, current) => prev.set(current.pk, true), new Map()).size === prepares.length;
         if (!allPreparesPkAreUnique) {
             return false;
@@ -375,7 +379,7 @@ class PBFT {
             PP
         });
 
-        Log(term, view, "NEW-VIEW", { pk: this.myPublicKey, data: NV });
+        Log(term, view, "NEW-VIEW", this.myPublicKey, NV);
         Multicast(this.myPublicKey, "NEW-VIEW", NV);
     }
 
