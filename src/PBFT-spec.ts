@@ -157,7 +157,16 @@ class PBFT {
                     Log(term, view, "PREPARE", { pk: senderPublicKey, data: P });
                     Log(term, view, "PRE-PREPARE", { pk: senderPublicKey, data: PP });
                     Multicast(this.myPublicKey, "PREPARE", P);
+                    this.checkPrepared(term, view, blockHash);
                 }
+            }
+        }
+    }
+
+    checkPrepared(term: number, view: number, blockHash: string) {
+        if (this.isPrePrepared(term, view, blockHash)) {
+            if (getPrepareCount(term, view, blockHash) >= 2 * this.config.f) {
+                this.onPrepared(view, term, blockHash);
             }
         }
     }
@@ -171,11 +180,7 @@ class PBFT {
                     term === this.term &&
                     primary(view) !== senderPublicKey) {
                     Log(term, view, "PREPARE", { pk: senderPublicKey, data: P });
-                    if (this.isPrePrepared(term, view, blockHash)) {
-                        if (getPrepareCount(term, view, blockHash) >= 2 * this.config.f) {
-                            this.onPrepared(view, term, blockHash);
-                        }
-                    }
+                    this.checkPrepared(term, view, blockHash);
                 }
             }
         }
@@ -201,6 +206,13 @@ class PBFT {
         });
         Log(term, view, "COMMIT", { pk: this.myPublicKey, data: C });
         Multicast(this.myPublicKey, "COMMIT", C);
+        this.checkCommit(term, view, blockHash);
+    }
+
+    checkCommit(term: number, view: number, blockHash: string) {
+        if (this.hasEnoughCommitVotes(term, view, blockHash)) {
+            this.commit(term, view, blockHash);
+        }
     }
 
     onReceiveCommit(senderPublicKey: string, C: DigestTypes.C) {
@@ -210,9 +222,7 @@ class PBFT {
             if (senderPublicKey !== this.myPublicKey) {
                 if (view >= this.view && term === this.term) {
                     Log(term, view, "COMMIT", { pk: senderPublicKey, data: C });
-                    if (this.hasEnoughCommitVotes(term, view, blockHash)) {
-                        this.commit(term, view, blockHash);
-                    }
+                    this.checkCommit(term, view, blockHash);
                 }
             }
         }
@@ -244,6 +254,7 @@ class PBFT {
         });
         Log(this.term, this.view, "VIEW-CHANGE", { pk: this.myPublicKey, data: VC });
         Unicast(this.myPublicKey, primary(this.view), "VIEW-CHANGE", VC);
+        this.checkElected(this.term, this.view);
         this.startTimer();
     }
 
@@ -262,9 +273,7 @@ class PBFT {
                         }
 
                         Log(term, view, "VIEW-CHANGE", { pk: senderPublicKey, data: VC });
-                        if (this.isElected(term, view)) {
-                            this.onElected(term, view);
-                        }
+                        this.checkElected(term, view);
                     }
                 }
             }
@@ -338,8 +347,10 @@ class PBFT {
         return isCommitMatch;
     }
 
-    isElected(term: number, view: number): boolean {
-        return getViewChangeCount(term, view) >= 2 * this.config.f + 1;
+    checkElected(term: number, view: number): void {
+        if (getViewChangeCount(term, view) >= 2 * this.config.f + 1) {
+            this.onElected(term, view);
+        }
     }
 
     onElected(term: number, view: number) {
