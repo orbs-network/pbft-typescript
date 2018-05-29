@@ -1,7 +1,7 @@
 import { ElectionTrigger } from "./ElectionTrigger";
 
 export class TimerBasedElectionTrigger implements ElectionTrigger {
-    private listener: () => void;
+    private listeners: Array<() => void> = [];
     private electionTimer: NodeJS.Timer;
 
     constructor(private timeout: number) {
@@ -17,7 +17,7 @@ export class TimerBasedElectionTrigger implements ElectionTrigger {
     }
 
     public register(cb: () => void): void {
-        this.listener = cb;
+        this.listeners.push(cb);
     }
 
     public snooze(): void {
@@ -40,7 +40,7 @@ export class TimerBasedElectionTrigger implements ElectionTrigger {
     }
 
     private onTimeout(): void {
-        this.listener();
+        this.listeners.map(listener => listener());
         this.resetElectionTimer();
     }
 }

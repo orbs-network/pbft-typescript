@@ -5,10 +5,10 @@ import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNetwork } from "./builders/NetworkBuilder";
+import { ElectionTriggerMock } from "./electionTrigger/ElectionTriggerMock";
 import { consensusMatcher } from "./matchers/consensusMatcher";
 import { ByzantineNode } from "./network/ByzantineNode";
 import { LoyalNode } from "./network/LoyalNode";
-import { every, wait } from "./timeUtils";
 
 chai.use(sinonChai);
 chai.use(consensusMatcher);
@@ -138,7 +138,8 @@ describe("PBFT", () => {
     });
 
     it("should change the leader on timeout (no commits for too long)", async () => {
-        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
+        const electionTrigger = new ElectionTriggerMock();
+        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.electingLeaderUsing(electionTrigger).build();
 
         const leader = network.nodes[0];
         const node1 = network.nodes[1];
@@ -151,14 +152,13 @@ describe("PBFT", () => {
         expect(node3.isLeader()).to.be.false;
 
         // leader is not sending a block, we time out
-        await wait(40);
+        electionTrigger.trigger();
 
         // node1 is the new leader, all other nodes should accept blocks offered by him
-        let currentBlock = theGenesisBlock;
-        await every(10, 2, async () => {
-            currentBlock = aBlock(currentBlock);
-            await node1.suggestBlock(currentBlock);
-        });
+        let currentBlock = aBlock(theGenesisBlock);
+        await node1.suggestBlock(currentBlock);
+        currentBlock = aBlock(currentBlock);
+        await node1.suggestBlock(currentBlock);
 
         expect(leader.isLeader()).to.be.false;
         expect(node1.isLeader()).to.be.true;

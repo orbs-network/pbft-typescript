@@ -1,3 +1,4 @@
+import { ElectionTrigger } from "../../src/electionTrigger/ElectionTrigger";
 import { Logger } from "../../src/logger/Logger";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
 import { InMemoryGossipDiscovery } from "../gossip/InMemoryGossipDiscovery";
@@ -6,6 +7,7 @@ import { SilentLogger } from "../logger/SilentLogger";
 import { InMemoryNetwork } from "../network/InMemoryNetwork";
 import { Node } from "../network/Node";
 import { NodeBuilder, aByzantineNode, aLoyalNode } from "./NodeBuilder";
+import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
 
 class NetworkBuilder {
     private network: InMemoryNetwork;
@@ -16,6 +18,7 @@ class NetworkBuilder {
     private customNodes: NodeBuilder[] = [];
     private customLeader: NodeBuilder;
     private logsToConsole: boolean = false;
+    private electionTrigger: ElectionTrigger;
 
     public and = this;
     public a = this;
@@ -27,6 +30,11 @@ class NetworkBuilder {
 
     public get thatLogsToConsole(): this {
         this.logsToConsole = true;
+        return this;
+    }
+
+    public electingLeaderUsing(electionTrigger: ElectionTrigger): this {
+        this.electionTrigger = electionTrigger;
         return this;
     }
 
@@ -80,10 +88,12 @@ class NetworkBuilder {
     private buildNode(builder: NodeBuilder, id: string, discovery: InMemoryGossipDiscovery): Node {
         const gossip = new InMemoryGossip(discovery);
         const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(id) : new SilentLogger();
+        const electionTrigger: ElectionTrigger = this.electionTrigger ? this.electionTrigger : new ElectionTriggerMock();
         discovery.registerGossip(id, gossip);
         return builder
             .thatIsPartOf(this.network)
             .communicatesVia(gossip)
+            .electingLeaderUsing(electionTrigger)
             .named(id)
             .thatLogsTo(logger)
             .build();

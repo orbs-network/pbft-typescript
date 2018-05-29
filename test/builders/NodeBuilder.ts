@@ -2,12 +2,12 @@ import { Config } from "../../src/Config";
 import { PBFT } from "../../src/PBFT";
 import { BlockValidator } from "../../src/blockValidator/BlockValidator";
 import { ElectionTrigger } from "../../src/electionTrigger/ElectionTrigger";
-import { TimerBasedElectionTrigger } from "../../src/electionTrigger/TimerBasedElectionTrigger";
 import { Gossip } from "../../src/gossip/Gossip";
 import { Logger } from "../../src/logger/Logger";
 import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 import { PBFTStorage } from "../../src/storage/PBFTStorage";
 import { BlockValidatorMock } from "../blockValidator/BlockValidatorMock";
+import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
 import { ConsoleLogger } from "../logger/ConsoleLogger";
 import { SilentLogger } from "../logger/SilentLogger";
 import { ByzantineNode } from "../network/ByzantineNode";
@@ -33,36 +33,50 @@ export class NodeBuilder {
     }
 
     public thatIsPartOf(network: InMemoryNetwork): this {
-        this.network = network;
+        if (!this.network) {
+            this.network = network;
+        }
         return this;
     }
 
     public named(name: string): this {
-        this.name = name;
+        if (!this.name) {
+            this.name = name;
+        }
         return this;
     }
 
     public storingOn(pbftStorage: PBFTStorage): this {
-        this.pbftStorage = pbftStorage;
+        if (!this.pbftStorage) {
+            this.pbftStorage = pbftStorage;
+        }
         return this;
     }
 
     public thatLogsTo(logger: Logger): this {
-        this.logger = logger;
+        if (!this.logger) {
+            this.logger = logger;
+        }
         return this;
     }
 
     public validateUsing(blockValidator: BlockValidator): this {
-        this.blockValidator = blockValidator;
+        if (!this.blockValidator) {
+            this.blockValidator = blockValidator;
+        }
         return this;
     }
     public communicatesVia(gossip: Gossip): this {
-        this.gossip = gossip;
+        if (!this.gossip) {
+            this.gossip = gossip;
+        }
         return this;
     }
 
     public electingLeaderUsing(electionTrigger: ElectionTrigger): this {
-        this.electionTrigger = electionTrigger;
+        if (!this.electionTrigger) {
+            this.electionTrigger = electionTrigger;
+        }
         return this;
     }
 
@@ -87,7 +101,7 @@ export class NodeBuilder {
     }
 
     private buildConfig(): Config {
-        const electionTrigger: ElectionTrigger = this.electionTrigger ? this.electionTrigger : new TimerBasedElectionTrigger(30);
+        const electionTrigger: ElectionTrigger = this.electionTrigger ? this.electionTrigger : new ElectionTriggerMock();
         const blockValidator: BlockValidator = this.blockValidator ? this.blockValidator : new BlockValidatorMock();
         const id = this.name || (this.isByzantine ? "Byzantine-Node" : "Loyal-Node");
         const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(id) : new SilentLogger();

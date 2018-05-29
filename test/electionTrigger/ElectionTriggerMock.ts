@@ -1,7 +1,7 @@
 import { ElectionTrigger } from "../../src/electionTrigger/ElectionTrigger";
 
 export class ElectionTriggerMock implements ElectionTrigger {
-    private listener: () => void;
+    private listeners: Array<() => void> = [];
 
     public stop(): void {
         // do nothing
@@ -12,7 +12,7 @@ export class ElectionTriggerMock implements ElectionTrigger {
     }
 
     public register(cb: () => void): void {
-        this.listener = cb;
+        this.listeners.push(cb);
     }
 
     public snooze(): void {
@@ -20,6 +20,6 @@ export class ElectionTriggerMock implements ElectionTrigger {
     }
 
     public trigger(): void {
-        this.listener();
+        this.listeners.map(listener => listener());
     }
 }
