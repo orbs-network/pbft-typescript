@@ -14,7 +14,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
 
     storePrePrepare(blockHash: string): void {
         this.prePrepareStorage[blockHash] = true;
-        this.logger.log(`storePrePrepare, block logged.`);
+        this.logger.log(`storePrePrepare, block [${blockHash}] logged.`);
     }
 
     hasPrePrepare(blockHash: string): boolean {
@@ -29,7 +29,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
                 this.prepareStorage[blockHash].push(senderId);
             }
         }
-        this.logger.log(`storePrepare, block logged. [${this.countOfPrepared(blockHash)}] votes so far.`);
+        this.logger.log(`storePrepare from [${senderId}], block [${blockHash}] logged. [${Object.keys(this.prepareStorage).map(k => this.prepareStorage[k])}] votes so far.`);
     }
 
     countOfPrepared(blockHash: string): number {

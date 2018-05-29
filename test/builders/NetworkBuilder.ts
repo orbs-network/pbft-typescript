@@ -15,6 +15,7 @@ class NetworkBuilder {
     private logger: Logger;
     private customNodes: NodeBuilder[] = [];
     private customLeader: NodeBuilder;
+    private logsToConsole: boolean = false;
 
     public and = this;
     public a = this;
@@ -25,7 +26,8 @@ class NetworkBuilder {
     }
 
     public get thatLogsToConsole(): this {
-        return this.thatLogsTo(new ConsoleLogger());
+        this.logsToConsole = true;
+        return this;
     }
 
     public with(count?: number) {
@@ -75,82 +77,44 @@ class NetworkBuilder {
         return this.network;
     }
 
+    private buildNode(builder: NodeBuilder, id: string, discovery: InMemoryGossipDiscovery): Node {
+        const gossip = new InMemoryGossip(discovery);
+        const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(id) : new SilentLogger();
+        discovery.registerGossip(id, gossip);
+        return builder
+            .thatIsPartOf(this.network)
+            .communicatesVia(gossip)
+            .named(id)
+            .thatLogsTo(logger)
+            .build();
+    }
+
     private createNodes(): void {
         const discovery = new InMemoryGossipDiscovery();
-        const logger: Logger = this.logger ? this.logger : new SilentLogger();
 
         let leader: Node;
         if (this.customLeader) {
-            const gossip = new InMemoryGossip(discovery);
-            const id = "Custome-Leader";
-            discovery.registerGossip(id, gossip);
-            leader = this.customLeader
-                .thatIsPartOf(this.network)
-                .communicatesVia(gossip)
-                .named(id)
-                .thatLogsTo(logger)
-                .build();
+            leader = this.buildNode(this.customLeader, "Custome-Leader", discovery);
         } else {
             if (this.isLeaderLoyal) {
-                const gossip = new InMemoryGossip(discovery);
-                const id = "Loyal-Leader";
-                discovery.registerGossip(id, gossip);
-                leader = aLoyalNode()
-                    .thatIsPartOf(this.network)
-                    .communicatesVia(gossip)
-                    .named(id)
-                    .thatLogsTo(logger)
-                    .build();
+                leader = this.buildNode(aLoyalNode(), "Loyal-Leader", discovery);
             } else {
-                const gossip = new InMemoryGossip(discovery);
-                const id = "Byzantine-Leader";
-                discovery.registerGossip(id, gossip);
-                leader = aByzantineNode()
-                    .thatIsPartOf(this.network)
-                    .communicatesVia(gossip)
-                    .named(id)
-                    .thatLogsTo(logger)
-                    .build();
+                leader = this.buildNode(aByzantineNode(), "Byzantine-Leader", discovery);
             }
         }
 
         const nodes: Node[] = [leader];
         for (let i = 0; i < this.countOfLoyalNodes; i++) {
-            const gossip = new InMemoryGossip(discovery);
-            const id = `Loyal-Node${i + 1}`;
-            discovery.registerGossip(id, gossip);
-            const node = aLoyalNode()
-                .thatIsPartOf(this.network)
-                .communicatesVia(gossip)
-                .named(id)
-                .thatLogsTo(logger)
-                .build();
+            const node = this.buildNode(aLoyalNode(), `Loyal-Node${i + 1}`, discovery);
             nodes.push(node);
         }
 
         for (let i = 0; i < this.countOfByzantineNodes; i++) {
-            const gossip = new InMemoryGossip(discovery);
-            const id = `Byzantine-Node${i + 1}`;
-            discovery.registerGossip(id, gossip);
-            const node = aByzantineNode()
-                .thatIsPartOf(this.network)
-                .communicatesVia(gossip)
-                .named(id)
-                .thatLogsTo(logger)
-                .build();
+            const node = this.buildNode(aByzantineNode(), `Byzantine-Node${i + 1}`, discovery);
             nodes.push(node);
         }
 
-        const customNodes = this.customNodes.map((nodeBuilder, idx) => {
-            const gossip = new InMemoryGossip(discovery);
-            const id = `Custome-Node${idx + 1}`;
-            discovery.registerGossip(id, gossip);
-            return nodeBuilder
-                .named(id)
-                .thatIsPartOf(this.network)
-                .communicatesVia(gossip)
-                .build();
-        });
+        const customNodes = this.customNodes.map((nodeBuilder, idx) => this.buildNode(nodeBuilder, `Custome-Node${idx + 1}`, discovery));
         nodes.push(...customNodes);
         this.network.registerNodes(nodes);
     }

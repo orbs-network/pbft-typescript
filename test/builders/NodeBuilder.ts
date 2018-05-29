@@ -24,6 +24,8 @@ export class NodeBuilder {
     private logger: Logger;
     private gossip: Gossip;
     private electionTrigger: ElectionTrigger;
+    private blockValidator: BlockValidator;
+    private logsToConsole: boolean = false;
 
     public and = this;
 
@@ -50,6 +52,10 @@ export class NodeBuilder {
         return this;
     }
 
+    public validateUsing(blockValidator: BlockValidator): this {
+        this.blockValidator = blockValidator;
+        return this;
+    }
     public communicatesVia(gossip: Gossip): this {
         this.gossip = gossip;
         return this;
@@ -61,7 +67,8 @@ export class NodeBuilder {
     }
 
     public get thatLogsToConsole(): this {
-        return this.thatLogsTo(new ConsoleLogger());
+        this.logsToConsole = true;
+        return this;
     }
 
     public get thatIsByzantine(): this {
@@ -80,11 +87,11 @@ export class NodeBuilder {
     }
 
     private buildConfig(): Config {
-        const logger: Logger = this.logger ? this.logger : new SilentLogger();
         const electionTrigger: ElectionTrigger = this.electionTrigger ? this.electionTrigger : new TimerBasedElectionTrigger(30);
-        const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage(logger);
-        const blockValidator: BlockValidator = new BlockValidatorMock();
+        const blockValidator: BlockValidator = this.blockValidator ? this.blockValidator : new BlockValidatorMock();
         const id = this.name || (this.isByzantine ? "Byzantine-Node" : "Loyal-Node");
+        const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(id) : new SilentLogger();
+        const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage(logger);
 
         return {
             id,
