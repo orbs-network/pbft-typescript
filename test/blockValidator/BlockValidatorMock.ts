@@ -2,18 +2,18 @@ import { Block } from "../../src/Block";
 import { BlockValidator } from "../../src/blockValidator/BlockValidator";
 
 export class BlockValidatorMock implements BlockValidator {
-    private resolveFunc: Function;
+    private resolveFuncs: Function[] = [];
 
     constructor(private autoResolve: boolean = true) {
 
     }
 
     public resolve() {
-        this.resolveFunc(true);
+        this.resolveFuncs.forEach(f => f(true));
     }
 
     public reject() {
-        this.resolveFunc(false);
+        this.resolveFuncs.forEach(f => f(false));
     }
 
     public validateBlock(block: Block): Promise<boolean> {
@@ -21,7 +21,7 @@ export class BlockValidatorMock implements BlockValidator {
             if (this.autoResolve) {
                 resolve(true);
             } else {
-                this.resolveFunc = resolve;
+                this.resolveFuncs.push(resolve);
             }
         });
     }
