@@ -25,7 +25,7 @@ describe("Spam Prevention", () => {
         await leader.suggestBlockTo(block, node);
         await leader.suggestBlockTo(block, node);
 
-        expect(inspectedStorage.countOfPrepared(block.hash)).to.equal(1);
+        expect(inspectedStorage.getPrepare(0).length).to.equal(1);
         network.shutDown();
     });
 });

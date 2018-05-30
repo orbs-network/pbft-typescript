@@ -2,8 +2,8 @@ import { Logger } from "../logger/Logger";
 import { PBFTStorage } from "./PBFTStorage";
 
 export class InMemoryPBFTStorage implements PBFTStorage {
-    private prePrepareStorage: { [blockHash: string]: boolean } = {};
-    private prepareStorage: { [blockHash: string]: string[] } = {};
+    private prePrepareStorage: { [term: number]: string } = {};
+    private prepareStorage: { [term: number]: Array<{ senderId: string, blockHash: string }> } = {};
     private viewChangeStorage: { [view: number]: string[] } = {};
 
     constructor(private logger: Logger) {
@@ -12,28 +12,28 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         this.viewChangeStorage = {};
     }
 
-    storePrePrepare(blockHash: string): void {
-        this.prePrepareStorage[blockHash] = true;
-        this.logger.log(`storePrePrepare, block [${blockHash}] logged.`);
+    storePrePrepare(term: number, blockHash: string): void {
+        this.prePrepareStorage[term] = blockHash;
+        this.logger.log(`storePrePrepare, term [${term}] logged.`);
     }
 
-    hasPrePrepare(blockHash: string): boolean {
-        return this.prePrepareStorage[blockHash] === true;
+    getPrePrepare(term: number): string {
+        return this.prePrepareStorage[term];
     }
 
-    storePrepare(blockHash: string, senderId: string): void {
-        if (this.prepareStorage[blockHash] === undefined) {
-            this.prepareStorage[blockHash] = [senderId];
+    storePrepare(term: number, senderId: string, blockHash: string): void {
+        if (this.prepareStorage[term] === undefined) {
+            this.prepareStorage[term] = [{ senderId, blockHash }];
         } else {
-            if (this.prepareStorage[blockHash].indexOf(senderId) === -1) {
-                this.prepareStorage[blockHash].push(senderId);
+            if (this.prepareStorage[term].filter(i => i.senderId === senderId).length === 0 ) {
+                this.prepareStorage[term].push({ senderId, blockHash });
             }
         }
-        this.logger.log(`storePrepare from [${senderId}], block [${blockHash}] logged. [${Object.keys(this.prepareStorage).map(k => this.prepareStorage[k])}] votes so far.`);
+        this.logger.log(`storePrepare from [${senderId}], term [${term}] logged. [${Object.keys(this.prepareStorage).map(k => parseInt(k, 10)).map(k => this.prepareStorage[k])}] votes so far.`);
     }
 
-    countOfPrepared(blockHash: string): number {
-        return this.prepareStorage[blockHash] !== undefined ? this.prepareStorage[blockHash].length : 0;
+    getPrepare(term: number): Array<{ senderId: string, blockHash: string }> {
+        return this.prepareStorage[term] !== undefined ? this.prepareStorage[term] : [];
     }
 
     storeViewChange(view: number, senderId: string): void {

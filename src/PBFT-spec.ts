@@ -1,7 +1,6 @@
 function primary(view: number): string { return ""; }
 function constructBlock(): Block { return { previousBlockHash: "", height: 0 }; }
 function HASH(block): string { return ""; }
-function getPrepareCount(term: number, view: number, blockHash: string): number { return 0; }
 function getCommitCount(term: number, view: number): any { return 0; }
 function getViewChangeCount(term: number, view: number): any { return 0; }
 function Multicast(senderPublicKey: string, message: string, payload): void { }
@@ -165,7 +164,7 @@ class PBFT {
 
     checkPrepared(term: number, view: number, blockHash: string) {
         if (this.isPrePrepared(term, view, blockHash)) {
-            if (getPrepareCount(term, view, blockHash) >= 2 * this.config.f) {
+            if (this.getPrepareCount(term, view, blockHash) >= 2 * this.config.f) {
                 this.onPrepared(view, term, blockHash);
             }
         }
@@ -184,6 +183,12 @@ class PBFT {
                 }
             }
         }
+    }
+
+    getPrepareCount(term: number, view: number, blockHash: string): number {
+        const PLog = fetchFromLog(term, view, "PREPARE");
+        const PPayloads = PLog.map(p => decrypt(p.pk, p.data));
+        return PPayloads.filter(PPayload => PPayload.blockHash === blockHash).length;
     }
 
     isPrePrepared(term: number, view: number, blockHash: string): boolean {

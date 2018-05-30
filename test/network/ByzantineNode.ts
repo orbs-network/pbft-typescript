@@ -9,7 +9,8 @@ export class ByzantineNode extends LoyalNode {
         nodes.forEach(node => {
             const payload: PrePreparePayload = {
                 block,
-                view: 0
+                view: 0,
+                term: 0
             };
             this.pbft.gossip.unicast(this.id, node.id, "preprepare", payload);
         });

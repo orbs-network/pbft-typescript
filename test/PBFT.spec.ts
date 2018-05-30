@@ -9,6 +9,7 @@ import { ElectionTriggerMock } from "./electionTrigger/ElectionTriggerMock";
 import { consensusMatcher } from "./matchers/consensusMatcher";
 import { ByzantineNode } from "./network/ByzantineNode";
 import { LoyalNode } from "./network/LoyalNode";
+import { nextTick } from "./timeUtils";
 
 chai.use(sinonChai);
 chai.use(consensusMatcher);
@@ -62,6 +63,7 @@ describe("PBFT", () => {
         const node3 = network.nodes[3];
         await leader.suggestBlockTo(block1, node1, node2);
         await leader.suggestBlockTo(block2, node3);
+        await nextTick();
 
         expect(node1.getLatestBlock()).to.equal(block1);
         expect(node2.getLatestBlock()).to.equal(block1);
