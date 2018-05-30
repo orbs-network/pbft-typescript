@@ -253,8 +253,11 @@ class PBFT {
             preparedProof: this.preparedProof
         });
         Log(this.term, this.view, "VIEW-CHANGE", this.myPublicKey, VC);
-        Unicast(this.myPublicKey, primary(this.view), "VIEW-CHANGE", VC);
-        this.checkElected(this.term, this.view);
+        if (primary(this.view) === this.myPublicKey) {
+            this.checkElected(this.term, this.view);
+        } else {
+            Unicast(this.myPublicKey, primary(this.view), "VIEW-CHANGE", VC);
+        }
         this.startTimer();
     }
 
@@ -383,7 +386,7 @@ class PBFT {
         Multicast(this.myPublicKey, "NEW-VIEW", NV);
     }
 
-    extractBlock(viewChanges: { pk: string, data: DigestTypes.VC }[]): Block {
+      extractBlock(viewChanges: { pk: string, data: DigestTypes.VC }[]): Block {
         const preparedProofs = viewChanges.map(vc => decrypt(vc.pk, vc.data).preparedProof);
         const filtedPreparedProofs = preparedProofs.filter(preparedProof => preparedProof !== undefined);
         if (filtedPreparedProofs.length > 0) {
