@@ -11,7 +11,12 @@ export class InMemoryGossipDiscovery {
         this.gossipMap.set(id, gossip);
     }
 
-    getAllGossips(): InMemoryGossip[] {
-        return Array.from(this.gossipMap.values());
+    getGossips(ids: string[] = []): InMemoryGossip[] {
+        if (ids.length > 0) {
+            const allIds = Array.from(this.gossipMap.keys());
+            return allIds.filter(id => ids.indexOf(id) > -1).map(id => this.getGossipById(id));
+        } else {
+            return Array.from(this.gossipMap.values());
+        }
     }
 }

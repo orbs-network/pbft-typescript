@@ -41,8 +41,24 @@ describe("InMemory Gossip Discovery", () => {
         const gossip2 = new InMemoryGossip(discovery);
         discovery.registerGossip(id1, gossip1);
         discovery.registerGossip(id2, gossip2);
-        const result = discovery.getAllGossips();
+        const result = discovery.getGossips();
 
         expect(result).to.deep.equal([gossip1, gossip2]);
+    });
+
+    it("should return a list of the requested gossips", () => {
+        const discovery = new InMemoryGossipDiscovery();
+        const id1 = genId();
+        const id2 = genId();
+        const id3 = genId();
+        const gossip1 = new InMemoryGossip(discovery);
+        const gossip2 = new InMemoryGossip(discovery);
+        const gossip3 = new InMemoryGossip(discovery);
+        discovery.registerGossip(id1, gossip1);
+        discovery.registerGossip(id2, gossip2);
+        discovery.registerGossip(id3, gossip3);
+        const result = discovery.getGossips([id1, id3]);
+
+        expect(result).to.deep.equal([gossip1, gossip3]);
     });
 });

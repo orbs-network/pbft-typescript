@@ -153,4 +153,82 @@ describe("InMemory Gossip", () => {
         expect(spy1).to.have.been.calledWith("broadcaster", payload);
         expect(spy2).to.not.have.been.called;
     });
+
+    describe("White List", () => {
+        let discovery: InMemoryGossipDiscovery;
+        let gossip1: InMemoryGossip;
+        let gossip2: InMemoryGossip;
+        let gossip3: InMemoryGossip;
+        let gossip4: InMemoryGossip;
+        let spy1: sinon.SinonSpy;
+        let spy2: sinon.SinonSpy;
+        let spy3: sinon.SinonSpy;
+        let spy4: sinon.SinonSpy;
+        let payload: string;
+        let message: string;
+
+        beforeEach(() => {
+            discovery = new InMemoryGossipDiscovery();
+            gossip1 = new InMemoryGossip(discovery);
+            gossip2 = new InMemoryGossip(discovery);
+            gossip3 = new InMemoryGossip(discovery);
+            gossip4 = new InMemoryGossip(discovery);
+            discovery.registerGossip("gossip1", gossip1);
+            discovery.registerGossip("gossip2", gossip2);
+            discovery.registerGossip("gossip3", gossip3);
+            discovery.registerGossip("gossip4", gossip4);
+            spy1 = sinon.spy();
+            spy2 = sinon.spy();
+            spy3 = sinon.spy();
+            spy4 = sinon.spy();
+            payload = Math.random().toString();
+            message = Math.random().toString();
+            gossip1.subscribe(message, spy1);
+            gossip2.subscribe(message, spy2);
+            gossip3.subscribe(message, spy3);
+            gossip4.subscribe(message, spy4);
+
+        });
+
+        describe("Outgoing white list", () => {
+            it("should ignore unicast messages that don't apply to the outgoing white list", () => {
+                gossip1.setOutGoingWhiteList(["gossip3"]);
+
+                gossip1.unicast("gossip1", "gossip2", message, payload);
+                gossip1.unicast("gossip1", "gossip3", message, payload);
+                gossip1.unicast("gossip1", "gossip4", message, payload);
+                expect(spy2).to.not.have.been.called;
+                expect(spy3).to.have.been.calledWith("gossip1", payload);
+                expect(spy4).to.not.have.been.called;
+            });
+
+            it("should ignore broadcast messages that don't apply to the outgoing white list", () => {
+                gossip1.setOutGoingWhiteList(["gossip3"]);
+
+                gossip1.broadcast("gossip1", message, payload);
+                expect(spy2).to.not.have.been.called;
+                expect(spy3).to.have.been.calledWith("gossip1", payload);
+                expect(spy4).to.not.have.been.called;
+            });
+        });
+
+        describe("Incoming white list", () => {
+            it("should ignore unicast messages that don't apply to the incoming white list", () => {
+                gossip4.setIncomingWhiteList(["gossip2"]);
+
+                gossip1.unicast("gossip1", "gossip4", message, payload);
+                gossip2.unicast("gossip2", "gossip4", message, payload);
+                gossip3.unicast("gossip3", "gossip4", message, payload);
+                expect(spy4).to.have.been.calledOnce.calledWith("gossip2", payload);
+            });
+
+            it("should ignore broadcast messages that don't apply to the incoming white list", () => {
+                gossip4.setIncomingWhiteList(["gossip2"]);
+
+                gossip1.broadcast("gossip1", message, payload);
+                gossip2.broadcast("gossip2", message, payload);
+                expect(spy4).to.have.been.calledOnce.calledWith("gossip2", payload);
+            });
+        });
+    });
 });
