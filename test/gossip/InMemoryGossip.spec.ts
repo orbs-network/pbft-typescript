@@ -191,6 +191,15 @@ describe("InMemory Gossip", () => {
         });
 
         describe("Outgoing white list", () => {
+            it("should ignore all messages if outGoing list is empty", () => {
+                gossip1.setOutGoingWhiteList([]);
+
+                gossip1.broadcast("gossip1", message, payload);
+                expect(spy2).to.not.have.been.called;
+                expect(spy3).to.not.have.been.called;
+                expect(spy4).to.not.have.been.called;
+            });
+
             it("should ignore unicast messages that don't apply to the outgoing white list", () => {
                 gossip1.setOutGoingWhiteList(["gossip3"]);
 
@@ -200,6 +209,21 @@ describe("InMemory Gossip", () => {
                 expect(spy2).to.not.have.been.called;
                 expect(spy3).to.have.been.calledWith("gossip1", payload);
                 expect(spy4).to.not.have.been.called;
+            });
+
+            it("should keep sending messages after the outGoing list was cleared", () => {
+                gossip1.setOutGoingWhiteList(["gossip3"]);
+
+                gossip1.broadcast("gossip1", message, payload);
+                expect(spy2).to.not.have.been.called;
+                expect(spy3).to.have.been.calledWith("gossip1", payload);
+                expect(spy4).to.not.have.been.called;
+
+                gossip1.clearOutGoingWhiteList();
+                gossip1.broadcast("gossip1", message, payload);
+                expect(spy2).to.have.been.calledWith("gossip1", payload);
+                expect(spy3).to.have.been.calledWith("gossip1", payload);
+                expect(spy4).to.have.been.calledWith("gossip1", payload);
             });
 
             it("should ignore broadcast messages that don't apply to the outgoing white list", () => {
@@ -213,6 +237,17 @@ describe("InMemory Gossip", () => {
         });
 
         describe("Incoming white list", () => {
+            it("should ignore all messages if incoming white list is empty", () => {
+                gossip2.setIncomingWhiteList([]);
+                gossip3.setIncomingWhiteList([]);
+                gossip4.setIncomingWhiteList([]);
+
+                gossip1.broadcast("gossip1", message, payload);
+                expect(spy2).to.not.have.been.called;
+                expect(spy3).to.not.have.been.called;
+                expect(spy4).to.not.have.been.called;
+            });
+
             it("should ignore unicast messages that don't apply to the incoming white list", () => {
                 gossip4.setIncomingWhiteList(["gossip2"]);
 
@@ -220,6 +255,25 @@ describe("InMemory Gossip", () => {
                 gossip2.unicast("gossip2", "gossip4", message, payload);
                 gossip3.unicast("gossip3", "gossip4", message, payload);
                 expect(spy4).to.have.been.calledOnce.calledWith("gossip2", payload);
+            });
+
+            it("should keep sending messages after the incomming list was cleared", () => {
+                gossip2.setIncomingWhiteList([]);
+                gossip3.setIncomingWhiteList(["gossip1"]);
+                gossip4.setIncomingWhiteList([]);
+
+                gossip1.broadcast("gossip1", message, payload);
+                expect(spy2).to.not.have.been.called;
+                expect(spy3).to.have.been.calledWith("gossip1", payload);
+                expect(spy4).to.not.have.been.called;
+
+                gossip2.clearIncommingWhiteList();
+                gossip3.clearIncommingWhiteList();
+                gossip4.clearIncommingWhiteList();
+                gossip1.broadcast("gossip1", message, payload);
+                expect(spy2).to.have.been.calledWith("gossip1", payload);
+                expect(spy3).to.have.been.calledWith("gossip1", payload);
+                expect(spy4).to.have.been.calledWith("gossip1", payload);
             });
 
             it("should ignore broadcast messages that don't apply to the incoming white list", () => {

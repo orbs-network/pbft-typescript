@@ -7,7 +7,7 @@ import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNetwork } from "./builders/NetworkBuilder";
 import { aLoyalNode } from "./builders/NodeBuilder";
 import { SilentLogger } from "./logger/SilentLogger";
-import { ByzantineNode } from "./network/ByzantineNode";
+import { nextTick } from "./timeUtils";
 
 chai.use(sinonChai);
 
@@ -16,16 +16,17 @@ describe("Spam Prevention", () => {
         const logger = new SilentLogger();
         const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
         const nodeBuilder = aLoyalNode().storingOn(inspectedStorage);
-        const network = aNetwork().leadBy.a.byzantineLeader.with(3).loyalNodes.withCustomeNode(nodeBuilder).build();
+        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.withCustomeNode(nodeBuilder).build();
 
         const block = aBlock(theGenesisBlock);
-        const leader = network.nodes[0] as ByzantineNode;
+        const leader = network.nodes[0];
         const node = network.nodes[4];
 
-        await leader.suggestBlockTo(block, node);
-        await leader.suggestBlockTo(block, node);
+        leader.pbft.gossip.unicast(leader.id, node.id, "preprepare", { block: block, view: 0, term: 0 });
+        leader.pbft.gossip.unicast(leader.id, node.id, "preprepare", { block: block, view: 0, term: 0 });
+        await nextTick();
 
-        expect(inspectedStorage.getPrepare(0).length).to.equal(1);
+        expect(inspectedStorage.getPrepare(0, 0).length).to.equal(1);
         network.shutDown();
     });
 });

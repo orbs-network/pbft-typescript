@@ -11,8 +11,8 @@ export class InMemoryGossipDiscovery {
         this.gossipMap.set(id, gossip);
     }
 
-    getGossips(ids: string[] = []): InMemoryGossip[] {
-        if (ids.length > 0) {
+    getGossips(ids?: string[]): InMemoryGossip[] {
+        if (ids !== undefined) {
             const allIds = Array.from(this.gossipMap.keys());
             return allIds.filter(id => ids.indexOf(id) > -1).map(id => this.getGossipById(id));
         } else {

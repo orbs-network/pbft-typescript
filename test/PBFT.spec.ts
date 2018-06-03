@@ -6,6 +6,7 @@ import * as sinonChai from "sinon-chai";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNetwork } from "./builders/NetworkBuilder";
 import { ElectionTriggerMock } from "./electionTrigger/ElectionTriggerMock";
+import { InMemoryGossip } from "./gossip/InMemoryGossip";
 import { consensusMatcher } from "./matchers/consensusMatcher";
 import { ByzantineNode } from "./network/ByzantineNode";
 import { LoyalNode } from "./network/LoyalNode";
@@ -53,16 +54,24 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, in a network of 4 nodes, where the leader is byzantine and the other 3 nodes are loyal", async () => {
-        const network = aNetwork().leadBy.a.byzantineLeader.with(3).loyalNodes.build();
+        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
 
         const block1 = aBlock(theGenesisBlock, "block1");
         const block2 = aBlock(theGenesisBlock, "block2");
-        const leader = network.nodes[0] as ByzantineNode;
+        const leader = network.nodes[0];
         const node1 = network.nodes[1];
         const node2 = network.nodes[2];
         const node3 = network.nodes[3];
-        await leader.suggestBlockTo(block1, node1, node2);
-        await leader.suggestBlockTo(block2, node3);
+
+        const leaderGossip = leader.pbft.gossip as InMemoryGossip;
+
+        // suggest block 1 to nodes 1 and 2
+        leaderGossip.setOutGoingWhiteList([node1.id, node2.id]);
+        await leader.suggestBlock(block1);
+
+        // suggest block 2 to node 3.
+        leaderGossip.setOutGoingWhiteList([node3.id]);
+        await leader.suggestBlock(block2);
         await nextTick();
 
         expect(node1.getLatestBlock()).to.equal(block1);
@@ -157,9 +166,9 @@ describe("PBFT", () => {
         electionTrigger.trigger();
 
         // node1 is the new leader, all other nodes should accept blocks offered by him
-        let currentBlock = aBlock(theGenesisBlock);
+        let currentBlock = aBlock(theGenesisBlock, "Block1");
         await node1.suggestBlock(currentBlock);
-        currentBlock = aBlock(currentBlock);
+        currentBlock = aBlock(currentBlock, "Block2");
         await node1.suggestBlock(currentBlock);
 
         expect(leader.isLeader()).to.be.false;

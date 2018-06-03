@@ -1,5 +1,6 @@
 import { ElectionTrigger } from "../../src/electionTrigger/ElectionTrigger";
 import { Logger } from "../../src/logger/Logger";
+import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
 import { InMemoryGossipDiscovery } from "../gossip/InMemoryGossipDiscovery";
 import { ConsoleLogger } from "../logger/ConsoleLogger";
@@ -7,7 +8,6 @@ import { SilentLogger } from "../logger/SilentLogger";
 import { InMemoryNetwork } from "../network/InMemoryNetwork";
 import { Node } from "../network/Node";
 import { NodeBuilder, aByzantineNode, aLoyalNode } from "./NodeBuilder";
-import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
 
 class NetworkBuilder {
     private network: InMemoryNetwork;

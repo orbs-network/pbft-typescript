@@ -14,8 +14,8 @@ interface RemoteListener {
 export class InMemoryGossip implements Gossip, RemoteListener {
     private totalSubscriptions: number = 0;
     private subscriptions: Map<number, SubscriptionsValue> = new Map();
-    private outGoingWhiteList: string[] = [];
-    private inComingWhiteList: string[] = [];
+    private outGoingWhiteList: string[];
+    private inComingWhiteList: string[];
 
     constructor(private discovery: InMemoryGossipDiscovery) {
     }
@@ -23,7 +23,7 @@ export class InMemoryGossip implements Gossip, RemoteListener {
     onRemoteMessage(senderId: string, message: string, payload?: any): void {
         this.subscriptions.forEach(subscription => {
             if (subscription.message === message) {
-                if (this.inComingWhiteList.length > 0) {
+                if (this.inComingWhiteList !== undefined) {
                     if (this.inComingWhiteList.indexOf(senderId) === -1) {
                         return;
                     }
@@ -37,8 +37,16 @@ export class InMemoryGossip implements Gossip, RemoteListener {
         this.outGoingWhiteList = whiteList;
     }
 
+    clearOutGoingWhiteList(): any {
+        this.outGoingWhiteList = undefined;
+    }
+
     setIncomingWhiteList(whiteList: string[]): void {
         this.inComingWhiteList = whiteList;
+    }
+
+    clearIncommingWhiteList(): any {
+        this.inComingWhiteList = undefined;
     }
 
     subscribe(message: string, cb: GossipCallback): number {
@@ -64,7 +72,7 @@ export class InMemoryGossip implements Gossip, RemoteListener {
     }
 
     unicast(senderId: string, targetId: string, message: string, payload?: any): void {
-        if (this.outGoingWhiteList.length > 0) {
+        if (this.outGoingWhiteList !== undefined) {
             if (this.outGoingWhiteList.indexOf(targetId) === -1) {
                 return;
             }

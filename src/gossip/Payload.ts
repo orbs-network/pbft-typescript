@@ -11,6 +11,12 @@ export interface PreparePayload {
     term: number;
 }
 
+export interface CommitPayload {
+    blockHash: string;
+    term: number;
+    view: number;
+}
+
 export interface ViewChangePayload {
     newView: number;
 }
