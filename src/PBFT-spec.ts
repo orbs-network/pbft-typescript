@@ -1,3 +1,7 @@
+// TODO:
+// Tigger Once, prepared, elected, committed.
+//
+
 function primary(view: number): string { return ""; }
 function constructBlock(): Block { return { previousBlockHash: "", height: 0 }; }
 function HASH(block): string { return ""; }
@@ -144,7 +148,7 @@ class PBFT {
                     blockHash === HASH(B) &&
                     B.previousBlockHash === HASH(this.lastCommittedBlock) &&
                     valid(B) &&
-                    this.isPrePrepared(term, view, blockHash) === false) {
+                    this.hasPreprepare(term, view) === false) {
 
                     this.CB = B;
                     const P: DigestTypes.P = sign(this.myPrivateKey, {
@@ -160,6 +164,11 @@ class PBFT {
                 }
             }
         }
+    }
+
+    hasPreprepare(term: number, view: number): boolean {
+        const PLog = fetchFromLog(term, view, "PRE-PREPARE");
+        return PLog !== undefined;
     }
 
     checkPrepared(term: number, view: number, blockHash: string) {
@@ -391,7 +400,7 @@ class PBFT {
         Multicast(this.myPublicKey, "NEW-VIEW", NV);
     }
 
-      extractBlock(viewChanges: { pk: string, data: DigestTypes.VC }[]): Block {
+    extractBlock(viewChanges: { pk: string, data: DigestTypes.VC }[]): Block {
         const preparedProofs = viewChanges.map(vc => decrypt(vc.pk, vc.data).preparedProof);
         const filtedPreparedProofs = preparedProofs.filter(preparedProof => preparedProof !== undefined);
         if (filtedPreparedProofs.length > 0) {
