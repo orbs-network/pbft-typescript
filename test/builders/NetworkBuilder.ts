@@ -7,13 +7,11 @@ import { ConsoleLogger } from "../logger/ConsoleLogger";
 import { SilentLogger } from "../logger/SilentLogger";
 import { InMemoryNetwork } from "../network/InMemoryNetwork";
 import { Node } from "../network/Node";
-import { NodeBuilder, aByzantineNode, aLoyalNode } from "./NodeBuilder";
+import { NodeBuilder, aNode } from "./NodeBuilder";
 
 class NetworkBuilder {
     private network: InMemoryNetwork;
-    private countOfLoyalNodes: number = 0;
-    private countOfByzantineNodes: number = 0;
-    private isLeaderLoyal: boolean = true;
+    private countOfNodes: number = 0;
     private logger: Logger;
     private customNodes: NodeBuilder[] = [];
     private customLeader: NodeBuilder;
@@ -41,12 +39,8 @@ class NetworkBuilder {
     public with(count?: number) {
         const networkBuilder = this;
         class With {
-            get loyalNodes() {
-                networkBuilder.countOfLoyalNodes = count;
-                return networkBuilder;
-            }
-            get byzantineNodes() {
-                networkBuilder.countOfByzantineNodes = count;
+            get nodes() {
+                networkBuilder.countOfNodes = count;
                 return networkBuilder;
             }
         }
@@ -58,27 +52,6 @@ class NetworkBuilder {
         return this;
     }
 
-    public get leadBy() {
-        const networkBuilder = this;
-        class A {
-            get loyalLeader() {
-                networkBuilder.isLeaderLoyal = true;
-                return networkBuilder;
-            }
-            get byzantineLeader() {
-                networkBuilder.isLeaderLoyal = false;
-                return networkBuilder;
-            }
-            customLeader(customLeader: NodeBuilder) {
-                networkBuilder.customLeader = customLeader;
-                return networkBuilder;
-            }
-        }
-
-        return {
-            a: new A()
-        };
-    }
     public build(): InMemoryNetwork {
         this.network = new InMemoryNetwork();
         this.createNodes();
@@ -102,25 +75,15 @@ class NetworkBuilder {
     private createNodes(): void {
         const discovery = new InMemoryGossipDiscovery();
 
+        const nodes: Node[] = [];
         let leader: Node;
         if (this.customLeader) {
             leader = this.buildNode(this.customLeader, "Custome-Leader", discovery);
-        } else {
-            if (this.isLeaderLoyal) {
-                leader = this.buildNode(aLoyalNode(), "Loyal-Leader", discovery);
-            } else {
-                leader = this.buildNode(aByzantineNode(), "Byzantine-Leader", discovery);
-            }
+            nodes.push(leader);
         }
 
-        const nodes: Node[] = [leader];
-        for (let i = 0; i < this.countOfLoyalNodes; i++) {
-            const node = this.buildNode(aLoyalNode(), `Loyal-Node${i + 1}`, discovery);
-            nodes.push(node);
-        }
-
-        for (let i = 0; i < this.countOfByzantineNodes; i++) {
-            const node = this.buildNode(aByzantineNode(), `Byzantine-Node${i + 1}`, discovery);
+        for (let i = 0; i < this.countOfNodes; i++) {
+            const node = this.buildNode(aNode(), `Node${i + 1}`, discovery);
             nodes.push(node);
         }
 

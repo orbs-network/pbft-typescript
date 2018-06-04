@@ -2,7 +2,7 @@ import { Block } from "../../src/Block";
 import { PBFT } from "../../src/PBFT";
 import { Node } from "./Node";
 
-export class LoyalNode implements Node {
+export class NodeMock implements Node {
     public blockLog: Block[] = [];
     public id: string;
 

@@ -5,7 +5,7 @@ import { InMemoryPBFTStorage } from "../src/storage/InMemoryPBFTStorage";
 import { PBFTStorage } from "../src/storage/PBFTStorage";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNetwork } from "./builders/NetworkBuilder";
-import { aLoyalNode } from "./builders/NodeBuilder";
+import { aNode } from "./builders/NodeBuilder";
 import { ElectionTriggerMock } from "./electionTrigger/ElectionTriggerMock";
 import { InMemoryGossip } from "./gossip/InMemoryGossip";
 import { SilentLogger } from "./logger/SilentLogger";
@@ -17,8 +17,8 @@ describe("Byzantine Attacks", () => {
     it("should ignore preprepare messages pretend to be me", async () => {
         const logger = new SilentLogger();
         const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
-        const leaderBuilder = aLoyalNode().storingOn(inspectedStorage);
-        const network = aNetwork().leadBy.a.customLeader(leaderBuilder).with(3).loyalNodes.build();
+        const leaderBuilder = aNode().storingOn(inspectedStorage);
+        const network = aNetwork().withCustomeNode(leaderBuilder).with(3).nodes.build();
 
         const block = aBlock(theGenesisBlock);
         const leader = network.nodes[0];
@@ -34,8 +34,8 @@ describe("Byzantine Attacks", () => {
     it("should ignore prepare messages pretend to be me", async () => {
         const logger = new SilentLogger();
         const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
-        const leaderNodeBuilder = aLoyalNode().storingOn(inspectedStorage);
-        const network = aNetwork().leadBy.a.customLeader(leaderNodeBuilder).with(3).loyalNodes.build();
+        const leaderNodeBuilder = aNode().storingOn(inspectedStorage);
+        const network = aNetwork().withCustomeNode(leaderNodeBuilder).with(3).nodes.build();
 
         const block = aBlock(theGenesisBlock);
         const leader = network.nodes[0];
@@ -54,8 +54,8 @@ describe("Byzantine Attacks", () => {
     it("should ignore prepare that came from the leader, we count the leader only on the preprepare", async () => {
         const logger = new SilentLogger();
         const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
-        const nodeBuilder = aLoyalNode().storingOn(inspectedStorage);
-        const network = aNetwork().leadBy.a.loyalLeader.with(2).loyalNodes.withCustomeNode(nodeBuilder).build();
+        const nodeBuilder = aNode().storingOn(inspectedStorage);
+        const network = aNetwork().with(3).nodes.withCustomeNode(nodeBuilder).build();
 
         const block = aBlock(theGenesisBlock);
         const leader = network.nodes[0];
@@ -79,7 +79,7 @@ describe("Byzantine Attacks", () => {
         // * validation is complete, nodes 1 and 2 continue.
         // * there's another consensus on B1.
         // * we use term to solve this
-        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
+        const network = aNetwork().with(4).nodes.build();
 
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
@@ -132,7 +132,7 @@ describe("Byzantine Attacks", () => {
         // [X] 4: P[B] => 3
 
         const electionTrigger = new ElectionTriggerMock();
-        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.electingLeaderUsing(electionTrigger).build();
+        const network = aNetwork().with(4).nodes.electingLeaderUsing(electionTrigger).build();
 
         const node1 = network.nodes[0]; // leader
         const node2 = network.nodes[1];

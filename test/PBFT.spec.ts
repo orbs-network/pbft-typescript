@@ -8,7 +8,7 @@ import { aNetwork } from "./builders/NetworkBuilder";
 import { ElectionTriggerMock } from "./electionTrigger/ElectionTriggerMock";
 import { InMemoryGossip } from "./gossip/InMemoryGossip";
 import { blockMatcher } from "./matchers/blockMatcher";
-import { LoyalNode } from "./network/LoyalNode";
+import { NodeMock } from "./network/NodeMock";
 import { nextTick } from "./timeUtils";
 
 chai.use(sinonChai);
@@ -16,7 +16,7 @@ chai.use(blockMatcher);
 
 describe("PBFT", () => {
     it("should start a network, append a block, and make sure that all nodes recived it", async () => {
-        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
+        const network = aNetwork().with(4).nodes.build();
 
         const block = aBlock(theGenesisBlock, "block content");
         const leader = network.nodes[0];
@@ -27,7 +27,7 @@ describe("PBFT", () => {
     });
 
     it("should ignore suggested block if they are not from the leader", async () => {
-        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
+        const network = aNetwork().with(4).nodes.build();
 
         const block = aBlock(theGenesisBlock);
         const byzantineNode = network.nodes[3];
@@ -38,7 +38,7 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, in a network of 4 nodes, where the leader is byzantine and the other 3 nodes are loyal", async () => {
-        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
+        const network = aNetwork().with(4).nodes.build();
 
         const block1 = aBlock(theGenesisBlock, "block1");
         const block2 = aBlock(theGenesisBlock, "block2");
@@ -65,7 +65,7 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, in a network of 4 nodes, where one of the nodes is byzantine and the others are loyal", async () => {
-        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.with(1).byzantineNodes.build();
+        const network = aNetwork().with(5).nodes.build();
 
         const block = aBlock(theGenesisBlock);
         const leader = network.nodes[0];
@@ -80,7 +80,7 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, even when a byzantine node is sending a bad block several times", async () => {
-        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
+        const network = aNetwork().with(4).nodes.build();
 
         const leader = network.nodes[0];
         const loyalNode = network.nodes[1];
@@ -100,7 +100,7 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, in a network of 7 nodes, where two of the nodes is byzantine and the others are loyal", async () => {
-        const network = aNetwork().leadBy.a.loyalLeader.with(6).loyalNodes.build();
+        const network = aNetwork().with(7).nodes.build();
 
         const block = aBlock(theGenesisBlock);
         const leader = network.nodes[0];
@@ -117,12 +117,12 @@ describe("PBFT", () => {
     });
 
     it("should fire onNewBlock only once per block, even if there were more confirmations", async () => {
-        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
+        const network = aNetwork().with(4).nodes.build();
 
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(block1);
         const leader = network.nodes[0];
-        const node = network.nodes[1] as LoyalNode;
+        const node = network.nodes[1] as NodeMock;
         await leader.suggestBlock(block1);
         await leader.suggestBlock(block2);
 
@@ -131,7 +131,7 @@ describe("PBFT", () => {
     });
 
     it("should not accept a block if it is not pointing to the previous block", async () => {
-        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
+        const network = aNetwork().with(4).nodes.build();
 
         const block1 = aBlock(theGenesisBlock);
         const notInOrderBlock = aBlock(aBlock(theGenesisBlock));
@@ -145,7 +145,7 @@ describe("PBFT", () => {
 
     it("should change the leader on timeout (no commits for too long)", async () => {
         const electionTrigger = new ElectionTriggerMock();
-        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.electingLeaderUsing(electionTrigger).build();
+        const network = aNetwork().with(4).nodes.electingLeaderUsing(electionTrigger).build();
 
         const leader = network.nodes[0];
         const node1 = network.nodes[1];

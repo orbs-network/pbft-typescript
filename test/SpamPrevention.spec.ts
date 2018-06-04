@@ -5,7 +5,7 @@ import { InMemoryPBFTStorage } from "../src/storage/InMemoryPBFTStorage";
 import { PBFTStorage } from "../src/storage/PBFTStorage";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNetwork } from "./builders/NetworkBuilder";
-import { aLoyalNode } from "./builders/NodeBuilder";
+import { aNode } from "./builders/NodeBuilder";
 import { SilentLogger } from "./logger/SilentLogger";
 import { nextTick } from "./timeUtils";
 
@@ -15,8 +15,8 @@ describe("Spam Prevention", () => {
     it("should store the PREPARE on the same term only one time", async () => {
         const logger = new SilentLogger();
         const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
-        const nodeBuilder = aLoyalNode().storingOn(inspectedStorage);
-        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.withCustomeNode(nodeBuilder).build();
+        const nodeBuilder = aNode().storingOn(inspectedStorage);
+        const network = aNetwork().with(4).nodes.withCustomeNode(nodeBuilder).build();
 
         const block = aBlock(theGenesisBlock);
         const leader = network.nodes[0];

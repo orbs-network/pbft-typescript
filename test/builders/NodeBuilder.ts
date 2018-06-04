@@ -10,14 +10,12 @@ import { BlockValidatorMock } from "../blockValidator/BlockValidatorMock";
 import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
 import { ConsoleLogger } from "../logger/ConsoleLogger";
 import { SilentLogger } from "../logger/SilentLogger";
-import { ByzantineNode } from "../network/ByzantineNode";
 import { InMemoryNetwork } from "../network/InMemoryNetwork";
-import { LoyalNode } from "../network/LoyalNode";
 import { Node } from "../network/Node";
+import { NodeMock } from "../network/NodeMock";
 import { theGenesisBlock } from "./BlockBuilder";
 
 export class NodeBuilder {
-    private isByzantine: boolean = false;
     private network: InMemoryNetwork;
     private name: string;
     private pbftStorage: PBFTStorage;
@@ -85,25 +83,15 @@ export class NodeBuilder {
         return this;
     }
 
-    public get thatIsByzantine(): this {
-        this.isByzantine = true;
-        return this;
-    }
-
     public build(): Node {
         const pbft = new PBFT(this.buildConfig());
-
-        if (this.isByzantine) {
-            return new ByzantineNode(pbft);
-        } else {
-            return new LoyalNode(pbft);
-        }
+        return new NodeMock(pbft);
     }
 
     private buildConfig(): Config {
         const electionTrigger: ElectionTrigger = this.electionTrigger ? this.electionTrigger : new ElectionTriggerMock();
         const blockValidator: BlockValidator = this.blockValidator ? this.blockValidator : new BlockValidatorMock();
-        const id = this.name || (this.isByzantine ? "Byzantine-Node" : "Loyal-Node");
+        const id = this.name || "Node";
         const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(id) : new SilentLogger();
         const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage(logger);
 
@@ -121,5 +109,3 @@ export class NodeBuilder {
 }
 
 export const aNode = () => new NodeBuilder();
-export const aLoyalNode = aNode;
-export const aByzantineNode = () => aNode().thatIsByzantine;

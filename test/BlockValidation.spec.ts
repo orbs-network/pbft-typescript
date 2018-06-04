@@ -4,17 +4,17 @@ import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNetwork } from "./builders/NetworkBuilder";
-import { LoyalNode } from "./network/LoyalNode";
+import { NodeMock } from "./network/NodeMock";
 
 chai.use(sinonChai);
 
 describe("Block Validation", () => {
     it("should call validateBlock on onPrepare", async () => {
-        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
+        const network = aNetwork().with(4).nodes.build();
 
         const block = aBlock(theGenesisBlock);
         const leader = network.nodes[0];
-        const node1 = network.nodes[1] as LoyalNode;
+        const node1 = network.nodes[1] as NodeMock;
         const spy = sinon.spy(node1.pbft.blockValidator, "validateBlock");
         await leader.suggestBlock(block);
 
@@ -24,11 +24,11 @@ describe("Block Validation", () => {
     });
 
     it("should not reach consensus if validateBlock returned false", async () => {
-        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
+        const network = aNetwork().with(4).nodes.build();
 
         const block = aBlock(theGenesisBlock);
         const leader = network.nodes[0];
-        const node1 = network.nodes[1] as LoyalNode;
+        const node1 = network.nodes[1] as NodeMock;
         node1.pbft.blockValidator.validateBlock = async () => false;
         await leader.suggestBlock(block);
 
