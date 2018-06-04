@@ -13,12 +13,12 @@ export type onNewBlockCB = (block: Block) => void;
 export class PBFT {
     private committedBlocksHashs: string[];
     private CB: Block;
-    private view: number;
     private network: Network;
     private pbftStorage: PBFTStorage;
     private logger: Logger;
     private electionTrigger: ElectionTrigger;
     private onNewBlockListeners: onNewBlockCB[];
+    private view: number;
     private term: number;
 
     public id: string;
@@ -80,9 +80,6 @@ export class PBFT {
         this.view++;
         this.logger.log(`onLeaderChange, new view:${this.view}`);
         const payload: ViewChangePayload = { newView: this.view };
-
-        // TODO: storeViewChange (Count myself)
-        // this.pbftStorage.storeViewChange(payload.newView, this.id);
         this.gossip.unicast(this.id, this.leaderId(), "view-change", payload);
     }
 
@@ -177,11 +174,16 @@ export class PBFT {
     private onReceiveViewChange(senderId: string, payload: ViewChangePayload): void {
         this.logger.log(`onReceiveViewChange from ${senderId}, newView:${payload.newView}`);
         this.pbftStorage.storeViewChange(payload.newView, senderId);
-        if (this.isElected(payload.newView)) {
-            const newViewPayload: NewViewPayload = { view: payload.newView };
-            this.gossip.multicast(this.id, this.getOtherNodesIds(), "new-view", newViewPayload);
+        const view = payload.newView;
+        if (this.isElected(view)) {
+            this.onElected(view);
         }
     }
+
+    private onElected(view: number) {
+        const newViewPayload: NewViewPayload = { view };
+        this.gossip.multicast(this.id, this.getOtherNodesIds(), "new-view", newViewPayload);
+}
 
     private checkPrepared(term: number, view: number, blockHash: string) {
         if (this.isPrePrepared(term, view, blockHash)) {
