@@ -80,7 +80,12 @@ export class PBFT {
         this.view++;
         this.logger.log(`onLeaderChange, new view:${this.view}`);
         const payload: ViewChangePayload = { newView: this.view };
-        this.gossip.unicast(this.id, this.leaderId(), "view-change", payload);
+        this.pbftStorage.storeViewChange(this.view, this.id);
+        if (this.isLeader(this.id)) {
+            this.checkElected(this.view);
+        } else {
+            this.gossip.unicast(this.id, this.leaderId(), "view-change", payload);
+        }
     }
 
     private broadcastPrePrepare(block: Block): void {
@@ -116,7 +121,7 @@ export class PBFT {
             return;
         }
 
-        if (this.isFromCurrentLeader(senderId) === false) {
+        if (this.isLeader(senderId) === false) {
             this.logger.log(`onReceivePrePrepare from ${senderId}, block rejected because it was not sent by the current leader (${this.view})`);
             return;
         }
@@ -161,7 +166,7 @@ export class PBFT {
             return;
         }
 
-        if (this.isFromCurrentLeader(senderId)) {
+        if (this.isLeader(senderId)) {
             this.logger.log(`onReceivePrepare from ${senderId}, prepare not logged as we don't accept prepare from the leader`);
             return;
         }
@@ -175,6 +180,10 @@ export class PBFT {
         this.logger.log(`onReceiveViewChange from ${senderId}, newView:${payload.newView}`);
         this.pbftStorage.storeViewChange(payload.newView, senderId);
         const view = payload.newView;
+        this.checkElected(view);
+    }
+
+    private checkElected(view: number): void {
         if (this.isElected(view)) {
             this.onElected(view);
         }
@@ -183,7 +192,7 @@ export class PBFT {
     private onElected(view: number) {
         const newViewPayload: NewViewPayload = { view };
         this.gossip.multicast(this.id, this.getOtherNodesIds(), "new-view", newViewPayload);
-}
+    }
 
     private checkPrepared(term: number, view: number, blockHash: string) {
         if (this.isPrePrepared(term, view, blockHash)) {
@@ -242,7 +251,7 @@ export class PBFT {
         return this.getLatestConfirmedBlockHash() === block.previousBlockHash;
     }
 
-    private isFromCurrentLeader(senderId: string): boolean {
+    private isLeader(senderId: string): boolean {
         return this.leaderId() === senderId;
     }
 

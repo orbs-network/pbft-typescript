@@ -81,7 +81,7 @@ class NetworkBuilder {
             nodes.push(node);
         }
 
-        const customNodes = this.customNodes.map((nodeBuilder, idx) => this.buildNode(nodeBuilder, `Custome-Node${idx + 1}`, discovery));
+        const customNodes = this.customNodes.map((nodeBuilder, idx) => this.buildNode(nodeBuilder, `Custome-Node${idx}`, discovery));
         nodes.push(...customNodes);
         this.network.registerNodes(nodes);
     }
