@@ -1,7 +1,3 @@
-// TODO:
-// Tigger Once, prepared, elected, committed.
-//
-
 function primary(view: number): string { return ""; }
 function constructBlock(): Block { return { previousBlockHash: "", height: 0 }; }
 function HASH(block): string { return ""; }
@@ -109,6 +105,7 @@ class PBFT {
     initPBFT() {
         this.term = this.lastCommittedBlock.height;
         this.initView(0);
+        this.suggestBlock();
         this.preparedProof = undefined;
     }
 
@@ -116,6 +113,9 @@ class PBFT {
         this.view = view;
         this.CB = undefined;
         this.startTimer();
+    }
+
+    suggestBlock(): void {
         if (primary(this.view) === this.myPublicKey) {
             this.CB = constructBlock();
             const PP: PPMessage = {
