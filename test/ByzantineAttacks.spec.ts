@@ -18,9 +18,9 @@ describe("Byzantine Attacks", () => {
         const logger = new SilentLogger();
         const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
         const leaderBuilder = aNode().storingOn(inspectedStorage);
-        const network = aNetwork().withCustomeNode(leaderBuilder).with(3).nodes.build();
-
         const block = aBlock(theGenesisBlock);
+        const network = aNetwork().blocksInPool([block]).withCustomeNode(leaderBuilder).with(3).nodes.build();
+
         const leader = network.nodes[0];
         const term = 0;
         const view = 0;
@@ -35,11 +35,12 @@ describe("Byzantine Attacks", () => {
         const logger = new SilentLogger();
         const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
         const leaderNodeBuilder = aNode().storingOn(inspectedStorage);
-        const network = aNetwork().withCustomeNode(leaderNodeBuilder).with(3).nodes.build();
-
         const block = aBlock(theGenesisBlock);
+        const network = aNetwork().blocksInPool([block]).withCustomeNode(leaderNodeBuilder).with(3).nodes.build();
+
         const leader = network.nodes[0];
-        await leader.suggestBlock(block);
+        network.processNextBlock();
+        await nextTick();
 
         const byzantineNode = network.nodes[3];
         const term = 0;
@@ -55,9 +56,9 @@ describe("Byzantine Attacks", () => {
         const logger = new SilentLogger();
         const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
         const nodeBuilder = aNode().storingOn(inspectedStorage);
-        const network = aNetwork().with(3).nodes.withCustomeNode(nodeBuilder).build();
-
         const block = aBlock(theGenesisBlock);
+        const network = aNetwork().blocksInPool([block]).with(3).nodes.withCustomeNode(nodeBuilder).build();
+
         const leader = network.nodes[0];
         const node = network.nodes[1];
         leader.pbft.gossip.unicast(leader.id, node.id, "prepare", { blockHash: block.hash, view: 0, term: 0 });
@@ -79,10 +80,10 @@ describe("Byzantine Attacks", () => {
         // * validation is complete, nodes 1 and 2 continue.
         // * there's another consensus on B1.
         // * we use term to solve this
-        const network = aNetwork().with(4).nodes.build();
-
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
+        const network = aNetwork().blocksInPool([block1, block2]).with(4).nodes.build();
+
         const leader = network.nodes[0];
         const node1 = network.nodes[1];
         const node2 = network.nodes[2];
@@ -90,10 +91,12 @@ describe("Byzantine Attacks", () => {
 
         const leaderGossip = leader.pbft.gossip as InMemoryGossip;
         leaderGossip.setOutGoingWhiteList([node1.id, node2.id]);
-        await leader.suggestBlock(block1);
+        network.processNextBlock();
+        await nextTick();
 
         leaderGossip.setOutGoingWhiteList([node2.id, node3.id]);
-        await leader.suggestBlock(block2);
+        network.processNextBlock();
+        await nextTick();
 
         expect(node1.getLatestBlock()).to.equal(block1);
         expect(node2.getLatestBlock()).to.equal(block1);
@@ -132,7 +135,9 @@ describe("Byzantine Attacks", () => {
         // [X] 4: P[B] => 3
 
         const electionTrigger = new ElectionTriggerMock();
-        const network = aNetwork().with(4).nodes.electingLeaderUsing(electionTrigger).build();
+        const block1 = aBlock(theGenesisBlock, "block1");
+        const block2 = aBlock(theGenesisBlock, "block2");
+        const network = aNetwork().blocksInPool([block1, block2]).with(4).nodes.electingLeaderUsing(electionTrigger).build();
 
         const node1 = network.nodes[0]; // leader
         const node2 = network.nodes[1];
@@ -149,8 +154,8 @@ describe("Byzantine Attacks", () => {
         gossip3.setOutGoingWhiteList([]);
         gossip4.setOutGoingWhiteList([]);
 
-        const block1 = aBlock(theGenesisBlock, "block1");
-        await node1.suggestBlock(block1);
+        network.processNextBlock();
+        await nextTick();
 
         expect(node1.getLatestBlock()).to.be.undefined;
         expect(node2.getLatestBlock()).to.be.undefined;
@@ -166,8 +171,8 @@ describe("Byzantine Attacks", () => {
 
         // elect node2 as the leader
         electionTrigger.trigger();
-        const block2 = aBlock(theGenesisBlock, "block2");
-        await node2.suggestBlock(block2);
+        network.processNextBlock();
+        await nextTick();
 
         expect(node1.getLatestBlock()).to.equal(block2);
         expect(node2.getLatestBlock()).to.be.undefined;

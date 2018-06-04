@@ -25,6 +25,7 @@ export class NodeBuilder {
     private gossip: Gossip;
     private electionTrigger: ElectionTrigger;
     private blocksValidator: BlocksValidator;
+    private blocksProvider: BlocksProvider;
     private logsToConsole: boolean = false;
 
     public and = this;
@@ -66,6 +67,14 @@ export class NodeBuilder {
         }
         return this;
     }
+
+    public gettingBlocksVia(blocksProvider: BlocksProvider): this {
+        if (!this.blocksProvider) {
+            this.blocksProvider = blocksProvider;
+        }
+        return this;
+    }
+
     public communicatesVia(gossip: Gossip): this {
         if (!this.gossip) {
             this.gossip = gossip;
@@ -93,7 +102,7 @@ export class NodeBuilder {
     private buildConfig(): Config {
         const electionTrigger: ElectionTrigger = this.electionTrigger ? this.electionTrigger : new ElectionTriggerMock();
         const blocksValidator: BlocksValidator = this.blocksValidator ? this.blocksValidator : new BlocksValidatorMock();
-        const blocksProvider: BlocksProvider = new BlocksProviderMock();
+        const blocksProvider: BlocksProvider = this.blocksProvider ? this.blocksProvider : new BlocksProviderMock();
         const id = this.name || "Node";
         const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(id) : new SilentLogger();
         const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage(logger);

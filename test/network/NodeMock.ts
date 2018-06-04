@@ -11,10 +11,6 @@ export class NodeMock implements Node {
         this.pbft.registerToOnNewBlock(block => this.onNewBlock(block));
     }
 
-    public async suggestBlock(block: Block): Promise<void> {
-        this.pbft.suggestBlockAsLeader(block);
-    }
-
     public getLatestBlock(): Block {
         return this.blockLog[this.blockLog.length - 1];
     }
@@ -25,6 +21,12 @@ export class NodeMock implements Node {
 
     public onNewBlock(block: Block): void {
         this.blockLog.push(block);
+    }
+
+    public processNextBlock(): void {
+        if (this.pbft) {
+            this.pbft.processNextBlock();
+        }
     }
 
     public dispose(): void {

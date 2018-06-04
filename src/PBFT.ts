@@ -1,5 +1,6 @@
 import { Block } from "./Block";
 import { Config } from "./Config";
+import { BlocksProvider } from "./blocksProvider/BlocksProvider";
 import { BlocksValidator } from "./blocksValidator/BlocksValidator";
 import { ElectionTrigger } from "./electionTrigger/ElectionTrigger";
 import { Gossip } from "./gossip/Gossip";
@@ -23,6 +24,7 @@ export class PBFT {
 
     public id: string;
     public blocksValidator: BlocksValidator;
+    public blocksProvider: BlocksProvider;
     public gossip: Gossip;
 
     constructor(config: Config) {
@@ -38,10 +40,10 @@ export class PBFT {
         this.logger = config.logger;
         this.electionTrigger = config.electionTrigger;
         this.blocksValidator = config.blocksValidator;
+        this.blocksProvider = config.blocksProvider;
 
         // leader election
         this.electionTrigger.register(() => this.onLeaderChange());
-        this.electionTrigger.start();
 
         // init committedBlocks
         this.committedBlocksHashs = [config.genesisBlockHash];
@@ -61,10 +63,14 @@ export class PBFT {
         this.onNewBlockListeners.push(bc);
     }
 
-    public suggestBlockAsLeader(block: Block): void {
-        this.CB = block;
-        this.pbftStorage.storePrePrepare(this.term, this.view, block.hash);
-        this.broadcastPrePrepare(block);
+    public processNextBlock(): void {
+        this.CB = undefined;
+        this.electionTrigger.start();
+        if (this.isLeader(this.id)) {
+            this.CB = this.blocksProvider.getBlock();
+            this.pbftStorage.storePrePrepare(this.term, this.view, this.CB.hash);
+            this.broadcastPrePrepare(this.CB);
+        }
     }
 
     public dispose(): any {

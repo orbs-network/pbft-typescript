@@ -1,5 +1,6 @@
 import * as chai from "chai";
 import { expect } from "chai";
+import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { aNetwork } from "../builders/NetworkBuilder";
 import { aNode } from "../builders/NodeBuilder";
@@ -53,6 +54,37 @@ describe("InMemory Network", () => {
         expect(network.getNodeIdBySeed(1)).to.equal(network.nodes[1].id);
         expect(network.getNodeIdBySeed(2)).to.equal(network.nodes[2].id);
         expect(network.getNodeIdBySeed(3)).to.equal(network.nodes[0].id);
+        network.shutDown();
+    });
+
+    it("should dipose all the nodes on shutdown", () => {
+        const network = aNetwork().with(3).nodes.build();
+        const node0 = network.nodes[0];
+        const node1 = network.nodes[1];
+        const node2 = network.nodes[2];
+        const spy0 = sinon.spy(node0.pbft, "dispose");
+        const spy1 = sinon.spy(node1.pbft, "dispose");
+        const spy2 = sinon.spy(node2.pbft, "dispose");
+
+        network.shutDown();
+        expect(spy0).to.have.been.called;
+        expect(spy1).to.have.been.called;
+        expect(spy2).to.have.been.called;
+    });
+
+    it("should start all the nodes when calling start", () => {
+        const network = aNetwork().with(3).nodes.build();
+        const node0 = network.nodes[0];
+        const node1 = network.nodes[1];
+        const node2 = network.nodes[2];
+        const spy0 = sinon.spy(node0.pbft, "processNextBlock");
+        const spy1 = sinon.spy(node1.pbft, "processNextBlock");
+        const spy2 = sinon.spy(node2.pbft, "processNextBlock");
+
+        network.processNextBlock();
+        expect(spy0).to.have.been.called;
+        expect(spy1).to.have.been.called;
+        expect(spy2).to.have.been.called;
         network.shutDown();
     });
 

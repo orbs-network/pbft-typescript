@@ -5,18 +5,20 @@ import * as sinonChai from "sinon-chai";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNetwork } from "./builders/NetworkBuilder";
 import { NodeMock } from "./network/NodeMock";
+import { nextTick } from "./timeUtils";
 
 chai.use(sinonChai);
 
 describe("Block Validation", () => {
     it("should call validateBlock on onPrepare", async () => {
-        const network = aNetwork().with(4).nodes.build();
-
         const block = aBlock(theGenesisBlock);
+        const network = aNetwork().blocksInPool([block]).with(4).nodes.build();
+
         const leader = network.nodes[0];
         const node1 = network.nodes[1] as NodeMock;
         const spy = sinon.spy(node1.pbft.blocksValidator, "validateBlock");
-        await leader.suggestBlock(block);
+        network.processNextBlock();
+        await nextTick();
 
         expect(spy).to.have.been.calledWith(block);
         expect(network.nodes).to.agreeOnBlock(block);
@@ -24,13 +26,14 @@ describe("Block Validation", () => {
     });
 
     it("should not reach consensus if validateBlock returned false", async () => {
-        const network = aNetwork().with(4).nodes.build();
-
         const block = aBlock(theGenesisBlock);
+        const network = aNetwork().blocksInPool([block]).with(4).nodes.build();
+
         const leader = network.nodes[0];
         const node1 = network.nodes[1] as NodeMock;
         node1.pbft.blocksValidator.validateBlock = async () => false;
-        await leader.suggestBlock(block);
+        network.processNextBlock();
+        await nextTick();
 
         expect(network.nodes).to.not.agreeOnBlock(block);
         network.shutDown();

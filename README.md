@@ -8,7 +8,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 
 - [V] Remove node types from the tests
 - [V] PBFT onLeaderChange should count itself
-- [ ] How do we generate a new block?
+- [V] Generate new block via a blocks provider?
 - [ ] implement new-view
 - [ ] missing protection against byzantine attacks with wrong term/view
 - [ ] add isMember, and call it from pbft
