@@ -14,7 +14,6 @@ class NetworkBuilder {
     private countOfNodes: number = 0;
     private logger: Logger;
     private customNodes: NodeBuilder[] = [];
-    private customLeader: NodeBuilder;
     private logsToConsole: boolean = false;
     private electionTrigger: ElectionTrigger;
 
@@ -76,14 +75,9 @@ class NetworkBuilder {
         const discovery = new InMemoryGossipDiscovery();
 
         const nodes: Node[] = [];
-        let leader: Node;
-        if (this.customLeader) {
-            leader = this.buildNode(this.customLeader, "Custome-Leader", discovery);
-            nodes.push(leader);
-        }
 
         for (let i = 0; i < this.countOfNodes; i++) {
-            const node = this.buildNode(aNode(), `Node${i + 1}`, discovery);
+            const node = this.buildNode(aNode(), `Node${i}`, discovery);
             nodes.push(node);
         }
 
