@@ -1,12 +1,14 @@
 import { Config } from "../../src/Config";
 import { PBFT } from "../../src/PBFT";
-import { BlockValidator } from "../../src/blockValidator/BlockValidator";
+import { BlocksProvider } from "../../src/blocksProvider/BlocksProvider";
+import { BlocksValidator } from "../../src/blocksValidator/BlocksValidator";
 import { ElectionTrigger } from "../../src/electionTrigger/ElectionTrigger";
 import { Gossip } from "../../src/gossip/Gossip";
 import { Logger } from "../../src/logger/Logger";
 import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 import { PBFTStorage } from "../../src/storage/PBFTStorage";
-import { BlockValidatorMock } from "../blockValidator/BlockValidatorMock";
+import { BlocksProviderMock } from "../blocksProvider/BlocksProviderMock";
+import { BlocksValidatorMock } from "../blocksValidator/BlocksValidatorMock";
 import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
 import { ConsoleLogger } from "../logger/ConsoleLogger";
 import { SilentLogger } from "../logger/SilentLogger";
@@ -22,7 +24,7 @@ export class NodeBuilder {
     private logger: Logger;
     private gossip: Gossip;
     private electionTrigger: ElectionTrigger;
-    private blockValidator: BlockValidator;
+    private blocksValidator: BlocksValidator;
     private logsToConsole: boolean = false;
 
     public and = this;
@@ -58,9 +60,9 @@ export class NodeBuilder {
         return this;
     }
 
-    public validateUsing(blockValidator: BlockValidator): this {
-        if (!this.blockValidator) {
-            this.blockValidator = blockValidator;
+    public validateUsing(blocksValidator: BlocksValidator): this {
+        if (!this.blocksValidator) {
+            this.blocksValidator = blocksValidator;
         }
         return this;
     }
@@ -90,7 +92,8 @@ export class NodeBuilder {
 
     private buildConfig(): Config {
         const electionTrigger: ElectionTrigger = this.electionTrigger ? this.electionTrigger : new ElectionTriggerMock();
-        const blockValidator: BlockValidator = this.blockValidator ? this.blockValidator : new BlockValidatorMock();
+        const blocksValidator: BlocksValidator = this.blocksValidator ? this.blocksValidator : new BlocksValidatorMock();
+        const blocksProvider: BlocksProvider = new BlocksProviderMock();
         const id = this.name || "Node";
         const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(id) : new SilentLogger();
         const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage(logger);
@@ -103,7 +106,8 @@ export class NodeBuilder {
             logger,
             pbftStorage,
             electionTrigger,
-            blockValidator
+            blocksProvider,
+            blocksValidator
         };
     }
 }

@@ -1,5 +1,5 @@
 import { Block } from "../Block";
 
-export interface BlockValidator {
+export interface BlocksValidator {
     validateBlock: (block: Block) => Promise<boolean>;
 }

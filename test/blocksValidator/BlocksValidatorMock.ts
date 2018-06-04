@@ -1,7 +1,7 @@
 import { Block } from "../../src/Block";
-import { BlockValidator } from "../../src/blockValidator/BlockValidator";
+import { BlocksValidator } from "../../src/blocksValidator/BlocksValidator";
 
-export class BlockValidatorMock implements BlockValidator {
+export class BlocksValidatorMock implements BlocksValidator {
     private resolveFuncs: Function[] = [];
 
     constructor(private autoResolve: boolean = true) {

@@ -1,5 +1,5 @@
-import { Block } from "./Block";
-import { BlockValidator } from "./blockValidator/BlockValidator";
+import { BlocksProvider } from "./blocksProvider/BlocksProvider";
+import { BlocksValidator } from "./blocksValidator/BlocksValidator";
 import { ElectionTrigger } from "./electionTrigger/ElectionTrigger";
 import { Gossip } from "./gossip/Gossip";
 import { Logger } from "./logger/Logger";
@@ -14,5 +14,6 @@ export interface Config {
     pbftStorage: PBFTStorage;
     logger: Logger;
     electionTrigger: ElectionTrigger;
-    blockValidator: BlockValidator;
+    blocksValidator: BlocksValidator;
+    blocksProvider: BlocksProvider;
 }

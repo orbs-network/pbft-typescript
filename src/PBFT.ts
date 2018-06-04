@@ -1,6 +1,6 @@
 import { Block } from "./Block";
 import { Config } from "./Config";
-import { BlockValidator } from "./blockValidator/BlockValidator";
+import { BlocksValidator } from "./blocksValidator/BlocksValidator";
 import { ElectionTrigger } from "./electionTrigger/ElectionTrigger";
 import { Gossip } from "./gossip/Gossip";
 import { CommitPayload, NewViewPayload, PrePreparePayload, PreparePayload, ViewChangePayload } from "./gossip/Payload";
@@ -22,7 +22,7 @@ export class PBFT {
     private term: number;
 
     public id: string;
-    public blockValidator: BlockValidator;
+    public blocksValidator: BlocksValidator;
     public gossip: Gossip;
 
     constructor(config: Config) {
@@ -37,7 +37,7 @@ export class PBFT {
         this.pbftStorage = config.pbftStorage;
         this.logger = config.logger;
         this.electionTrigger = config.electionTrigger;
-        this.blockValidator = config.blockValidator;
+        this.blocksValidator = config.blocksValidator;
 
         // leader election
         this.electionTrigger.register(() => this.onLeaderChange());
@@ -136,7 +136,7 @@ export class PBFT {
             return;
         }
 
-        const isValidBlock = await this.blockValidator.validateBlock(block);
+        const isValidBlock = await this.blocksValidator.validateBlock(block);
         if (!isValidBlock) {
             this.logger.log(`onReceivePrePrepare from ${senderId}, block is invalid`);
             return;
