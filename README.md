@@ -6,7 +6,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 
 ## To do
 
-- [ ] Remove node types from the tests
+- [V] Remove node types from the tests
 - [ ] implement new-view
 - [ ] How do we generate a new block?
 - [ ] missing protection against byzantine attacks with wrong term/view
