@@ -19,7 +19,7 @@ describe("Block Validation", () => {
         await leader.suggestBlock(block);
 
         expect(spy).to.have.been.calledWith(block);
-        expect(network).to.reachConsensusOnBlock(block);
+        expect(network.nodes).to.agreeOnBlock(block);
         network.shutDown();
     });
 
@@ -32,7 +32,7 @@ describe("Block Validation", () => {
         node1.pbft.blockValidator.validateBlock = async () => false;
         await leader.suggestBlock(block);
 
-        expect(network).to.not.reachConsensusOnBlock(block);
+        expect(network.nodes).to.not.agreeOnBlock(block);
         network.shutDown();
     });
 });

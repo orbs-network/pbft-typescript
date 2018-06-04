@@ -1,4 +1,4 @@
-/// <reference path="./matchers/consensusMatcher.d.ts"/>
+/// <reference path="./matchers/blockMatcher.d.ts"/>
 
 import * as chai from "chai";
 import { expect } from "chai";
@@ -7,13 +7,12 @@ import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNetwork } from "./builders/NetworkBuilder";
 import { ElectionTriggerMock } from "./electionTrigger/ElectionTriggerMock";
 import { InMemoryGossip } from "./gossip/InMemoryGossip";
-import { consensusMatcher } from "./matchers/consensusMatcher";
-import { ByzantineNode } from "./network/ByzantineNode";
+import { blockMatcher } from "./matchers/blockMatcher";
 import { LoyalNode } from "./network/LoyalNode";
 import { nextTick } from "./timeUtils";
 
 chai.use(sinonChai);
-chai.use(consensusMatcher);
+chai.use(blockMatcher);
 
 describe("PBFT", () => {
     it("should start a network, append a block, and make sure that all nodes recived it", async () => {
@@ -23,18 +22,18 @@ describe("PBFT", () => {
         const leader = network.nodes[0];
         await leader.suggestBlock(block);
 
-        expect(network).to.reachConsensusOnBlock(block);
+        expect(network.nodes).to.agreeOnBlock(block);
         network.shutDown();
     });
 
     it("should ignore suggested block if they are not from the leader", async () => {
-        const network = aNetwork().leadBy.a.loyalLeader.with(2).loyalNodes.with(1).byzantineNodes.build();
+        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
 
         const block = aBlock(theGenesisBlock);
         const byzantineNode = network.nodes[3];
         await byzantineNode.suggestBlock(block);
 
-        expect(network).to.not.reachConsensusOnBlock(block);
+        expect(network.nodes).to.not.agreeOnBlock(block);
         network.shutDown();
     });
 
@@ -70,39 +69,50 @@ describe("PBFT", () => {
 
         const block = aBlock(theGenesisBlock);
         const leader = network.nodes[0];
+        const byzantineNode = network.nodes[4];
+        const gossip = byzantineNode.pbft.gossip as InMemoryGossip;
+        gossip.setIncomingWhiteList([]);
+
         await leader.suggestBlock(block);
 
-        expect(network).to.reachConsensusOnBlock(block);
+        expect(network.nodes.splice(0, 2)).to.agreeOnBlock(block);
         network.shutDown();
     });
 
     it("should reach consensus, even when a byzantine node is sending a bad block several times", async () => {
-        const network = aNetwork().leadBy.a.loyalLeader.with(2).loyalNodes.with(1).byzantineNodes.build();
+        const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
 
         const leader = network.nodes[0];
         const loyalNode = network.nodes[1];
-        const byzantineNode = network.nodes[3] as ByzantineNode;
+        const byzantineNode = network.nodes[3];
 
         const goodBlock = aBlock(theGenesisBlock);
         const badBlock = aBlock(theGenesisBlock);
         await leader.suggestBlock(goodBlock);
-        byzantineNode.suggestBlockTo(badBlock, loyalNode);
-        byzantineNode.suggestBlockTo(badBlock, loyalNode);
-        byzantineNode.suggestBlockTo(badBlock, loyalNode);
-        byzantineNode.suggestBlockTo(badBlock, loyalNode);
+        const gossip = byzantineNode.pbft.gossip;
+        gossip.broadcast(byzantineNode.id, "preprepare", { block: badBlock, view: 0, term: 0 });
+        gossip.broadcast(byzantineNode.id, "preprepare", { block: badBlock, view: 0, term: 0 });
+        gossip.broadcast(byzantineNode.id, "preprepare", { block: badBlock, view: 0, term: 0 });
+        gossip.broadcast(byzantineNode.id, "preprepare", { block: badBlock, view: 0, term: 0 });
 
-        expect(network).to.reachConsensusOnBlock(goodBlock);
+        expect(network.nodes).to.agreeOnBlock(goodBlock);
         network.shutDown();
     });
 
     it("should reach consensus, in a network of 7 nodes, where two of the nodes is byzantine and the others are loyal", async () => {
-        const network = aNetwork().leadBy.a.loyalLeader.with(4).loyalNodes.with(2).byzantineNodes.build();
+        const network = aNetwork().leadBy.a.loyalLeader.with(6).loyalNodes.build();
 
         const block = aBlock(theGenesisBlock);
         const leader = network.nodes[0];
+        const byzantineNode1 = network.nodes[5];
+        const byzantineNode2 = network.nodes[6];
+        const gossip1 = byzantineNode1.pbft.gossip as InMemoryGossip;
+        const gossip2 = byzantineNode2.pbft.gossip as InMemoryGossip;
+        gossip1.setIncomingWhiteList([]);
+        gossip2.setIncomingWhiteList([]);
         await leader.suggestBlock(block);
 
-        expect(network).to.reachConsensusOnBlock(block);
+        expect(network.nodes.splice(0, 4)).to.agreeOnBlock(block);
         network.shutDown();
     });
 
@@ -129,7 +139,7 @@ describe("PBFT", () => {
         await leader.suggestBlock(block1);
         await leader.suggestBlock(notInOrderBlock);
 
-        expect(network).to.reachConsensusOnBlock(block1);
+        expect(network.nodes).to.agreeOnBlock(block1);
         network.shutDown();
     });
 
@@ -161,7 +171,7 @@ describe("PBFT", () => {
         expect(node2.isLeader()).to.be.false;
         expect(node3.isLeader()).to.be.false;
 
-        expect(network).to.reachConsensusOnBlock(currentBlock);
+        expect(network.nodes).to.agreeOnBlock(currentBlock);
         network.shutDown();
     });
 });
