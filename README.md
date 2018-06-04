@@ -1,6 +1,8 @@
 # PBFT-Typescript
 
-This is a work in progress, do not use in production.
+*Work in progress, do not use in production.*
+
+This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine Fault Tolerance).
 
 ## To do
 
