@@ -15,21 +15,6 @@ import { nextTick } from "./timeUtils";
 chai.use(sinonChai);
 chai.use(consensusMatcher);
 
-//////////////
-// Todos:
-// * add isMember, and call it from pbft
-// * timeout should be configurable, currently values are hardcoded in the tests and builder
-// *
-// * Nodes should not broadcast prepare if it's not the same term (To avoid DDosig the system)
-// * Nodes can pretend to be other nodes => use sig
-// * Unsubscribe gossip on dispose of PBFT
-// * timeouts should trigger leader election
-// * Should I use nodeId or view?
-// * Why do we need the term
-// * Do we have to sign the message type as well? is it a must?
-// * Currently the prepare logs are using the blockHash and nodeId, convert it to v & r.
-//////////////
-
 describe("PBFT", () => {
     it("should start a network, append a block, and make sure that all nodes recived it", async () => {
         const network = aNetwork().leadBy.a.loyalLeader.with(3).loyalNodes.build();
