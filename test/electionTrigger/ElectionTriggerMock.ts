@@ -15,10 +15,6 @@ export class ElectionTriggerMock implements ElectionTrigger {
         this.listeners.push(cb);
     }
 
-    public snooze(): void {
-        // do nothing
-    }
-
     public trigger(): void {
         this.listeners.map(listener => listener());
     }

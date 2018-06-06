@@ -20,10 +20,6 @@ export class TimerBasedElectionTrigger implements ElectionTrigger {
         this.listeners.push(cb);
     }
 
-    public snooze(): void {
-        this.resetElectionTimer();
-    }
-
     private resetElectionTimer(): void {
         this.stopElectionTimer();
         this.startElectionTimer();

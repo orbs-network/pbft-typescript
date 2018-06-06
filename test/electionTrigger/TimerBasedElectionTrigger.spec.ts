@@ -42,23 +42,6 @@ describe("Timer Based Election Trigger", () => {
         expect(spy).to.have.been.calledTwice;
     });
 
-    it("should not trigger the cb, if snoozed", async () => {
-        const et: ElectionTrigger = new TimerBasedElectionTrigger(10);
-        const spy = sinon.spy();
-        et.register(spy);
-        et.start();
-        await wait(5);
-        et.snooze();
-        await wait(5);
-        et.snooze();
-        await wait(5);
-        et.snooze();
-        await wait(15);
-        et.snooze();
-
-        expect(spy).to.have.been.calledOnce;
-    });
-
     it("should not trigger the cb, if stopped", async () => {
         const et: ElectionTrigger = new TimerBasedElectionTrigger(10);
         const spy = sinon.spy();
