@@ -10,6 +10,9 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] PBFT onLeaderChange should count itself
 - [V] Generate new block via a blocks provider?
 - [ ] implement new-view
+- [ ] we should have a timer for each view. new-view shouldn't restart a timer if it's already started.
+- [ ] term should be taken from the height of the latest block and not do ++ on commit.
+- [ ] commit is pushing the block hash to a log to prevent multiple commits of the same block, this shouldn't be the solution.
 - [ ] suggest block in new-view (inside PP)
 - [ ] extract block util
 - [ ] trigger once, prepared, elected, new-view, committed.
