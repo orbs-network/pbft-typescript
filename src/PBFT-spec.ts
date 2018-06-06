@@ -6,6 +6,7 @@ function getViewChangeCount(term: number, view: number): any { return 0; }
 function Multicast(senderPublicKey: string, message: string, payload): void { }
 function Unicast(senderPublicKey: string, targetPublicKey: string, message, payload): void { }
 function valid(block: Block): boolean { return true; }
+function notifyCommit(block: Block): void { }
 class ViewTimer {
     constructor(public readonly view, timeout: number, onTimeout: () => void) {
 
