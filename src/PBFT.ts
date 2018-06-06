@@ -277,6 +277,7 @@ export class PBFT {
     private commitBlock(block: Block): void {
         if (this.committedBlocksHashs.indexOf(block.hash) === -1) {
             this.committedBlocksHashs.push(block.hash);
+            this.electionTrigger.stop();
             this.onNewBlockListeners.forEach(cb => cb(this.CB));
             this.term++;
         }

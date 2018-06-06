@@ -2,10 +2,12 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
+import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNetwork } from "./builders/NetworkBuilder";
 import { aNode } from "./builders/NodeBuilder";
 import { ElectionTriggerMock } from "./electionTrigger/ElectionTriggerMock";
 import { InMemoryGossip } from "./gossip/InMemoryGossip";
+import { nextTick } from "./timeUtils";
 
 chai.use(sinonChai);
 
@@ -68,6 +70,18 @@ describe("Leader Election", () => {
         gossip.onRemoteMessage(node2.id, "view-change", { newView: 1 });
         gossip.onRemoteMessage(node3.id, "view-change", { newView: 1 });
         expect(multicastSpy).to.have.been.calledWith(node1.id, [node0.id, node2.id, node3.id], "new-view", { view: 1 });
+        network.shutDown();
+    });
+
+    it("should stop the timer on commit", async () => {
+        const electionTriggerMock = new ElectionTriggerMock();
+        const block = aBlock(theGenesisBlock, "Block");
+        const network = aNetwork().blocksInPool([block]).with(3).nodes.electingLeaderUsing(electionTriggerMock).build();
+        const spy = sinon.spy(electionTriggerMock, "stop");
+
+        network.processNextBlock();
+        await nextTick();
+        expect(spy.callCount).to.equal(network.nodes.length);
         network.shutDown();
     });
 
