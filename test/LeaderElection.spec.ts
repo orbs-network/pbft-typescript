@@ -76,7 +76,7 @@ describe("Leader Election", () => {
     it("should stop the timer on commit", async () => {
         const electionTriggerMock = new ElectionTriggerMock();
         const block = aBlock(theGenesisBlock, "Block");
-        const network = aNetwork().blocksInPool([block]).with(3).nodes.electingLeaderUsing(electionTriggerMock).build();
+        const network = aNetwork().blocksInPool([block]).with(4).nodes.electingLeaderUsing(electionTriggerMock).build();
         const spy = sinon.spy(electionTriggerMock, "stop");
 
         network.processNextBlock();
