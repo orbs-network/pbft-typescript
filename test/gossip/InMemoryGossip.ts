@@ -82,8 +82,4 @@ export class InMemoryGossip implements Gossip, RemoteListener {
             targetGossip.onRemoteMessage(senderId, message, payload);
         }
     }
-
-    private isInWhiteList(senderId: string, targetId: string, message: string): boolean {
-        return false;
-    }
 }
