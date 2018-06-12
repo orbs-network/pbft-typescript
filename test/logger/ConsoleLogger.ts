@@ -4,7 +4,7 @@ export class ConsoleLogger implements Logger {
     public isActive: boolean;
 
     constructor(private id: string) {
-        this.isActive = id === "Node1";
+        this.isActive = true;
     }
 
     public log(msg: string): void {
