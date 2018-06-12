@@ -22,5 +22,5 @@ export interface ViewChangePayload {
 }
 
 export interface NewViewPayload {
-    view: number;
+    PP: PrePreparePayload;
 }

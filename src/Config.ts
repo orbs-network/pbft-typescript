@@ -1,6 +1,6 @@
 import { BlocksProvider } from "./blocksProvider/BlocksProvider";
 import { BlocksValidator } from "./blocksValidator/BlocksValidator";
-import { ElectionTrigger } from "./electionTrigger/ElectionTrigger";
+import { ElectionTriggerFactory } from "./electionTrigger/ElectionTrigger";
 import { Gossip } from "./gossip/Gossip";
 import { Logger } from "./logger/Logger";
 import { Network } from "./network/Network";
@@ -13,7 +13,7 @@ export interface Config {
     gossip: Gossip;
     pbftStorage: PBFTStorage;
     logger: Logger;
-    electionTrigger: ElectionTrigger;
+    electionTriggerFactory: ElectionTriggerFactory;
     blocksValidator: BlocksValidator;
     blocksProvider: BlocksProvider;
 }

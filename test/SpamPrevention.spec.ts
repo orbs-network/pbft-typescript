@@ -16,7 +16,7 @@ describe("Spam Prevention", () => {
         const logger = new SilentLogger();
         const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
         const nodeBuilder = aNode().storingOn(inspectedStorage);
-        const network = aNetwork().with(4).nodes.withCustomeNode(nodeBuilder).build();
+        const network = aNetwork().with(4).nodes.withCustomNode(nodeBuilder).build();
 
         const block = aBlock(theGenesisBlock);
         const leader = network.nodes[0];
@@ -26,7 +26,7 @@ describe("Spam Prevention", () => {
         leader.pbft.gossip.unicast(leader.id, node.id, "preprepare", { block: block, view: 0, term: 0 });
         await nextTick();
 
-        expect(inspectedStorage.getPrepare(0, 0).length).to.equal(1);
+        expect(inspectedStorage.getPrepare(0, 0, block.hash).length).to.equal(1);
         network.shutDown();
     });
 });

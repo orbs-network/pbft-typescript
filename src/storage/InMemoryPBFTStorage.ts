@@ -17,7 +17,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
     storePrePrepare(term: number, view: number, blockHash: string): void {
         const key = term.toString() + "_" + view.toString();
         this.prePrepareStorage[key] = blockHash;
-        this.logger.log(`storePrePrepare, term [${term}], view [${view}] logged.`);
+        this.logger.log(`term:[${term}], view:[${view}], blockHash:[${blockHash}], storePrePrepare`);
     }
 
     getPrePrepare(term: number, view: number): string {
@@ -34,12 +34,13 @@ export class InMemoryPBFTStorage implements PBFTStorage {
                 this.prepareStorage[key].push({ senderId, blockHash });
             }
         }
-        this.logger.log(`storePrepare from [${senderId}], term [${term}] logged. [${Object.keys(this.prepareStorage).map(k => parseInt(k, 10)).map(k => this.prepareStorage[k])}] votes so far.`);
+        this.logger.log(`term:[${term}], view:[${view}], blockHash:[${blockHash}], storePrepare from "${senderId}". ${this.getPrepare(term, view, blockHash).length} votes so far.`);
     }
 
-    getPrepare(term: number, view: number): Array<{ senderId: string, blockHash: string }> {
+    getPrepare(term: number, view: number, blockHash: string): string[] {
         const key = term.toString() + "_" + view.toString();
-        return this.prepareStorage[key] !== undefined ? this.prepareStorage[key] : [];
+        const prepares = this.prepareStorage[key] !== undefined ? this.prepareStorage[key] : [];
+        return prepares.filter(p => p.blockHash === blockHash).map(p => p.senderId);
     }
 
     storeCommit(term: number, view: number, senderId: string, blockHash: string): void {
@@ -51,12 +52,13 @@ export class InMemoryPBFTStorage implements PBFTStorage {
                 this.commitStorage[key].push({ senderId, blockHash });
             }
         }
-        this.logger.log(`storeCommit from [${senderId}], term [${term}] logged. [${Object.keys(this.commitStorage).map(k => parseInt(k, 10)).map(k => this.commitStorage[k])}] votes so far.`);
+        this.logger.log(`term:[${term}], view:[${view}], blockHash:[${blockHash}], storeCommit from "${senderId}". ${this.getCommit(term, view, blockHash).length} votes so far.`);
     }
 
-    getCommit(term: number, view: number): Array<{ senderId: string, blockHash: string }> {
+    getCommit(term: number, view: number, blockHash: string): string[] {
         const key = term.toString() + "_" + view.toString();
-        return this.commitStorage[key] !== undefined ? this.commitStorage[key] : [];
+        const commits = this.commitStorage[key] !== undefined ? this.commitStorage[key] : [];
+        return commits.filter(c => c.blockHash === blockHash).map(c => c.senderId);
     }
 
     storeViewChange(view: number, senderId: string): void {
@@ -67,7 +69,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
                 this.viewChangeStorage[view].push(senderId);
             }
         }
-        this.logger.log(`storeViewChange, view change logged. [${this.countOfViewChange(view)}] votes so far.`);
+        this.logger.log(`view:[${view}], storeViewChange, from "${senderId}". ${this.countOfViewChange(view)} votes so far.`);
     }
 
     countOfViewChange(view: number): number {

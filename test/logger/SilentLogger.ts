@@ -5,5 +5,13 @@ export class SilentLogger implements Logger {
         // we are silent
         // console.log(msg);
     }
+
+    public logC(): void {
+
+    }
+
+    public cycle(): void {
+
+    }
 }
 

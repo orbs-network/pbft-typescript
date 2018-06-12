@@ -42,8 +42,8 @@ describe("PBFT In Memory Storage", () => {
         storage.storePrepare(term1, view1, sender2Id, block1.hash);
         storage.storePrepare(term1, view2, sender3Id, block1.hash);
         storage.storePrepare(term2, view1, sender3Id, block2.hash);
-        const actual = storage.getPrepare(term1, view1);
-        const expected = [{ senderId: sender1Id, blockHash: block1.hash }, { senderId: sender2Id, blockHash: block1.hash }];
+        const actual = storage.getPrepare(term1, view1, block1.hash);
+        const expected = [sender1Id, sender2Id];
         expect(actual).to.deep.equal(expected);
     });
 
@@ -62,8 +62,8 @@ describe("PBFT In Memory Storage", () => {
         storage.storeCommit(term1, view1, sender2Id, block1.hash);
         storage.storeCommit(term1, view2, sender3Id, block1.hash);
         storage.storeCommit(term2, view1, sender3Id, block2.hash);
-        const actual = storage.getCommit(term1, view1);
-        const expected = [{ senderId: sender1Id, blockHash: block1.hash }, { senderId: sender2Id, blockHash: block1.hash }];
+        const actual = storage.getCommit(term1, view1, block1.hash);
+        const expected = [sender1Id, sender2Id];
         expect(actual).to.deep.equal(expected);
     });
 

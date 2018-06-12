@@ -7,7 +7,7 @@ function Multicast(senderPublicKey: string, message: string, payload): void { }
 function Unicast(senderPublicKey: string, targetPublicKey: string, message, payload): void { }
 function valid(block: Block): boolean { return true; }
 function notifyCommit(block: Block): void { }
-class ViewTimer {
+class ViewState {
     constructor(public readonly view, timeout: number, onTimeout: () => void) {
 
     }
@@ -106,26 +106,23 @@ class PBFT {
     private view: number;
     private CB: Block;
     private preparedProof: PreparedProof;
-    private viewTimer: ViewTimer;
+    private viewState: ViewState;
 
     constructor(private config: { f: number, TIMEOUT: number }) {
-        this.initPBFT();
-    }
-
-    initPBFT() {
         this.term = this.lastCommittedBlock.height;
-        this.initView(0);
-        this.suggestBlock();
+        this.view = 0;
+        this.CB = undefined;
         this.preparedProof = undefined;
     }
 
-    initView(view: number) {
+    private initView(view: number) {
         this.view = view;
         this.CB = undefined;
-        this.startViewTimer(this.view); // re-start
+        this.startViewState(this.view);
     }
 
-    suggestBlock(): void {
+    processNextBlock(): void {
+        this.initView(0);
         if (primary(this.view) === this.myPublicKey) {
             this.CB = constructBlock();
             const PP: PPMessage = {
@@ -142,17 +139,17 @@ class PBFT {
         }
     }
 
-    stopViewTimer(): void {
-        if (this.viewTimer) {
-            this.viewTimer.dispose();
-            this.viewTimer = undefined;
+    stopViewState(): void {
+        if (this.viewState) {
+            this.viewState.dispose();
+            this.viewState = undefined;
         }
     }
-    startViewTimer(view: number) {
-        if (this.viewTimer && this.viewTimer.view !== view) {
-            this.stopViewTimer();
+    startViewState(view: number) {
+        if (this.viewState && this.viewState.view !== view) {
+            this.stopViewState();
             const timeout = this.config.TIMEOUT * 2 ^ view;
-            this.viewTimer = new ViewTimer(view, timeout, this.onTimeout);
+            this.viewState = new ViewState(view, timeout, this.onLeaderChange);
         }
     }
 
@@ -254,7 +251,7 @@ class PBFT {
 
         if (message === "COMMIT") {
             if (senderPublicKey !== this.myPublicKey) {
-                if (view >= this.view && term === this.term) {
+                if (view <= this.view && term === this.term) {
                     Log(term, view, "COMMIT", senderPublicKey, C);
                     this.checkCommit(term, view, blockHash);
                 }
@@ -276,12 +273,12 @@ class PBFT {
 
     commit(term: number, view: number, blockHash: string) {
         // TODO: stop the gossip events
-        this.stopViewTimer();
+        this.stopViewState();
         this.lastCommittedBlock = this.CB;
         notifyCommit(this.CB);
     }
 
-    onTimeout() {
+    onLeaderChange() {
         this.view++;
         const VC: DigestTypes.VC = sign(this.myPrivateKey, {
             message: "VIEW-CHANGE",
@@ -295,7 +292,7 @@ class PBFT {
         } else {
             Unicast(this.myPublicKey, primary(this.view), "VIEW-CHANGE", VC);
         }
-        this.startViewTimer(this.view);
+        this.startViewState(this.view);
     }
 
     onReceiveViewChange(senderPublicKey: string, VC: DigestTypes.VC) {

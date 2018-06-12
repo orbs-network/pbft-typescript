@@ -1,10 +1,10 @@
-import { Config } from "../../src/Config";
-import { PBFT } from "../../src/PBFT";
 import { BlocksProvider } from "../../src/blocksProvider/BlocksProvider";
 import { BlocksValidator } from "../../src/blocksValidator/BlocksValidator";
-import { ElectionTrigger } from "../../src/electionTrigger/ElectionTrigger";
+import { Config } from "../../src/Config";
+import { ElectionTriggerFactory } from "../../src/electionTrigger/ElectionTrigger";
 import { Gossip } from "../../src/gossip/Gossip";
 import { Logger } from "../../src/logger/Logger";
+import { PBFT } from "../../src/PBFT";
 import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 import { PBFTStorage } from "../../src/storage/PBFTStorage";
 import { BlocksProviderMock } from "../blocksProvider/BlocksProviderMock";
@@ -23,7 +23,7 @@ export class NodeBuilder {
     private pbftStorage: PBFTStorage;
     private logger: Logger;
     private gossip: Gossip;
-    private electionTrigger: ElectionTrigger;
+    private electionTriggerFactory: ElectionTriggerFactory;
     private blocksValidator: BlocksValidator;
     private blocksProvider: BlocksProvider;
     private logsToConsole: boolean = false;
@@ -82,9 +82,9 @@ export class NodeBuilder {
         return this;
     }
 
-    public electingLeaderUsing(electionTrigger: ElectionTrigger): this {
-        if (!this.electionTrigger) {
-            this.electionTrigger = electionTrigger;
+    public electingLeaderUsing(electionTriggerFactory: ElectionTriggerFactory): this {
+        if (!this.electionTriggerFactory) {
+            this.electionTriggerFactory = electionTriggerFactory;
         }
         return this;
     }
@@ -100,7 +100,7 @@ export class NodeBuilder {
     }
 
     private buildConfig(): Config {
-        const electionTrigger: ElectionTrigger = this.electionTrigger ? this.electionTrigger : new ElectionTriggerMock();
+        const electionTriggerFactory: ElectionTriggerFactory = this.electionTriggerFactory ? this.electionTriggerFactory : view => new ElectionTriggerMock(view);
         const blocksValidator: BlocksValidator = this.blocksValidator ? this.blocksValidator : new BlocksValidatorMock();
         const blocksProvider: BlocksProvider = this.blocksProvider ? this.blocksProvider : new BlocksProviderMock();
         const id = this.name || "Node";
@@ -114,7 +114,7 @@ export class NodeBuilder {
             gossip: this.gossip,
             logger,
             pbftStorage,
-            electionTrigger,
+            electionTriggerFactory,
             blocksProvider,
             blocksValidator
         };
