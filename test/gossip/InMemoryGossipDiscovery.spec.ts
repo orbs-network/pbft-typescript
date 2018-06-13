@@ -25,6 +25,22 @@ describe("InMemory Gossip Discovery", () => {
         expect(result).to.equal(gossip);
     });
 
+    it("should be able to get all the gossips ids", () => {
+        const id1 = genId();
+        const id2 = genId();
+        const id3 = genId();
+        const discovery = new InMemoryGossipDiscovery();
+        const gossip1 = new InMemoryGossip(discovery);
+        const gossip2 = new InMemoryGossip(discovery);
+        const gossip3 = new InMemoryGossip(discovery);
+        discovery.registerGossip(id1, gossip1);
+        discovery.registerGossip(id2, gossip2);
+        discovery.registerGossip(id3, gossip3);
+        const result = discovery.getAllGossipsIds();
+
+        expect(result).to.deep.equal([id1, id2, id3]);
+    });
+
     it("should return undefined if a given id was not registered", () => {
         const id = genId();
         const discovery = new InMemoryGossipDiscovery();
