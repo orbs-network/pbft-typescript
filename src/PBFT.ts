@@ -30,8 +30,6 @@ export class PBFT {
     public gossip: Gossip;
 
     constructor(config: Config) {
-        config.logger.log(`PBFT instace initiating`);
-
         this.onNewBlockListeners = [];
 
         // config
