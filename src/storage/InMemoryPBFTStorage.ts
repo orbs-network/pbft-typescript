@@ -29,7 +29,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         return this.prePrepareStorage.get(key);
     }
 
-    storePrepare(term: number, view: number, senderId: string, blockHash: string): boolean {
+    storePrepare(term: number, view: number, blockHash: string, senderId: string): boolean {
         const key = term.toString() + "_" + view.toString() + "_" + blockHash;
         const prepares = this.prepareStorage.get(key);
         if (prepares) {
@@ -50,7 +50,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         return this.prepareStorage.get(key) || [];
     }
 
-    storeCommit(term: number, view: number, senderId: string, blockHash: string): boolean {
+    storeCommit(term: number, view: number, blockHash: string, senderId: string): boolean {
         const key = term.toString() + "_" + view.toString() + "_" + blockHash;
         const commits = this.commitStorage.get(key);
         if (commits) {

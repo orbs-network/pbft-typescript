@@ -6,9 +6,9 @@
 export interface PBFTStorage {
     storePrePrepare(term: number, view: number, blockHash: string): boolean;
     getPrePrepare(term: number, view: number): string;
-    storePrepare(term: number, view: number, senderId: string, blockHash: string): boolean;
+    storePrepare(term: number, view: number, blockHash: string, senderId: string): boolean;
     getPrepare(term: number, view: number, blockHash: string): string[];
-    storeCommit(term: number, view: number, senderId: string, blockHash: string): boolean;
+    storeCommit(term: number, view: number, blockHash: string, senderId: string): boolean;
     getCommit(term: number, view: number, blockHash: string): string[];
     storeViewChange(view: number, senderId: string): boolean;
     countOfViewChange(view: number): number;

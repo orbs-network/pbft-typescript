@@ -181,7 +181,7 @@ export class PBFT {
         }
 
         this.CB = block;
-        this.pbftStorage.storePrepare(term, view, this.id, block.hash);
+        this.pbftStorage.storePrepare(term, view, block.hash, this.id);
         this.pbftStorage.storePrePrepare(term, view, block.hash);
         this.broadcastPrepare(term, view, block);
         this.checkPrepared(term, view, block.hash);
@@ -209,7 +209,7 @@ export class PBFT {
             return;
         }
 
-        this.pbftStorage.storePrepare(term, view, senderId, blockHash);
+        this.pbftStorage.storePrepare(term, view, blockHash, senderId);
 
         this.checkPrepared(term, view, blockHash);
         this.logger.cycle();
@@ -263,7 +263,7 @@ export class PBFT {
     }
 
     private onPrepared(term: number, view: number, blockHash: string): void {
-        this.pbftStorage.storeCommit(term, view, this.id, blockHash);
+        this.pbftStorage.storeCommit(term, view, blockHash, this.id);
         const payload = {
             term,
             view,
@@ -276,7 +276,7 @@ export class PBFT {
     private onReceiveCommit(senderId: string, payload: CommitPayload): void {
         const { term, view, blockHash } = payload;
         this.logger.log(`term:[${term}], view:[${view}], blockHash:[${blockHash}], onReceiveCommit from "${senderId}"`);
-        this.pbftStorage.storeCommit(term, view, senderId, blockHash);
+        this.pbftStorage.storeCommit(term, view, blockHash, senderId);
 
         this.checkCommit(term, view, blockHash);
         this.logger.cycle();
