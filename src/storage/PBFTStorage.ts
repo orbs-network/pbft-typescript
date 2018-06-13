@@ -1,15 +1,15 @@
 //
 // This API stores messages that the PBFT received.
-// The only assumption is that a message will be stored only once per term & senderId
-// For example: If a storePrepare is called twice with the same term and sender id, it will be stored once.
+// The only assumption is that a message will be stored only once per parameter
+// For example: If a storePrepare is called twice with the same values, it will be stored once.
 //
 export interface PBFTStorage {
-    storePrePrepare(term: number, view: number, blockHash: string): void;
+    storePrePrepare(term: number, view: number, blockHash: string): boolean;
     getPrePrepare(term: number, view: number): string;
-    storePrepare(term: number, view: number, senderId: string, blockHash: string): void;
+    storePrepare(term: number, view: number, senderId: string, blockHash: string): boolean;
     getPrepare(term: number, view: number, blockHash: string): string[];
-    storeCommit(term: number, view: number, senderId: string, blockHash: string): void;
+    storeCommit(term: number, view: number, senderId: string, blockHash: string): boolean;
     getCommit(term: number, view: number, blockHash: string): string[];
-    storeViewChange(view: number, senderId: string): void;
+    storeViewChange(view: number, senderId: string): boolean;
     countOfViewChange(view: number): number;
 }

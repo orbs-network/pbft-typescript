@@ -10,21 +10,59 @@ chai.use(sinonChai);
 
 describe("PBFT In Memory Storage", () => {
     const logger: Logger = new SilentLogger();
-    it("will create an In Memory instace", () => {
-        const storage = new InMemoryPBFTStorage(logger);
-        expect(storage).to.not.be.undefined;
-    });
 
-    it("stores a preprepare on the storage", () => {
+    it("storing a preprepare returns true if it stored a new value, false if it already exists", () => {
         const storage = new InMemoryPBFTStorage(logger);
         const term = Math.floor(Math.random() * 1000);
         const view = Math.floor(Math.random() * 1000);
         const block = aBlock(theGenesisBlock);
-        expect(storage.getPrePrepare(term, view)).to.be.undefined;
-        storage.storePrePrepare(term, view, block.hash);
-        expect(storage.getPrePrepare(term, view + 1)).to.be.undefined;
-        expect(storage.getPrePrepare(term + 1, view)).to.be.undefined;
-        expect(storage.getPrePrepare(term, view)).to.equal(block.hash);
+        const firstTime = storage.storePrePrepare(term, view, block.hash);
+        expect(firstTime).to.be.true;
+        const secondstime = storage.storePrePrepare(term, view, block.hash);
+        expect(secondstime).to.be.false;
+    });
+
+    it("storing a prepare returns true if it stored a new value, false if it already exists", () => {
+        const storage = new InMemoryPBFTStorage(logger);
+        const term = Math.floor(Math.random() * 1000);
+        const view = Math.floor(Math.random() * 1000);
+        const senderId1 = Math.floor(Math.random() * 1000).toString();
+        const senderId2 = Math.floor(Math.random() * 1000).toString();
+        const block = aBlock(theGenesisBlock);
+        const firstTime = storage.storePrepare(term, view, senderId1, block.hash);
+        expect(firstTime).to.be.true;
+        const secondstime = storage.storePrepare(term, view, senderId2, block.hash);
+        expect(secondstime).to.be.true;
+        const thirdTime = storage.storePrepare(term, view, senderId2, block.hash);
+        expect(thirdTime).to.be.false;
+    });
+
+    it("storing a commit returns true if it stored a new value, false if it already exists", () => {
+        const storage = new InMemoryPBFTStorage(logger);
+        const term = Math.floor(Math.random() * 1000);
+        const view = Math.floor(Math.random() * 1000);
+        const senderId1 = Math.floor(Math.random() * 1000).toString();
+        const senderId2 = Math.floor(Math.random() * 1000).toString();
+        const block = aBlock(theGenesisBlock);
+        const firstTime = storage.storeCommit(term, view, senderId1, block.hash);
+        expect(firstTime).to.be.true;
+        const secondstime = storage.storeCommit(term, view, senderId2, block.hash);
+        expect(secondstime).to.be.true;
+        const thirdTime = storage.storeCommit(term, view, senderId2, block.hash);
+        expect(thirdTime).to.be.false;
+    });
+
+    it("storing a view-change returns true if it stored a new value, false if it already exists", () => {
+        const storage = new InMemoryPBFTStorage(logger);
+        const view = Math.floor(Math.random() * 1000);
+        const senderId1 = Math.floor(Math.random() * 1000).toString();
+        const senderId2 = Math.floor(Math.random() * 1000).toString();
+        const firstTime = storage.storeViewChange(view, senderId1);
+        expect(firstTime).to.be.true;
+        const secondstime = storage.storeViewChange(view, senderId2);
+        expect(secondstime).to.be.true;
+        const thirdTime = storage.storeViewChange(view, senderId2);
+        expect(thirdTime).to.be.false;
     });
 
     it("stores a prepare on the storage", () => {
