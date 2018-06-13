@@ -40,6 +40,7 @@ describe("PBFT In Memory Storage", () => {
         const block2 = aBlock(theGenesisBlock);
         storage.storePrepare(term1, view1, sender1Id, block1.hash);
         storage.storePrepare(term1, view1, sender2Id, block1.hash);
+        storage.storePrepare(term1, view1, sender2Id, block2.hash);
         storage.storePrepare(term1, view2, sender3Id, block1.hash);
         storage.storePrepare(term2, view1, sender3Id, block2.hash);
         const actual = storage.getPrepare(term1, view1, block1.hash);
