@@ -5,7 +5,6 @@ import { ElectionTriggerFactory } from "../../src/electionTrigger/ElectionTrigge
 import { Gossip } from "../../src/gossip/Gossip";
 import { Logger } from "../../src/logger/Logger";
 import { PBFT } from "../../src/PBFT";
-import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 import { PBFTStorage } from "../../src/storage/PBFTStorage";
 import { BlocksProviderMock } from "../blocksProvider/BlocksProviderMock";
 import { BlocksValidatorMock } from "../blocksValidator/BlocksValidatorMock";
@@ -15,6 +14,7 @@ import { SilentLogger } from "../logger/SilentLogger";
 import { InMemoryNetwork } from "../network/InMemoryNetwork";
 import { Node } from "../network/Node";
 import { NodeMock } from "../network/NodeMock";
+import { InMemoryPBFTStorage } from "../storage/InMemoryPBFTStorage";
 import { theGenesisBlock } from "./BlockBuilder";
 
 export class NodeBuilder {

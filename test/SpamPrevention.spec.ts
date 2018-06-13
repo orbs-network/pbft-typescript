@@ -1,12 +1,12 @@
 import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
-import { InMemoryPBFTStorage } from "../src/storage/InMemoryPBFTStorage";
 import { PBFTStorage } from "../src/storage/PBFTStorage";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNetwork } from "./builders/NetworkBuilder";
 import { aNode } from "./builders/NodeBuilder";
 import { SilentLogger } from "./logger/SilentLogger";
+import { InMemoryPBFTStorage } from "./storage/InMemoryPBFTStorage";
 import { nextTick } from "./timeUtils";
 
 chai.use(sinonChai);
