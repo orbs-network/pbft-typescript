@@ -1,7 +1,9 @@
-import { Gossip, NewViewCallback, PrepareCallback, PreprepareCallback, ViewChangeCallback } from "../../src/gossip/Gossip";
+import { CommitCallback, Gossip, NewViewCallback, PrepareCallback, PreprepareCallback, ViewChangeCallback } from "../../src/gossip/Gossip";
+import { Logger } from "../../src/logger/Logger";
+import { SilentLogger } from "../logger/SilentLogger";
 import { InMemoryGossipDiscovery } from "./InMemoryGossipDiscovery";
 
-type GossipCallback = PreprepareCallback | PrepareCallback | NewViewCallback | ViewChangeCallback;
+type GossipCallback = PreprepareCallback | PrepareCallback | CommitCallback | NewViewCallback | ViewChangeCallback;
 type SubscriptionsValue = {
     message: string;
     cb: (senderId: string, payload: any) => void;
@@ -17,7 +19,7 @@ export class InMemoryGossip implements Gossip, RemoteListener {
     private outGoingWhiteList: string[];
     private inComingWhiteList: string[];
 
-    constructor(private discovery: InMemoryGossipDiscovery) {
+    constructor(private discovery: InMemoryGossipDiscovery, private logger: Logger = new SilentLogger()) {
     }
 
     onRemoteMessage(senderId: string, message: string, payload?: any): void {
@@ -28,6 +30,7 @@ export class InMemoryGossip implements Gossip, RemoteListener {
                         return;
                     }
                 }
+                this.logger.log({ Subject: "GossipReceive", senderId, payload });
                 subscription.cb(senderId, payload);
             }
         });
@@ -60,11 +63,7 @@ export class InMemoryGossip implements Gossip, RemoteListener {
     }
 
     broadcast(senderId: string, message: string, payload?: any): void {
-        this.discovery.getGossips(this.outGoingWhiteList).forEach(gossip => {
-            if (gossip !== this) {
-                gossip.onRemoteMessage(senderId, message, payload);
-            }
-        });
+        this.multicast(senderId, this.discovery.getAllGossipsIds(), message, payload);
     }
 
     multicast(senderId: string, targetsIds: string[], message: string, payload?: any): void {
@@ -79,6 +78,7 @@ export class InMemoryGossip implements Gossip, RemoteListener {
         }
         const targetGossip = this.discovery.getGossipById(targetId);
         if (targetGossip) {
+            this.logger.log({ Subject: "GossipSend", senderId, targetId, payload });
             targetGossip.onRemoteMessage(senderId, message, payload);
         }
     }

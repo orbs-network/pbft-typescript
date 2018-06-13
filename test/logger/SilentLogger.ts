@@ -1,17 +1,8 @@
-import { Logger } from "../../src/logger/Logger";
+import { Logger, LogTypes } from "../../src/logger/Logger";
 
 export class SilentLogger implements Logger {
-    public log(msg: string): void {
+    public log(data: LogTypes): void {
         // we are silent
-        // console.log(msg);
-    }
-
-    public logC(): void {
-
-    }
-
-    public cycle(): void {
-
     }
 }
 

@@ -20,7 +20,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
             return false;
         }
         this.prePrepareStorage.set(key, blockHash);
-        this.logger.logd({ Subject: "Storage", StorageType: "PrePrepare", term, view, blockHash });
+        this.logger.log({ Subject: "Storage", StorageType: "PrePrepare", term, view, blockHash });
         return true;
     }
 
@@ -41,7 +41,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         } else {
             this.prepareStorage.set(key, [senderId]);
         }
-        this.logger.logd({ Subject: "Storage", StorageType: "Prepare", term, view, blockHash, senderId });
+        this.logger.log({ Subject: "Storage", StorageType: "Prepare", term, view, blockHash, senderId });
         return true;
     }
 
@@ -62,7 +62,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         } else {
             this.commitStorage.set(key, [senderId]);
         }
-        this.logger.logd({ Subject: "Storage", StorageType: "Commit", term, view, blockHash, senderId });
+        this.logger.log({ Subject: "Storage", StorageType: "Commit", term, view, blockHash, senderId });
         return true;
     }
 
@@ -82,7 +82,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         } else {
             this.viewChangeStorage.set(view, [senderId]);
         }
-        this.logger.logd({ Subject: "Storage", StorageType: "ViewChange", view, senderId });
+        this.logger.log({ Subject: "Storage", StorageType: "ViewChange", view, senderId });
         return true;
     }
 

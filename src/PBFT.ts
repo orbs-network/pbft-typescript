@@ -108,7 +108,7 @@ export class PBFT {
 
     private onLeaderChange(): void {
         this.view++;
-        this.logger.log(`term:[${this.term}], view:[${this.view}], onLeaderChange`);
+        this.logger.log({ Subject: "Flow", FlowType: "LeaderChange", term: this.term, newView: this.view });
         const payload: ViewChangePayload = { newView: this.view };
         this.pbftStorage.storeViewChange(this.view, this.id);
         if (this.isLeader(this.id)) {
@@ -140,37 +140,38 @@ export class PBFT {
     private async onReceivePrePrepare(senderId: string, payload: PrePreparePayload): Promise<void> {
         const { view, term, block } = payload;
         if (senderId === this.id) {
-            this.logger.log(`term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block rejected because it came from this node`);
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block rejected because it came from this node` });
             return;
         }
 
         if (this.isLeader(senderId) === false) {
-            this.logger.log(`term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block rejected because it was not sent by the current leader (${view})`);
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block rejected because it was not sent by the current leader (${view})` });
             return;
         }
 
         if (this.isBlockPointingToPreviousBlock(block) === false) {
-            this.logger.log(`term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block rejected because it's not pointing to the previous block`);
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block rejected because it's not pointing to the previous block` });
             return;
         }
 
         const isValidBlock = await this.blocksValidator.validateBlock(block);
         if (!isValidBlock) {
-            this.logger.log(`term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block is invalid`);
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block is invalid` });
             return;
         }
 
         if (this.view !== view) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", unrelated view` });
             return;
         }
 
         if (this.term !== term) {
-            this.logger.log(`term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", unrelated term ${term}`);
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", unrelated term` });
             return;
         }
 
         if (this.checkPrePrepare(term, view)) {
-            this.logger.log(`term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", already prepared`);
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", already prepared` });
             return;
         }
 
@@ -188,16 +189,17 @@ export class PBFT {
     private onReceivePrepare(senderId: string, payload: PreparePayload): void {
         const { term, view, blockHash } = payload;
         if (senderId === this.id) {
-            this.logger.log(`term:[${term}], view:[${view}], blockHash:[${blockHash}], onReceivePrepare from "${senderId}", block rejected because it came from this node`);
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], blockHash:[${blockHash}], onReceivePrepare from "${senderId}", block rejected because it came from this node` });
             return;
         }
 
         if (this.view !== view) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], blockHash:[${blockHash}], onReceivePrepare from "${senderId}", prepare not logged because of unrelated view` });
             return;
         }
 
         if (this.isLeader(senderId)) {
-            this.logger.log(`term:[${term}], view:[${view}], blockHash:[${blockHash}], onReceivePrepare from "${senderId}", prepare not logged as we don't accept prepare from the leader`);
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], blockHash:[${blockHash}], onReceivePrepare from "${senderId}", prepare not logged as we don't accept prepare from the leader` });
             return;
         }
 
@@ -222,13 +224,13 @@ export class PBFT {
     private onElected(view: number) {
         this.view = view;
         const block: Block = this.blocksProvider.getBlock();
-        this.logger.log(`term:[${this.term}], view:[${view}], blockHash:[${block.hash}], onElected, new block constructed.`);
         const PP: PrePreparePayload = {
             term: this.term,
             view,
             block
         };
         this.CB = block;
+        this.logger.log({ Subject: "Flow", FlowType: "Elected", term: this.term, view, blockHash: block.hash });
         const newViewPayload: NewViewPayload = { PP };
         this.pbftStorage.storePrePrepare(this.term, this.view, block.hash);
         this.gossip.multicast(this.id, this.getOtherNodesIds(), "new-view", newViewPayload);
@@ -312,7 +314,7 @@ export class PBFT {
 
     private commitBlock(block: Block): void {
         if (this.committedBlocksHashs.indexOf(block.hash) === -1) {
-            this.logger.log(`term:[${this.term}], view:[${this.view}], blockHash:[${block.hash}] COMMITTED!`);
+            this.logger.log({ Subject: "Flow", FlowType: "Commit", term: this.term, view: this.view, blockHash: block.hash });
             this.committedBlocksHashs.push(block.hash);
             this.stopViewState();
             this.onNewBlockListeners.forEach(cb => cb(this.CB));

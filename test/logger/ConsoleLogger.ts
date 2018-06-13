@@ -1,26 +1,12 @@
-import { Logger } from "../../src/logger/Logger";
+import { Logger, LogTypes } from "../../src/logger/Logger";
 
 export class ConsoleLogger implements Logger {
-    public isActive: boolean;
 
     constructor(private id: string) {
-        this.isActive = true;
     }
 
-    public log(msg: string): void {
-        if (this.isActive) {
-            console.log(`[${this.id}]: ${msg}`);
-        }
-    }
-
-    public logC(msg: string): void {
-        this.log(msg);
-        this.cycle();
-    }
-
-    public cycle(): void {
-        if (this.isActive) {
-            console.log("");
-        }
+    public log(data: LogTypes): void {
+        const dataStr = JSON.stringify(data, undefined, 2);
+        console.log(`[${this.id}]: ${dataStr}`);
     }
 }

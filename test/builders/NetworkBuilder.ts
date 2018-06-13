@@ -67,8 +67,8 @@ class NetworkBuilder {
     }
 
     private buildNode(builder: NodeBuilder, id: string, discovery: InMemoryGossipDiscovery): Node {
-        const gossip = new InMemoryGossip(discovery);
         const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(id) : new SilentLogger();
+        const gossip = new InMemoryGossip(discovery, logger);
         const electionTriggerFactory: ElectionTriggerFactory = this.electionTriggerFactory ? this.electionTriggerFactory : view => new ElectionTriggerMock(view);
         const blocksProvider: BlocksProvider = new BlocksProviderMock(this.blocksPool);
         discovery.registerGossip(id, gossip);
