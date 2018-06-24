@@ -1,8 +1,11 @@
 {
   "name": "pbft",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "./dist/src/PBFT.js",
+  "files": [
+    "./dist/src/*"
+  ],
   "scripts": {
     "build": "yarn run tsc",
     "tdd": "NODE_ENV=test yarn run mocha --require ts-node/register --watch --watch-extensions ts \"test/**/*.spec.ts\"",
@@ -23,7 +26,7 @@
     "sinon-chai": "^3.0.0",
     "ts-node": "^6.0.3",
     "tslint": "^5.10.0",
-    "typescript": "^2.8.3"
+    "typescript": "^2.9.1"
   },
   "devDependencies": {
     "@types/object-path": "^0.9.29",
