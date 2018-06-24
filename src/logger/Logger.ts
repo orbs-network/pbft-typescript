@@ -24,6 +24,7 @@ type StoreCommit = {
 
 type StoreViewChange = {
     StorageType: "ViewChange",
+    term: number,
     view: number,
     senderId: string
 };
@@ -31,7 +32,7 @@ type StoreViewChange = {
 type StorageLogData = { Subject: "Storage" } & (StorePrePrepare | StorePrepare | StoreCommit | StoreViewChange);
 
 /// GOSSIP ///
-type GossipSendLogData = { Subject: "GossipSend", senderId: string, targetId: string, payload: any };
+type GossipSendLogData = { Subject: "GossipSend", message: string, senderId: string, targetId: string, payload: any };
 type GossipReceiveLogData = { Subject: "GossipReceive", senderId: string, payload: any };
 
 // FLOW
@@ -49,7 +50,8 @@ type FlowCommit = {
 type FlowLeaderChange = {
     FlowType: "LeaderChange",
     term: number,
-    newView: number
+    newView: number,
+    leaderId: string
 };
 
 type FlowLogData = { Subject: "Flow" } & (FlowElected | FlowCommit | FlowLeaderChange);
@@ -61,4 +63,7 @@ export type LogTypes = StorageLogData | GossipSendLogData | GossipReceiveLogData
 
 export interface Logger {
     log(data: LogTypes): void;
+}
+export interface LoggerConstructor {
+    new (id: string): Logger;
 }

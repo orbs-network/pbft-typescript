@@ -18,6 +18,7 @@ export interface CommitPayload {
 }
 
 export interface ViewChangePayload {
+    term: number;
     newView: number;
 }
 

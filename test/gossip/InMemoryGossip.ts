@@ -78,7 +78,7 @@ export class InMemoryGossip implements Gossip, RemoteListener {
         }
         const targetGossip = this.discovery.getGossipById(targetId);
         if (targetGossip) {
-            this.logger.log({ Subject: "GossipSend", senderId, targetId, payload });
+            this.logger.log({ Subject: "GossipSend", message, senderId, targetId, payload });
             targetGossip.onRemoteMessage(senderId, message, payload);
         }
     }

@@ -3,8 +3,8 @@ import { Block } from "../../src/Block";
 export function aBlock(previousBlock: Block, content?: string): Block {
     return {
         previousBlockHash: previousBlock.hash,
-        hash: Math.random().toString(),
-        content: content || Math.random().toString()
+        hash: Math.floor(Math.random() * 1_000_000).toString(),
+        content: content || Math.floor(Math.random() * 1_000_000).toString()
     };
 }
 

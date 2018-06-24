@@ -1,7 +1,7 @@
 import { Block } from "../../src/Block";
 import { BlocksProvider } from "../../src/blocksProvider/BlocksProvider";
 import { ElectionTriggerFactory } from "../../src/electionTrigger/ElectionTrigger";
-import { Logger } from "../../src/logger/Logger";
+import { Logger, LoggerConstructor } from "../../src/logger/Logger";
 import { BlocksProviderMock } from "../blocksProvider/BlocksProviderMock";
 import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
@@ -15,22 +15,21 @@ import { aNode, NodeBuilder } from "./NodeBuilder";
 class NetworkBuilder {
     private network: InMemoryNetwork;
     private countOfNodes: number = 0;
-    private logger: Logger;
+    private loggerCtor: LoggerConstructor = SilentLogger;
     private customNodes: NodeBuilder[] = [];
-    private logsToConsole: boolean = false;
     private electionTriggerFactory: ElectionTriggerFactory;
     private blocksPool: Block[] = [];
 
     public and = this;
     public a = this;
 
-    public thatLogsTo(logger: Logger): this {
-        this.logger = logger;
+    public get thatLogsToConsole(): this {
+        this.thatLogsToCustomeLogger(ConsoleLogger);
         return this;
     }
 
-    public get thatLogsToConsole(): this {
-        this.logsToConsole = true;
+    public thatLogsToCustomeLogger(ctor: LoggerConstructor): this {
+        this.loggerCtor = ctor;
         return this;
     }
 
@@ -67,7 +66,7 @@ class NetworkBuilder {
     }
 
     private buildNode(builder: NodeBuilder, id: string, discovery: InMemoryGossipDiscovery): Node {
-        const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(id) : new SilentLogger();
+        const logger: Logger = new this.loggerCtor(id);
         const gossip = new InMemoryGossip(discovery, logger);
         const electionTriggerFactory: ElectionTriggerFactory = this.electionTriggerFactory ? this.electionTriggerFactory : view => new ElectionTriggerMock(view);
         const blocksProvider: BlocksProvider = new BlocksProviderMock(this.blocksPool);

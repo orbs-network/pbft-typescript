@@ -108,11 +108,11 @@ export class PBFT {
 
     private onLeaderChange(): void {
         this.view++;
-        this.logger.log({ Subject: "Flow", FlowType: "LeaderChange", term: this.term, newView: this.view });
-        const payload: ViewChangePayload = { newView: this.view };
-        this.pbftStorage.storeViewChange(this.view, this.id);
+        this.logger.log({ Subject: "Flow", FlowType: "LeaderChange", leaderId: this.leaderId(), term: this.term, newView: this.view });
+        const payload: ViewChangePayload = { term: this.term, newView: this.view };
+        this.pbftStorage.storeViewChange(this.term, this.view, this.id);
         if (this.isLeader(this.id)) {
-            this.checkElected(this.view);
+            this.checkElected(this.term, this.view);
         } else {
             this.gossip.unicast(this.id, this.leaderId(), "view-change", payload);
         }
@@ -209,13 +209,14 @@ export class PBFT {
     }
 
     private onReceiveViewChange(senderId: string, payload: ViewChangePayload): void {
-        this.pbftStorage.storeViewChange(payload.newView, senderId);
+        this.pbftStorage.storeViewChange(payload.term, payload.newView, senderId);
         const view = payload.newView;
-        this.checkElected(view);
+        const term = payload.term;
+        this.checkElected(term, view);
     }
 
-    private checkElected(view: number): void {
-        const countElected = this.countElected(view);
+    private checkElected(term: number, view: number): void {
+        const countElected = this.countElected(term, view);
         if (countElected >= this.getF() * 2 + 1) {
             this.onElected(view);
         }
@@ -299,8 +300,8 @@ export class PBFT {
         return this.leaderId() === senderId;
     }
 
-    private countElected(view: number): number {
-        return this.pbftStorage.countOfViewChange(view);
+    private countElected(term: number, view: number): number {
+        return this.pbftStorage.countOfViewChange(term, view);
     }
 
     private countPrepared(term: number, view: number, blockHash: string): number {

@@ -16,6 +16,7 @@
   },
   "include": [
     "test/**/*.spec.ts",
-    "test/**/*.d.ts"
+    "test/**/*.d.ts",
+    "test/logger/sockets/LogsServer.ts"
   ]
 }

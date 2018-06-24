@@ -18,7 +18,10 @@ chai.use(blockMatcher);
 describe("PBFT", () => {
     it("should send pre-prepare only if it's the leader", async () => {
         const block = aBlock(theGenesisBlock);
-        const network = aNetwork().blocksInPool([block]).with(4).nodes.build();
+        const network = aNetwork()
+            .blocksInPool([block])
+            .with(4).nodes
+            .build();
 
         const node0 = network.nodes[0];
         const node1 = network.nodes[1];
@@ -36,6 +39,7 @@ describe("PBFT", () => {
         expect(spy2).to.not.have.been.called;
         expect(spy3).to.not.have.been.called;
 
+        await nextTick();
         network.shutDown();
     });
 
@@ -191,7 +195,12 @@ describe("PBFT", () => {
         const block2 = aBlock(block1, "Block2");
         const block3 = aBlock(block1, "Block3");
         const block4 = aBlock(block3, "Block4");
-        const network = aNetwork().blocksInPool([block1, block2, block3, block4]).with(4).nodes.electingLeaderUsing(electionTriggerFactory).build();
+        const network = aNetwork()
+            .blocksInPool([block1, block2, block3, block4])
+            .with(4)
+            .nodes
+            .electingLeaderUsing(electionTriggerFactory)
+            .build();
 
         const node0 = network.nodes[0];
         const node1 = network.nodes[1];

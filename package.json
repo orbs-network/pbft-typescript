@@ -24,5 +24,12 @@
     "ts-node": "^6.0.3",
     "tslint": "^5.10.0",
     "typescript": "^2.8.3"
+  },
+  "devDependencies": {
+    "@types/object-path": "^0.9.29",
+    "@types/socket.io": "^1.4.34",
+    "@types/socket.io-client": "^1.4.32",
+    "object-path": "^0.11.4",
+    "socket.io": "^2.1.1"
   }
 }

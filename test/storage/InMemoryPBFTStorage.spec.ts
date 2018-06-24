@@ -55,13 +55,14 @@ describe("PBFT In Memory Storage", () => {
     it("storing a view-change returns true if it stored a new value, false if it already exists", () => {
         const storage = new InMemoryPBFTStorage(logger);
         const view = Math.floor(Math.random() * 1000);
+        const term = Math.floor(Math.random() * 1000);
         const senderId1 = Math.floor(Math.random() * 1000).toString();
         const senderId2 = Math.floor(Math.random() * 1000).toString();
-        const firstTime = storage.storeViewChange(view, senderId1);
+        const firstTime = storage.storeViewChange(term, view, senderId1);
         expect(firstTime).to.be.true;
-        const secondstime = storage.storeViewChange(view, senderId2);
+        const secondstime = storage.storeViewChange(term, view, senderId2);
         expect(secondstime).to.be.true;
-        const thirdTime = storage.storeViewChange(view, senderId2);
+        const thirdTime = storage.storeViewChange(term, view, senderId2);
         expect(thirdTime).to.be.false;
     });
 
@@ -108,11 +109,20 @@ describe("PBFT In Memory Storage", () => {
 
     it("stores a view-change on the storage", () => {
         const storage = new InMemoryPBFTStorage(logger);
+        const term1 = Math.floor(Math.random() * 1000);
+        const term2 = Math.floor(Math.random() * 1000);
+        const view1 = Math.floor(Math.random() * 1000);
+        const view2 = Math.floor(Math.random() * 1000);
         const sender1Id = Math.random().toString();
         const sender2Id = Math.random().toString();
-        storage.storeViewChange(1, sender1Id);
-        storage.storeViewChange(1, sender2Id);
-        const actual = storage.countOfViewChange(1);
-        expect(actual).to.equal(2);
+        const sender3Id = Math.random().toString();
+        const block1 = aBlock(theGenesisBlock);
+        const block2 = aBlock(theGenesisBlock);
+        storage.storeViewChange(term1, view1, sender1Id);
+        storage.storeViewChange(term1, view1, sender2Id);
+        storage.storeViewChange(term1, view2, sender3Id);
+        storage.storeViewChange(term2, view1, sender3Id);
+        const actual = storage.countOfViewChange(term1, view1);
+        expect(actual).to.deep.equal(2);
     });
 });

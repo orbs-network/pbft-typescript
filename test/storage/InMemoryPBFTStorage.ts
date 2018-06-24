@@ -5,7 +5,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
     private prePrepareStorage: Map<string, string>;
     private prepareStorage: Map<string, string[]>;
     private commitStorage: Map<string, string[]>;
-    private viewChangeStorage: Map<number, string[]>;
+    private viewChangeStorage: Map<string, string[]>;
 
     constructor(private logger: Logger) {
         this.prePrepareStorage = new Map();
@@ -71,8 +71,9 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         return this.commitStorage.get(key) || [];
     }
 
-    storeViewChange(view: number, senderId: string): boolean {
-        const senders = this.viewChangeStorage.get(view);
+    storeViewChange(term: number, view: number, senderId: string): boolean {
+        const key = term.toString() + "_" + view.toString();
+        const senders = this.viewChangeStorage.get(key);
         if (senders) {
             if (senders.indexOf(senderId) === -1) {
                 senders.push(senderId);
@@ -80,14 +81,15 @@ export class InMemoryPBFTStorage implements PBFTStorage {
                 return false;
             }
         } else {
-            this.viewChangeStorage.set(view, [senderId]);
+            this.viewChangeStorage.set(key, [senderId]);
         }
-        this.logger.log({ Subject: "Storage", StorageType: "ViewChange", view, senderId });
+        this.logger.log({ Subject: "Storage", StorageType: "ViewChange", term, view, senderId });
         return true;
     }
 
-    countOfViewChange(view: number): number {
-        const viewChanges = this.viewChangeStorage.get(view) || [];
+    countOfViewChange(term: number, view: number): number {
+        const key = term.toString() + "_" + view.toString();
+        const viewChanges = this.viewChangeStorage.get(key) || [];
         return viewChanges.length;
     }
 }

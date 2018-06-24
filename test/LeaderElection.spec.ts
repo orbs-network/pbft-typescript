@@ -26,7 +26,7 @@ describe("Leader Election", () => {
         network.processNextBlock();
         const unicastSpy = sinon.spy(testedNode.pbft.gossip, "unicast");
         electionTrigger.trigger();
-        expect(unicastSpy).to.have.been.calledWith(testedNode.id, nextLeader.id, "view-change", { newView: 1 });
+        expect(unicastSpy).to.have.been.calledWith(testedNode.id, nextLeader.id, "view-change", { term: 0, newView: 1 });
         network.shutDown();
     });
 
@@ -128,9 +128,9 @@ describe("Leader Election", () => {
 
         const gossip = node1.pbft.gossip as InMemoryGossip;
         const multicastSpy = sinon.spy(gossip, "multicast");
-        gossip.onRemoteMessage(node0.id, "view-change", { newView: 1 });
-        gossip.onRemoteMessage(node2.id, "view-change", { newView: 1 });
-        gossip.onRemoteMessage(node3.id, "view-change", { newView: 1 });
+        gossip.onRemoteMessage(node0.id, "view-change", { term: 0, newView: 1 });
+        gossip.onRemoteMessage(node2.id, "view-change", { term: 0, newView: 1 });
+        gossip.onRemoteMessage(node3.id, "view-change", { term: 0, newView: 1 });
         expect(multicastSpy).to.have.been.calledWith(node1.id, [node0.id, node2.id, node3.id], "new-view", { PP: { view: 1, term: 0, block: block2 } });
         network.shutDown();
     });
@@ -228,9 +228,9 @@ describe("Leader Election", () => {
         electionTrigger2.trigger();
         electionTrigger3.trigger();
 
-        expect(spy0).to.have.been.calledWith(node0.id, node1.id, "view-change", { newView: 1 });
+        expect(spy0).to.have.been.calledWith(node0.id, node1.id, "view-change", { term: 0, newView: 1 });
         expect(spy1).to.have.been.calledWith(node1.id, [node0.id, node2.id, node3.id], "new-view", { PP: { term: 0, view: 1, block: block2 } });
-        expect(spy2).to.have.been.calledWith(node2.id, node1.id, "view-change", { newView: 1 });
+        expect(spy2).to.have.been.calledWith(node2.id, node1.id, "view-change", { term: 0, newView: 1 });
 
         network.shutDown();
     });
