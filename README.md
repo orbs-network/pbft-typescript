@@ -13,6 +13,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] implement new-view
 - [V] we should have a timer for each view. new-view shouldn't restart a timer if it's already started.
 - [V] suggest block in new-view (inside PP)
+- [ ] Convert getBlock of "BlocksProvider" to async.
 - [ ] synced init node is missing
 - [ ] the onElected will trigger new-view more than once
 - [ ] new-view shouldn't restart a timer if it's already started.
