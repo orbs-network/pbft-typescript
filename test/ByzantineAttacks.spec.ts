@@ -2,6 +2,7 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
 import { PBFTStorage } from "../src/storage/PBFTStorage";
+import { BlocksValidatorMock } from "./blocksValidator/BlocksValidatorMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNetwork } from "./builders/NetworkBuilder";
 import { aNode } from "./builders/NodeBuilder";
@@ -143,6 +144,7 @@ describe("Byzantine Attacks", () => {
         // The solution is to have a commit phase.
         //
 
+        const hangingValidator: BlocksValidatorMock = new BlocksValidatorMock(false);
         const electionTriggers: Array<ElectionTriggerMock> = [];
         const electionTriggerFactory = (view: number) => {
             const t = new ElectionTriggerMock(view);
@@ -150,9 +152,13 @@ describe("Byzantine Attacks", () => {
             return t;
         };
         const block1 = aBlock(theGenesisBlock, "block1");
-        const block2 = aBlock(block1, "block2");
-        const block3 = aBlock(theGenesisBlock, "block3");
-        const network = aNetwork().blocksInPool([block1, block2, block3]).with(4).nodes.electingLeaderUsing(electionTriggerFactory).build();
+        const block2 = aBlock(theGenesisBlock, "block2");
+        const network = aNetwork()
+            .blocksInPool([block1, block2])
+            .with(4).nodes
+            .validateUsing(hangingValidator)
+            .electingLeaderUsing(electionTriggerFactory)
+            .build();
 
         const node0 = network.nodes[0];
         const node1 = network.nodes[1];
@@ -169,7 +175,8 @@ describe("Byzantine Attacks", () => {
         gossip2.setOutGoingWhiteList([]);
         gossip3.setOutGoingWhiteList([]);
 
-        network.processNextBlock();
+        await network.processNextBlock();
+        hangingValidator.resolve();
         await nextTick();
 
         expect(node0.getLatestBlock()).to.be.undefined;
@@ -181,18 +188,18 @@ describe("Byzantine Attacks", () => {
         gossip1.clearOutGoingWhiteList();
         gossip2.clearOutGoingWhiteList();
         gossip3.clearOutGoingWhiteList();
-
-        gossip2.setIncomingWhiteList([]);
+        gossip3.setIncomingWhiteList([]);
 
         // elect node2 as the leader
-        network.processNextBlock();
         electionTriggers.map(t => t.trigger()); // force leader election before the block was verified, goes to block 3
         await nextTick();
+        hangingValidator.resolve();
+        await nextTick();
 
-        expect(node0.getLatestBlock()).to.equal(block3);
-        expect(node1.getLatestBlock()).to.equal(block3);
-        expect(node2.getLatestBlock()).to.be.undefined;
-        expect(node3.getLatestBlock()).to.equal(block3);
+        expect(node0.getLatestBlock()).to.equal(block2);
+        expect(node1.getLatestBlock()).to.equal(block2);
+        expect(node2.getLatestBlock()).to.equal(block2);
+        expect(node3.getLatestBlock()).to.be.undefined;
 
         network.shutDown();
     });

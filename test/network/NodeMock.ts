@@ -23,9 +23,9 @@ export class NodeMock implements Node {
         this.blockLog.push(block);
     }
 
-    public processNextBlock(): void {
+    public async processNextBlock(): Promise<void> {
         if (this.pbft) {
-            this.pbft.processNextBlock();
+            await this.pbft.processNextBlock();
         }
     }
 

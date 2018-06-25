@@ -4,6 +4,7 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
+import { BlocksValidatorMock } from "./blocksValidator/BlocksValidatorMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNetwork } from "./builders/NetworkBuilder";
 import { ElectionTriggerMock } from "./electionTrigger/ElectionTriggerMock";
@@ -32,14 +33,14 @@ describe("PBFT", () => {
         const spy2 = sinon.spy(node2.pbft.gossip, "multicast");
         const spy3 = sinon.spy(node3.pbft.gossip, "multicast");
 
-        network.processNextBlock();
+        await network.processNextBlock();
+        const preprepareCounter = (spy: sinon.SinonSpy) => spy.getCalls().filter(c => c.args[2] === "preprepare").length;
 
-        expect(spy0).to.have.been.called;
-        expect(spy1).to.not.have.been.called;
-        expect(spy2).to.not.have.been.called;
-        expect(spy3).to.not.have.been.called;
+        expect(preprepareCounter(spy0)).to.equal(1);
+        expect(preprepareCounter(spy1)).to.equal(0);
+        expect(preprepareCounter(spy2)).to.equal(0);
+        expect(preprepareCounter(spy3)).to.equal(0);
 
-        await nextTick();
         network.shutDown();
     });
 
@@ -47,20 +48,18 @@ describe("PBFT", () => {
         const block = aBlock(theGenesisBlock, "block content");
         const network = aNetwork().blocksInPool([block]).with(4).nodes.build();
 
-        const leader = network.nodes[0];
-        network.processNextBlock();
-        await nextTick();
+        await network.processNextBlock();
 
         expect(network.nodes).to.agreeOnBlock(block);
         network.shutDown();
     });
 
     it("should ignore suggested block if they are not from the leader", async () => {
-        const block = aBlock(theGenesisBlock);
+        const block = aBlock(theGenesisBlock, "block1");
         const network = aNetwork().blocksInPool([block]).with(4).nodes.build();
 
         const byzantineNode = network.nodes[3];
-        network.processNextBlock();
+        await byzantineNode.processNextBlock();
 
         expect(network.nodes).to.not.agreeOnBlock(block);
         network.shutDown();
@@ -80,13 +79,11 @@ describe("PBFT", () => {
 
         // suggest block 1 to nodes 1 and 2
         leaderGossip.setOutGoingWhiteList([node1.id, node2.id]);
-        network.processNextBlock();
-        await nextTick();
+        await network.processNextBlock();
 
         // suggest block 2 to node 3.
         leaderGossip.setOutGoingWhiteList([node3.id]);
-        network.processNextBlock();
-        await nextTick();
+        await network.processNextBlock();
 
         expect(node1.getLatestBlock()).to.equal(block1);
         expect(node2.getLatestBlock()).to.equal(block1);
@@ -103,8 +100,7 @@ describe("PBFT", () => {
         const gossip = byzantineNode.pbft.gossip as InMemoryGossip;
         gossip.setIncomingWhiteList([]);
 
-        network.processNextBlock();
-        await nextTick();
+        await network.processNextBlock();
 
         expect(network.nodes.splice(0, 2)).to.agreeOnBlock(block);
         network.shutDown();
@@ -114,12 +110,9 @@ describe("PBFT", () => {
         const goodBlock = aBlock(theGenesisBlock);
         const network = aNetwork().blocksInPool([goodBlock]).with(4).nodes.build();
 
-        const leader = network.nodes[0];
-        const loyalNode = network.nodes[1];
         const byzantineNode = network.nodes[3];
 
-        network.processNextBlock();
-        await nextTick();
+        await network.processNextBlock();
 
         const fakeBlock = aBlock(theGenesisBlock);
         const gossip = byzantineNode.pbft.gossip;
@@ -137,15 +130,13 @@ describe("PBFT", () => {
         const block = aBlock(theGenesisBlock);
         const network = aNetwork().blocksInPool([block]).with(7).nodes.build();
 
-        const leader = network.nodes[0];
         const byzantineNode1 = network.nodes[5];
         const byzantineNode2 = network.nodes[6];
         const gossip1 = byzantineNode1.pbft.gossip as InMemoryGossip;
         const gossip2 = byzantineNode2.pbft.gossip as InMemoryGossip;
         gossip1.setIncomingWhiteList([]);
         gossip2.setIncomingWhiteList([]);
-        network.processNextBlock();
-        await nextTick();
+        await network.processNextBlock();
 
         expect(network.nodes.splice(0, 4)).to.agreeOnBlock(block);
         network.shutDown();
@@ -158,11 +149,8 @@ describe("PBFT", () => {
 
         const leader = network.nodes[0];
         const node = network.nodes[1] as NodeMock;
-        network.processNextBlock();
-        await nextTick();
-
-        network.processNextBlock();
-        await nextTick();
+        await network.processNextBlock();
+        await network.processNextBlock();
 
         expect(node.blockLog.length).to.equal(2);
         network.shutDown();
@@ -173,22 +161,19 @@ describe("PBFT", () => {
         const notInOrderBlock = aBlock(aBlock(theGenesisBlock));
         const network = aNetwork().blocksInPool([block1, notInOrderBlock]).with(4).nodes.build();
 
-        const leader = network.nodes[0];
-        network.processNextBlock();
-        await nextTick();
-
-        network.processNextBlock();
-        await nextTick();
+        await network.processNextBlock();
+        await network.processNextBlock();
 
         expect(network.nodes).to.agreeOnBlock(block1);
         network.shutDown();
     });
 
     it("should change the leader on timeout (no commits for too long)", async () => {
-        const electionTriggers: Array<ElectionTriggerMock> = [];
+        const validator: BlocksValidatorMock = new BlocksValidatorMock(false);
+        const electionTriggerList: Array<ElectionTriggerMock> = [];
         const electionTriggerFactory = (view: number) => {
             const t = new ElectionTriggerMock(view);
-            electionTriggers.push(t);
+            electionTriggerList.push(t);
             return t;
         };
         const block1 = aBlock(theGenesisBlock, "Block1");
@@ -199,6 +184,7 @@ describe("PBFT", () => {
             .blocksInPool([block1, block2, block3, block4])
             .with(4)
             .nodes
+            .validateUsing(validator)
             .electingLeaderUsing(electionTriggerFactory)
             .build();
 
@@ -212,12 +198,17 @@ describe("PBFT", () => {
         expect(node2.isLeader()).to.be.false;
         expect(node3.isLeader()).to.be.false;
 
-        network.processNextBlock(); // block 1
+        await network.processNextBlock(); // block 1
+        validator.resolve();
         await nextTick();
         expect(network.nodes).to.agreeOnBlock(block1);
 
-        network.processNextBlock(); // block 2
-        electionTriggers.map(t => t.trigger()); // force leader election before the block was verified, goes to block 3
+        await network.processNextBlock(); // block 2
+        electionTriggerList.map(t => t.trigger()); // force leader election before the block was verified, goes to block 3
+        validator.resolve();
+        await nextTick();
+
+        validator.resolve();
         await nextTick();
 
         expect(network.nodes).to.agreeOnBlock(block3);

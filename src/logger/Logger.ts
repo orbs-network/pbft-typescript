@@ -3,7 +3,8 @@ type StorePrePrepare = {
     StorageType: "PrePrepare",
     term: number,
     view: number,
-    blockHash: string
+    blockHash: string,
+    blockContent: string
 };
 
 type StorePrepare = {
@@ -40,11 +41,15 @@ type FlowElected = {
     FlowType: "Elected",
     term: number,
     view: number,
-    blockHash: string,
+    blockHash: string
 };
 
 type FlowCommit = {
-    FlowType: "Commit"
+    FlowType: "Commit",
+    term: number,
+    view: number,
+    blockHash: string,
+    blockContent: string
 };
 
 type FlowLeaderChange = {

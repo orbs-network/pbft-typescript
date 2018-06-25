@@ -9,7 +9,7 @@ export class BlocksProviderMock implements BlocksProvider {
 
     }
 
-    public getBlock(): Block {
+    public async getBlock(): Promise<Block> {
         if (this.upCommingBlocks.length > 0) {
             return this.upCommingBlocks.shift();
         } else {

@@ -14,13 +14,13 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         this.viewChangeStorage = new Map();
     }
 
-    storePrePrepare(term: number, view: number, blockHash: string): boolean {
+    storePrePrepare(term: number, view: number, blockHash: string, blockContent: string): boolean {
         const key = term.toString() + "_" + view.toString();
         if (this.prePrepareStorage.get(key) !== undefined) {
             return false;
         }
         this.prePrepareStorage.set(key, blockHash);
-        this.logger.log({ Subject: "Storage", StorageType: "PrePrepare", term, view, blockHash });
+        this.logger.log({ Subject: "Storage", StorageType: "PrePrepare", term, view, blockHash, blockContent });
         return true;
     }
 

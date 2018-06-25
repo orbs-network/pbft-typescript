@@ -4,7 +4,7 @@
 // For example: If a storePrepare is called twice with the same values, it will be stored once.
 //
 export interface PBFTStorage {
-    storePrePrepare(term: number, view: number, blockHash: string): boolean;
+    storePrePrepare(term: number, view: number, blockHash: string, blockContent: string): boolean;
     getPrePrepare(term: number, view: number): string;
     storePrepare(term: number, view: number, blockHash: string, senderId: string): boolean;
     getPrepare(term: number, view: number, blockHash: string): string[];

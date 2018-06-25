@@ -72,7 +72,7 @@ describe("InMemory Network", () => {
         expect(spy2).to.have.been.called;
     });
 
-    it("should start all the nodes when calling start", () => {
+    it("should start all the nodes when calling start", async () => {
         const network = aNetwork().with(3).nodes.build();
         const node0 = network.nodes[0];
         const node1 = network.nodes[1];
@@ -81,7 +81,7 @@ describe("InMemory Network", () => {
         const spy1 = sinon.spy(node1.pbft, "processNextBlock");
         const spy2 = sinon.spy(node2.pbft, "processNextBlock");
 
-        network.processNextBlock();
+        await network.processNextBlock();
         expect(spy0).to.have.been.called;
         expect(spy1).to.have.been.called;
         expect(spy2).to.have.been.called;

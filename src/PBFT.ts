@@ -20,6 +20,7 @@ export class PBFT {
     private logger: Logger;
     private onNewBlockListeners: onNewBlockCB[];
     private view: number;
+    private electedOnView: number;
     private term: number;
     private viewState: ViewState;
 
@@ -63,6 +64,7 @@ export class PBFT {
     }
 
     private initView(view: number) {
+        this.electedOnView = -1;
         this.view = view;
         this.CB = undefined;
         this.startViewState(this.view);
@@ -88,11 +90,11 @@ export class PBFT {
         this.onNewBlockListeners.push(bc);
     }
 
-    public processNextBlock(): void {
+    public async processNextBlock(): Promise<void> {
         this.initView(0);
         if (this.isLeader(this.id)) {
-            this.CB = this.blocksProvider.getBlock();
-            this.pbftStorage.storePrePrepare(this.term, this.view, this.CB.hash);
+            this.CB = await this.blocksProvider.getBlock();
+            this.pbftStorage.storePrePrepare(this.term, this.view, this.CB.hash, this.CB.content);
             this.broadcastPrePrepare(this.term, this.view, this.CB);
         }
     }
@@ -107,7 +109,7 @@ export class PBFT {
     }
 
     private onLeaderChange(): void {
-        this.view++;
+        this.initView(this.view + 1);
         this.logger.log({ Subject: "Flow", FlowType: "LeaderChange", leaderId: this.leaderId(), term: this.term, newView: this.view });
         const payload: ViewChangePayload = { term: this.term, newView: this.view };
         this.pbftStorage.storeViewChange(this.term, this.view, this.id);
@@ -116,7 +118,6 @@ export class PBFT {
         } else {
             this.gossip.unicast(this.id, this.leaderId(), "view-change", payload);
         }
-        this.startViewState(this.view);
     }
 
     private broadcastPrePrepare(term: number, view: number, block: Block): void {
@@ -177,7 +178,7 @@ export class PBFT {
 
         this.CB = block;
         this.pbftStorage.storePrepare(term, view, block.hash, this.id);
-        this.pbftStorage.storePrePrepare(term, view, block.hash);
+        this.pbftStorage.storePrePrepare(term, view, block.hash, block.content);
         this.broadcastPrepare(term, view, block);
         this.checkPrepared(term, view, block.hash);
     }
@@ -222,9 +223,13 @@ export class PBFT {
         }
     }
 
-    private onElected(view: number) {
-        this.view = view;
-        const block: Block = this.blocksProvider.getBlock();
+    private async onElected(view: number) {
+        if (this.electedOnView === view) {
+            return;
+        }
+        this.initView(view);
+        this.electedOnView = view;
+        const block: Block = await this.blocksProvider.getBlock();
         const PP: PrePreparePayload = {
             term: this.term,
             view,
@@ -233,7 +238,7 @@ export class PBFT {
         this.CB = block;
         this.logger.log({ Subject: "Flow", FlowType: "Elected", term: this.term, view, blockHash: block.hash });
         const newViewPayload: NewViewPayload = { PP };
-        this.pbftStorage.storePrePrepare(this.term, this.view, block.hash);
+        this.pbftStorage.storePrePrepare(this.term, this.view, block.hash, block.content);
         this.gossip.multicast(this.id, this.getOtherNodesIds(), "new-view", newViewPayload);
     }
 
@@ -315,7 +320,7 @@ export class PBFT {
 
     private commitBlock(block: Block): void {
         if (this.committedBlocksHashs.indexOf(block.hash) === -1) {
-            this.logger.log({ Subject: "Flow", FlowType: "Commit", term: this.term, view: this.view, blockHash: block.hash });
+            this.logger.log({ Subject: "Flow", FlowType: "Commit", term: this.term, view: this.view, blockHash: block.hash, blockContent: block.content });
             this.committedBlocksHashs.push(block.hash);
             this.stopViewState();
             this.onNewBlockListeners.forEach(cb => cb(this.CB));

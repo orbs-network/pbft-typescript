@@ -5,7 +5,6 @@ import * as sinonChai from "sinon-chai";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNetwork } from "./builders/NetworkBuilder";
 import { NodeMock } from "./network/NodeMock";
-import { nextTick } from "./timeUtils";
 
 chai.use(sinonChai);
 
@@ -17,8 +16,7 @@ describe("Block Validation", () => {
         const leader = network.nodes[0];
         const node1 = network.nodes[1] as NodeMock;
         const spy = sinon.spy(node1.pbft.blocksValidator, "validateBlock");
-        network.processNextBlock();
-        await nextTick();
+        await network.processNextBlock();
 
         expect(spy).to.have.been.calledWith(block);
         expect(network.nodes).to.agreeOnBlock(block);
@@ -32,8 +30,7 @@ describe("Block Validation", () => {
         const leader = network.nodes[0];
         const node1 = network.nodes[1] as NodeMock;
         node1.pbft.blocksValidator.validateBlock = async () => false;
-        network.processNextBlock();
-        await nextTick();
+        await network.processNextBlock();
 
         expect(network.nodes).to.not.agreeOnBlock(block);
         network.shutDown();

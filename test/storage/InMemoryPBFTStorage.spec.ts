@@ -16,9 +16,9 @@ describe("PBFT In Memory Storage", () => {
         const term = Math.floor(Math.random() * 1000);
         const view = Math.floor(Math.random() * 1000);
         const block = aBlock(theGenesisBlock);
-        const firstTime = storage.storePrePrepare(term, view, block.hash);
+        const firstTime = storage.storePrePrepare(term, view, block.hash, block.content);
         expect(firstTime).to.be.true;
-        const secondstime = storage.storePrePrepare(term, view, block.hash);
+        const secondstime = storage.storePrePrepare(term, view, block.hash, block.content);
         expect(secondstime).to.be.false;
     });
 

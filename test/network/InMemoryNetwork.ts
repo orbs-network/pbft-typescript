@@ -25,8 +25,10 @@ export class InMemoryNetwork implements Network {
         nodes.forEach(node => this.registerNode(node));
     }
 
-    processNextBlock(): void {
-        this.nodes.forEach(node => node.processNextBlock());
+    async processNextBlock(): Promise<void> {
+        for (const node of this.nodes) {
+            await node.processNextBlock();
+        }
     }
 
     shutDown(): void {
