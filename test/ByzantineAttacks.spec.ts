@@ -1,6 +1,7 @@
 import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
+import { CommitPayload, PreparePayload, PrePreparePayload } from "../src/gossip/Payload";
 import { PBFTStorage } from "../src/storage/PBFTStorage";
 import { BlocksValidatorMock } from "./blocksValidator/BlocksValidatorMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
@@ -203,4 +204,50 @@ describe("Byzantine Attacks", () => {
 
         network.shutDown();
     });
+
+    it("should not process gossip messages from nodes that are not part of the network (isMember = false)", async () => {
+        const network = aNetwork()
+            .with(4)
+            .nodes
+            .build();
+
+        const node0 = network.nodes[0];
+        const node1 = network.nodes[1];
+        const node2 = network.nodes[2];
+        const node3 = network.nodes[3];
+        const gossip1: InMemoryGossip = node1.pbft.gossip as InMemoryGossip;
+        const gossip2: InMemoryGossip = node2.pbft.gossip as InMemoryGossip;
+        const gossip3: InMemoryGossip = node3.pbft.gossip as InMemoryGossip;
+
+        // node0, if faking other messages
+        const block1 = aBlock(theGenesisBlock);
+        const PPpayload1: PrePreparePayload = { term: 0, view: 0, block: block1 };
+        const Ppayload1: PreparePayload = { term: 0, view: 0, blockHash: block1.hash };
+        const Cpayload1: CommitPayload = { term: 0, view: 0, blockHash: block1.hash };
+        gossip1.onRemoteMessage(node0.id, "preprepare", PPpayload1); // node1 causing preprepare on node1
+        gossip1.onRemoteMessage("node1000", "prepare", Ppayload1); // node1 pretending to send prepare as node1000
+        gossip1.onRemoteMessage("node2000", "prepare", Ppayload1); // node1 pretending to send prepare as node2000
+        gossip1.onRemoteMessage("node1000", "commit", Cpayload1); // node1 pretending to send commit as node1000
+        gossip1.onRemoteMessage("node2000", "commit", Cpayload1); // node1 pretending to send commit as node2000
+
+        const block2 = aBlock(theGenesisBlock);
+        const PPpayload2: PrePreparePayload = { term: 0, view: 0, block: block2 };
+        const Ppayload2: PreparePayload = { term: 0, view: 0, blockHash: block2.hash };
+        const Cpayload2: CommitPayload = { term: 0, view: 0, blockHash: block2.hash };
+        gossip2.onRemoteMessage(node0.id, "preprepare", PPpayload2); // node1 causing preprepare on node2
+        gossip2.onRemoteMessage("node1000", "prepare", Ppayload2); // node1 pretending to send prepare as node1000
+        gossip2.onRemoteMessage("node2000", "prepare", Ppayload2); // node1 pretending to send prepare as node2000
+        gossip2.onRemoteMessage("node1000", "commit", Cpayload2); // node1 pretending to send commit as node1000
+        gossip2.onRemoteMessage("node2000", "commit", Cpayload2); // node1 pretending to send commit as node2000
+
+        await nextTick();
+        expect(node1.getLatestBlock()).to.not.equal(block1);
+        expect(node2.getLatestBlock()).to.not.equal(block2);
+
+        expect(node1.getLatestBlock()).to.not.equal(block1);
+        expect(node2.getLatestBlock()).to.not.equal(block2);
+
+        network.shutDown();
+    });
+
 });

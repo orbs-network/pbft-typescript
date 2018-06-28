@@ -224,6 +224,11 @@ export class PBFT {
             return;
         }
 
+        if (this.network.isMember(senderId) === false) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], blockHash:[${blockHash}], onReceivePrepare from "${senderId}", prepare not logged because the sender is not part of the network` });
+            return;
+        }
+
         this.pbftStorage.storePrepare(term, view, blockHash, senderId);
 
         this.checkPrepared(term, view, blockHash);
