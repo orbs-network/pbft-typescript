@@ -31,6 +31,10 @@ export class InMemoryNetwork implements Network {
         }
     }
 
+    isMember(nodeId: string): boolean {
+        return this.nodes.find(n => n.id === nodeId) !== undefined;
+    }
+
     shutDown(): void {
         this.nodes.forEach(node => node.dispose());
     }

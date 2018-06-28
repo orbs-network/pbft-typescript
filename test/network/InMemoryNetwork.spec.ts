@@ -95,4 +95,13 @@ describe("InMemory Network", () => {
         network.shutDown();
     });
 
+    it("should return true/false for isMember", () => {
+        const network = aNetwork().with(3).nodes.build();
+        expect(network.isMember(network.nodes[0].id)).to.be.true;
+        expect(network.isMember(network.nodes[1].id)).to.be.true;
+        expect(network.isMember(network.nodes[2].id)).to.be.true;
+        expect(network.isMember("3")).to.be.false;
+        network.shutDown();
+    });
+
 });
