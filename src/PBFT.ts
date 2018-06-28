@@ -23,6 +23,7 @@ export class PBFT {
     private electedOnView: number;
     private term: number;
     private viewState: ViewState;
+    private gossipSubscriptionTokens: number[];
 
     public id: string;
     public blocksValidator: BlocksValidator;
@@ -46,16 +47,34 @@ export class PBFT {
         // init committedBlocks
         this.committedBlocksHashs = [config.genesisBlockHash];
 
+        this.gossipSubscriptionTokens = [];
         this.initPBFT();
         this.subscriveToGossip();
     }
 
     private subscriveToGossip(): void {
-        this.gossip.subscribe("preprepare", (senderId, payload) => this.onReceivePrePrepare(senderId, payload));
-        this.gossip.subscribe("prepare", (senderId, payload) => this.onReceivePrepare(senderId, payload));
-        this.gossip.subscribe("commit", (senderId, payload) => this.onReceiveCommit(senderId, payload));
-        this.gossip.subscribe("view-change", (senderId, payload) => this.onReceiveViewChange(senderId, payload));
-        this.gossip.subscribe("new-view", (senderId, payload) => this.onReceiveNewView(senderId, payload));
+        let token = this.gossip.subscribe("preprepare", (senderId, payload) => this.onReceivePrePrepare(senderId, payload));
+        this.gossipSubscriptionTokens.push(token);
+
+        token = this.gossip.subscribe("prepare", (senderId, payload) => this.onReceivePrepare(senderId, payload));
+        this.gossipSubscriptionTokens.push(token);
+
+        token = this.gossip.subscribe("commit", (senderId, payload) => this.onReceiveCommit(senderId, payload));
+        this.gossipSubscriptionTokens.push(token);
+
+        token = this.gossip.subscribe("view-change", (senderId, payload) => this.onReceiveViewChange(senderId, payload));
+        this.gossipSubscriptionTokens.push(token);
+
+        token = this.gossip.subscribe("new-view", (senderId, payload) => this.onReceiveNewView(senderId, payload));
+        this.gossipSubscriptionTokens.push(token);
+
+    }
+
+    private unsubscriveFromGossip(): void {
+        while (this.gossipSubscriptionTokens.length > 0) {
+            const token = this.gossipSubscriptionTokens.pop();
+            this.gossip.unsubscribe(token);
+        }
     }
 
     private initPBFT(): void {
@@ -102,6 +121,7 @@ export class PBFT {
     public dispose(): any {
         this.stopViewState();
         this.onNewBlockListeners = [];
+        this.unsubscriveFromGossip();
     }
 
     public leaderId(): string {

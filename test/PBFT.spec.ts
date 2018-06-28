@@ -168,6 +168,33 @@ describe("PBFT", () => {
         network.shutDown();
     });
 
+    it("should not process gossip messages after dispose", async () => {
+        const block1 = aBlock(theGenesisBlock);
+        const block2 = aBlock(block1);
+        const network = aNetwork()
+            .blocksInPool([block1, block2])
+            .with(4)
+            .nodes
+            .build();
+
+        await network.processNextBlock();
+        expect(network.nodes).to.agreeOnBlock(block1);
+        network.shutDown();
+
+        const node1 = network.nodes[1];
+        const node2 = network.nodes[2];
+        const node3 = network.nodes[3];
+        const spy1 = sinon.spy(node1.pbft.gossip, "multicast");
+        const spy2 = sinon.spy(node2.pbft.gossip, "multicast");
+        const spy3 = sinon.spy(node3.pbft.gossip, "multicast");
+
+        await network.processNextBlock();
+
+        expect(spy1).to.not.have.been.called;
+        expect(spy2).to.not.have.been.called;
+        expect(spy3).to.not.have.been.called;
+    });
+
     it("should change the leader on timeout (no commits for too long)", async () => {
         const validator: BlocksValidatorMock = new BlocksValidatorMock(false);
         const electionTriggerList: Array<ElectionTriggerMock> = [];
