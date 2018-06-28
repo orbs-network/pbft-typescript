@@ -160,7 +160,7 @@ class PBFT {
         if (message === "PRE-PREPARE") {
             if (senderPublicKey !== this.myPublicKey) {
                 if (view === this.view &&
-                    term === this.term &&
+                    this.term === term &&
                     primary(view) === senderPublicKey &&
                     blockHash === HASH(B) &&
                     B.previousBlockHash === HASH(this.lastCommittedBlock) &&
@@ -201,8 +201,8 @@ class PBFT {
 
         if (message === "PREPARE") {
             if (senderPublicKey !== this.myPublicKey) {
-                if (view === this.view &&
-                    term === this.term &&
+                if (this.view <= view &&
+                    this.term === term &&
                     primary(view) !== senderPublicKey) {
                     Log(term, view, "PREPARE", senderPublicKey, P);
                     this.checkPrepared(term, view, blockHash);
@@ -251,7 +251,7 @@ class PBFT {
 
         if (message === "COMMIT") {
             if (senderPublicKey !== this.myPublicKey) {
-                if (view <= this.view && term === this.term) {
+                if (this.view >= view && this.term === term) {
                     Log(term, view, "COMMIT", senderPublicKey, C);
                     this.checkCommit(term, view, blockHash);
                 }
@@ -260,7 +260,7 @@ class PBFT {
     }
 
     hasEnoughCommitVotes(term: number, view: number, blockHash: string): boolean {
-        if (view === this.view && term === this.term) {
+        if (view === this.view && this.term === term) {
             if (this.isPrePrepared(term, view, blockHash)) {
                 if (getCommitCount(term, view) >= 2 * this.config.f + 1) {
                     return true;
@@ -300,7 +300,7 @@ class PBFT {
 
         if (message === "VIEW-CHANGE") {
             if (senderPublicKey !== this.myPublicKey) {
-                if (view >= this.view && term === this.term) {
+                if (view >= this.view && this.term === term) {
                     if (primary(view) === this.myPublicKey) {
 
                         if (preparedProof) {
@@ -441,7 +441,7 @@ class PBFT {
 
         if (message === "NEW-VIEW") {
             if (senderPublicKey !== this.myPublicKey) {
-                if (view >= this.view && term === this.term) {
+                if (view >= this.view && this.term === term) {
                     if (primary(view) === senderPublicKey) {
                         const invalidProofIndex = newViewProof.findIndex(proof => !this.isViewChangeValid(term, view, proof));
                         if (invalidProofIndex > -1) {
