@@ -13,10 +13,10 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] implement new-view
 - [V] we should have a timer for each view. new-view shouldn't restart a timer if it's already started.
 - [V] suggest block in new-view (inside PP)
-- [ ] Convert getBlock of "BlocksProvider" to async.
+- [V] Convert getBlock of "BlocksProvider" to async.
+- [V] the onElected will trigger new-view more than once
+- [V] new-view shouldn't restart a timer if it's already started.
 - [ ] synced init node is missing
-- [ ] the onElected will trigger new-view more than once
-- [ ] new-view shouldn't restart a timer if it's already started.
 - [ ] term should be taken from the height of the latest block and not do ++ on commit.
 - [ ] commit is pushing the block hash to a log to prevent multiple commits of the same block, this shouldn't be the solution.
 - [ ] suggest block in new-view (inside PP), with proofs from other nodes.
