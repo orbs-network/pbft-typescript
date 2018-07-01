@@ -5,7 +5,6 @@ import { InMemoryGossipDiscovery } from "./InMemoryGossipDiscovery";
 
 type GossipCallback = PreprepareCallback | PrepareCallback | CommitCallback | NewViewCallback | ViewChangeCallback;
 type SubscriptionsValue = {
-    message: string;
     cb: (message: string, senderId: string, payload: any) => void;
 };
 
@@ -24,15 +23,13 @@ export class InMemoryGossip implements Gossip, RemoteListener {
 
     onRemoteMessage(senderId: string, message: string, payload?: any): void {
         this.subscriptions.forEach(subscription => {
-            if (subscription.message === message) {
-                if (this.inComingWhiteList !== undefined) {
-                    if (this.inComingWhiteList.indexOf(senderId) === -1) {
-                        return;
-                    }
+            if (this.inComingWhiteList !== undefined) {
+                if (this.inComingWhiteList.indexOf(senderId) === -1) {
+                    return;
                 }
-                this.logger.log({ Subject: "GossipReceive", senderId, payload });
-                subscription.cb(message, senderId, payload);
             }
+            this.logger.log({ Subject: "GossipReceive", senderId, payload });
+            subscription.cb(message, senderId, payload);
         });
     }
 
@@ -52,9 +49,9 @@ export class InMemoryGossip implements Gossip, RemoteListener {
         this.inComingWhiteList = undefined;
     }
 
-    subscribe(message: string, cb: GossipCallback): number {
+    subscribe(cb: GossipCallback): number {
         this.totalSubscriptions++;
-        this.subscriptions.set(this.totalSubscriptions, { message, cb });
+        this.subscriptions.set(this.totalSubscriptions, { cb });
         return this.totalSubscriptions;
     }
 

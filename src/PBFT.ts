@@ -3,7 +3,7 @@ import { BlocksProvider } from "./blocksProvider/BlocksProvider";
 import { BlocksValidator } from "./blocksValidator/BlocksValidator";
 import { Config } from "./Config";
 import { ElectionTriggerFactory } from "./electionTrigger/ElectionTrigger";
-import { Gossip } from "./gossip/Gossip";
+import { Gossip, MessageTypes } from "./gossip/Gossip";
 import { CommitPayload, NewViewPayload, PreparePayload, PrePreparePayload, ViewChangePayload } from "./gossip/Payload";
 import { Logger } from "./logger/Logger";
 import { Network } from "./network/Network";
@@ -23,7 +23,7 @@ export class PBFT {
     private electedOnView: number;
     private term: number;
     private viewState: ViewState;
-    private gossipSubscriptionTokens: number[];
+    private gossipSubscriptionToken: number;
 
     public id: string;
     public blocksValidator: BlocksValidator;
@@ -47,33 +47,44 @@ export class PBFT {
         // init committedBlocks
         this.committedBlocksHashs = [config.genesisBlockHash];
 
-        this.gossipSubscriptionTokens = [];
+        this.gossipSubscriptionToken = undefined;
         this.initPBFT();
         this.subscriveToGossip();
     }
 
+    private gossipFilter(message: MessageTypes, senderId: string, payload: any): void {
+        switch (message) {
+            case "preprepare" : {
+                this.onReceivePrePrepare(senderId, payload);
+                break;
+            }
+            case "prepare" : {
+                this.onReceivePrepare(senderId, payload);
+                break;
+            }
+            case "commit" : {
+                this.onReceiveCommit(senderId, payload);
+                break;
+            }
+            case "view-change" : {
+                this.onReceiveViewChange(senderId, payload);
+                break;
+            }
+            case "new-view" : {
+                this.onReceiveNewView(senderId, payload);
+                break;
+            }
+        }
+    }
+
     private subscriveToGossip(): void {
-        let token = this.gossip.subscribe("preprepare", (message, senderId, payload) => this.onReceivePrePrepare(message, senderId, payload));
-        this.gossipSubscriptionTokens.push(token);
-
-        token = this.gossip.subscribe("prepare", (message, senderId, payload) => this.onReceivePrepare(message, senderId, payload));
-        this.gossipSubscriptionTokens.push(token);
-
-        token = this.gossip.subscribe("commit", (message, senderId, payload) => this.onReceiveCommit(message, senderId, payload));
-        this.gossipSubscriptionTokens.push(token);
-
-        token = this.gossip.subscribe("view-change", (message, senderId, payload) => this.onReceiveViewChange(message, senderId, payload));
-        this.gossipSubscriptionTokens.push(token);
-
-        token = this.gossip.subscribe("new-view", (message, senderId, payload) => this.onReceiveNewView(message, senderId, payload));
-        this.gossipSubscriptionTokens.push(token);
-
+        this.gossipSubscriptionToken = this.gossip.subscribe((message: MessageTypes, senderId: string, payload: any) => this.gossipFilter(message, senderId, payload));
     }
 
     private unsubscriveFromGossip(): void {
-        while (this.gossipSubscriptionTokens.length > 0) {
-            const token = this.gossipSubscriptionTokens.pop();
-            this.gossip.unsubscribe(token);
+        if (this.gossipSubscriptionToken) {
+            this.gossip.unsubscribe(this.gossipSubscriptionToken);
+            this.gossipSubscriptionToken = undefined;
         }
     }
 
@@ -158,7 +169,7 @@ export class PBFT {
         this.gossip.multicast(this.id, this.getOtherNodesIds(), "prepare", payload);
     }
 
-    private async onReceivePrePrepare(message: string, senderId: string, payload: PrePreparePayload): Promise<void> {
+    private async onReceivePrePrepare(senderId: string, payload: PrePreparePayload): Promise<void> {
         const { view, term, block } = payload;
         if (senderId === this.id) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block rejected because it came from this node` });
@@ -207,7 +218,7 @@ export class PBFT {
         return this.pbftStorage.getPrePrepare(term, view) !== undefined;
     }
 
-    private onReceivePrepare(message: string, senderId: string, payload: PreparePayload): void {
+    private onReceivePrepare(senderId: string, payload: PreparePayload): void {
         const { term, view, blockHash } = payload;
         if (senderId === this.id) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], blockHash:[${blockHash}], onReceivePrepare from "${senderId}", block rejected because it came from this node` });
@@ -234,7 +245,7 @@ export class PBFT {
         this.checkPrepared(term, view, blockHash);
     }
 
-    private onReceiveViewChange(message: string, senderId: string, payload: ViewChangePayload): void {
+    private onReceiveViewChange(senderId: string, payload: ViewChangePayload): void {
         this.pbftStorage.storeViewChange(payload.term, payload.newView, senderId);
         const view = payload.newView;
         const term = payload.term;
@@ -287,7 +298,7 @@ export class PBFT {
         this.checkCommit(term, view, blockHash);
     }
 
-    private onReceiveCommit(message: string, senderId: string, payload: CommitPayload): void {
+    private onReceiveCommit(senderId: string, payload: CommitPayload): void {
         const { term, view, blockHash } = payload;
         this.pbftStorage.storeCommit(term, view, blockHash, senderId);
 
@@ -303,11 +314,11 @@ export class PBFT {
         }
     }
 
-    private onReceiveNewView(message: string, senderId: string, payload: NewViewPayload): void {
+    private onReceiveNewView(senderId: string, payload: NewViewPayload): void {
         const { PP } = payload;
         const { view } = PP;
         this.initView(view);
-        this.onReceivePrePrepare("preprepare", senderId, PP);
+        this.onReceivePrePrepare(senderId, PP);
     }
 
     private getF(): number {

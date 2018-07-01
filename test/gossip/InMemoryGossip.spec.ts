@@ -21,7 +21,7 @@ describe("InMemory Gossip", () => {
         const spy = sinon.spy();
         const message = Math.random().toString();
 
-        listener.subscribe(message, spy);
+        listener.subscribe(spy);
         broadcaster.broadcast(broadcasterId, message);
 
         expect(spy).to.have.been.calledOnce;
@@ -41,9 +41,8 @@ describe("InMemory Gossip", () => {
         const spy1 = sinon.spy();
         const spy2 = sinon.spy();
         const message = Math.random().toString();
-        listener1.subscribe(message, spy1);
-        listener2.subscribe(message, spy2);
-
+        listener1.subscribe(spy1);
+        listener2.subscribe(spy2);
         broadcaster.broadcast(broadcasterId, message);
         expect(spy1).to.have.been.calledOnce;
         expect(spy2).to.have.been.calledOnce;
@@ -67,34 +66,14 @@ describe("InMemory Gossip", () => {
         const spy2 = sinon.spy();
         const spy3 = sinon.spy();
         const message = Math.random().toString();
-        listener1.subscribe(message, spy1);
-        listener2.subscribe(message, spy2);
-        listener3.subscribe(message, spy3);
+        listener1.subscribe(spy1);
+        listener2.subscribe(spy2);
+        listener3.subscribe(spy3);
 
         broadcaster.multicast(broadcasterId, [listener1Id, listener2Id], message);
         expect(spy1).to.have.been.calledOnce;
         expect(spy2).to.have.been.calledOnce;
         expect(spy3).to.not.have.been.calledOnce;
-    });
-
-    it("should get called only for the requested message", () => {
-        const discovery = new InMemoryGossipDiscovery();
-        const listenerId = genId();
-        const broadcasterId = genId();
-        const listener = new InMemoryGossip(discovery);
-        const broadcaster = new InMemoryGossip(discovery);
-        discovery.registerGossip(listenerId, listener);
-        discovery.registerGossip(broadcasterId, broadcaster);
-        const spy1 = sinon.spy();
-        const spy2 = sinon.spy();
-        const message1 = Math.random().toString();
-        const message2 = Math.random().toString();
-        listener.subscribe(message1, spy1);
-        listener.subscribe(message2, spy2);
-
-        broadcaster.broadcast(broadcasterId, message1);
-        expect(spy1).to.have.been.calledOnce;
-        expect(spy2).to.not.have.been.calledOnce;
     });
 
     it("should be able to unsubscribe", () => {
@@ -108,8 +87,8 @@ describe("InMemory Gossip", () => {
         const spy1 = sinon.spy();
         const spy2 = sinon.spy();
         const message = Math.random().toString();
-        const subscriptionToken = listener.subscribe(message, spy1);
-        listener.subscribe(message, spy2);
+        const subscriptionToken = listener.subscribe(spy1);
+        listener.subscribe(spy2);
         listener.unsubscribe(subscriptionToken);
 
         broadcaster.broadcast(broadcasterId, message);
@@ -128,7 +107,7 @@ describe("InMemory Gossip", () => {
         const spy = sinon.spy();
         const payload = Math.random().toString();
         const message = Math.random().toString();
-        listener.subscribe(message, spy);
+        listener.subscribe(spy);
 
         broadcaster.broadcast(broadcasterId, message, payload);
         expect(spy).to.have.been.calledWith(message, broadcasterId, payload);
@@ -146,8 +125,8 @@ describe("InMemory Gossip", () => {
         const spy2 = sinon.spy();
         const payload = Math.random().toString();
         const message = Math.random().toString();
-        listener1.subscribe(message, spy1);
-        listener2.subscribe(message, spy2);
+        listener1.subscribe(spy1);
+        listener2.subscribe(spy2);
 
         broadcaster.unicast("broadcaster", "listener1", message, payload);
         expect(spy1).to.have.been.calledWith(message, "broadcaster", payload);
@@ -183,10 +162,10 @@ describe("InMemory Gossip", () => {
             spy4 = sinon.spy();
             payload = Math.random().toString();
             message = Math.random().toString();
-            gossip1.subscribe(message, spy1);
-            gossip2.subscribe(message, spy2);
-            gossip3.subscribe(message, spy3);
-            gossip4.subscribe(message, spy4);
+            gossip1.subscribe(spy1);
+            gossip2.subscribe(spy2);
+            gossip3.subscribe(spy3);
+            gossip4.subscribe(spy4);
 
         });
 

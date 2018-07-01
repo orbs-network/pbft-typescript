@@ -1,5 +1,7 @@
 import { CommitPayload, NewViewPayload, PreparePayload, PrePreparePayload, ViewChangePayload } from "./Payload";
 
+export type MessageTypes = "preprepare" | "prepare" | "commit" | "view-change" | "new-view";
+
 export type PreprepareCallback = (message: "preprepare", senderId: string, payload: PrePreparePayload) => void;
 export type PrepareCallback = (message: "prepare", senderId: string, payload: PreparePayload) => void;
 export type CommitCallback = (message: "commit", senderId: string, payload: CommitPayload) => void;
@@ -7,11 +9,7 @@ export type ViewChangeCallback = (message: "view-change", senderId: string, payl
 export type NewViewCallback = (message: "new-view", senderId: string, payload: NewViewPayload) => void;
 
 export interface Gossip {
-    subscribe(message: "preprepare", cb: PreprepareCallback): number;
-    subscribe(message: "prepare", cb: PrepareCallback): number;
-    subscribe(message: "commit", cb: CommitCallback): number;
-    subscribe(message: "view-change", cb: ViewChangeCallback): number;
-    subscribe(message: "new-view", cb: NewViewCallback): number;
+    subscribe(cb: PreprepareCallback | PrepareCallback | CommitCallback | ViewChangeCallback | NewViewCallback): number;
     unsubscribe(subscriptionToken: number): void;
 
     broadcast(senderId: string, message: "preprepare", payload: PrePreparePayload): void;
