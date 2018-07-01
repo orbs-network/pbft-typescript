@@ -131,7 +131,7 @@ describe("InMemory Gossip", () => {
         listener.subscribe(message, spy);
 
         broadcaster.broadcast(broadcasterId, message, payload);
-        expect(spy).to.have.been.calledWith(broadcasterId, payload);
+        expect(spy).to.have.been.calledWith(message, broadcasterId, payload);
     });
 
     it("should be able to unicast a message to a single client", () => {
@@ -150,7 +150,7 @@ describe("InMemory Gossip", () => {
         listener2.subscribe(message, spy2);
 
         broadcaster.unicast("broadcaster", "listener1", message, payload);
-        expect(spy1).to.have.been.calledWith("broadcaster", payload);
+        expect(spy1).to.have.been.calledWith(message, "broadcaster", payload);
         expect(spy2).to.not.have.been.called;
     });
 
@@ -207,7 +207,7 @@ describe("InMemory Gossip", () => {
                 gossip1.unicast("gossip1", "gossip3", message, payload);
                 gossip1.unicast("gossip1", "gossip4", message, payload);
                 expect(spy2).to.not.have.been.called;
-                expect(spy3).to.have.been.calledWith("gossip1", payload);
+                expect(spy3).to.have.been.calledWith(message, "gossip1", payload);
                 expect(spy4).to.not.have.been.called;
             });
 
@@ -216,14 +216,14 @@ describe("InMemory Gossip", () => {
 
                 gossip1.broadcast("gossip1", message, payload);
                 expect(spy2).to.not.have.been.called;
-                expect(spy3).to.have.been.calledWith("gossip1", payload);
+                expect(spy3).to.have.been.calledWith(message, "gossip1", payload);
                 expect(spy4).to.not.have.been.called;
 
                 gossip1.clearOutGoingWhiteList();
                 gossip1.broadcast("gossip1", message, payload);
-                expect(spy2).to.have.been.calledWith("gossip1", payload);
-                expect(spy3).to.have.been.calledWith("gossip1", payload);
-                expect(spy4).to.have.been.calledWith("gossip1", payload);
+                expect(spy2).to.have.been.calledWith(message, "gossip1", payload);
+                expect(spy3).to.have.been.calledWith(message, "gossip1", payload);
+                expect(spy4).to.have.been.calledWith(message, "gossip1", payload);
             });
 
             it("should ignore broadcast messages that don't apply to the outgoing white list", () => {
@@ -231,7 +231,7 @@ describe("InMemory Gossip", () => {
 
                 gossip1.broadcast("gossip1", message, payload);
                 expect(spy2).to.not.have.been.called;
-                expect(spy3).to.have.been.calledWith("gossip1", payload);
+                expect(spy3).to.have.been.calledWith(message, "gossip1", payload);
                 expect(spy4).to.not.have.been.called;
             });
         });
@@ -254,7 +254,7 @@ describe("InMemory Gossip", () => {
                 gossip1.unicast("gossip1", "gossip4", message, payload);
                 gossip2.unicast("gossip2", "gossip4", message, payload);
                 gossip3.unicast("gossip3", "gossip4", message, payload);
-                expect(spy4).to.have.been.calledOnce.calledWith("gossip2", payload);
+                expect(spy4).to.have.been.calledOnce.calledWith(message, "gossip2", payload);
             });
 
             it("should keep sending messages after the incomming list was cleared", () => {
@@ -264,16 +264,16 @@ describe("InMemory Gossip", () => {
 
                 gossip1.broadcast("gossip1", message, payload);
                 expect(spy2).to.not.have.been.called;
-                expect(spy3).to.have.been.calledWith("gossip1", payload);
+                expect(spy3).to.have.been.calledWith(message, "gossip1", payload);
                 expect(spy4).to.not.have.been.called;
 
                 gossip2.clearIncommingWhiteList();
                 gossip3.clearIncommingWhiteList();
                 gossip4.clearIncommingWhiteList();
                 gossip1.broadcast("gossip1", message, payload);
-                expect(spy2).to.have.been.calledWith("gossip1", payload);
-                expect(spy3).to.have.been.calledWith("gossip1", payload);
-                expect(spy4).to.have.been.calledWith("gossip1", payload);
+                expect(spy2).to.have.been.calledWith(message, "gossip1", payload);
+                expect(spy3).to.have.been.calledWith(message, "gossip1", payload);
+                expect(spy4).to.have.been.calledWith(message, "gossip1", payload);
             });
 
             it("should ignore broadcast messages that don't apply to the incoming white list", () => {
@@ -281,7 +281,7 @@ describe("InMemory Gossip", () => {
 
                 gossip1.broadcast("gossip1", message, payload);
                 gossip2.broadcast("gossip2", message, payload);
-                expect(spy4).to.have.been.calledOnce.calledWith("gossip2", payload);
+                expect(spy4).to.have.been.calledOnce.calledWith(message, "gossip2", payload);
             });
         });
     });

@@ -1,10 +1,10 @@
-import { NewViewPayload, PrePreparePayload, PreparePayload, ViewChangePayload, CommitPayload } from "./Payload";
+import { CommitPayload, NewViewPayload, PreparePayload, PrePreparePayload, ViewChangePayload } from "./Payload";
 
-export type PreprepareCallback = (senderId: string, payload: PrePreparePayload) => void;
-export type PrepareCallback = (senderId: string, payload: PreparePayload) => void;
-export type CommitCallback = (senderId: string, payload: CommitPayload) => void;
-export type ViewChangeCallback = (senderId: string, payload: ViewChangePayload) => void;
-export type NewViewCallback = (senderId: string, payload: NewViewPayload) => void;
+export type PreprepareCallback = (message: "preprepare", senderId: string, payload: PrePreparePayload) => void;
+export type PrepareCallback = (message: "prepare", senderId: string, payload: PreparePayload) => void;
+export type CommitCallback = (message: "commit", senderId: string, payload: CommitPayload) => void;
+export type ViewChangeCallback = (message: "view-change", senderId: string, payload: ViewChangePayload) => void;
+export type NewViewCallback = (message: "new-view", senderId: string, payload: NewViewPayload) => void;
 
 export interface Gossip {
     subscribe(message: "preprepare", cb: PreprepareCallback): number;

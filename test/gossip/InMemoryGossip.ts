@@ -6,7 +6,7 @@ import { InMemoryGossipDiscovery } from "./InMemoryGossipDiscovery";
 type GossipCallback = PreprepareCallback | PrepareCallback | CommitCallback | NewViewCallback | ViewChangeCallback;
 type SubscriptionsValue = {
     message: string;
-    cb: (senderId: string, payload: any) => void;
+    cb: (message: string, senderId: string, payload: any) => void;
 };
 
 interface RemoteListener {
@@ -31,7 +31,7 @@ export class InMemoryGossip implements Gossip, RemoteListener {
                     }
                 }
                 this.logger.log({ Subject: "GossipReceive", senderId, payload });
-                subscription.cb(senderId, payload);
+                subscription.cb(message, senderId, payload);
             }
         });
     }

@@ -53,19 +53,19 @@ export class PBFT {
     }
 
     private subscriveToGossip(): void {
-        let token = this.gossip.subscribe("preprepare", (senderId, payload) => this.onReceivePrePrepare(senderId, payload));
+        let token = this.gossip.subscribe("preprepare", (message, senderId, payload) => this.onReceivePrePrepare(message, senderId, payload));
         this.gossipSubscriptionTokens.push(token);
 
-        token = this.gossip.subscribe("prepare", (senderId, payload) => this.onReceivePrepare(senderId, payload));
+        token = this.gossip.subscribe("prepare", (message, senderId, payload) => this.onReceivePrepare(message, senderId, payload));
         this.gossipSubscriptionTokens.push(token);
 
-        token = this.gossip.subscribe("commit", (senderId, payload) => this.onReceiveCommit(senderId, payload));
+        token = this.gossip.subscribe("commit", (message, senderId, payload) => this.onReceiveCommit(message, senderId, payload));
         this.gossipSubscriptionTokens.push(token);
 
-        token = this.gossip.subscribe("view-change", (senderId, payload) => this.onReceiveViewChange(senderId, payload));
+        token = this.gossip.subscribe("view-change", (message, senderId, payload) => this.onReceiveViewChange(message, senderId, payload));
         this.gossipSubscriptionTokens.push(token);
 
-        token = this.gossip.subscribe("new-view", (senderId, payload) => this.onReceiveNewView(senderId, payload));
+        token = this.gossip.subscribe("new-view", (message, senderId, payload) => this.onReceiveNewView(message, senderId, payload));
         this.gossipSubscriptionTokens.push(token);
 
     }
@@ -158,7 +158,7 @@ export class PBFT {
         this.gossip.multicast(this.id, this.getOtherNodesIds(), "prepare", payload);
     }
 
-    private async onReceivePrePrepare(senderId: string, payload: PrePreparePayload): Promise<void> {
+    private async onReceivePrePrepare(message: string, senderId: string, payload: PrePreparePayload): Promise<void> {
         const { view, term, block } = payload;
         if (senderId === this.id) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block rejected because it came from this node` });
@@ -207,7 +207,7 @@ export class PBFT {
         return this.pbftStorage.getPrePrepare(term, view) !== undefined;
     }
 
-    private onReceivePrepare(senderId: string, payload: PreparePayload): void {
+    private onReceivePrepare(message: string, senderId: string, payload: PreparePayload): void {
         const { term, view, blockHash } = payload;
         if (senderId === this.id) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], blockHash:[${blockHash}], onReceivePrepare from "${senderId}", block rejected because it came from this node` });
@@ -234,7 +234,7 @@ export class PBFT {
         this.checkPrepared(term, view, blockHash);
     }
 
-    private onReceiveViewChange(senderId: string, payload: ViewChangePayload): void {
+    private onReceiveViewChange(message: string, senderId: string, payload: ViewChangePayload): void {
         this.pbftStorage.storeViewChange(payload.term, payload.newView, senderId);
         const view = payload.newView;
         const term = payload.term;
@@ -287,7 +287,7 @@ export class PBFT {
         this.checkCommit(term, view, blockHash);
     }
 
-    private onReceiveCommit(senderId: string, payload: CommitPayload): void {
+    private onReceiveCommit(message: string, senderId: string, payload: CommitPayload): void {
         const { term, view, blockHash } = payload;
         this.pbftStorage.storeCommit(term, view, blockHash, senderId);
 
@@ -303,11 +303,11 @@ export class PBFT {
         }
     }
 
-    private onReceiveNewView(senderId: string, payload: NewViewPayload): void {
+    private onReceiveNewView(message: string, senderId: string, payload: NewViewPayload): void {
         const { PP } = payload;
         const { view } = PP;
         this.initView(view);
-        this.onReceivePrePrepare(senderId, PP);
+        this.onReceivePrePrepare("preprepare", senderId, PP);
     }
 
     private getF(): number {
