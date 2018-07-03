@@ -25,9 +25,9 @@ export class InMemoryNetwork implements Network {
         nodes.forEach(node => this.registerNode(node));
     }
 
-    async processNextBlock(): Promise<void> {
+    startConsensusOnAllNodes(): void {
         for (const node of this.nodes) {
-            await node.processNextBlock();
+            node.startConsensus();
         }
     }
 

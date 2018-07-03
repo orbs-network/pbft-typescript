@@ -2,37 +2,51 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
+import { Block } from "../src/Block";
+import { BlocksProviderMock } from "./blocksProvider/BlocksProviderMock";
+import { BlocksValidatorMock } from "./blocksValidator/BlocksValidatorMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNetwork } from "./builders/NetworkBuilder";
-import { NodeMock } from "./network/NodeMock";
+import { InMemoryNetwork } from "./network/InMemoryNetwork";
 
 chai.use(sinonChai);
 
 describe("Block Validation", () => {
-    it("should call validateBlock on onPrepare", async () => {
-        const block = aBlock(theGenesisBlock);
-        const network = aNetwork().blocksInPool([block]).with(4).nodes.build();
+    let block: Block;
+    let blocksValidator: BlocksValidatorMock;
+    let blocksProvider: BlocksProviderMock;
+    let network: InMemoryNetwork;
 
-        const leader = network.nodes[0];
-        const node1 = network.nodes[1] as NodeMock;
-        const spy = sinon.spy(node1.pbft.blocksValidator, "validateBlock");
-        await network.processNextBlock();
+    beforeEach(() => {
+        block = aBlock(theGenesisBlock);
+        blocksValidator = new BlocksValidatorMock(false);
+        blocksProvider = new BlocksProviderMock([block]);
+        network = aNetwork()
+            .validateUsing(blocksValidator)
+            .gettingBlocksVia(blocksProvider)
+            .with(4).nodes
+            .build();
+    });
 
-        expect(spy).to.have.been.calledWith(block);
-        expect(network.nodes).to.agreeOnBlock(block);
+    afterEach(() => {
         network.shutDown();
     });
 
-    it("should not reach consensus if validateBlock returned false", async () => {
-        const block = aBlock(theGenesisBlock);
-        const network = aNetwork().blocksInPool([block]).with(4).nodes.build();
+    it("should call validateBlock on onPrepare", async () => {
+        const spy = sinon.spy(blocksValidator, "validateBlock");
+        network.startConsensusOnAllNodes();
+        await blocksProvider.afterAllBlocksProvided();
+        await blocksValidator.resolveValidations();
 
-        const leader = network.nodes[0];
-        const node1 = network.nodes[1] as NodeMock;
-        node1.pbft.blocksValidator.validateBlock = async () => false;
-        await network.processNextBlock();
+        expect(spy).to.have.been.calledWith(block);
+        expect(network.nodes).to.agreeOnBlock(block);
+    });
+
+    it("should not reach consensus if validateBlock returned false", async () => {
+        network.startConsensusOnAllNodes();
+        await blocksProvider.afterAllBlocksProvided();
+        await blocksValidator.rejectValidations();
 
         expect(network.nodes).to.not.agreeOnBlock(block);
-        network.shutDown();
     });
 });

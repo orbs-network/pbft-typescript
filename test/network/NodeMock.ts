@@ -16,16 +16,16 @@ export class NodeMock implements Node {
     }
 
     public isLeader(): boolean {
-        return this.pbft.leaderId() === this.pbft.id;
+        return this.pbft.isLeader();
     }
 
     public onNewBlock(block: Block): void {
         this.blockLog.push(block);
     }
 
-    public async processNextBlock(): Promise<void> {
+    public startConsensus(): void {
         if (this.pbft) {
-            await this.pbft.processNextBlock();
+            this.pbft.start();
         }
     }
 

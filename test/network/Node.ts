@@ -6,6 +6,6 @@ export interface Node {
     pbft: PBFT;
     isLeader(): boolean;
     getLatestBlock(): Block;
-    processNextBlock(): Promise<void>;
+    startConsensus(): void;
     dispose(): void;
 }

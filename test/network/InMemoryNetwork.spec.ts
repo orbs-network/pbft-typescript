@@ -77,11 +77,11 @@ describe("InMemory Network", () => {
         const node0 = network.nodes[0];
         const node1 = network.nodes[1];
         const node2 = network.nodes[2];
-        const spy0 = sinon.spy(node0.pbft, "processNextBlock");
-        const spy1 = sinon.spy(node1.pbft, "processNextBlock");
-        const spy2 = sinon.spy(node2.pbft, "processNextBlock");
+        const spy0 = sinon.spy(node0.pbft, "start");
+        const spy1 = sinon.spy(node1.pbft, "start");
+        const spy2 = sinon.spy(node2.pbft, "start");
 
-        await network.processNextBlock();
+        network.startConsensusOnAllNodes();
         expect(spy0).to.have.been.called;
         expect(spy1).to.have.been.called;
         expect(spy2).to.have.been.called;

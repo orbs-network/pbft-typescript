@@ -12,6 +12,7 @@ import { ConsoleLogger } from "../logger/ConsoleLogger";
 import { SilentLogger } from "../logger/SilentLogger";
 import { InMemoryNetwork } from "../network/InMemoryNetwork";
 import { Node } from "../network/Node";
+import { aBlock, theGenesisBlock } from "./BlockBuilder";
 import { aNode, NodeBuilder } from "./NodeBuilder";
 
 export class With {
@@ -31,6 +32,7 @@ class NetworkBuilder {
     private electionTriggerFactory: ElectionTriggerFactory;
     private blocksValidator: BlocksValidator;
     private blocksPool: Block[] = [];
+    private blocksProvider: BlocksProvider;
 
     public countOfNodes: number = 0;
     public and = this;
@@ -70,6 +72,13 @@ class NetworkBuilder {
         return this;
     }
 
+    public gettingBlocksVia(blocksProvider: BlocksProvider): this {
+        if (!this.blocksProvider) {
+            this.blocksProvider = blocksProvider;
+        }
+        return this;
+    }
+
     public build(): InMemoryNetwork {
         this.network = new InMemoryNetwork();
         this.createNodes();
@@ -81,7 +90,7 @@ class NetworkBuilder {
         const gossip = new InMemoryGossip(discovery, logger);
         const electionTriggerFactory: ElectionTriggerFactory = this.electionTriggerFactory ? this.electionTriggerFactory : view => new ElectionTriggerMock(view);
         const blocksValidator: BlocksValidator = this.blocksValidator ? this.blocksValidator : new BlocksValidatorMock();
-        const blocksProvider: BlocksProvider = new BlocksProviderMock(this.blocksPool);
+        const blocksProvider: BlocksProvider = this.blocksProvider ? this.blocksProvider : new BlocksProviderMock();
         discovery.registerGossip(id, gossip);
         return builder
             .thatIsPartOf(this.network)
@@ -111,3 +120,33 @@ class NetworkBuilder {
 }
 
 export const aNetwork = () => new NetworkBuilder();
+export const aSimpleNetwork = (countOfNodes: number = 4, blocksPool?: Block[]) => {
+    const block1 = aBlock(theGenesisBlock, "block 1");
+    const block2 = aBlock(block1, "block 2");
+    const block3 = aBlock(block2, "block 3");
+    const block4 = aBlock(block3, "block 4");
+    blocksPool = blocksPool || [block1, block2, block3, block4];
+    const electionTriggers: ElectionTriggerMock[] = [];
+    const electionTriggerFactory = (view: number) => {
+        const t = new ElectionTriggerMock(view);
+        electionTriggers.push(t);
+        return t;
+    };
+    const triggerElection = () => electionTriggers.map(e => e.trigger());
+    const blocksValidator = new BlocksValidatorMock(false);
+    const blocksProvider = new BlocksProviderMock(blocksPool);
+    const network = aNetwork()
+        .validateUsing(blocksValidator)
+        .electingLeaderUsing(electionTriggerFactory)
+        .gettingBlocksVia(blocksProvider)
+        .with(countOfNodes).nodes
+        .build();
+
+    return {
+        network,
+        blocksValidator,
+        blocksProvider,
+        blocksPool,
+        triggerElection
+    };
+};

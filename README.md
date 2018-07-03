@@ -17,6 +17,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] the onElected will trigger new-view more than once
 - [V] new-view shouldn't restart a timer if it's already started.
 - [V] Unsubscribe gossip on dispose of PBFT
+- [V] Separate the PBFT to a 1-Height-PBFT and a full PBFT.
 - [ ] add isMember, and call it from pbft
 - [ ] missing protection against byzantine attacks with wrong term/view/senderId etc.
 - [ ] synced init node is missing
