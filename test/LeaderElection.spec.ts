@@ -93,7 +93,7 @@ describe("Leader Election", () => {
         gossip.onRemoteMessage(node3.id, "view-change", { term: 0, newView: 1 });
         await blocksProvider.afterAllBlocksProvided();
 
-        expect(multicastSpy).to.have.been.calledWith(node1.id, [node0.id, node2.id, node3.id], "new-view", { term: 0, PP: { view: 1, term: 0, block: block2 } });
+        expect(multicastSpy).to.have.been.calledWith(node1.id, [node0.id, node2.id, node3.id], "new-view", { term: 0, view: 1, PP: { view: 1, term: 0, block: block2 } });
         network.shutDown();
     });
 
@@ -150,7 +150,7 @@ describe("Leader Election", () => {
         await blocksValidator.resolveValidations();
 
         expect(spy0).to.have.been.calledWith(node0.id, node1.id, "view-change", { term: 1, newView: 1 });
-        expect(spy1).to.have.been.calledWith(node1.id, [node0.id, node2.id, node3.id], "new-view", { term: 1, PP: { term: 1, view: 1, block: block3 } });
+        expect(spy1).to.have.been.calledWith(node1.id, [node0.id, node2.id, node3.id], "new-view", { term: 1, view: 1, PP: { term: 1, view: 1, block: block3 } });
         expect(spy2).to.have.been.calledWith(node2.id, node1.id, "view-change", { term: 1, newView: 1 });
 
         network.shutDown();

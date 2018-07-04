@@ -14,7 +14,7 @@ chai.use(sinonChai);
 describe("PBFT Gossip Filter", () => {
     it("should be able to set the term and recive messages from gossip", async () => {
         // a network with 4 nodes
-        const {  network } = aSimpleNetwork();
+        const { network } = aSimpleNetwork();
         const node0 = network.nodes[0];
         const node1 = network.nodes[1];
 
@@ -31,10 +31,10 @@ describe("PBFT Gossip Filter", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         node1.pbft.gossip.broadcast(node1.id, "preprepare", { term: 3, view: 0, block });
-        node1.pbft.gossip.broadcast(node1.id, "prepare", { term: 3, view: 0, blockHash: block.hash});
+        node1.pbft.gossip.broadcast(node1.id, "prepare", { term: 3, view: 0, blockHash: block.hash });
         node1.pbft.gossip.broadcast(node1.id, "commit", { term: 3, view: 0, blockHash: block.hash });
         node1.pbft.gossip.broadcast(node1.id, "view-change", { term: 3, newView: 0 });
-        node1.pbft.gossip.broadcast(node1.id, "new-view", { term: 3, PP: undefined });
+        node1.pbft.gossip.broadcast(node1.id, "new-view", { term: 3, view: 0, PP: undefined });
 
         expect(PPSpy).to.have.been.calledOnce;
         expect(PSpy).to.have.been.calledOnce;
@@ -45,7 +45,7 @@ describe("PBFT Gossip Filter", () => {
 
     it("should ignore messages if not the in current term", async () => {
         // a network with 4 nodes
-        const {  network } = aSimpleNetwork();
+        const { network } = aSimpleNetwork();
         const node0 = network.nodes[0];
         const node1 = network.nodes[1];
 
@@ -62,10 +62,10 @@ describe("PBFT Gossip Filter", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         node1.pbft.gossip.broadcast(node1.id, "preprepare", { term: 3, view: 0, block });
-        node1.pbft.gossip.broadcast(node1.id, "prepare", { term: 3, view: 0, blockHash: block.hash});
+        node1.pbft.gossip.broadcast(node1.id, "prepare", { term: 3, view: 0, blockHash: block.hash });
         node1.pbft.gossip.broadcast(node1.id, "commit", { term: 3, view: 0, blockHash: block.hash });
         node1.pbft.gossip.broadcast(node1.id, "view-change", { term: 3, newView: 0 });
-        node1.pbft.gossip.broadcast(node1.id, "new-view", { term: 3, PP: undefined });
+        node1.pbft.gossip.broadcast(node1.id, "new-view", { term: 3, view: 0, PP: undefined });
 
         expect(PPSpy).to.not.have.been.calledOnce;
         expect(PSpy).to.not.have.been.calledOnce;
@@ -76,7 +76,7 @@ describe("PBFT Gossip Filter", () => {
 
     it("should ignore messages with my id", async () => {
         // a network with 4 nodes
-        const {  network } = aSimpleNetwork();
+        const { network } = aSimpleNetwork();
         const node0 = network.nodes[0];
 
         const gossipFilter: PBFTGossipFilter = new PBFTGossipFilter(node0.pbft.gossip, node0.id, network);
@@ -92,10 +92,10 @@ describe("PBFT Gossip Filter", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         node0.pbft.gossip.broadcast(node0.id, "preprepare", { term: 3, view: 0, block });
-        node0.pbft.gossip.broadcast(node0.id, "prepare", { term: 3, view: 0, blockHash: block.hash});
+        node0.pbft.gossip.broadcast(node0.id, "prepare", { term: 3, view: 0, blockHash: block.hash });
         node0.pbft.gossip.broadcast(node0.id, "commit", { term: 3, view: 0, blockHash: block.hash });
         node0.pbft.gossip.broadcast(node0.id, "view-change", { term: 3, newView: 0 });
-        node0.pbft.gossip.broadcast(node0.id, "new-view", { term: 3, PP: undefined });
+        node0.pbft.gossip.broadcast(node0.id, "new-view", { term: 3, view: 0, PP: undefined });
 
         expect(PPSpy).to.not.have.been.calledOnce;
         expect(PSpy).to.not.have.been.calledOnce;
@@ -106,7 +106,7 @@ describe("PBFT Gossip Filter", () => {
 
     it("should ignore messages that are not part of the network", async () => {
         // a network with 4 nodes
-        const {  network } = aSimpleNetwork();
+        const { network } = aSimpleNetwork();
         const node0 = network.nodes[0];
         const node1 = network.nodes[1];
 
@@ -123,10 +123,10 @@ describe("PBFT Gossip Filter", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         node1.pbft.gossip.broadcast("node-666", "preprepare", { term: 3, view: 0, block });
-        node1.pbft.gossip.broadcast("node-666", "prepare", { term: 3, view: 0, blockHash: block.hash});
+        node1.pbft.gossip.broadcast("node-666", "prepare", { term: 3, view: 0, blockHash: block.hash });
         node1.pbft.gossip.broadcast("node-666", "commit", { term: 3, view: 0, blockHash: block.hash });
         node1.pbft.gossip.broadcast("node-666", "view-change", { term: 3, newView: 0 });
-        node1.pbft.gossip.broadcast("node-666", "new-view", { term: 3, PP: undefined });
+        node1.pbft.gossip.broadcast("node-666", "new-view", { term: 3, view: 0, PP: undefined });
 
         expect(PPSpy).to.not.have.been.calledOnce;
         expect(PSpy).to.not.have.been.calledOnce;

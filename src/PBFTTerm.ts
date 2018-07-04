@@ -212,7 +212,7 @@ export class PBFTTerm {
         };
         this.CB = block;
         this.logger.log({ Subject: "Flow", FlowType: "Elected", term: this.term, view, blockHash: block.hash });
-        const newViewPayload: NewViewPayload = { term: this.term, PP };
+        const newViewPayload: NewViewPayload = { term: this.term, view, PP };
         this.pbftStorage.storePrePrepare(this.term, this.view, block.hash, block.content);
         this.gossip.multicast(this.id, this.getOtherNodesIds(), "new-view", newViewPayload);
     }
@@ -254,10 +254,11 @@ export class PBFTTerm {
     }
 
     public onReceiveNewView(senderId: string, payload: NewViewPayload): void {
-        const { PP } = payload;
-        const { view } = PP;
-        this.initView(view);
-        this.onReceivePrePrepare(senderId, PP);
+        const { PP, view } = payload;
+        if (this.view <= view) {
+            this.initView(view);
+            this.onReceivePrePrepare(senderId, PP);
+        }
     }
 
     private getF(): number {

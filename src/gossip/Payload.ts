@@ -25,4 +25,5 @@ export interface ViewChangePayload {
 export interface NewViewPayload {
     PP: PrePreparePayload;
     term: number;
+    view: number;
 }
