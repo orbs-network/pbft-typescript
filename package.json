@@ -1,5 +1,5 @@
 {
-  "name": "pbft",
+  "name": "pbft-typescript",
   "version": "0.0.1",
   "description": "",
   "main": "./dist/src/PBFT.js",
