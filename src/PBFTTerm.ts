@@ -181,10 +181,11 @@ export class PBFTTerm {
     }
 
     public onReceiveViewChange(senderId: string, payload: ViewChangePayload): void {
-        this.pbftStorage.storeViewChange(payload.term, payload.newView, senderId);
-        const view = payload.newView;
-        const term = payload.term;
-        this.checkElected(term, view);
+        const { newView, term } = payload;
+        if (newView >= this.view) {
+            this.pbftStorage.storeViewChange(term, newView, senderId);
+            this.checkElected(term, newView);
+        }
     }
 
     private checkElected(term: number, view: number): void {
