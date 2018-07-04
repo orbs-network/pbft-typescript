@@ -1,6 +1,3 @@
-import { BlocksProvider } from "../../src/blocksProvider/BlocksProvider";
-import { BlocksValidator } from "../../src/blocksValidator/BlocksValidator";
-import { Config } from "../../src/Config";
 import { ElectionTriggerFactory } from "../../src/electionTrigger/ElectionTrigger";
 import { Gossip } from "../../src/gossip/Gossip";
 import { Logger } from "../../src/logger/Logger";
@@ -17,10 +14,10 @@ import { InMemoryPBFTStorage } from "../storage/InMemoryPBFTStorage";
 
 class ConfigBuilder {
 
-    public build(): Config {
+    public build() {
         const electionTriggerFactory: ElectionTriggerFactory = view => new ElectionTriggerMock(view);
-        const blocksValidator: BlocksValidator = new BlocksValidatorMock();
-        const blocksProvider: BlocksProvider = new BlocksProviderMock();
+        const blocksValidator = new BlocksValidatorMock(false);
+        const blocksProvider = new BlocksProviderMock();
         const id = "Dummy Node";
         const logger: Logger = new SilentLogger();
         const pbftStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
