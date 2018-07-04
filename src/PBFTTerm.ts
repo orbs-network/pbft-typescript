@@ -182,10 +182,19 @@ export class PBFTTerm {
 
     public onReceiveViewChange(senderId: string, payload: ViewChangePayload): void {
         const { newView, term } = payload;
-        if (newView >= this.view) {
-            this.pbftStorage.storeViewChange(term, newView, senderId);
-            this.checkElected(term, newView);
+        const leaderToBeId = this.network.getNodeIdBySeed(newView);
+        if (leaderToBeId !== this.id) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], newView:[${newView}], onReceiveViewChange from "${senderId}", ignored because the newView doesn't match me as the leader` });
+            return;
         }
+
+        if (this.view > newView) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderId}", ignored because of unrelated view` });
+            return;
+        }
+
+        this.pbftStorage.storeViewChange(term, newView, senderId);
+        this.checkElected(term, newView);
     }
 
     private checkElected(term: number, view: number): void {

@@ -13,12 +13,20 @@ import { NetworkMock } from "../network/NetworkMock";
 import { InMemoryPBFTStorage } from "../storage/InMemoryPBFTStorage";
 
 class ConfigBuilder {
+    private name: string;
+
+    public named(name: string): this {
+        if (!this.name) {
+            this.name = name;
+        }
+        return this;
+    }
 
     public build() {
         const electionTriggerFactory: ElectionTriggerFactory = view => new ElectionTriggerMock(view);
         const blocksValidator = new BlocksValidatorMock(false);
         const blocksProvider = new BlocksProviderMock();
-        const id = "Dummy Node";
+        const id = this.name || "Node";
         const logger: Logger = new SilentLogger();
         const pbftStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
         const discovery: InMemoryGossipDiscovery = new InMemoryGossipDiscovery();
@@ -38,4 +46,4 @@ class ConfigBuilder {
     }
 }
 
-export const aConfig = () => new ConfigBuilder().build();
+export const aConfig = () => new ConfigBuilder();

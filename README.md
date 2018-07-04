@@ -22,7 +22,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] missing protection against byzantine attacks with wrong term/senderId etc.
 - [V] make sure on onReceiveNewView the PP.view === view
 - [V] protect against wrong view in PBFTTerm
-- [ ] protect against bad leader messages
+- [V] protect against bad leader messages
 - [ ] the PP validation should be extracted and used on new view PP
 - [ ] use BlockStore interface
 - [ ] publish on npm

@@ -15,8 +15,8 @@ chai.use(sinonChai);
 chai.use(blockMatcher);
 
 describe("PBFTTerm", () => {
-    const init = () => {
-        const config = aConfig();
+    const init = (nodeId = "DummyNode") => {
+        const config = aConfig().named(nodeId).build();
         const electionTriggers: ElectionTriggerMock[] = [];
         config.electionTriggerFactory = (view: number) => {
             const t = new ElectionTriggerMock(view);
@@ -42,7 +42,7 @@ describe("PBFTTerm", () => {
     });
 
     it("onViewChange should not accept views from the past", async () => {
-        const { config, triggerElection } = init();
+        const { config, triggerElection } = init("Node1");
 
         const pbftTerm: PBFTTerm = new PBFTTerm(config, 0, () => { });
         expect(pbftTerm.getView()).to.equal(0);
@@ -53,11 +53,6 @@ describe("PBFTTerm", () => {
         const spy = sinon.spy(config.pbftStorage, "storeViewChange");
         // current view (1) => valid
         pbftTerm.onReceiveViewChange(leaderId, { term: 0, newView: 1 });
-        expect(spy).to.have.been.called;
-
-        // view from the future (2) => valid
-        spy.resetHistory();
-        pbftTerm.onReceiveViewChange(leaderId, { term: 0, newView: 2 });
         expect(spy).to.have.been.called;
 
         // view from the past (0) => invalid, should be ignored
@@ -162,7 +157,7 @@ describe("PBFTTerm", () => {
     });
 
     it("onReceiveNewView should not accept messages that don't match the leader", async () => {
-        const { config, triggerElection } = init();
+        const { config } = init();
 
         const pbftTerm: PBFTTerm = new PBFTTerm(config, 0, () => { });
 
@@ -178,5 +173,22 @@ describe("PBFTTerm", () => {
         pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(3), { term: 0, view: 2, PP: {term: 0, view: 0, block} });
         await config.blocksValidator.resolveValidations();
         expect(pbftTerm.getView()).to.equal(1);
+    });
+
+    it("onReceiveViewChange should not accept messages that don't match me as the leader", async () => {
+        const { config } = init("Node1");
+
+        const pbftTerm: PBFTTerm = new PBFTTerm(config, 0, () => { });
+        const node0Id = config.network.getNodeIdBySeed(0);
+        const spy = sinon.spy(config.pbftStorage, "storeViewChange");
+
+        // match me as a leader => ok
+        pbftTerm.onReceiveViewChange(node0Id, { term: 0, newView: 1 });
+        expect(spy).to.have.been.called;
+
+        // doesn't match me as a leader => ignore
+        spy.resetHistory();
+        pbftTerm.onReceiveViewChange(node0Id, { term: 0, newView: 2 });
+        expect(spy).to.not.have.been.called;
     });
 });
