@@ -10,6 +10,7 @@ import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aConfig } from "./builders/ConfigBuilder";
 import { ElectionTriggerMock } from "./electionTrigger/ElectionTriggerMock";
 import { blockMatcher } from "./matchers/blockMatcher";
+import { nextTick } from "./timeUtils";
 chai.use(sinonChai);
 chai.use(blockMatcher);
 
@@ -158,5 +159,24 @@ describe("PBFTTerm", () => {
         spy.resetHistory();
         pbftTerm.onReceivePrePrepare(noneLeaderId, { term: 0, view: 0, block });
         expect(spy).to.not.have.been.called;
+    });
+
+    it("onReceiveNewView should not accept messages that don't match the leader", async () => {
+        const { config, triggerElection } = init();
+
+        const pbftTerm: PBFTTerm = new PBFTTerm(config, 0, () => { });
+
+        const block: Block = aBlock(theGenesisBlock);
+
+        // from the leader => ok
+        pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(1), { term: 0, view: 1, PP: {term: 0, view: 0, block} });
+        await nextTick();
+        await config.blocksValidator.resolveValidations();
+        expect(pbftTerm.getView()).to.equal(1);
+
+        // not from the leader => ignore
+        pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(3), { term: 0, view: 2, PP: {term: 0, view: 0, block} });
+        await config.blocksValidator.resolveValidations();
+        expect(pbftTerm.getView()).to.equal(1);
     });
 });

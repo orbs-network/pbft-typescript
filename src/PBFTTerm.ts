@@ -255,11 +255,20 @@ export class PBFTTerm {
     }
 
     public onReceiveNewView(senderId: string, payload: NewViewPayload): void {
-        const { PP, view } = payload;
-        if (this.view <= view) {
-            this.initView(view);
-            this.onReceivePrePrepare(senderId, PP);
+        const { PP, view, term } = payload;
+        const wanaBeLeaderId = this.network.getNodeIdBySeed(view);
+        if (wanaBeLeaderId !== senderId) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderId}", rejected because it match the new id (${view})` });
+            return;
         }
+
+        if (this.view > view) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderId}", view is from the past` });
+            return;
+        }
+
+        this.initView(view);
+        this.onReceivePrePrepare(senderId, PP);
     }
 
     private getF(): number {
