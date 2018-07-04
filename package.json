@@ -1,10 +1,10 @@
 {
   "name": "pbft-typescript",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "main": "./dist/src/PBFT.js",
   "files": [
-    "dist/src/**/*"
+    "dist"
   ],
   "scripts": {
     "build": "yarn run tsc",
