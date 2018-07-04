@@ -15,7 +15,6 @@ import { InMemoryNetwork } from "../network/InMemoryNetwork";
 import { Node } from "../network/Node";
 import { NodeMock } from "../network/NodeMock";
 import { InMemoryPBFTStorage } from "../storage/InMemoryPBFTStorage";
-import { theGenesisBlock } from "./BlockBuilder";
 
 export class NodeBuilder {
     private network: InMemoryNetwork;
@@ -109,7 +108,6 @@ export class NodeBuilder {
 
         return {
             id,
-            genesisBlockHash: theGenesisBlock.hash,
             network: this.network,
             gossip: this.gossip,
             logger,

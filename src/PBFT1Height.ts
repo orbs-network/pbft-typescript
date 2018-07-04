@@ -120,10 +120,6 @@ export class PBFT1Height {
 
     public async onReceivePrePrepare(senderId: string, payload: PrePreparePayload): Promise<void> {
         const { view, term, block } = payload;
-        if (senderId === this.id) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block rejected because it came from this node` });
-            return;
-        }
 
         if (this.isLeader(senderId) === false) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block rejected because it was not sent by the current leader (${view})` });
@@ -145,11 +141,6 @@ export class PBFT1Height {
             return;
         }
 
-        if (this.term !== term) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", unrelated term` });
-            return;
-        }
-
         if (this.checkPrePrepare(term, view)) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", already prepared` });
             return;
@@ -168,12 +159,7 @@ export class PBFT1Height {
 
     public onReceivePrepare(senderId: string, payload: PreparePayload): void {
         const { term, view, blockHash } = payload;
-        if (senderId === this.id) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], blockHash:[${blockHash}], onReceivePrepare from "${senderId}", block rejected because it came from this node` });
-            return;
-        }
-
-        if (this.view !== view) {
+        if (this.view > view) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], blockHash:[${blockHash}], onReceivePrepare from "${senderId}", prepare not logged because of unrelated view` });
             return;
         }
@@ -183,14 +169,11 @@ export class PBFT1Height {
             return;
         }
 
-        if (this.network.isMember(senderId) === false) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], blockHash:[${blockHash}], onReceivePrepare from "${senderId}", prepare not logged because the sender is not part of the network` });
-            return;
-        }
-
         this.pbftStorage.storePrepare(term, view, blockHash, senderId);
 
-        this.checkPrepared(term, view, blockHash);
+        if (this.view === view) {
+            this.checkPrepared(this.term, this.view, blockHash);
+        }
     }
 
     public onReceiveViewChange(senderId: string, payload: ViewChangePayload): void {

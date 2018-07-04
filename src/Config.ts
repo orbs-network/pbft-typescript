@@ -9,7 +9,6 @@ import { PBFTStorage } from "./storage/PBFTStorage";
 export interface Config {
     id: string;
     network: Network;
-    genesisBlockHash: string;
     gossip: Gossip;
     pbftStorage: PBFTStorage;
     logger: Logger;
