@@ -12,7 +12,7 @@ import { ViewState } from "./ViewState";
 
 export type onNewBlockCB = (block: Block) => void;
 
-export class PBFT1Height {
+export class PBFTTerm {
     private readonly network: Network;
     private readonly pbftStorage: PBFTStorage;
     private readonly logger: Logger;
@@ -54,6 +54,10 @@ export class PBFT1Height {
             this.pbftStorage.storePrePrepare(this.term, this.view, this.CB.hash, this.CB.content);
             this.broadcastPrePrepare(this.term, this.view, this.CB);
         }
+    }
+
+    public getView(): number {
+        return this.view;
     }
 
     private initView(view: number) {

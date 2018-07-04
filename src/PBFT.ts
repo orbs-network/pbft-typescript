@@ -4,7 +4,7 @@ import { BlocksValidator } from "./blocksValidator/BlocksValidator";
 import { Config } from "./Config";
 import { Gossip } from "./gossip/Gossip";
 import { PBFTGossipFilter } from "./gossipFilter/PBFTGossipFilter";
-import { PBFT1Height } from "./PBFT1Height";
+import { PBFTTerm } from "./PBFTTerm";
 
 export type onNewBlockCB = (block: Block) => void;
 
@@ -12,9 +12,9 @@ export class PBFT {
     private readonly committedBlocksHashs: string[];
     private readonly onNewBlockListeners: onNewBlockCB[];
     private term: number;
-    private pbft1Height: PBFT1Height;
+    private pbftTerm: PBFTTerm;
     private pbftGossipFilter: PBFTGossipFilter;
-    private readonly pbft1HeightConfig: Config;
+    private readonly pbftTermConfig: Config;
 
     public readonly id: string;
     public readonly gossip: Gossip;
@@ -23,7 +23,7 @@ export class PBFT {
         this.onNewBlockListeners = [];
         this.id = config.id;
 
-        this.pbft1HeightConfig = this.create1HeightConfig(config);
+        this.pbftTermConfig = this.createTermConfig(config);
         this.pbftGossipFilter = new PBFTGossipFilter(config.gossip, this.id, config.network);
 
         // init committedBlocks
@@ -47,14 +47,14 @@ export class PBFT {
         this.onNewBlockListeners.forEach(cb => cb(block));
     }
 
-    private disposePBFT1Height(): void {
-        if (this.pbft1Height) {
-            this.pbft1Height.dispose();
-            this.pbft1Height = undefined;
+    private disposePBFTTerm(): void {
+        if (this.pbftTerm) {
+            this.pbftTerm.dispose();
+            this.pbftTerm = undefined;
         }
     }
 
-    private create1HeightConfig(config: Config): Config {
+    private createTermConfig(config: Config): Config {
         const result: Config = { ...config };
         result.blocksValidator = this.overrideBlockValidation(result.blocksValidator);
         return result;
@@ -71,20 +71,20 @@ export class PBFT {
         };
     }
 
-    private createPBFT1Height(): void {
-        this.pbft1Height = new PBFT1Height(this.pbft1HeightConfig, this.term, block => {
+    private createPBFTTerm(): void {
+        this.pbftTerm = new PBFTTerm(this.pbftTermConfig, this.term, block => {
             this.committedBlocksHashs.push(block.hash);
-            this.disposePBFT1Height();
+            this.disposePBFTTerm();
             this.term++;
-            this.createPBFT1Height();
+            this.createPBFTTerm();
             this.notifyNewBlock(block);
         });
-        this.pbftGossipFilter.setTerm(this.term, this.pbft1Height);
+        this.pbftGossipFilter.setTerm(this.term, this.pbftTerm);
     }
 
     public isLeader(): boolean {
-        if (this.pbft1Height !== undefined) {
-            return this.pbft1Height.leaderId() === this.id;
+        if (this.pbftTerm !== undefined) {
+            return this.pbftTerm.leaderId() === this.id;
         }
     }
 
@@ -93,14 +93,14 @@ export class PBFT {
     }
 
     public start(): void {
-        if (this.pbft1Height === undefined) {
-            this.createPBFT1Height();
+        if (this.pbftTerm === undefined) {
+            this.createPBFTTerm();
         }
     }
 
     public dispose(): any {
         this.onNewBlockListeners.length = 0;
-        this.disposePBFT1Height();
+        this.disposePBFTTerm();
         this.pbftGossipFilter.dispose();
     }
 }
