@@ -293,13 +293,10 @@ export class PBFTTerm {
             return;
         }
 
-        this.initView(view);
-        await this.onReceivePrePrepare(senderId, PP);
-
-        // if (await this.validatePrePreapare(view, senderId, PP)) {
-        //     this.initView(view);
-        //     this.processPrePrepare(PP);
-        // }
+        if (await this.validatePrePreapare(view, senderId, PP)) {
+            this.initView(view);
+            this.processPrePrepare(PP);
+        }
     }
 
     private getF(): number {

@@ -210,4 +210,23 @@ describe("PBFTTerm", () => {
         await config.blocksValidator.resolveAllValidations(true);
         expect(pbftTerm.getView()).to.equal(1);
     });
+
+    it("onReceiveNewView should not accept messages that don't pass validation", async () => {
+        const { config } = init();
+
+        const pbftTerm: PBFTTerm = new PBFTTerm(config, 0, () => { });
+
+        const block: Block = aBlock(theGenesisBlock);
+
+        // pass validation => ok
+        pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(1), { term: 0, view: 1, PP: {term: 0, view: 1, block} });
+        await nextTick();
+        await config.blocksValidator.resolveAllValidations(true);
+        expect(pbftTerm.getView()).to.equal(1);
+
+        // doesn't pass validation => ignore
+        pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(2), { term: 0, view: 2, PP: {term: 0, view: 2, block} });
+        await config.blocksValidator.resolveAllValidations(false);
+        expect(pbftTerm.getView()).to.equal(1);
+    });
 });
