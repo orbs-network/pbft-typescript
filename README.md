@@ -34,3 +34,4 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [ ] suggest block in new-view (inside PP), with proofs from other nodes.
 - [ ] Nodes can pretend to be other nodes => sign all messages
 - [ ] sign messages including the message type
+- [ ] documentation
