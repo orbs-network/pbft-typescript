@@ -150,7 +150,8 @@ export class PBFTTerm {
             return false;
         }
 
-        if (this.isLeader(senderId) === false) {
+        const wanaBeLeaderId = this.network.getNodeIdBySeed(targetView);
+        if (wanaBeLeaderId !== senderId) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block rejected because it was not sent by the current leader (${view})` });
             return false;
         }
@@ -294,6 +295,7 @@ export class PBFTTerm {
 
         this.initView(view);
         await this.onReceivePrePrepare(senderId, PP);
+
         // if (await this.validatePrePreapare(view, senderId, PP)) {
         //     this.initView(view);
         //     this.processPrePrepare(PP);
