@@ -175,10 +175,10 @@ describe("Byzantine Attacks", () => {
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
 
-        expect(node0.getLatestBlock()).to.be.undefined;
-        expect(node1.getLatestBlock()).to.be.undefined;
-        expect(node2.getLatestBlock()).to.be.undefined;
-        expect(node3.getLatestBlock()).to.be.undefined;
+        expect(node0.getLatestBlock()).to.equal(theGenesisBlock);
+        expect(node1.getLatestBlock()).to.equal(theGenesisBlock);
+        expect(node2.getLatestBlock()).to.equal(theGenesisBlock);
+        expect(node3.getLatestBlock()).to.equal(theGenesisBlock);
 
         gossip0.clearOutGoingWhiteList();
         gossip1.clearOutGoingWhiteList();
@@ -196,7 +196,7 @@ describe("Byzantine Attacks", () => {
         expect(node0.getLatestBlock()).to.equal(block2);
         expect(node1.getLatestBlock()).to.equal(block2);
         expect(node2.getLatestBlock()).to.equal(block2);
-        expect(node3.getLatestBlock()).to.be.undefined;
+        expect(node3.getLatestBlock()).to.equal(theGenesisBlock);
 
         network.shutDown();
     });

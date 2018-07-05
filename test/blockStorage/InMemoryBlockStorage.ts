@@ -12,4 +12,13 @@ export class InMemoryBlockStorage implements BlockStorage {
     public appendBlockToChain(block: Block): void {
         this.blockChain.push(block);
     }
+
+    public getTopMostBlock(): Block {
+        return this.blockChain[this.blockChain.length - 1];
+    }
+
+    public getBlockChainHeight(): number {
+        return this.blockChain.length;
+    }
+
 }

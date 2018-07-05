@@ -8,7 +8,6 @@ import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aSimpleNetwork } from "./builders/NetworkBuilder";
 import { InMemoryGossip } from "./gossip/InMemoryGossip";
 import { blockMatcher } from "./matchers/blockMatcher";
-import { NodeMock } from "./network/NodeMock";
 
 chai.use(sinonChai);
 chai.use(blockMatcher);
@@ -77,7 +76,7 @@ describe("PBFT", () => {
 
         expect(network.nodes[1].getLatestBlock()).to.equal(block1);
         expect(network.nodes[2].getLatestBlock()).to.equal(block1);
-        expect(network.nodes[3].getLatestBlock()).to.be.undefined;
+        expect(network.nodes[3].getLatestBlock()).to.equal(theGenesisBlock);
         network.shutDown();
     });
 
@@ -131,24 +130,6 @@ describe("PBFT", () => {
         await blocksValidator.resolveAllValidations(true);
 
         expect(network.nodes.splice(0, 4)).to.agreeOnBlock(blocksPool[0]);
-        network.shutDown();
-    });
-
-    it("should fire onNewBlock only once per block, even if there were more confirmations", async () => {
-        const { network, blocksProvider, blocksValidator } = aSimpleNetwork();
-
-        // block 1
-        network.startConsensusOnAllNodes();
-        await blocksProvider.provideNextBlock();
-        await blocksValidator.resolveAllValidations(true);
-
-        // block 2
-        network.startConsensusOnAllNodes();
-        await blocksProvider.provideNextBlock();
-        await blocksValidator.resolveAllValidations(true);
-
-        const node = network.nodes[1] as NodeMock;
-        expect(node.blockLog.length).to.equal(2);
         network.shutDown();
     });
 

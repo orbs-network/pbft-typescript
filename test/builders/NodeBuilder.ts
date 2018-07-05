@@ -1,4 +1,5 @@
 import { BlocksProvider } from "../../src/blocksProvider/BlocksProvider";
+import { BlockStorage } from "../../src/blockStorage/BlockStorage";
 import { BlocksValidator } from "../../src/blocksValidator/BlocksValidator";
 import { Config } from "../../src/Config";
 import { ElectionTriggerFactory } from "../../src/electionTrigger/ElectionTrigger";
@@ -7,6 +8,7 @@ import { Logger } from "../../src/logger/Logger";
 import { PBFT } from "../../src/PBFT";
 import { PBFTStorage } from "../../src/storage/PBFTStorage";
 import { BlocksProviderMock } from "../blocksProvider/BlocksProviderMock";
+import { InMemoryBlockStorage } from "../blockStorage/InMemoryBlockStorage";
 import { BlocksValidatorMock } from "../blocksValidator/BlocksValidatorMock";
 import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
 import { ConsoleLogger } from "../logger/ConsoleLogger";
@@ -94,14 +96,16 @@ export class NodeBuilder {
     }
 
     public build(): Node {
-        const pbft = new PBFT(this.buildConfig());
-        return new NodeMock(pbft);
+        const config: Config = this.buildConfig();
+        const pbft = new PBFT(config);
+        return new NodeMock(pbft, config.blockStorage);
     }
 
     private buildConfig(): Config {
         const electionTriggerFactory: ElectionTriggerFactory = this.electionTriggerFactory ? this.electionTriggerFactory : view => new ElectionTriggerMock(view);
         const blocksValidator: BlocksValidator = this.blocksValidator ? this.blocksValidator : new BlocksValidatorMock();
         const blocksProvider: BlocksProvider = this.blocksProvider ? this.blocksProvider : new BlocksProviderMock();
+        const blockStorage: BlockStorage = new InMemoryBlockStorage();
         const id = this.name || "Node";
         const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(id) : new SilentLogger();
         const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage(logger);
@@ -114,7 +118,8 @@ export class NodeBuilder {
             pbftStorage,
             electionTriggerFactory,
             blocksProvider,
-            blocksValidator
+            blocksValidator,
+            blockStorage
         };
     }
 }

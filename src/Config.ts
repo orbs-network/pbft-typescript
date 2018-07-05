@@ -1,4 +1,5 @@
 import { BlocksProvider } from "./blocksProvider/BlocksProvider";
+import { BlockStorage } from "./blockStorage/BlockStorage";
 import { BlocksValidator } from "./blocksValidator/BlocksValidator";
 import { ElectionTriggerFactory } from "./electionTrigger/ElectionTrigger";
 import { Gossip } from "./gossip/Gossip";
@@ -15,4 +16,5 @@ export interface Config {
     electionTriggerFactory: ElectionTriggerFactory;
     blocksValidator: BlocksValidator;
     blocksProvider: BlocksProvider;
+    blockStorage: BlockStorage;
 }

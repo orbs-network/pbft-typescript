@@ -1,18 +1,18 @@
 import { Block } from "../../src/Block";
+import { BlockStorage } from "../../src/blockStorage/BlockStorage";
 import { PBFT } from "../../src/PBFT";
 import { Node } from "./Node";
 
 export class NodeMock implements Node {
-    public blockLog: Block[] = [];
     public id: string;
 
-    constructor(public pbft: PBFT) {
+    constructor(public pbft: PBFT, private blockStorage: BlockStorage) {
         this.id = pbft.id;
         this.pbft.registerToOnNewBlock(block => this.onNewBlock(block));
     }
 
     public getLatestBlock(): Block {
-        return this.blockLog[this.blockLog.length - 1];
+        return this.blockStorage.getTopMostBlock();
     }
 
     public isLeader(): boolean {
@@ -20,7 +20,7 @@ export class NodeMock implements Node {
     }
 
     public onNewBlock(block: Block): void {
-        this.blockLog.push(block);
+        this.blockStorage.appendBlockToChain(block);
     }
 
     public startConsensus(): void {

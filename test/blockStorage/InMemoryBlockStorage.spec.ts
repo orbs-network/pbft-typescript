@@ -31,4 +31,31 @@ describe("InMemory BlockStorage", () => {
         const expected = block.hash;
         expect(actual).to.equal(expected);
     });
+
+    it("should return the top most block", () => {
+        const blockStorage: BlockStorage = new InMemoryBlockStorage();
+        const block1: Block = aBlock(theGenesisBlock);
+        const block2: Block = aBlock(block1);
+        const block3: Block = aBlock(block2);
+        blockStorage.appendBlockToChain(block1);
+        blockStorage.appendBlockToChain(block2);
+        blockStorage.appendBlockToChain(block3);
+
+        const actual = blockStorage.getTopMostBlock();
+        const expected = block3;
+        expect(actual).to.equal(expected);
+    });
+
+    it("should return the block chain height", () => {
+        const blockStorage: BlockStorage = new InMemoryBlockStorage();
+        const block1: Block = aBlock(theGenesisBlock);
+        const block2: Block = aBlock(block1);
+        const block3: Block = aBlock(block2);
+        blockStorage.appendBlockToChain(block1);
+        blockStorage.appendBlockToChain(block2);
+        blockStorage.appendBlockToChain(block3);
+
+        const actual = blockStorage.getBlockChainHeight();
+        expect(actual).to.equal(4);
+    });
 });

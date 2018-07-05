@@ -1,9 +1,11 @@
+import { BlockStorage } from "../../src/blockStorage/BlockStorage";
 import { ElectionTriggerFactory } from "../../src/electionTrigger/ElectionTrigger";
 import { Gossip } from "../../src/gossip/Gossip";
 import { Logger } from "../../src/logger/Logger";
 import { Network } from "../../src/network/Network";
 import { PBFTStorage } from "../../src/storage/PBFTStorage";
 import { BlocksProviderMock } from "../blocksProvider/BlocksProviderMock";
+import { InMemoryBlockStorage } from "../blockStorage/InMemoryBlockStorage";
 import { BlocksValidatorMock } from "../blocksValidator/BlocksValidatorMock";
 import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
@@ -32,6 +34,7 @@ class ConfigBuilder {
         const discovery: InMemoryGossipDiscovery = new InMemoryGossipDiscovery();
         const gossip: Gossip = new InMemoryGossip(discovery, logger);
         const network: Network = new NetworkMock();
+        const blockStorage: BlockStorage = new InMemoryBlockStorage();
 
         return {
             id,
@@ -41,7 +44,8 @@ class ConfigBuilder {
             pbftStorage,
             electionTriggerFactory,
             blocksProvider,
-            blocksValidator
+            blocksValidator,
+            blockStorage
         };
     }
 }
