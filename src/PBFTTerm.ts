@@ -287,6 +287,11 @@ export class PBFTTerm {
             return;
         }
 
+        if (view !== PP.view) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderId}", view doesn't match PP.view` });
+            return;
+        }
+
         this.initView(view);
         await this.onReceivePrePrepare(senderId, PP);
         // if (await this.validatePrePreapare(view, senderId, PP)) {

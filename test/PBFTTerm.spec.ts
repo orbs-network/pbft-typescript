@@ -164,7 +164,7 @@ describe("PBFTTerm", () => {
         const block: Block = aBlock(theGenesisBlock);
 
         // from the leader => ok
-        pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(1), { term: 0, view: 1, PP: {term: 0, view: 0, block} });
+        pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(1), { term: 0, view: 1, PP: {term: 0, view: 1, block} });
         await nextTick();
         await config.blocksValidator.resolveAllValidations(true);
         expect(pbftTerm.getView()).to.equal(1);
@@ -190,5 +190,24 @@ describe("PBFTTerm", () => {
         spy.resetHistory();
         pbftTerm.onReceiveViewChange(node0Id, { term: 0, newView: 2 });
         expect(spy).to.not.have.been.called;
+    });
+
+    it("onReceiveNewView should not accept messages don't match the PP.view", async () => {
+        const { config } = init();
+
+        const pbftTerm: PBFTTerm = new PBFTTerm(config, 0, () => { });
+
+        const block: Block = aBlock(theGenesisBlock);
+
+        // same view => ok
+        pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(1), { term: 0, view: 1, PP: {term: 0, view: 1, block} });
+        await nextTick();
+        await config.blocksValidator.resolveAllValidations(true);
+        expect(pbftTerm.getView()).to.equal(1);
+
+        // miss matching view => ignore
+        pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(2), { term: 0, view: 2, PP: {term: 0, view: 1, block} });
+        await config.blocksValidator.resolveAllValidations(true);
+        expect(pbftTerm.getView()).to.equal(1);
     });
 });

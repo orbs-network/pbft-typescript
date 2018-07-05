@@ -25,10 +25,11 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] protect against bad leader messages
 - [V] publish on npm
 - [V] the PP validation should be extracted and used on new view PP
-- [ ] onReceiveNewView should match the PP.view with the view
+- [V] onReceiveNewView should match the PP.view with the view
+- [ ] onReceiveNewView should validate the given PP
+- [ ] clear the pbftStorage
 - [ ] use BlockStore interface
 - [ ] trigger once, prepared, elected, new-view, committed.
-- [ ] commit is pushing the block hash to a log to prevent multiple commits of the same block, this shouldn't be the solution.
 - [ ] term should be taken from the height of the latest block and not do ++ on commit.
 - [ ] suggest block in new-view (inside PP), with proofs from other nodes.
 - [ ] Nodes can pretend to be other nodes => sign all messages
