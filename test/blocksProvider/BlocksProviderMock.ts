@@ -1,6 +1,7 @@
 import { Block } from "../../src/Block";
 import { BlocksProvider } from "../../src/blocksProvider/BlocksProvider";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
+import { nextTick } from "../timeUtils";
 
 export class BlocksProviderMock implements BlocksProvider {
     private blocksPool = theGenesisBlock;
@@ -18,7 +19,7 @@ export class BlocksProviderMock implements BlocksProvider {
         this.upCommingBlocks = [...upCommingBlocks];
     }
 
-    public provideNextBlock(): Promise<any> {
+    public async provideNextBlock(): Promise<any> {
         if (this.resolveList.length === 0) {
             return Promise.resolve();
         }
@@ -26,7 +27,8 @@ export class BlocksProviderMock implements BlocksProvider {
         const resolve = this.resolveList.pop();
         const promise = this.promiseList.pop();
         resolve(this.getNextBlock());
-        return promise;
+        await promise;
+        return nextTick;
     }
 
     public getBlock(): Promise<Block> {

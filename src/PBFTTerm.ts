@@ -123,38 +123,49 @@ export class PBFTTerm {
     }
 
     public async onReceivePrePrepare(senderId: string, payload: PrePreparePayload): Promise<void> {
+        if (await this.validatePrePreapare(this.view, senderId, payload)) {
+            this.processPrePrepare(payload);
+        }
+    }
+
+    private processPrePrepare(payload: PrePreparePayload): void {
         const { view, term, block } = payload;
-
-        if (this.view !== view) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", unrelated view` });
-            return;
-        }
-
-        if (this.checkPrePrepare(term, view)) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", already prepared` });
-            return;
-        }
-
-        if (this.isLeader(senderId) === false) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block rejected because it was not sent by the current leader (${view})` });
-            return;
-        }
-
-        const isValidBlock = await this.blocksValidator.validateBlock(block);
-        if (this.disposed) {
-            return;
-        }
-
-        if (!isValidBlock) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block is invalid` });
-            return;
-        }
-
         this.CB = block;
         this.pbftStorage.storePrepare(term, view, block.hash, this.id);
         this.pbftStorage.storePrePrepare(term, view, block.hash, block.content);
         this.broadcastPrepare(term, view, block);
         this.checkPrepared(term, view, block.hash);
+    }
+
+    private async validatePrePreapare(targetView: number, senderId: string, payload: PrePreparePayload): Promise<boolean> {
+        const { view, term, block } = payload;
+
+        if (targetView !== view) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", unrelated view` });
+            return false;
+        }
+
+        if (this.checkPrePrepare(term, view)) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", already prepared` });
+            return false;
+        }
+
+        if (this.isLeader(senderId) === false) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block rejected because it was not sent by the current leader (${view})` });
+            return false;
+        }
+
+        const isValidBlock = await this.blocksValidator.validateBlock(block);
+        if (this.disposed) {
+            return false;
+        }
+
+        if (!isValidBlock) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block is invalid` });
+            return false;
+        }
+
+        return true;
     }
 
     private checkPrePrepare(term: number, view: number): boolean {
@@ -263,7 +274,7 @@ export class PBFTTerm {
         }
     }
 
-    public onReceiveNewView(senderId: string, payload: NewViewPayload): void {
+    public async onReceiveNewView(senderId: string, payload: NewViewPayload): Promise<void> {
         const { PP, view, term } = payload;
         const wanaBeLeaderId = this.network.getNodeIdBySeed(view);
         if (wanaBeLeaderId !== senderId) {
@@ -277,7 +288,11 @@ export class PBFTTerm {
         }
 
         this.initView(view);
-        this.onReceivePrePrepare(senderId, PP);
+        await this.onReceivePrePrepare(senderId, PP);
+        // if (await this.validatePrePreapare(view, senderId, PP)) {
+        //     this.initView(view);
+        //     this.processPrePrepare(PP);
+        // }
     }
 
     private getF(): number {

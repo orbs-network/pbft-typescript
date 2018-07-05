@@ -24,7 +24,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] protect against wrong view in PBFTTerm
 - [V] protect against bad leader messages
 - [V] publish on npm
-- [ ] the PP validation should be extracted and used on new view PP
+- [V] the PP validation should be extracted and used on new view PP
 - [ ] onReceiveNewView should match the PP.view with the view
 - [ ] use BlockStore interface
 - [ ] trigger once, prepared, elected, new-view, committed.
