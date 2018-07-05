@@ -1,5 +1,5 @@
-import { theGenesisBlock } from "../test/builders/BlockBuilder";
 import { Block } from "./Block";
+import { BlockStorage } from "./blockStorage/BlockStorage";
 import { BlocksValidator } from "./blocksValidator/BlocksValidator";
 import { Config } from "./Config";
 import { Gossip } from "./gossip/Gossip";
@@ -9,8 +9,8 @@ import { PBFTTerm } from "./PBFTTerm";
 export type onNewBlockCB = (block: Block) => void;
 
 export class PBFT {
-    private readonly committedBlocksHashs: string[];
     private readonly onNewBlockListeners: onNewBlockCB[];
+    private readonly blockStorage: BlockStorage;
     private term: number;
     private pbftTerm: PBFTTerm;
     private pbftGossipFilter: PBFTGossipFilter;
@@ -22,25 +22,15 @@ export class PBFT {
     constructor(config: Config) {
         this.onNewBlockListeners = [];
         this.id = config.id;
+        this.blockStorage = config.blockStorage;
 
         this.pbftTermConfig = this.createTermConfig(config);
         this.pbftGossipFilter = new PBFTGossipFilter(config.gossip, this.id, config.network);
-
-        // init committedBlocks
-        this.committedBlocksHashs = [theGenesisBlock.hash];
 
         // config
         this.gossip = config.gossip;
 
         this.term = 0; // TODO: this.lastCommittedBlock.height;
-    }
-
-    private getLatestConfirmedBlockHash(): string {
-        return this.committedBlocksHashs[this.committedBlocksHashs.length - 1];
-    }
-
-    private isBlockPointingToPreviousBlock(block: Block): boolean {
-        return this.getLatestConfirmedBlockHash() === block.previousBlockHash;
     }
 
     private notifyNewBlock(block: Block): void {
@@ -63,7 +53,7 @@ export class PBFT {
     private overrideBlockValidation(blocksValidator: BlocksValidator): BlocksValidator {
         return {
             validateBlock: async (block: Block): Promise<boolean> => {
-                if (this.isBlockPointingToPreviousBlock(block) === false) {
+                if (this.blockStorage.getTopMostBlock().hash !== block.previousBlockHash) {
                     return false;
                 }
                 return blocksValidator.validateBlock(block);
@@ -73,7 +63,6 @@ export class PBFT {
 
     private createPBFTTerm(): void {
         this.pbftTerm = new PBFTTerm(this.pbftTermConfig, this.term, block => {
-            this.committedBlocksHashs.push(block.hash);
             this.disposePBFTTerm();
             this.term++;
             this.createPBFTTerm();
