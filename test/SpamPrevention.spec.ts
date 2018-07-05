@@ -18,7 +18,7 @@ describe("Spam Prevention", () => {
         const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
         const nodeBuilder = aNode().storingOn(inspectedStorage);
         const block = aBlock(theGenesisBlock);
-        const blocksValidator = new BlocksValidatorMock(false);
+        const blocksValidator = new BlocksValidatorMock();
         const blocksProvider = new BlocksProviderMock([block]);
         const network = aNetwork()
             .with(4).nodes
@@ -31,10 +31,10 @@ describe("Spam Prevention", () => {
         const node = network.nodes[4];
 
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
+        await blocksProvider.provideNextBlock();
         leader.pbft.gossip.unicast(leader.id, node.id, "preprepare", { block: block, view: 0, term: 0 });
         leader.pbft.gossip.unicast(leader.id, node.id, "preprepare", { block: block, view: 0, term: 0 });
-        await blocksValidator.resolveValidations();
+        await blocksValidator.resolveAllValidations(true);
 
         expect(inspectedStorage.getPrepare(0, 0, block.hash).length).to.equal(4);
         network.shutDown();

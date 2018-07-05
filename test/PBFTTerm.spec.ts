@@ -102,19 +102,19 @@ describe("PBFTTerm", () => {
 
         // current view (1) => valid
         pbftTerm.onReceivePrePrepare(leaderId, { term: 0, view: 1, block });
-        await config.blocksValidator.resolveValidations();
+        await config.blocksValidator.resolveAllValidations(true);
         expect(spy).to.have.been.called;
 
         // view from the future (2) => invalid, should be ignored
         spy.resetHistory();
         pbftTerm.onReceivePrePrepare(leaderId, { term: 0, view: 2, block });
-        await config.blocksValidator.resolveValidations();
+        await config.blocksValidator.resolveAllValidations(true);
         expect(spy).to.not.have.been.called;
 
         // view from the past (0) => invalid, should be ignored
         spy.resetHistory();
         pbftTerm.onReceivePrePrepare(leaderId, { term: 0, view: 0, block });
-        await config.blocksValidator.resolveValidations();
+        await config.blocksValidator.resolveAllValidations(true);
         expect(spy).to.not.have.been.called;
     });
 
@@ -166,12 +166,12 @@ describe("PBFTTerm", () => {
         // from the leader => ok
         pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(1), { term: 0, view: 1, PP: {term: 0, view: 0, block} });
         await nextTick();
-        await config.blocksValidator.resolveValidations();
+        await config.blocksValidator.resolveAllValidations(true);
         expect(pbftTerm.getView()).to.equal(1);
 
         // not from the leader => ignore
         pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(3), { term: 0, view: 2, PP: {term: 0, view: 0, block} });
-        await config.blocksValidator.resolveValidations();
+        await config.blocksValidator.resolveAllValidations(true);
         expect(pbftTerm.getView()).to.equal(1);
     });
 

@@ -100,12 +100,12 @@ describe("Byzantine Attacks", () => {
         const leaderGossip = leader.pbft.gossip as InMemoryGossip;
         leaderGossip.setOutGoingWhiteList([node1.id, node2.id]);
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
 
         leaderGossip.setOutGoingWhiteList([node2.id, node3.id]);
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
 
         expect(node1.getLatestBlock()).to.equal(block1);
         expect(node2.getLatestBlock()).to.equal(block1);
@@ -172,8 +172,8 @@ describe("Byzantine Attacks", () => {
         gossip3.setOutGoingWhiteList([]);
 
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
 
         expect(node0.getLatestBlock()).to.be.undefined;
         expect(node1.getLatestBlock()).to.be.undefined;
@@ -188,10 +188,10 @@ describe("Byzantine Attacks", () => {
 
         // elect node2 as the leader
         triggerElection();
-        await blocksValidator.resolveValidations();
+        await blocksValidator.resolveAllValidations(true);
 
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
 
         expect(node0.getLatestBlock()).to.equal(block2);
         expect(node1.getLatestBlock()).to.equal(block2);

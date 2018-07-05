@@ -125,6 +125,16 @@ export class PBFTTerm {
     public async onReceivePrePrepare(senderId: string, payload: PrePreparePayload): Promise<void> {
         const { view, term, block } = payload;
 
+        if (this.view !== view) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", unrelated view` });
+            return;
+        }
+
+        if (this.checkPrePrepare(term, view)) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", already prepared` });
+            return;
+        }
+
         if (this.isLeader(senderId) === false) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block rejected because it was not sent by the current leader (${view})` });
             return;
@@ -137,16 +147,6 @@ export class PBFTTerm {
 
         if (!isValidBlock) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block is invalid` });
-            return;
-        }
-
-        if (this.view !== view) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", unrelated view` });
-            return;
-        }
-
-        if (this.checkPrePrepare(term, view)) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", already prepared` });
             return;
         }
 
@@ -176,7 +176,7 @@ export class PBFTTerm {
         this.pbftStorage.storePrepare(term, view, blockHash, senderId);
 
         if (this.view === view) {
-            this.checkPrepared(this.term, this.view, blockHash);
+            this.checkPrepared(term, view, blockHash);
         }
     }
 

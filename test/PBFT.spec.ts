@@ -22,8 +22,8 @@ describe("PBFT", () => {
         const spy3 = sinon.spy(network.nodes[3].pbft.gossip, "multicast");
 
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
         const preprepareCounter = (spy: sinon.SinonSpy) => spy.getCalls().filter(c => c.args[2] === "preprepare").length;
 
         expect(preprepareCounter(spy0)).to.equal(1);
@@ -38,8 +38,8 @@ describe("PBFT", () => {
         const { network, blocksProvider, blocksValidator, blocksPool } = aSimpleNetwork();
 
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
 
         expect(network.nodes).to.agreeOnBlock(blocksPool[0]);
         network.shutDown();
@@ -49,8 +49,8 @@ describe("PBFT", () => {
         const { network, blocksProvider, blocksValidator, blocksPool } = aSimpleNetwork();
 
         network.nodes[3].startConsensus(); // pretending to be the leader
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
 
         expect(network.nodes).to.not.agreeOnBlock(blocksPool[0]);
         network.shutDown();
@@ -66,14 +66,14 @@ describe("PBFT", () => {
         // suggest block 1 to nodes 1 and 2
         leaderGossip.setOutGoingWhiteList([network.nodes[1].id, network.nodes[2].id]);
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
 
         // suggest block 2 to node 3.
         leaderGossip.setOutGoingWhiteList([network.nodes[3].id]);
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
 
         expect(network.nodes[1].getLatestBlock()).to.equal(block1);
         expect(network.nodes[2].getLatestBlock()).to.equal(block1);
@@ -89,8 +89,8 @@ describe("PBFT", () => {
         gossip.setIncomingWhiteList([]); // prevent any income gossip messages
 
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
 
         expect(network.nodes.splice(0, 3)).to.agreeOnBlock(blocksPool[0]);
     });
@@ -109,8 +109,8 @@ describe("PBFT", () => {
         gossip.broadcast(byzantineNode.id, "preprepare", { block: fakeBlock, view: 0, term: 0 });
         gossip.broadcast(byzantineNode.id, "preprepare", { block: fakeBlock, view: 0, term: 0 });
 
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
 
         expect(network.nodes).to.agreeOnBlock(goodBlock);
         network.shutDown();
@@ -127,8 +127,8 @@ describe("PBFT", () => {
         gossip2.setIncomingWhiteList([]);
 
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
 
         expect(network.nodes.splice(0, 4)).to.agreeOnBlock(blocksPool[0]);
         network.shutDown();
@@ -139,13 +139,13 @@ describe("PBFT", () => {
 
         // block 1
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
 
         // block 2
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
 
         const node = network.nodes[1] as NodeMock;
         expect(node.blockLog.length).to.equal(2);
@@ -159,13 +159,13 @@ describe("PBFT", () => {
 
         // block 1
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
 
         // not in otder block
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
 
         expect(network.nodes).to.agreeOnBlock(block1);
         network.shutDown();
@@ -176,8 +176,8 @@ describe("PBFT", () => {
 
         // block 1
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
 
         expect(network.nodes).to.agreeOnBlock(blocksPool[0]);
         network.shutDown();
@@ -191,8 +191,8 @@ describe("PBFT", () => {
 
         // block 2 (After network shutdown)
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
 
         expect(spy1).to.not.have.been.called;
         expect(spy2).to.not.have.been.called;
@@ -221,21 +221,21 @@ describe("PBFT", () => {
         expect(node3.isLeader()).to.be.false;
 
         // processing block1, should be agreed by all nodes
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
         expect(network.nodes).to.agreeOnBlock(block1);
 
         // processing block 2
-        await blocksProvider.afterAllBlocksProvided();
+        await blocksProvider.provideNextBlock();
         triggerElection(); // force leader election before the block was verified, goes to block 3
         expect(node0.isLeader()).to.be.false;
         expect(node1.isLeader()).to.be.true;
         expect(node2.isLeader()).to.be.false;
         expect(node3.isLeader()).to.be.false;
-        await blocksValidator.resolveValidations();
+        await blocksValidator.resolveAllValidations(true);
 
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
         expect(network.nodes).to.agreeOnBlock(block3);
 
         network.shutDown();

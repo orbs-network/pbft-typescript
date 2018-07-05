@@ -24,7 +24,7 @@ class ConfigBuilder {
 
     public build() {
         const electionTriggerFactory: ElectionTriggerFactory = view => new ElectionTriggerMock(view);
-        const blocksValidator = new BlocksValidatorMock(false);
+        const blocksValidator = new BlocksValidatorMock();
         const blocksProvider = new BlocksProviderMock();
         const id = this.name || "Node";
         const logger: Logger = new SilentLogger();

@@ -133,7 +133,7 @@ export const aSimpleNetwork = (countOfNodes: number = 4, blocksPool?: Block[]) =
         return t;
     };
     const triggerElection = () => electionTriggers.map(e => e.trigger());
-    const blocksValidator = new BlocksValidatorMock(false);
+    const blocksValidator = new BlocksValidatorMock();
     const blocksProvider = new BlocksProviderMock(blocksPool);
     const network = aNetwork()
         .validateUsing(blocksValidator)

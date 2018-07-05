@@ -19,7 +19,7 @@ describe("Block Validation", () => {
 
     beforeEach(() => {
         block = aBlock(theGenesisBlock);
-        blocksValidator = new BlocksValidatorMock(false);
+        blocksValidator = new BlocksValidatorMock();
         blocksProvider = new BlocksProviderMock([block]);
         network = aNetwork()
             .validateUsing(blocksValidator)
@@ -35,8 +35,8 @@ describe("Block Validation", () => {
     it("should call validateBlock on onPrepare", async () => {
         const spy = sinon.spy(blocksValidator, "validateBlock");
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
 
         expect(spy).to.have.been.calledWith(block);
         expect(network.nodes).to.agreeOnBlock(block);
@@ -44,8 +44,8 @@ describe("Block Validation", () => {
 
     it("should not reach consensus if validateBlock returned false", async () => {
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.rejectValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(false);
 
         expect(network.nodes).to.not.agreeOnBlock(block);
     });

@@ -23,9 +23,10 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] make sure on onReceiveNewView the PP.view === view
 - [V] protect against wrong view in PBFTTerm
 - [V] protect against bad leader messages
+- [V] publish on npm
 - [ ] the PP validation should be extracted and used on new view PP
+- [ ] onReceiveNewView should match the PP.view with the view
 - [ ] use BlockStore interface
-- [ ] publish on npm
 - [ ] trigger once, prepared, elected, new-view, committed.
 - [ ] commit is pushing the block hash to a log to prevent multiple commits of the same block, this shouldn't be the solution.
 - [ ] term should be taken from the height of the latest block and not do ++ on commit.

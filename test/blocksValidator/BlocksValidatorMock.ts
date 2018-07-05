@@ -2,36 +2,41 @@ import { Block } from "../../src/Block";
 import { BlocksValidator } from "../../src/blocksValidator/BlocksValidator";
 
 export class BlocksValidatorMock implements BlocksValidator {
-    private validationsPromises: any[] = [];
-    private resolveFuncs: Function[] = [];
+    private promiseList: Promise<boolean>[] = [];
+    private resolveList: Function[] = [];
 
-    constructor(private autoResolve: boolean = true) {
+    constructor() {
 
     }
 
-    public resolveValidations(): Promise<any> {
-        this.resolveFuncs.forEach(f => f(true));
-        return this.afterAllValidations();
+    public async resolveLastValidation(isValid: boolean): Promise<any> {
+        if (this.resolveList.length === 0) {
+            return Promise.resolve();
+        }
+
+        const resolve = this.resolveList.pop();
+        const promise = this.promiseList.pop();
+        resolve(isValid);
+        return promise;
     }
 
-    public rejectValidations(): Promise<any> {
-        this.resolveFuncs.forEach(f => f(false));
-        return this.afterAllValidations();
+    public async resolveAllValidations(isValid: boolean): Promise<any> {
+        this.resolveList.forEach(f => f(isValid));
+        this.resolveList.length = 0;
+        await this.afterAllValidations();
     }
 
     private afterAllValidations(): Promise<any> {
-        return Promise.all(this.validationsPromises);
+        const result = Promise.all(this.promiseList);
+        this.promiseList.length = 0;
+        return result;
     }
 
     public validateBlock(block: Block): Promise<boolean> {
         const promise = new Promise<boolean>((resolve, reject) => {
-            if (this.autoResolve) {
-                resolve(true);
-            } else {
-                this.resolveFuncs.push(resolve);
-            }
+            this.resolveList.push(resolve);
         });
-        this.validationsPromises.push(promise);
+        this.promiseList.push(promise);
         return promise;
     }
 }

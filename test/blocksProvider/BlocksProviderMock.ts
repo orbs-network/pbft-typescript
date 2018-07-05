@@ -4,7 +4,8 @@ import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 
 export class BlocksProviderMock implements BlocksProvider {
     private blocksPool = theGenesisBlock;
-    private blocksProvidingPromises: any[] = [];
+    private promiseList: Promise<Block>[] = [];
+    private resolveList: Function[] = [];
     private upCommingBlocks: Block[] = [];
 
     constructor(upCommingBlocks?: Block[]) {
@@ -17,20 +18,31 @@ export class BlocksProviderMock implements BlocksProvider {
         this.upCommingBlocks = [...upCommingBlocks];
     }
 
-    public afterAllBlocksProvided(): Promise<any> {
-        return Promise.all(this.blocksProvidingPromises);
+    public provideNextBlock(): Promise<any> {
+        if (this.resolveList.length === 0) {
+            return Promise.resolve();
+        }
+
+        const resolve = this.resolveList.pop();
+        const promise = this.promiseList.pop();
+        resolve(this.getNextBlock());
+        return promise;
     }
 
     public getBlock(): Promise<Block> {
-        const promise = new Promise<Block>((resolve, reject) => {
-            if (this.upCommingBlocks.length > 0) {
-                return resolve(this.upCommingBlocks.shift());
-            } else {
-                return resolve(aBlock(this.blocksPool));
-            }
+        const promise = new Promise<Block>(resolve => {
+            this.resolveList.push(resolve);
         });
 
-        this.blocksProvidingPromises.push(promise);
+        this.promiseList.push(promise);
         return promise;
+    }
+
+    private getNextBlock(): Block {
+        if (this.upCommingBlocks.length > 0) {
+            return this.upCommingBlocks.shift();
+        } else {
+            return aBlock(this.blocksPool);
+        }
     }
 }

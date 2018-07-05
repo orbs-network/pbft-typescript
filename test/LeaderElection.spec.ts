@@ -17,9 +17,9 @@ describe("Leader Election", () => {
         const unicastSpy = sinon.spy(testedNode.pbft.gossip, "unicast");
 
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
+        await blocksProvider.provideNextBlock();
         triggerElection();
-        await blocksValidator.resolveValidations();
+        await blocksValidator.resolveAllValidations(true);
 
         expect(unicastSpy).to.have.been.calledWith(testedNode.id, nextLeader.id, "view-change", { term: 0, newView: 1 });
 
@@ -35,7 +35,7 @@ describe("Leader Election", () => {
         const node3 = network.nodes[3];
 
         network.startConsensusOnAllNodes(); // view 0
-        await blocksProvider.afterAllBlocksProvided();
+        await blocksProvider.provideNextBlock();
 
         expect(node0.isLeader()).to.be.true;
         expect(node1.isLeader()).to.be.false;
@@ -86,12 +86,12 @@ describe("Leader Election", () => {
         const gossip = node1.pbft.gossip as InMemoryGossip;
         const multicastSpy = sinon.spy(gossip, "multicast");
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
+        await blocksProvider.provideNextBlock();
 
         gossip.onRemoteMessage(node0.id, "view-change", { term: 0, newView: 1 });
         gossip.onRemoteMessage(node2.id, "view-change", { term: 0, newView: 1 });
         gossip.onRemoteMessage(node3.id, "view-change", { term: 0, newView: 1 });
-        await blocksProvider.afterAllBlocksProvided();
+        await blocksProvider.provideNextBlock();
 
         expect(multicastSpy).to.have.been.calledWith(node1.id, [node0.id, node2.id, node3.id], "new-view", { term: 0, view: 1, PP: { view: 1, term: 0, block: block2 } });
         network.shutDown();
@@ -105,17 +105,17 @@ describe("Leader Election", () => {
 
         // block1
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
         expect(network.nodes).to.agreeOnBlock(block1);
 
         // starting block2
-        await blocksProvider.afterAllBlocksProvided();
+        await blocksProvider.provideNextBlock();
         triggerElection(); // triggeting election before block2 was accepted, this will cause block3 to be accepted
-        await blocksValidator.resolveValidations();
+        await blocksValidator.resolveAllValidations(true);
 
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
         expect(network.nodes).to.agreeOnBlock(block3);
 
         network.shutDown();
@@ -133,8 +133,8 @@ describe("Leader Election", () => {
         const node3 = network.nodes[3];
 
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
-        await blocksValidator.resolveValidations();
+        await blocksProvider.provideNextBlock();
+        await blocksValidator.resolveAllValidations(true);
 
         expect(node0.isLeader()).to.true;
         expect(node1.isLeader()).to.false;
@@ -145,9 +145,10 @@ describe("Leader Election", () => {
         const spy1 = sinon.spy(node1.pbft.gossip, "multicast");
         const spy2 = sinon.spy(node2.pbft.gossip, "unicast");
 
-        await blocksProvider.afterAllBlocksProvided();
+        await blocksProvider.provideNextBlock();
         triggerElection();
-        await blocksValidator.resolveValidations();
+        await blocksValidator.resolveAllValidations(true);
+        await blocksProvider.provideNextBlock();
 
         expect(spy0).to.have.been.calledWith(node0.id, node1.id, "view-change", { term: 1, newView: 1 });
         expect(spy1).to.have.been.calledWith(node1.id, [node0.id, node2.id, node3.id], "new-view", { term: 1, view: 1, PP: { term: 1, view: 1, block: block3 } });
@@ -166,10 +167,10 @@ describe("Leader Election", () => {
         const broadcastSpy = sinon.spy(gossip, "broadcast");
 
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
+        await blocksProvider.provideNextBlock();
         gossip.onRemoteMessage("view-change", leader.id, { newView: 1 });
         gossip.onRemoteMessage("view-change", node2.id, { newView: 1 });
-        await blocksValidator.resolveValidations();
+        await blocksValidator.resolveAllValidations(true);
 
         expect(broadcastSpy).to.not.have.been.called;
         network.shutDown();
@@ -184,11 +185,11 @@ describe("Leader Election", () => {
         const broadcastSpy = sinon.spy(gossip, "broadcast");
 
         network.startConsensusOnAllNodes();
-        await blocksProvider.afterAllBlocksProvided();
+        await blocksProvider.provideNextBlock();
         gossip.onRemoteMessage("view-change", leader.id, { newView: 1 });
         gossip.onRemoteMessage("view-change", leader.id, { newView: 1 });
         gossip.onRemoteMessage("view-change", leader.id, { newView: 1 });
-        await blocksValidator.resolveValidations();
+        await blocksValidator.resolveAllValidations(true);
 
         expect(broadcastSpy).to.not.have.been.called;
         network.shutDown();
