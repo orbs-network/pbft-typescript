@@ -28,8 +28,10 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] onReceiveNewView should match the PP.view with the view
 - [V] onReceiveNewView should validate the given PP
 - [V] use BlockStorage interface
-- [ ] publish the public types on the root of the library (import { Config } from 'pbft-typescript')
-- [ ] intellisense is not working for pbft-typescript imports
+- [V] publish the public types on the root of the library (import { Config } from 'pbft-typescript')
+- [V] intellisense is not working for pbft-typescript imports
+- [ ] BlockStorage interface async compatible.
+- [ ] BlockStorage interface remove 'appendBlockToChain'.
 - [ ] add the git repo to the npm site
 - [ ] term should be taken from the height of the latest block (Use the BlockStorage)
 - [ ] clear the pbftStorage
@@ -38,3 +40,6 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [ ] Nodes can pretend to be other nodes => sign all messages
 - [ ] sign messages including the message type
 - [ ] documentation
+- [ ] Sync from external source.
+- [ ] Gossip match interface to MVP.
+
