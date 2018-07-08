@@ -17,6 +17,7 @@
     "outDir": "dist",
   },
   "include": [
+    "src/lib.ts",
     "test/**/*.spec.ts",
     "test/**/*.d.ts",
     "test/logger/sockets/LogsServer.ts"

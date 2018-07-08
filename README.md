@@ -28,6 +28,9 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] onReceiveNewView should match the PP.view with the view
 - [V] onReceiveNewView should validate the given PP
 - [V] use BlockStorage interface
+- [ ] publish the public types on the root of the library (import { Config } from 'pbft-typescript')
+- [ ] intellisense is not working for pbft-typescript imports
+- [ ] add the git repo to the npm site
 - [ ] term should be taken from the height of the latest block (Use the BlockStorage)
 - [ ] clear the pbftStorage
 - [ ] trigger once, prepared, elected, new-view, committed.

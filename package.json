@@ -2,7 +2,8 @@
   "name": "pbft-typescript",
   "version": "0.0.5",
   "description": "",
-  "main": "./dist/src/PBFT.js",
+  "main": "./dist/src/lib.js",
+  "types": "./dist/src/lib.d.ts",
   "files": [
     "dist/src/**/*"
   ],
