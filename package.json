@@ -1,6 +1,6 @@
 {
   "name": "pbft-typescript",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "",
   "main": "./dist/src/lib.js",
   "types": "./dist/src/lib.d.ts",
