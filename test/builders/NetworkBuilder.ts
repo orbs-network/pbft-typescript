@@ -2,7 +2,7 @@ import { Block } from "../../src/Block";
 import { BlocksProvider } from "../../src/blocksProvider/BlocksProvider";
 import { BlocksValidator } from "../../src/blocksValidator/BlocksValidator";
 import { ElectionTriggerFactory } from "../../src/electionTrigger/ElectionTrigger";
-import { Logger, LoggerConstructor } from "../../src/logger/Logger";
+import { Logger } from "../../src/logger/Logger";
 import { BlocksProviderMock } from "../blocksProvider/BlocksProviderMock";
 import { BlocksValidatorMock } from "../blocksValidator/BlocksValidatorMock";
 import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
@@ -15,6 +15,9 @@ import { Node } from "../network/Node";
 import { aBlock, theGenesisBlock } from "./BlockBuilder";
 import { aNode, NodeBuilder } from "./NodeBuilder";
 
+export interface LoggerConstructor {
+    new (id: string): Logger;
+}
 export class With {
     constructor(private networkBuilder: NetworkBuilder, private count: number) {
 

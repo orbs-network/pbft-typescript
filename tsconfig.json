@@ -10,14 +10,13 @@
     "noImplicitAny": true,
     "skipLibCheck": true,
     "moduleResolution": "node",
-    "declarationMap": true,
     "declaration": true,
     "sourceMap": true,
     "inlineSources": true,
     "outDir": "dist",
   },
   "include": [
-    "src/lib.ts",
+    "src/index.ts",
     "test/**/*.spec.ts",
     "test/**/*.d.ts",
     "test/logger/sockets/LogsServer.ts"

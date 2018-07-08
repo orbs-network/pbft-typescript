@@ -69,6 +69,3 @@ export type LogTypes = StorageLogData | GossipSendLogData | GossipReceiveLogData
 export interface Logger {
     log(data: LogTypes): void;
 }
-export interface LoggerConstructor {
-    new (id: string): Logger;
-}
