@@ -41,5 +41,23 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [ ] sign messages including the message type
 - [ ] documentation
 - [ ] Sync from external source.
-- [ ] Gossip match interface to MVP.
+- [ ] Gossip match interface to MVP: Gossip.unicast(nodeAddress: string, messageType: string, data: IData)
+      IData: {
+          pk: 7338AB,
+          payload: {
+              msgType: "PrePrepare",
+              view: 7,
+              term: 11,
+              block: Block
+          }
+          signature: 8F752H
+      }
+- [ ] Optimizations: IData - Signature only on hash(header).
+- [ ] Network: Responsible for MAP: PK - nodeAddress
+- [ ] Block: {
+        header:{
+            prevBlockHash
+            hash
+        }
+     }
 
