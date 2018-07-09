@@ -33,6 +33,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] BlockStorage interface async compatible.
 - [V] BlockStorage interface remove 'appendBlockToChain'.
 - [V] add the git repo to the npm site
+- [ ] Default implementations of: PBFTStorage, TimerBasedElectionTrigger
 - [ ] term should be taken from the height of the latest block (Use the BlockStorage)
 - [ ] clear the pbftStorage
 - [ ] trigger once, prepared, elected, new-view, committed.
@@ -68,3 +69,5 @@ Block: {
         }
      }
 ```
+
+
