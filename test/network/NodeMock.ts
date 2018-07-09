@@ -2,11 +2,12 @@ import { Block } from "../../src/Block";
 import { BlockStorage } from "../../src/blockStorage/BlockStorage";
 import { PBFT } from "../../src/PBFT";
 import { Node } from "./Node";
+import { InMemoryBlockStorage } from "../blockStorage/InMemoryBlockStorage";
 
 export class NodeMock implements Node {
     public id: string;
 
-    constructor(public pbft: PBFT, private blockStorage: BlockStorage) {
+    constructor(public pbft: PBFT, private blockStorage: InMemoryBlockStorage) {
         this.id = pbft.id;
         this.pbft.registerToOnNewBlock(block => this.onNewBlock(block));
     }

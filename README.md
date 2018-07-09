@@ -30,8 +30,8 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] use BlockStorage interface
 - [V] publish the public types on the root of the library (import { Config } from 'pbft-typescript')
 - [V] intellisense is not working for pbft-typescript imports
-- [ ] BlockStorage interface async compatible.
-- [ ] BlockStorage interface remove 'appendBlockToChain'.
+- [V] BlockStorage interface async compatible.
+- [V] BlockStorage interface remove 'appendBlockToChain'.
 - [ ] add the git repo to the npm site
 - [ ] term should be taken from the height of the latest block (Use the BlockStorage)
 - [ ] clear the pbftStorage

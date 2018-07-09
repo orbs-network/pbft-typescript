@@ -10,12 +10,12 @@ chai.use(sinonChai);
 
 describe("InMemory BlockStorage", () => {
     it("should be able to initialize BlockStorage", () => {
-        const blockStorage: BlockStorage = new InMemoryBlockStorage();
+        const blockStorage = new InMemoryBlockStorage();
         expect(blockStorage).to.not.be.undefined;
     });
 
     it("should return the genesis block on height 0", async () => {
-        const blockStorage: BlockStorage = new InMemoryBlockStorage();
+        const blockStorage = new InMemoryBlockStorage();
 
         const actual: string = await blockStorage.getBlockHashOnHeight(0);
         const expected: string = theGenesisBlock.hash;
@@ -23,7 +23,7 @@ describe("InMemory BlockStorage", () => {
     });
 
     it("should be append to the BlockStorage", async () => {
-        const blockStorage: BlockStorage = new InMemoryBlockStorage();
+        const blockStorage = new InMemoryBlockStorage();
         const block: Block = aBlock(theGenesisBlock);
         blockStorage.appendBlockToChain(block);
 
@@ -33,7 +33,7 @@ describe("InMemory BlockStorage", () => {
     });
 
     it("should return the top most block", async () => {
-        const blockStorage: BlockStorage = new InMemoryBlockStorage();
+        const blockStorage = new InMemoryBlockStorage();
         const block1: Block = aBlock(theGenesisBlock);
         const block2: Block = aBlock(block1);
         const block3: Block = aBlock(block2);
@@ -47,7 +47,7 @@ describe("InMemory BlockStorage", () => {
     });
 
     it("should return the block chain height", async () => {
-        const blockStorage: BlockStorage = new InMemoryBlockStorage();
+        const blockStorage = new InMemoryBlockStorage();
         const block1: Block = aBlock(theGenesisBlock);
         const block2: Block = aBlock(block1);
         const block3: Block = aBlock(block2);
