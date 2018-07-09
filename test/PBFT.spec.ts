@@ -45,7 +45,7 @@ describe("PBFT", () => {
         network.shutDown();
     });
 
-    it.only("should ignore suggested block if they are not from the leader", async () => {
+    it("should ignore suggested block if they are not from the leader", async () => {
         const { network, blocksProvider, blocksValidator, blocksPool } = aSimpleNetwork();
 
         network.nodes[3].startConsensus(); // pretending to be the leader
