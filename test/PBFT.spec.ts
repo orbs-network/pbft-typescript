@@ -45,11 +45,12 @@ describe("PBFT", () => {
         network.shutDown();
     });
 
-    it("should ignore suggested block if they are not from the leader", async () => {
+    it.only("should ignore suggested block if they are not from the leader", async () => {
         const { network, blocksProvider, blocksValidator, blocksPool } = aSimpleNetwork();
 
         network.nodes[3].startConsensus(); // pretending to be the leader
         await blocksProvider.provideNextBlock();
+        await nextTick(); // await for blockStorage.getTopMostBlock
         await blocksValidator.resolveAllValidations(true);
 
         expect(network.nodes).to.not.agreeOnBlock(blocksPool[0]);
@@ -57,8 +58,8 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, in a network of 4 nodes, where the leader is byzantine and the other 3 nodes are loyal", async () => {
-        const block1 = aBlock(theGenesisBlock, "block1");
-        const block2 = aBlock(theGenesisBlock, "block2");
+        const block1 = aBlock(theGenesisBlock);
+        const block2 = aBlock(theGenesisBlock);
         const { network, blocksProvider, blocksValidator } = aSimpleNetwork(4, [block1, block2]);
 
         const leaderGossip = network.nodes[0].pbft.gossip as InMemoryGossip;
@@ -184,10 +185,10 @@ describe("PBFT", () => {
     });
 
     it("should change the leader on timeout (no commits for too long)", async () => {
-        const block1 = aBlock(theGenesisBlock, "Block1");
-        const block2 = aBlock(block1, "Block2");
-        const block3 = aBlock(block1, "Block3");
-        const block4 = aBlock(block3, "Block4");
+        const block1 = aBlock(theGenesisBlock);
+        const block2 = aBlock(block1);
+        const block3 = aBlock(block1);
+        const block4 = aBlock(block3);
         const { network, blocksProvider, blocksValidator, triggerElection } = aSimpleNetwork(4, [block1, block2, block3, block4]);
 
         const node0 = network.nodes[0];

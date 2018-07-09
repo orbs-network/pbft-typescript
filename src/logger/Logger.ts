@@ -1,10 +1,11 @@
+import { Block } from "../Block";
+
 /// STORAGE ///
 type StorePrePrepare = {
     StorageType: "PrePrepare",
     term: number,
     view: number,
-    blockHash: string,
-    blockContent: string
+    block: Block
 };
 
 type StorePrepare = {
@@ -48,8 +49,7 @@ type FlowCommit = {
     FlowType: "Commit",
     term: number,
     view: number,
-    blockHash: string,
-    blockContent: string
+    block: Block
 };
 
 type FlowLeaderChange = {

@@ -6,7 +6,7 @@ export class InMemoryBlockStorage implements BlockStorage {
     private blockChain: Block[] = [theGenesisBlock];
 
     public async getBlockHashOnHeight(height: number): Promise<string> {
-        return this.blockChain[height].hash;
+        return this.blockChain[height].header.hash;
     }
 
     public appendBlockToChain(block: Block): void {

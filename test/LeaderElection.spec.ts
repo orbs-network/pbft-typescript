@@ -75,8 +75,8 @@ describe("Leader Election", () => {
     });
 
     it("should count 2f+1 view-change to be elected", async () => {
-        const block1 = aBlock(theGenesisBlock, "block1");
-        const block2 = aBlock(block1, "block2");
+        const block1 = aBlock(theGenesisBlock);
+        const block2 = aBlock(block1);
         const { network, blocksProvider, blocksValidator } = aSimpleNetwork(4, [block1, block2]);
 
         const node0 = network.nodes[0];
@@ -99,9 +99,9 @@ describe("Leader Election", () => {
     });
 
     it("should accept a block constructed by the new leader", async () => {
-        const block1 = aBlock(theGenesisBlock, "Block1");
-        const block2 = aBlock(block1, "Block2");
-        const block3 = aBlock(block1, "Block3");
+        const block1 = aBlock(theGenesisBlock);
+        const block2 = aBlock(block1);
+        const block3 = aBlock(block1);
         const { network, blocksProvider, blocksValidator, triggerElection } = aSimpleNetwork(4, [block1, block2, block3]);
 
         // block1
@@ -123,9 +123,9 @@ describe("Leader Election", () => {
     });
 
     it("should cycle back to the first node on view-change", async () => {
-        const block1 = aBlock(theGenesisBlock, "Block1");
-        const block2 = aBlock(block1, "Block2");
-        const block3 = aBlock(block1, "Block3");
+        const block1 = aBlock(theGenesisBlock);
+        const block2 = aBlock(block1);
+        const block3 = aBlock(block1);
         const { network, blocksProvider, blocksValidator, triggerElection } = aSimpleNetwork(4, [block1, block2, block3]);
 
         const node0 = network.nodes[0];

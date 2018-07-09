@@ -124,10 +124,10 @@ class NetworkBuilder {
 
 export const aNetwork = () => new NetworkBuilder();
 export const aSimpleNetwork = (countOfNodes: number = 4, blocksPool?: Block[]) => {
-    const block1 = aBlock(theGenesisBlock, "block 1");
-    const block2 = aBlock(block1, "block 2");
-    const block3 = aBlock(block2, "block 3");
-    const block4 = aBlock(block3, "block 4");
+    const block1 = aBlock(theGenesisBlock);
+    const block2 = aBlock(block1);
+    const block3 = aBlock(block2);
+    const block4 = aBlock(block3);
     blocksPool = blocksPool || [block1, block2, block3, block4];
     const electionTriggers: ElectionTriggerMock[] = [];
     const electionTriggerFactory = (view: number) => {

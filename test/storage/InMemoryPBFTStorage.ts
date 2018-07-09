@@ -1,8 +1,9 @@
 import { Logger } from "../../src/logger/Logger";
 import { PBFTStorage } from "../../src/storage/PBFTStorage";
+import { Block } from "../../src/Block";
 
 export class InMemoryPBFTStorage implements PBFTStorage {
-    private prePrepareStorage: Map<string, string>;
+    private prePrepareStorage: Map<string, Block>;
     private prepareStorage: Map<string, string[]>;
     private commitStorage: Map<string, string[]>;
     private viewChangeStorage: Map<string, string[]>;
@@ -14,17 +15,17 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         this.viewChangeStorage = new Map();
     }
 
-    storePrePrepare(term: number, view: number, blockHash: string, blockContent: string): boolean {
+    storePrePrepare(term: number, view: number, block: Block): boolean {
         const key = term.toString() + "_" + view.toString();
         if (this.prePrepareStorage.get(key) !== undefined) {
             return false;
         }
-        this.prePrepareStorage.set(key, blockHash);
-        this.logger.log({ Subject: "Storage", StorageType: "PrePrepare", term, view, blockHash, blockContent });
+        this.prePrepareStorage.set(key, block);
+        this.logger.log({ Subject: "Storage", StorageType: "PrePrepare", term, view, block });
         return true;
     }
 
-    getPrePrepare(term: number, view: number): string {
+    getPrePrepare(term: number, view: number): Block {
         const key = term.toString() + "_" + view.toString();
         return this.prePrepareStorage.get(key);
     }

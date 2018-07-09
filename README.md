@@ -58,7 +58,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 
 - [ ] Optimizations: IData - Signature only on hash(header).
 - [ ] Network: Responsible for MAP: PK - nodeAddress
-- [ ] ConverBlock Interface to:
+- [V] ConverBlock Interface to:
 
 ```json
 Block: {

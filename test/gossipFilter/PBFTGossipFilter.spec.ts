@@ -31,8 +31,8 @@ describe("PBFT Gossip Filter", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         node1.pbft.gossip.broadcast(node1.id, "preprepare", { term: 3, view: 0, block });
-        node1.pbft.gossip.broadcast(node1.id, "prepare", { term: 3, view: 0, blockHash: block.hash });
-        node1.pbft.gossip.broadcast(node1.id, "commit", { term: 3, view: 0, blockHash: block.hash });
+        node1.pbft.gossip.broadcast(node1.id, "prepare", { term: 3, view: 0, blockHash: block.header.hash });
+        node1.pbft.gossip.broadcast(node1.id, "commit", { term: 3, view: 0, blockHash: block.header.hash });
         node1.pbft.gossip.broadcast(node1.id, "view-change", { term: 3, newView: 0 });
         node1.pbft.gossip.broadcast(node1.id, "new-view", { term: 3, view: 0, PP: undefined });
 
@@ -62,8 +62,8 @@ describe("PBFT Gossip Filter", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         node1.pbft.gossip.broadcast(node1.id, "preprepare", { term: 3, view: 0, block });
-        node1.pbft.gossip.broadcast(node1.id, "prepare", { term: 3, view: 0, blockHash: block.hash });
-        node1.pbft.gossip.broadcast(node1.id, "commit", { term: 3, view: 0, blockHash: block.hash });
+        node1.pbft.gossip.broadcast(node1.id, "prepare", { term: 3, view: 0, blockHash: block.header.hash });
+        node1.pbft.gossip.broadcast(node1.id, "commit", { term: 3, view: 0, blockHash: block.header.hash });
         node1.pbft.gossip.broadcast(node1.id, "view-change", { term: 3, newView: 0 });
         node1.pbft.gossip.broadcast(node1.id, "new-view", { term: 3, view: 0, PP: undefined });
 
@@ -92,8 +92,8 @@ describe("PBFT Gossip Filter", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         node0.pbft.gossip.broadcast(node0.id, "preprepare", { term: 3, view: 0, block });
-        node0.pbft.gossip.broadcast(node0.id, "prepare", { term: 3, view: 0, blockHash: block.hash });
-        node0.pbft.gossip.broadcast(node0.id, "commit", { term: 3, view: 0, blockHash: block.hash });
+        node0.pbft.gossip.broadcast(node0.id, "prepare", { term: 3, view: 0, blockHash: block.header.hash });
+        node0.pbft.gossip.broadcast(node0.id, "commit", { term: 3, view: 0, blockHash: block.header.hash });
         node0.pbft.gossip.broadcast(node0.id, "view-change", { term: 3, newView: 0 });
         node0.pbft.gossip.broadcast(node0.id, "new-view", { term: 3, view: 0, PP: undefined });
 
@@ -123,8 +123,8 @@ describe("PBFT Gossip Filter", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         node1.pbft.gossip.broadcast("node-666", "preprepare", { term: 3, view: 0, block });
-        node1.pbft.gossip.broadcast("node-666", "prepare", { term: 3, view: 0, blockHash: block.hash });
-        node1.pbft.gossip.broadcast("node-666", "commit", { term: 3, view: 0, blockHash: block.hash });
+        node1.pbft.gossip.broadcast("node-666", "prepare", { term: 3, view: 0, blockHash: block.header.hash });
+        node1.pbft.gossip.broadcast("node-666", "commit", { term: 3, view: 0, blockHash: block.header.hash });
         node1.pbft.gossip.broadcast("node-666", "view-change", { term: 3, newView: 0 });
         node1.pbft.gossip.broadcast("node-666", "new-view", { term: 3, view: 0, PP: undefined });
 

@@ -74,17 +74,17 @@ describe("PBFTTerm", () => {
         const block: Block = aBlock(theGenesisBlock);
 
         // current view (1) => valid
-        pbftTerm.onReceivePrepare(noneLeaderId, { term: 0, view: 1, blockHash: block.hash });
+        pbftTerm.onReceivePrepare(noneLeaderId, { term: 0, view: 1, blockHash: block.header.hash });
         expect(spy).to.have.been.called;
 
         // view from the future (2) => valid
         spy.resetHistory();
-        pbftTerm.onReceivePrepare(noneLeaderId, { term: 0, view: 2, blockHash: block.hash });
+        pbftTerm.onReceivePrepare(noneLeaderId, { term: 0, view: 2, blockHash: block.header.hash });
         expect(spy).to.have.been.called;
 
         // view from the past (0) => invalid, should be ignored
         spy.resetHistory();
-        pbftTerm.onReceivePrepare(noneLeaderId, { term: 0, view: 0, blockHash: block.hash });
+        pbftTerm.onReceivePrepare(noneLeaderId, { term: 0, view: 0, blockHash: block.header.hash });
         expect(spy).to.not.have.been.called;
     });
 

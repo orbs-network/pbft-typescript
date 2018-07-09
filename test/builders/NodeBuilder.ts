@@ -98,7 +98,7 @@ export class NodeBuilder {
     public build(): Node {
         const config: Config = this.buildConfig();
         const pbft = new PBFT(config);
-        return new NodeMock(pbft, config.blockStorage);
+        return new NodeMock(pbft, config.blockStorage as InMemoryBlockStorage);
     }
 
     private buildConfig(): Config {

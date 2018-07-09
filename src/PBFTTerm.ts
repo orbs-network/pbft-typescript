@@ -51,7 +51,7 @@ export class PBFTTerm {
                 return;
             }
 
-            this.pbftStorage.storePrePrepare(this.term, this.view, this.CB.hash, this.CB.content);
+            this.pbftStorage.storePrePrepare(this.term, this.view, this.CB);
             this.broadcastPrePrepare(this.term, this.view, this.CB);
         }
     }
@@ -115,7 +115,7 @@ export class PBFTTerm {
 
     private broadcastPrepare(term: number, view: number, block: Block): void {
         const payload: PreparePayload = {
-            blockHash: block.hash,
+            blockHash: block.header.hash,
             view,
             term
         };
@@ -136,10 +136,10 @@ export class PBFTTerm {
         }
 
         this.CB = block;
-        this.pbftStorage.storePrepare(term, view, block.hash, this.id);
-        this.pbftStorage.storePrePrepare(term, view, block.hash, block.content);
+        this.pbftStorage.storePrepare(term, view, block.header.hash, this.id);
+        this.pbftStorage.storePrePrepare(term, view, block);
         this.broadcastPrepare(term, view, block);
-        this.checkPrepared(term, view, block.hash);
+        this.checkPrepared(term, view, block.header.hash);
     }
 
     private async validatePrePreapare(senderId: string, payload: PrePreparePayload): Promise<boolean> {
@@ -233,9 +233,9 @@ export class PBFTTerm {
             block
         };
         this.CB = block;
-        this.logger.log({ Subject: "Flow", FlowType: "Elected", term: this.term, view, blockHash: block.hash });
+        this.logger.log({ Subject: "Flow", FlowType: "Elected", term: this.term, view, blockHash: block.header.hash });
         const newViewPayload: NewViewPayload = { term: this.term, view, PP };
-        this.pbftStorage.storePrePrepare(this.term, this.view, block.hash, block.content);
+        this.pbftStorage.storePrePrepare(this.term, this.view, block);
         this.gossip.multicast(this.id, this.getOtherNodesIds(), "new-view", newViewPayload);
     }
 
@@ -320,12 +320,12 @@ export class PBFTTerm {
     }
 
     private isPrePrepared(term: number, view: number, blockHash: string): boolean {
-        const prePreparedBlockHash = this.pbftStorage.getPrePrepare(term, view);
-        return prePreparedBlockHash === blockHash;
+        const prePreparedBlock: Block = this.pbftStorage.getPrePrepare(term, view);
+        return prePreparedBlock && (prePreparedBlock.header.hash === blockHash);
     }
 
     private commitBlock(block: Block): void {
-        this.logger.log({ Subject: "Flow", FlowType: "Commit", term: this.term, view: this.view, blockHash: block.hash, blockContent: block.content });
+        this.logger.log({ Subject: "Flow", FlowType: "Commit", term: this.term, view: this.view, block });
         this.stopViewState();
         this.onCommittedBlock(this.CB);
     }

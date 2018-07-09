@@ -54,7 +54,7 @@ export class PBFT {
         return {
             validateBlock: async (block: Block): Promise<boolean> => {
                 const topBlock: Block = await this.blockStorage.getTopMostBlock();
-                if (topBlock.hash !== block.previousBlockHash) {
+                if (topBlock.header.hash !== block.header.prevBlockHash) {
                     return false;
                 }
                 return blocksValidator.validateBlock(block);
