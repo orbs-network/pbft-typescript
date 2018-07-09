@@ -1,8 +1,8 @@
 import { Block } from "../Block";
 
 export interface BlockStorage {
-    getBlockHashOnHeight(height: number): string;
+    getBlockHashOnHeight(height: number): Promise<string>;
     appendBlockToChain(block: Block): void;
-    getTopMostBlock(): Block;
-    getBlockChainHeight(): number;
+    getTopMostBlock(): Promise<Block>;
+    getBlockChainHeight(): Promise<number>;
 }

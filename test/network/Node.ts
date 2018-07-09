@@ -5,7 +5,7 @@ export interface Node {
     id: string;
     pbft: PBFT;
     isLeader(): boolean;
-    getLatestBlock(): Block;
+    getLatestBlock(): Promise<Block>;
     startConsensus(): void;
     dispose(): void;
 }

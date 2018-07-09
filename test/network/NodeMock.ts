@@ -11,8 +11,9 @@ export class NodeMock implements Node {
         this.pbft.registerToOnNewBlock(block => this.onNewBlock(block));
     }
 
-    public getLatestBlock(): Block {
-        return this.blockStorage.getTopMostBlock();
+    public async getLatestBlock(): Promise<Block> {
+        const block: Block = await this.blockStorage.getTopMostBlock();
+        return block;
     }
 
     public isLeader(): boolean {

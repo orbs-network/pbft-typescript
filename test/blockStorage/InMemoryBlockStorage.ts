@@ -5,7 +5,7 @@ import { theGenesisBlock } from "../builders/BlockBuilder";
 export class InMemoryBlockStorage implements BlockStorage {
     private blockChain: Block[] = [theGenesisBlock];
 
-    public getBlockHashOnHeight(height: number): string {
+    public async getBlockHashOnHeight(height: number): Promise<string> {
         return this.blockChain[height].hash;
     }
 
@@ -13,11 +13,11 @@ export class InMemoryBlockStorage implements BlockStorage {
         this.blockChain.push(block);
     }
 
-    public getTopMostBlock(): Block {
+    public async getTopMostBlock(): Promise<Block> {
         return this.blockChain[this.blockChain.length - 1];
     }
 
-    public getBlockChainHeight(): number {
+    public async getBlockChainHeight(): Promise<number> {
         return this.blockChain.length;
     }
 
