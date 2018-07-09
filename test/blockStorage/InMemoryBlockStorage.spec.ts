@@ -14,25 +14,25 @@ describe("InMemory BlockStorage", () => {
         expect(blockStorage).to.not.be.undefined;
     });
 
-    it("should return the genesis block on height 0", () => {
+    it("should return the genesis block on height 0", async () => {
         const blockStorage: BlockStorage = new InMemoryBlockStorage();
 
-        const actual = blockStorage.getBlockHashOnHeight(0);
-        const expected = theGenesisBlock.hash;
+        const actual: string = await blockStorage.getBlockHashOnHeight(0);
+        const expected: string = theGenesisBlock.hash;
         expect(actual).to.equal(expected);
     });
 
-    it("should be append to the BlockStorage", () => {
+    it("should be append to the BlockStorage", async () => {
         const blockStorage: BlockStorage = new InMemoryBlockStorage();
         const block: Block = aBlock(theGenesisBlock);
         blockStorage.appendBlockToChain(block);
 
-        const actual = blockStorage.getBlockHashOnHeight(1);
-        const expected = block.hash;
+        const actual: string = await blockStorage.getBlockHashOnHeight(1);
+        const expected: string = block.hash;
         expect(actual).to.equal(expected);
     });
 
-    it("should return the top most block", () => {
+    it("should return the top most block", async () => {
         const blockStorage: BlockStorage = new InMemoryBlockStorage();
         const block1: Block = aBlock(theGenesisBlock);
         const block2: Block = aBlock(block1);
@@ -41,12 +41,12 @@ describe("InMemory BlockStorage", () => {
         blockStorage.appendBlockToChain(block2);
         blockStorage.appendBlockToChain(block3);
 
-        const actual = blockStorage.getTopMostBlock();
+        const actual: Block = await blockStorage.getTopMostBlock();
         const expected = block3;
         expect(actual).to.equal(expected);
     });
 
-    it("should return the block chain height", () => {
+    it("should return the block chain height", async () => {
         const blockStorage: BlockStorage = new InMemoryBlockStorage();
         const block1: Block = aBlock(theGenesisBlock);
         const block2: Block = aBlock(block1);
@@ -55,7 +55,7 @@ describe("InMemory BlockStorage", () => {
         blockStorage.appendBlockToChain(block2);
         blockStorage.appendBlockToChain(block3);
 
-        const actual = blockStorage.getBlockChainHeight();
+        const actual: number = await blockStorage.getBlockChainHeight();
         expect(actual).to.equal(4);
     });
 });

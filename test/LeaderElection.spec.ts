@@ -5,6 +5,7 @@ import * as sinonChai from "sinon-chai";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aSimpleNetwork } from "./builders/NetworkBuilder";
 import { InMemoryGossip } from "./gossip/InMemoryGossip";
+import { nextTick } from "./timeUtils";
 
 chai.use(sinonChai);
 
@@ -134,6 +135,7 @@ describe("Leader Election", () => {
 
         network.startConsensusOnAllNodes();
         await blocksProvider.provideNextBlock();
+        await nextTick(); // await for blockStorage.getTopMostBlock
         await blocksValidator.resolveAllValidations(true);
 
         expect(node0.isLeader()).to.true;
@@ -147,7 +149,9 @@ describe("Leader Election", () => {
 
         await blocksProvider.provideNextBlock();
         triggerElection();
+        await nextTick();
         await blocksValidator.resolveAllValidations(true);
+        await nextTick(); // await for blockStorage.getTopMostBlock
         await blocksProvider.provideNextBlock();
 
         expect(spy0).to.have.been.calledWith(node0.id, node1.id, "view-change", { term: 1, newView: 1 });

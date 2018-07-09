@@ -8,6 +8,7 @@ import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aSimpleNetwork } from "./builders/NetworkBuilder";
 import { InMemoryGossip } from "./gossip/InMemoryGossip";
 import { blockMatcher } from "./matchers/blockMatcher";
+import { nextTick } from "./timeUtils";
 
 chai.use(sinonChai);
 chai.use(blockMatcher);
@@ -66,17 +67,19 @@ describe("PBFT", () => {
         leaderGossip.setOutGoingWhiteList([network.nodes[1].id, network.nodes[2].id]);
         network.startConsensusOnAllNodes();
         await blocksProvider.provideNextBlock();
+        await nextTick(); // await for blockStorage.getTopMostBlock
         await blocksValidator.resolveAllValidations(true);
 
         // suggest block 2 to node 3.
         leaderGossip.setOutGoingWhiteList([network.nodes[3].id]);
         network.startConsensusOnAllNodes();
         await blocksProvider.provideNextBlock();
+        await nextTick(); // await for blockStorage.getTopMostBlock
         await blocksValidator.resolveAllValidations(true);
 
-        expect(network.nodes[1].getLatestBlock()).to.equal(block1);
-        expect(network.nodes[2].getLatestBlock()).to.equal(block1);
-        expect(network.nodes[3].getLatestBlock()).to.equal(theGenesisBlock);
+        expect(await network.nodes[1].getLatestBlock()).to.equal(block1);
+        expect(await network.nodes[2].getLatestBlock()).to.equal(block1);
+        expect(await network.nodes[3].getLatestBlock()).to.equal(theGenesisBlock);
         network.shutDown();
     });
 

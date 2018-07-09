@@ -53,7 +53,8 @@ export class PBFT {
     private overrideBlockValidation(blocksValidator: BlocksValidator): BlocksValidator {
         return {
             validateBlock: async (block: Block): Promise<boolean> => {
-                if (this.blockStorage.getTopMostBlock().hash !== block.previousBlockHash) {
+                const topBlock: Block = await this.blockStorage.getTopMostBlock();
+                if (topBlock.hash !== block.previousBlockHash) {
                     return false;
                 }
                 return blocksValidator.validateBlock(block);

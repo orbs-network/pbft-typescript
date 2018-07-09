@@ -123,13 +123,18 @@ export class PBFTTerm {
     }
 
     public async onReceivePrePrepare(senderId: string, payload: PrePreparePayload): Promise<void> {
-        if (await this.validatePrePreapare(this.view, senderId, payload)) {
+        if (await this.validatePrePreapare(senderId, payload)) {
             this.processPrePrepare(payload);
         }
     }
 
     private processPrePrepare(payload: PrePreparePayload): void {
         const { view, term, block } = payload;
+        if (this.view !== view) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], processPrePrepare, view doesn't match` });
+            return;
+        }
+
         this.CB = block;
         this.pbftStorage.storePrepare(term, view, block.hash, this.id);
         this.pbftStorage.storePrePrepare(term, view, block.hash, block.content);
@@ -137,20 +142,15 @@ export class PBFTTerm {
         this.checkPrepared(term, view, block.hash);
     }
 
-    private async validatePrePreapare(targetView: number, senderId: string, payload: PrePreparePayload): Promise<boolean> {
+    private async validatePrePreapare(senderId: string, payload: PrePreparePayload): Promise<boolean> {
         const { view, term, block } = payload;
-
-        if (targetView !== view) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", unrelated view` });
-            return false;
-        }
 
         if (this.checkPrePrepare(term, view)) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", already prepared` });
             return false;
         }
 
-        const wanaBeLeaderId = this.network.getNodeIdBySeed(targetView);
+        const wanaBeLeaderId = this.network.getNodeIdBySeed(view);
         if (wanaBeLeaderId !== senderId) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block rejected because it was not sent by the current leader (${view})` });
             return false;
@@ -293,7 +293,7 @@ export class PBFTTerm {
             return;
         }
 
-        if (await this.validatePrePreapare(view, senderId, PP)) {
+        if (await this.validatePrePreapare(senderId, PP)) {
             this.initView(view);
             this.processPrePrepare(PP);
         }

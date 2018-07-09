@@ -9,6 +9,7 @@ import { aNetwork } from "./builders/NetworkBuilder";
 import { aNode } from "./builders/NodeBuilder";
 import { SilentLogger } from "./logger/SilentLogger";
 import { InMemoryPBFTStorage } from "./storage/InMemoryPBFTStorage";
+import { nextTick } from "./timeUtils";
 
 chai.use(sinonChai);
 
@@ -34,6 +35,7 @@ describe("Spam Prevention", () => {
         await blocksProvider.provideNextBlock();
         leader.pbft.gossip.unicast(leader.id, node.id, "preprepare", { block: block, view: 0, term: 0 });
         leader.pbft.gossip.unicast(leader.id, node.id, "preprepare", { block: block, view: 0, term: 0 });
+        await nextTick();
         await blocksValidator.resolveAllValidations(true);
 
         expect(inspectedStorage.getPrepare(0, 0, block.hash).length).to.equal(4);

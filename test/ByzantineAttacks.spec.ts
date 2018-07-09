@@ -9,7 +9,7 @@ import { aNode } from "./builders/NodeBuilder";
 import { InMemoryGossip } from "./gossip/InMemoryGossip";
 import { SilentLogger } from "./logger/SilentLogger";
 import { InMemoryPBFTStorage } from "./storage/InMemoryPBFTStorage";
-import { nextTick } from "./timeUtils";
+import { nextTick, wait } from "./timeUtils";
 
 chai.use(sinonChai);
 
@@ -73,24 +73,14 @@ describe("Byzantine Attacks", () => {
         leader.pbft.gossip.unicast(leader.id, node.id, "preprepare", { block, view: 0, term: 0 });
         await nextTick();
 
-        expect(node.getLatestBlock()).to.not.deep.equal(block);
+        expect(await node.getLatestBlock()).to.not.deep.equal(block);
         network.shutDown();
     });
 
-    it("Leader suggests 2 blocks that points to the previous block at the same time", async () => {
-        // We have nodes 0, 1, 2, 3.
-
-        // * 0 is a byzantine leader
-        // * 0 sends PP (B1) to nodes 1 and 2. B1 is pointing to the previous block.
-        // * nodes 1 and 2 hang on validation
-        // * 0 sends PP (B2) to nodes 2 and 3. B2 is pointing to the previous block.
-        // * there's a consensus on B2.
-        // * validation is complete, nodes 1 and 2 continue.
-        // * there's another consensus on B1.
-        // * we use term to solve this
-        const block1 = aBlock(theGenesisBlock);
-        const block2 = aBlock(theGenesisBlock);
-        const { network, blocksProvider, blocksValidator } = aSimpleNetwork(4, [block1, block2]);
+    it("Block validation is completed after new election, old validation should be ignored", async () => {
+        const block1 = aBlock(theGenesisBlock, "Block 1");
+        const block2 = aBlock(theGenesisBlock, "Block 2");
+        const { network, blocksProvider, blocksValidator, triggerElection } = aSimpleNetwork(4, [block1, block2]);
 
         const leader = network.nodes[0];
         const node1 = network.nodes[1];
@@ -101,16 +91,18 @@ describe("Byzantine Attacks", () => {
         leaderGossip.setOutGoingWhiteList([node1.id, node2.id]);
         network.startConsensusOnAllNodes();
         await blocksProvider.provideNextBlock();
-        await blocksValidator.resolveAllValidations(true);
+        await nextTick(); // await for blockStorage.getTopMostBlock
 
-        leaderGossip.setOutGoingWhiteList([node2.id, node3.id]);
+        triggerElection();
+
         await blocksProvider.provideNextBlock();
+        await nextTick(); // await for blockStorage.getTopMostBlock
         await blocksValidator.resolveAllValidations(true);
 
-        expect(node1.getLatestBlock()).to.equal(block1);
-        expect(node2.getLatestBlock()).to.equal(block1);
-        expect(node3.getLatestBlock()).to.not.equal(block1);
-        expect(node3.getLatestBlock()).to.not.equal(block2);
+        expect(await node1.getLatestBlock()).to.equal(block2);
+        expect(await node2.getLatestBlock()).to.equal(block2);
+        expect(await node3.getLatestBlock()).to.equal(block2);
+        expect(await node3.getLatestBlock()).to.equal(block2);
         network.shutDown();
     });
 
@@ -173,12 +165,13 @@ describe("Byzantine Attacks", () => {
 
         network.startConsensusOnAllNodes();
         await blocksProvider.provideNextBlock();
+        await nextTick(); // await for blockStorage.getTopMostBlock
         await blocksValidator.resolveAllValidations(true);
 
-        expect(node0.getLatestBlock()).to.equal(theGenesisBlock);
-        expect(node1.getLatestBlock()).to.equal(theGenesisBlock);
-        expect(node2.getLatestBlock()).to.equal(theGenesisBlock);
-        expect(node3.getLatestBlock()).to.equal(theGenesisBlock);
+        expect(await node0.getLatestBlock()).to.equal(theGenesisBlock);
+        expect(await node1.getLatestBlock()).to.equal(theGenesisBlock);
+        expect(await node2.getLatestBlock()).to.equal(theGenesisBlock);
+        expect(await node3.getLatestBlock()).to.equal(theGenesisBlock);
 
         gossip0.clearOutGoingWhiteList();
         gossip1.clearOutGoingWhiteList();
@@ -191,12 +184,13 @@ describe("Byzantine Attacks", () => {
         await blocksValidator.resolveAllValidations(true);
 
         await blocksProvider.provideNextBlock();
+        await nextTick(); // await for blockStorage.getTopMostBlock
         await blocksValidator.resolveAllValidations(true);
 
-        expect(node0.getLatestBlock()).to.equal(block2);
-        expect(node1.getLatestBlock()).to.equal(block2);
-        expect(node2.getLatestBlock()).to.equal(block2);
-        expect(node3.getLatestBlock()).to.equal(theGenesisBlock);
+        expect(await node0.getLatestBlock()).to.equal(block2);
+        expect(await node1.getLatestBlock()).to.equal(block2);
+        expect(await node2.getLatestBlock()).to.equal(block2);
+        expect(await node3.getLatestBlock()).to.equal(theGenesisBlock);
 
         network.shutDown();
     });
@@ -237,11 +231,11 @@ describe("Byzantine Attacks", () => {
         gossip2.onRemoteMessage("node2000", "commit", Cpayload2); // node1 pretending to send commit as node2000
 
         await nextTick();
-        expect(node1.getLatestBlock()).to.not.equal(block1);
-        expect(node2.getLatestBlock()).to.not.equal(block2);
+        expect(await node1.getLatestBlock()).to.not.equal(block1);
+        expect(await node2.getLatestBlock()).to.not.equal(block2);
 
-        expect(node1.getLatestBlock()).to.not.equal(block1);
-        expect(node2.getLatestBlock()).to.not.equal(block2);
+        expect(await node1.getLatestBlock()).to.not.equal(block1);
+        expect(await node2.getLatestBlock()).to.not.equal(block2);
 
         network.shutDown();
     });

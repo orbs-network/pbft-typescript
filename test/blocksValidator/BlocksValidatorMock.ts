@@ -22,13 +22,13 @@ export class BlocksValidatorMock implements BlocksValidator {
 
     public async resolveAllValidations(isValid: boolean): Promise<any> {
         this.resolveList.forEach(f => f(isValid));
-        this.resolveList.length = 0;
+        this.resolveList = [];
         await this.afterAllValidations();
     }
 
     private afterAllValidations(): Promise<any> {
         const result = Promise.all(this.promiseList);
-        this.promiseList.length = 0;
+        this.promiseList = [];
         return result;
     }
 
