@@ -5,6 +5,7 @@ import { Config } from "./Config";
 import { Gossip } from "./gossip/Gossip";
 import { PBFTGossipFilter } from "./gossipFilter/PBFTGossipFilter";
 import { PBFTTerm } from "./PBFTTerm";
+import { InMemoryBlockStorage } from "../test/blockStorage/InMemoryBlockStorage";
 
 export type onCommittedCB = (block: Block) => Promise<void>;
 
@@ -22,7 +23,7 @@ export class PBFT {
     constructor(config: Config) {
         this.onCommittedListeners = [];
         this.id = config.id;
-        this.blockStorage = config.blockStorage;
+        this.blockStorage = config.blockStorage || new InMemoryBlockStorage();
 
         this.pbftTermConfig = this.createTermConfig(config);
         this.pbftGossipFilter = new PBFTGossipFilter(config.gossip, this.id, config.network);

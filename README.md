@@ -38,7 +38,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] BlocksProvider.getBlock() change to requestNewBlock(blockHeight: number)
 - [V] BlockStorage: remove getBlockHashOnHeight(), getBlockChainHeight().
 - [V] Convert registerOnCommitted() to async.
-- [ ] Default implementations of: PBFTStorage.
+- [V] Default implementations of: PBFTStorage.
 - [ ] Implement registerOnCommitted() to async.
 - [ ] term should be taken from the height of the latest block (Use the BlockStorage)
 - [ ] Add restart to PBFT api
