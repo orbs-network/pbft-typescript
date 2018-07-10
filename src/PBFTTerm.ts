@@ -46,7 +46,7 @@ export class PBFTTerm {
     public async startTerm(): Promise<void> {
         this.initView(0);
         if (this.isLeader(this.id)) {
-            this.CB = await this.blocksProvider.getBlock();
+            this.CB = await this.blocksProvider.requestNewBlock(this.term);
             if (this.disposed) {
                 return;
             }
@@ -237,7 +237,7 @@ export class PBFTTerm {
         }
         this.initView(view);
         this.electedOnView = view;
-        const block: Block = await this.blocksProvider.getBlock();
+        const block: Block = await this.blocksProvider.requestNewBlock(this.term);
         if (this.disposed) {
             return;
         }

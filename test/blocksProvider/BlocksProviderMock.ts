@@ -31,7 +31,7 @@ export class BlocksProviderMock implements BlocksProvider {
         return nextTick;
     }
 
-    public getBlock(): Promise<Block> {
+    public requestNewBlock(): Promise<Block> {
         const promise = new Promise<Block>(resolve => {
             this.resolveList.push(resolve);
         });

@@ -1,5 +1,5 @@
 import { Block } from "../Block";
 
 export interface BlocksProvider {
-    getBlock(): Promise<Block>;
+    requestNewBlock(height: number): Promise<Block>;
 }
