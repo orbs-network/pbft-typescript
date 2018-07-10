@@ -44,3 +44,9 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [ ] Optimizations: IData - Signature only on hash(header).
 - [ ] Network: Responsible for MAP: PK - nodeAddress
 - [?] Sync from external source.
+- [ ] Rename OnNewBlock to OnCommitted(Block)
+- [ ] Convert registerOnCommitted() to async.
+- [ ] Default implementations of: PBFTStorage.
+- [ ] Expose TimerBasedElectionTrigger.
+- [ ] BlcokStorage.getTopMostBlock() => convert to BlcokStorage.getLastBlockHash()
+- [ ] BlockStorage: remove getBlockHashOnHeight(), getBlockChainHeight().
