@@ -13,7 +13,7 @@ export class NodeMock implements Node {
     }
 
     public async getLatestBlock(): Promise<Block> {
-        const block: Block = await this.blockStorage.getTopMostBlock();
+        const block: Block = await this.blockStorage.getLastBlockHash();
         return block;
     }
 

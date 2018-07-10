@@ -51,7 +51,7 @@ describe("PBFT", () => {
 
         network.nodes[3].startConsensus(); // pretending to be the leader
         await blocksProvider.provideNextBlock();
-        await nextTick(); // await for blockStorage.getTopMostBlock
+        await nextTick(); // await for blockStorage.getLastBlockHash
         await blocksValidator.resolveAllValidations(true);
 
         expect(network.nodes).to.not.agreeOnBlock(blocksPool[0]);
@@ -69,14 +69,14 @@ describe("PBFT", () => {
         leaderGossip.setOutGoingWhiteList([network.nodes[1].id, network.nodes[2].id]);
         network.startConsensusOnAllNodes();
         await blocksProvider.provideNextBlock();
-        await nextTick(); // await for blockStorage.getTopMostBlock
+        await nextTick(); // await for blockStorage.getLastBlockHash
         await blocksValidator.resolveAllValidations(true);
 
         // suggest block 2 to node 3.
         leaderGossip.setOutGoingWhiteList([network.nodes[3].id]);
         network.startConsensusOnAllNodes();
         await blocksProvider.provideNextBlock();
-        await nextTick(); // await for blockStorage.getTopMostBlock
+        await nextTick(); // await for blockStorage.getLastBlockHash
         await blocksValidator.resolveAllValidations(true);
 
         expect(await network.nodes[1].getLatestBlock()).to.equal(block1);

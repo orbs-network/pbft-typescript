@@ -41,7 +41,7 @@ describe("InMemory BlockStorage", () => {
         blockStorage.appendBlockToChain(block2);
         blockStorage.appendBlockToChain(block3);
 
-        const actual: Block = await blockStorage.getTopMostBlock();
+        const actual: Block = await blockStorage.getLastBlockHash();
         const expected = block3;
         expect(actual).to.equal(expected);
     });

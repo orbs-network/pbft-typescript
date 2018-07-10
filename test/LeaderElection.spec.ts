@@ -136,7 +136,7 @@ describe("Leader Election", () => {
 
         network.startConsensusOnAllNodes();
         await blocksProvider.provideNextBlock();
-        await nextTick(); // await for blockStorage.getTopMostBlock
+        await nextTick(); // await for blockStorage.getLastBlockHash
         await blocksValidator.resolveAllValidations(true);
 
         expect(node0.isLeader()).to.true;
@@ -152,7 +152,7 @@ describe("Leader Election", () => {
         triggerElection();
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
-        await nextTick(); // await for blockStorage.getTopMostBlock
+        await nextTick(); // await for blockStorage.getLastBlockHash
         await blocksProvider.provideNextBlock();
 
         expect(spy0).to.have.been.calledWith(node0.id, node1.id, "view-change", buildPayload({ term: 1, newView: 1 }));

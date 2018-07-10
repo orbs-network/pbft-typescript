@@ -13,7 +13,7 @@ export class InMemoryBlockStorage implements BlockStorage {
         this.blockChain.push(block);
     }
 
-    public async getTopMostBlock(): Promise<Block> {
+    public async getLastBlockHash(): Promise<Block> {
         return this.blockChain[this.blockChain.length - 1];
     }
 

@@ -34,8 +34,8 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] BlockStorage interface remove 'appendBlockToChain'.
 - [V] add the git repo to the npm site
 - [V] Rename OnNewBlock to OnCommitted(Block)
+- [V] BlcokStorage.getTopMostBlock() => convert to BlcokStorage.getLastBlockHash()
 - [ ] Default implementations of: PBFTStorage.
-- [ ] BlcokStorage.getTopMostBlock() => convert to BlcokStorage.getLastBlockHash()
 - [ ] BlockStorage: remove getBlockHashOnHeight(), getBlockChainHeight().
 - [ ] Convert registerOnCommitted() to async.
 - [ ] BlocksProvider.getBlock() change to requestNewBlock(blockHeight: number)

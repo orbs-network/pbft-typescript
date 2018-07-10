@@ -92,12 +92,12 @@ describe("Byzantine Attacks", () => {
         leaderGossip.setOutGoingWhiteList([node1.id, node2.id]);
         network.startConsensusOnAllNodes();
         await blocksProvider.provideNextBlock();
-        await nextTick(); // await for blockStorage.getTopMostBlock
+        await nextTick(); // await for blockStorage.getLastBlockHash
 
         triggerElection();
 
         await blocksProvider.provideNextBlock();
-        await nextTick(); // await for blockStorage.getTopMostBlock
+        await nextTick(); // await for blockStorage.getLastBlockHash
         await blocksValidator.resolveAllValidations(true);
 
         expect(await node1.getLatestBlock()).to.equal(block2);
@@ -166,7 +166,7 @@ describe("Byzantine Attacks", () => {
 
         network.startConsensusOnAllNodes();
         await blocksProvider.provideNextBlock();
-        await nextTick(); // await for blockStorage.getTopMostBlock
+        await nextTick(); // await for blockStorage.getLastBlockHash
         await blocksValidator.resolveAllValidations(true);
 
         expect(await node0.getLatestBlock()).to.equal(theGenesisBlock);
@@ -185,7 +185,7 @@ describe("Byzantine Attacks", () => {
         await blocksValidator.resolveAllValidations(true);
 
         await blocksProvider.provideNextBlock();
-        await nextTick(); // await for blockStorage.getTopMostBlock
+        await nextTick(); // await for blockStorage.getLastBlockHash
         await blocksValidator.resolveAllValidations(true);
 
         expect(await node0.getLatestBlock()).to.equal(block2);
