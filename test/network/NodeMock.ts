@@ -9,7 +9,7 @@ export class NodeMock implements Node {
 
     constructor(public pbft: PBFT, private blockStorage: InMemoryBlockStorage) {
         this.id = pbft.id;
-        this.pbft.registerToOnNewBlock(block => this.onNewBlock(block));
+        this.pbft.registerToOnCommitted(block => this.onNewBlock(block));
     }
 
     public async getLatestBlock(): Promise<Block> {

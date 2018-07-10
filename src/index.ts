@@ -9,4 +9,4 @@ export { Logger, LogTypes } from "./logger/Logger";
 export { Network } from "./network/Network";
 export { Block } from "./Block";
 export { PBFTStorage } from "./storage/PBFTStorage";
-export { onNewBlockCB, PBFT } from "./PBFT";
+export { onCommittedCB, PBFT } from "./PBFT";

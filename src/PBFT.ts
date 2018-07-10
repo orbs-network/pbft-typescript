@@ -6,10 +6,10 @@ import { Gossip } from "./gossip/Gossip";
 import { PBFTGossipFilter } from "./gossipFilter/PBFTGossipFilter";
 import { PBFTTerm } from "./PBFTTerm";
 
-export type onNewBlockCB = (block: Block) => void;
+export type onCommittedCB = (block: Block) => void;
 
 export class PBFT {
-    private readonly onNewBlockListeners: onNewBlockCB[];
+    private readonly onCommittedListeners: onCommittedCB[];
     private readonly blockStorage: BlockStorage;
     private term: number;
     private pbftTerm: PBFTTerm;
@@ -20,7 +20,7 @@ export class PBFT {
     public readonly gossip: Gossip;
 
     constructor(config: Config) {
-        this.onNewBlockListeners = [];
+        this.onCommittedListeners = [];
         this.id = config.id;
         this.blockStorage = config.blockStorage;
 
@@ -33,8 +33,8 @@ export class PBFT {
         this.term = 0; // TODO: this.lastCommittedBlock.height;
     }
 
-    private notifyNewBlock(block: Block): void {
-        this.onNewBlockListeners.forEach(cb => cb(block));
+    private notifyCommitted(block: Block): void {
+        this.onCommittedListeners.forEach(cb => cb(block));
     }
 
     private disposePBFTTerm(): void {
@@ -67,7 +67,7 @@ export class PBFT {
             this.disposePBFTTerm();
             this.term++;
             this.createPBFTTerm();
-            this.notifyNewBlock(block);
+            this.notifyCommitted(block);
         });
         this.pbftGossipFilter.setTerm(this.term, this.pbftTerm);
     }
@@ -78,8 +78,8 @@ export class PBFT {
         }
     }
 
-    public registerToOnNewBlock(bc: (block: Block) => void): void {
-        this.onNewBlockListeners.push(bc);
+    public registerToOnCommitted(bc: (block: Block) => void): void {
+        this.onCommittedListeners.push(bc);
     }
 
     public start(): void {
@@ -89,7 +89,7 @@ export class PBFT {
     }
 
     public dispose(): any {
-        this.onNewBlockListeners.length = 0;
+        this.onCommittedListeners.length = 0;
         this.disposePBFTTerm();
         this.pbftGossipFilter.dispose();
     }
