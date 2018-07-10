@@ -33,8 +33,16 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] BlockStorage interface async compatible.
 - [V] BlockStorage interface remove 'appendBlockToChain'.
 - [V] add the git repo to the npm site
-- [ ] Default implementations of: PBFTStorage, TimerBasedElectionTrigger
+- [ ] Rename OnNewBlock to OnCommitted(Block)
+- [ ] Default implementations of: PBFTStorage.
+- [ ] BlcokStorage.getTopMostBlock() => convert to BlcokStorage.getLastBlockHash()
+- [ ] BlockStorage: remove getBlockHashOnHeight(), getBlockChainHeight().
+- [ ] Convert registerOnCommitted() to async.
+- [ ] BlocksProvider.getBlock() change to requestNewBlock(blockHeight: number)
 - [ ] term should be taken from the height of the latest block (Use the BlockStorage)
+- [ ] Add restart to PBFT api
+- [ ] Remove senderId from Gossip -> Use PK instead
+- [ ] 
 - [ ] clear the pbftStorage
 - [ ] sign messages including the message type
 - [ ] trigger once, prepared, elected, new-view, committed.
@@ -44,9 +52,3 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [ ] Optimizations: IData - Signature only on hash(header).
 - [ ] Network: Responsible for MAP: PK - nodeAddress
 - [?] Sync from external source.
-- [ ] Rename OnNewBlock to OnCommitted(Block)
-- [ ] Convert registerOnCommitted() to async.
-- [ ] Default implementations of: PBFTStorage.
-- [ ] Expose TimerBasedElectionTrigger.
-- [ ] BlcokStorage.getTopMostBlock() => convert to BlcokStorage.getLastBlockHash()
-- [ ] BlockStorage: remove getBlockHashOnHeight(), getBlockChainHeight().
