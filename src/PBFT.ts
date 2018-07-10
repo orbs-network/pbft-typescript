@@ -89,6 +89,9 @@ export class PBFT {
         }
     }
 
+    public restart(): void {
+    }
+
     public dispose(): any {
         this.onCommittedListeners.length = 0;
         this.disposePBFTTerm();

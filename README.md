@@ -37,11 +37,12 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] BlcokStorage.getTopMostBlock() => convert to BlcokStorage.getLastBlockHash()
 - [V] BlocksProvider.getBlock() change to requestNewBlock(blockHeight: number)
 - [V] BlockStorage: remove getBlockHashOnHeight(), getBlockChainHeight().
-- [V] Convert registerOnCommitted() to async.
+- [V] Convert "registerOnCommitted" to async.
 - [V] Default implementations of: PBFTStorage.
-- [ ] Implement registerOnCommitted() to async.
+- [V] Add "restart" to PBFT api
+- [ ] Implement "registerOnCommitted" to async.
+- [ ] Implement "restart" to PBFT api
 - [ ] term should be taken from the height of the latest block (Use the BlockStorage)
-- [ ] Add restart to PBFT api
 - [ ] Remove senderId from Gossip -> Use PK instead
 - [ ]
 - [ ] clear the pbftStorage
