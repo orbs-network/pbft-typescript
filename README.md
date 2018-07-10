@@ -44,7 +44,9 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] Implement "registerOnCommitted" to async.
 - [V] Implement "restart" to PBFT api
 - [ ] Remove senderId from Gossip -> Use PK instead
-- [ ]
+- [ ] KeyManager passed in config
+- [ ] KeyManager implementation. 
+- [ ] 
 - [ ] Have a better (Readable) tests solution to await nextTick
 - [ ] clear the pbftStorage
 - [ ] sign messages including the message type
