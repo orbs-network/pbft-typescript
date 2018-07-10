@@ -8,6 +8,7 @@ import { BlocksValidatorMock } from "./blocksValidator/BlocksValidatorMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNetwork } from "./builders/NetworkBuilder";
 import { InMemoryNetwork } from "./network/InMemoryNetwork";
+import { nextTick } from "./timeUtils";
 
 chai.use(sinonChai);
 
@@ -35,6 +36,7 @@ describe("Block Validation", () => {
     it("should call validateBlock on onPrepare", async () => {
         const spy = sinon.spy(blocksValidator, "validateBlock");
         network.startConsensusOnAllNodes();
+        await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
 
@@ -44,6 +46,7 @@ describe("Block Validation", () => {
 
     it("should not reach consensus if validateBlock returned false", async () => {
         network.startConsensusOnAllNodes();
+        await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(false);
 

@@ -21,6 +21,7 @@ export class PBFTTerm {
     private viewState: ViewState;
     private CB: Block;
     private disposed: boolean = false;
+    private committedLocally: boolean = false;
 
     public readonly id: string;
     public readonly blocksValidator: BlocksValidator;
@@ -356,6 +357,10 @@ export class PBFTTerm {
     }
 
     private commitBlock(block: Block): void {
+        if (this.committedLocally) {
+            return;
+        }
+        this.committedLocally = true;
         this.logger.log({ Subject: "Flow", FlowType: "Commit", term: this.term, view: this.view, block });
         this.stopViewState();
         this.onCommittedBlock(this.CB);

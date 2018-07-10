@@ -38,7 +38,7 @@ describe("PBFTTerm", () => {
         expect(pbftTerm.getView()).to.equal(1);
         const leaderId = config.network.getNodeIdBySeed(1);
 
-        pbftTerm.onReceiveNewView(leaderId, buildPayload({ term: 0, view: 0, PP: undefined }));
+        pbftTerm.onReceiveNewView(leaderId, buildPayload({ term: 1, view: 0, PP: undefined }));
         expect(pbftTerm.getView()).to.equal(1);
     });
 
@@ -53,12 +53,12 @@ describe("PBFTTerm", () => {
 
         const spy = sinon.spy(config.pbftStorage, "storeViewChange");
         // current view (1) => valid
-        pbftTerm.onReceiveViewChange(leaderId, buildPayload({ term: 0, newView: 1 }));
+        pbftTerm.onReceiveViewChange(leaderId, buildPayload({ term: 1, newView: 1 }));
         expect(spy).to.have.been.called;
 
         // view from the past (0) => invalid, should be ignored
         spy.resetHistory();
-        pbftTerm.onReceiveViewChange(leaderId, buildPayload({ term: 0, newView: 0 }));
+        pbftTerm.onReceiveViewChange(leaderId, buildPayload({ term: 1, newView: 0 }));
         expect(spy).to.not.have.been.called;
     });
 
@@ -75,17 +75,17 @@ describe("PBFTTerm", () => {
         const block: Block = aBlock(theGenesisBlock);
 
         // current view (1) => valid
-        pbftTerm.onReceivePrepare(noneLeaderId, buildPayload({ term: 0, view: 1, blockHash: block.header.hash }));
+        pbftTerm.onReceivePrepare(noneLeaderId, buildPayload({ term: 1, view: 1, blockHash: block.header.hash }));
         expect(spy).to.have.been.called;
 
         // view from the future (2) => valid
         spy.resetHistory();
-        pbftTerm.onReceivePrepare(noneLeaderId, buildPayload({ term: 0, view: 2, blockHash: block.header.hash }));
+        pbftTerm.onReceivePrepare(noneLeaderId, buildPayload({ term: 1, view: 2, blockHash: block.header.hash }));
         expect(spy).to.have.been.called;
 
         // view from the past (0) => invalid, should be ignored
         spy.resetHistory();
-        pbftTerm.onReceivePrepare(noneLeaderId, buildPayload({ term: 0, view: 0, blockHash: block.header.hash }));
+        pbftTerm.onReceivePrepare(noneLeaderId, buildPayload({ term: 1, view: 0, blockHash: block.header.hash }));
         expect(spy).to.not.have.been.called;
     });
 
@@ -102,19 +102,19 @@ describe("PBFTTerm", () => {
         const spy = sinon.spy(config.pbftStorage, "storePrepare");
 
         // current view (1) => valid
-        pbftTerm.onReceivePrePrepare(leaderId, buildPayload({ term: 0, view: 1, block }));
+        pbftTerm.onReceivePrePrepare(leaderId, buildPayload({ term: 1, view: 1, block }));
         await config.blocksValidator.resolveAllValidations(true);
         expect(spy).to.have.been.called;
 
         // view from the future (2) => invalid, should be ignored
         spy.resetHistory();
-        pbftTerm.onReceivePrePrepare(leaderId, buildPayload({ term: 0, view: 2, block }));
+        pbftTerm.onReceivePrePrepare(leaderId, buildPayload({ term: 1, view: 2, block }));
         await config.blocksValidator.resolveAllValidations(true);
         expect(spy).to.not.have.been.called;
 
         // view from the past (0) => invalid, should be ignored
         spy.resetHistory();
-        pbftTerm.onReceivePrePrepare(leaderId, buildPayload({ term: 0, view: 0, block }));
+        pbftTerm.onReceivePrePrepare(leaderId, buildPayload({ term: 1, view: 0, block }));
         await config.blocksValidator.resolveAllValidations(true);
         expect(spy).to.not.have.been.called;
     });
@@ -128,12 +128,12 @@ describe("PBFTTerm", () => {
 
         const spy = sinon.spy(config.pbftStorage, "storePrepare");
         // not from the leader => ok
-        pbftTerm.onReceivePrepare(noneLeaderId, buildPayload({ term: 0, view: 0, blockHash: "" }));
+        pbftTerm.onReceivePrepare(noneLeaderId, buildPayload({ term: 1, view: 0, blockHash: "" }));
         expect(spy).to.have.been.called;
 
         // from the leader => ignore
         spy.resetHistory();
-        pbftTerm.onReceivePrepare(leaderId, buildPayload({ term: 0, view: 0, blockHash: "" }));
+        pbftTerm.onReceivePrepare(leaderId, buildPayload({ term: 1, view: 0, blockHash: "" }));
         expect(spy).to.not.have.been.called;
     });
 
@@ -148,12 +148,12 @@ describe("PBFTTerm", () => {
 
         const spy = sinon.spy(config.blocksValidator, "validateBlock");
         // from the leader => ok
-        pbftTerm.onReceivePrePrepare(leaderId, buildPayload({ term: 0, view: 0, block }));
+        pbftTerm.onReceivePrePrepare(leaderId, buildPayload({ term: 1, view: 0, block }));
         expect(spy).to.have.been.called;
 
         // not from the leader => ignore
         spy.resetHistory();
-        pbftTerm.onReceivePrePrepare(noneLeaderId, buildPayload({ term: 0, view: 0, block }));
+        pbftTerm.onReceivePrePrepare(noneLeaderId, buildPayload({ term: 1, view: 0, block }));
         expect(spy).to.not.have.been.called;
     });
 
@@ -165,13 +165,13 @@ describe("PBFTTerm", () => {
         const block: Block = aBlock(theGenesisBlock);
 
         // from the leader => ok
-        pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(1), buildPayload({ term: 0, view: 1, PP: buildPayload({term: 0, view: 1, block}) }));
+        pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(1), buildPayload({ term: 1, view: 1, PP: buildPayload({term: 1, view: 1, block}) }));
         await nextTick();
         await config.blocksValidator.resolveAllValidations(true);
         expect(pbftTerm.getView()).to.equal(1);
 
         // not from the leader => ignore
-        pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(3), buildPayload({ term: 0, view: 2, PP: buildPayload({term: 0, view: 0, block}) }));
+        pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(3), buildPayload({ term: 1, view: 2, PP: buildPayload({term: 1, view: 0, block}) }));
         await config.blocksValidator.resolveAllValidations(true);
         expect(pbftTerm.getView()).to.equal(1);
     });
@@ -184,12 +184,12 @@ describe("PBFTTerm", () => {
         const spy = sinon.spy(config.pbftStorage, "storeViewChange");
 
         // match me as a leader => ok
-        pbftTerm.onReceiveViewChange(node0Id, buildPayload({ term: 0, newView: 1 }));
+        pbftTerm.onReceiveViewChange(node0Id, buildPayload({ term: 1, newView: 1 }));
         expect(spy).to.have.been.called;
 
         // doesn't match me as a leader => ignore
         spy.resetHistory();
-        pbftTerm.onReceiveViewChange(node0Id, buildPayload({ term: 0, newView: 2 }));
+        pbftTerm.onReceiveViewChange(node0Id, buildPayload({ term: 1, newView: 2 }));
         expect(spy).to.not.have.been.called;
     });
 
@@ -201,13 +201,13 @@ describe("PBFTTerm", () => {
         const block: Block = aBlock(theGenesisBlock);
 
         // same view => ok
-        pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(1), buildPayload({ term: 0, view: 1, PP: buildPayload({term: 0, view: 1, block}) }));
+        pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(1), buildPayload({ term: 1, view: 1, PP: buildPayload({term: 1, view: 1, block}) }));
         await nextTick();
         await config.blocksValidator.resolveAllValidations(true);
         expect(pbftTerm.getView()).to.equal(1);
 
         // miss matching view => ignore
-        pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(2), buildPayload({ term: 0, view: 2, PP: buildPayload({term: 0, view: 1, block}) }));
+        pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(2), buildPayload({ term: 1, view: 2, PP: buildPayload({term: 1, view: 1, block}) }));
         await config.blocksValidator.resolveAllValidations(true);
         expect(pbftTerm.getView()).to.equal(1);
     });
@@ -220,13 +220,13 @@ describe("PBFTTerm", () => {
         const block: Block = aBlock(theGenesisBlock);
 
         // pass validation => ok
-        pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(1), buildPayload({ term: 0, view: 1, PP: buildPayload({term: 0, view: 1, block}) }));
+        pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(1), buildPayload({ term: 1, view: 1, PP: buildPayload({term: 1, view: 1, block}) }));
         await nextTick();
         await config.blocksValidator.resolveAllValidations(true);
         expect(pbftTerm.getView()).to.equal(1);
 
         // doesn't pass validation => ignore
-        pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(2), buildPayload({ term: 0, view: 2, PP: buildPayload({term: 0, view: 2, block}) }));
+        pbftTerm.onReceiveNewView(config.network.getNodeIdBySeed(2), buildPayload({ term: 1, view: 2, PP: buildPayload({term: 1, view: 2, block}) }));
         await config.blocksValidator.resolveAllValidations(false);
         expect(pbftTerm.getView()).to.equal(1);
     });

@@ -7,6 +7,7 @@ import { aNode } from "../builders/NodeBuilder";
 import { InMemoryGossip } from "../gossip/InMemoryGossip";
 import { InMemoryGossipDiscovery } from "../gossip/InMemoryGossipDiscovery";
 import { InMemoryNetwork } from "./InMemoryNetwork";
+import { nextTick } from "../timeUtils";
 
 chai.use(sinonChai);
 
@@ -82,6 +83,7 @@ describe("InMemory Network", () => {
         const spy2 = sinon.spy(node2.pbft, "start");
 
         network.startConsensusOnAllNodes();
+        await nextTick(); // await for blockStorage.getBlockChainHeight();
         expect(spy0).to.have.been.called;
         expect(spy1).to.have.been.called;
         expect(spy2).to.have.been.called;

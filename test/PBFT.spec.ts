@@ -23,8 +23,10 @@ describe("PBFT", () => {
         const spy3 = sinon.spy(network.nodes[3].pbft.gossip, "multicast");
 
         network.startConsensusOnAllNodes();
+        await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
+        await nextTick(); // await for notifyCommitted
         const preprepareCounter = (spy: sinon.SinonSpy) => spy.getCalls().filter(c => c.args[2] === "preprepare").length;
 
         expect(preprepareCounter(spy0)).to.equal(1);
@@ -39,6 +41,7 @@ describe("PBFT", () => {
         const { network, blocksProvider, blocksValidator, blocksPool } = aSimpleNetwork();
 
         network.startConsensusOnAllNodes();
+        await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
 
@@ -68,6 +71,7 @@ describe("PBFT", () => {
         // suggest block 1 to nodes 1 and 2
         leaderGossip.setOutGoingWhiteList([network.nodes[1].id, network.nodes[2].id]);
         network.startConsensusOnAllNodes();
+        await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await nextTick(); // await for blockStorage.getLastBlockHash
         await blocksValidator.resolveAllValidations(true);
@@ -75,9 +79,11 @@ describe("PBFT", () => {
         // suggest block 2 to node 3.
         leaderGossip.setOutGoingWhiteList([network.nodes[3].id]);
         network.startConsensusOnAllNodes();
+        await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await nextTick(); // await for blockStorage.getLastBlockHash
         await blocksValidator.resolveAllValidations(true);
+        await nextTick(); // await for notifyCommitted
 
         expect(await network.nodes[1].getLatestBlock()).to.equal(block1);
         expect(await network.nodes[2].getLatestBlock()).to.equal(block1);
@@ -93,6 +99,7 @@ describe("PBFT", () => {
         gossip.setIncomingWhiteList([]); // prevent any income gossip messages
 
         network.startConsensusOnAllNodes();
+        await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
 
@@ -107,11 +114,12 @@ describe("PBFT", () => {
         const byzantineNode = network.nodes[3];
 
         network.startConsensusOnAllNodes();
+        await nextTick(); // await for blockStorage.getBlockChainHeight();
         const gossip = byzantineNode.pbft.gossip;
-        gossip.broadcast(byzantineNode.id, "preprepare", buildPayload({ block: fakeBlock, view: 0, term: 0 }));
-        gossip.broadcast(byzantineNode.id, "preprepare", buildPayload({ block: fakeBlock, view: 0, term: 0 }));
-        gossip.broadcast(byzantineNode.id, "preprepare", buildPayload({ block: fakeBlock, view: 0, term: 0 }));
-        gossip.broadcast(byzantineNode.id, "preprepare", buildPayload({ block: fakeBlock, view: 0, term: 0 }));
+        gossip.broadcast(byzantineNode.id, "preprepare", buildPayload({ block: fakeBlock, view: 0, term: 1 }));
+        gossip.broadcast(byzantineNode.id, "preprepare", buildPayload({ block: fakeBlock, view: 0, term: 1 }));
+        gossip.broadcast(byzantineNode.id, "preprepare", buildPayload({ block: fakeBlock, view: 0, term: 1 }));
+        gossip.broadcast(byzantineNode.id, "preprepare", buildPayload({ block: fakeBlock, view: 0, term: 1 }));
 
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
@@ -131,6 +139,7 @@ describe("PBFT", () => {
         gossip2.setIncomingWhiteList([]);
 
         network.startConsensusOnAllNodes();
+        await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
 
@@ -145,11 +154,13 @@ describe("PBFT", () => {
 
         // block 1
         network.startConsensusOnAllNodes();
+        await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
 
         // not in otder block
         network.startConsensusOnAllNodes();
+        await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
 
@@ -162,8 +173,10 @@ describe("PBFT", () => {
 
         // block 1
         network.startConsensusOnAllNodes();
+        await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
+        await nextTick(); // await for notifyCommitted
 
         expect(network.nodes).to.agreeOnBlock(blocksPool[0]);
         network.shutDown();
@@ -177,8 +190,10 @@ describe("PBFT", () => {
 
         // block 2 (After network shutdown)
         network.startConsensusOnAllNodes();
+        await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
+        await nextTick(); // await for notifyCommitted
 
         expect(spy1).to.not.have.been.called;
         expect(spy2).to.not.have.been.called;
@@ -199,6 +214,7 @@ describe("PBFT", () => {
 
         // block 1
         network.startConsensusOnAllNodes();
+        await nextTick(); // await for blockStorage.getBlockChainHeight();
 
         // (only) node0 is the leader
         expect(node0.isLeader()).to.be.true;
@@ -213,6 +229,8 @@ describe("PBFT", () => {
 
         // processing block 2
         await blocksProvider.provideNextBlock();
+        await nextTick(); // await for notifyCommitted
+
         triggerElection(); // force leader election before the block was verified, goes to block 3
         expect(node0.isLeader()).to.be.false;
         expect(node1.isLeader()).to.be.true;

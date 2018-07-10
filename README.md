@@ -40,15 +40,16 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] Convert "registerOnCommitted" to async.
 - [V] Default implementations of: PBFTStorage.
 - [V] Add "restart" to PBFT api
-- [ ] Implement "registerOnCommitted" to async.
-- [ ] Implement "restart" to PBFT api
-- [ ] term should be taken from the height of the latest block (Use the BlockStorage)
+- [V] term should be taken from the height of the latest block (Use the BlockStorage)
+- [V] Implement "registerOnCommitted" to async.
+- [V] Implement "restart" to PBFT api
 - [ ] Remove senderId from Gossip -> Use PK instead
 - [ ]
+- [ ] Have a better (Readable) tests solution to await nextTick
 - [ ] clear the pbftStorage
 - [ ] sign messages including the message type
 - [ ] trigger once, prepared, elected, new-view, committed.
-- [ ] suggest block in new-view (inside PP), with proofs from other nodes.
+- [!] suggest block in new-view (inside PP), with proofs from other nodes.
 - [ ] documentation
 - [ ] monitoring
 - [ ] Optimizations: IData - Signature only on hash(header).

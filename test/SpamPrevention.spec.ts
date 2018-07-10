@@ -33,13 +33,14 @@ describe("Spam Prevention", () => {
         const node = network.nodes[4];
 
         network.startConsensusOnAllNodes();
+        await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
-        leader.pbft.gossip.unicast(leader.id, node.id, "preprepare", buildPayload({ block, view: 0, term: 0 }));
-        leader.pbft.gossip.unicast(leader.id, node.id, "preprepare", buildPayload({ block, view: 0, term: 0 }));
+        leader.pbft.gossip.unicast(leader.id, node.id, "preprepare", buildPayload({ block, view: 0, term: 1 }));
+        leader.pbft.gossip.unicast(leader.id, node.id, "preprepare", buildPayload({ block, view: 0, term: 1 }));
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
 
-        expect(inspectedStorage.getPrepare(0, 0, block.header.hash).length).to.equal(4);
+        expect(inspectedStorage.getPrepare(1, 0, block.header.hash).length).to.equal(4);
         network.shutDown();
     });
 });

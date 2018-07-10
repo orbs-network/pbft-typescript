@@ -12,7 +12,6 @@ export type onCommittedCB = (block: Block) => Promise<void>;
 export class PBFT {
     private readonly onCommittedListeners: onCommittedCB[];
     private readonly blockStorage: BlockStorage;
-    private term: number;
     private pbftTerm: PBFTTerm;
     private pbftGossipFilter: PBFTGossipFilter;
     private readonly pbftTermConfig: Config;
@@ -30,12 +29,10 @@ export class PBFT {
 
         // config
         this.gossip = config.gossip;
-
-        this.term = 0; // TODO: this.lastCommittedBlock.height;
     }
 
-    private notifyCommitted(block: Block): void {
-        this.onCommittedListeners.forEach(cb => cb(block));
+    private notifyCommitted(block: Block): Promise<any> {
+        return Promise.all(this.onCommittedListeners.map(cb => cb(block)));
     }
 
     private disposePBFTTerm(): void {
@@ -63,14 +60,14 @@ export class PBFT {
         };
     }
 
-    private createPBFTTerm(): void {
-        this.pbftTerm = new PBFTTerm(this.pbftTermConfig, this.term, block => {
+    private async createPBFTTerm(): Promise<void> {
+        const term: number = await this.blockStorage.getBlockChainHeight();
+        this.pbftTerm = new PBFTTerm(this.pbftTermConfig, term, async block => {
             this.disposePBFTTerm();
-            this.term++;
-            this.createPBFTTerm();
-            this.notifyCommitted(block);
+            await this.notifyCommitted(block);
+            await this.createPBFTTerm();
         });
-        this.pbftGossipFilter.setTerm(this.term, this.pbftTerm);
+        this.pbftGossipFilter.setTerm(term, this.pbftTerm);
     }
 
     public isLeader(): boolean {
@@ -89,7 +86,13 @@ export class PBFT {
         }
     }
 
+    public stop(): void {
+        this.disposePBFTTerm();
+    }
+
     public restart(): void {
+        this.stop();
+        this.start();
     }
 
     public dispose(): any {
