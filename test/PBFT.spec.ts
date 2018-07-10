@@ -9,6 +9,7 @@ import { aSimpleNetwork } from "./builders/NetworkBuilder";
 import { InMemoryGossip } from "./gossip/InMemoryGossip";
 import { blockMatcher } from "./matchers/blockMatcher";
 import { nextTick } from "./timeUtils";
+import { buildPayload } from "./payload/PayloadUtils";
 
 chai.use(sinonChai);
 chai.use(blockMatcher);
@@ -107,10 +108,10 @@ describe("PBFT", () => {
 
         network.startConsensusOnAllNodes();
         const gossip = byzantineNode.pbft.gossip;
-        gossip.broadcast(byzantineNode.id, "preprepare", { block: fakeBlock, view: 0, term: 0 });
-        gossip.broadcast(byzantineNode.id, "preprepare", { block: fakeBlock, view: 0, term: 0 });
-        gossip.broadcast(byzantineNode.id, "preprepare", { block: fakeBlock, view: 0, term: 0 });
-        gossip.broadcast(byzantineNode.id, "preprepare", { block: fakeBlock, view: 0, term: 0 });
+        gossip.broadcast(byzantineNode.id, "preprepare", buildPayload({ block: fakeBlock, view: 0, term: 0 }));
+        gossip.broadcast(byzantineNode.id, "preprepare", buildPayload({ block: fakeBlock, view: 0, term: 0 }));
+        gossip.broadcast(byzantineNode.id, "preprepare", buildPayload({ block: fakeBlock, view: 0, term: 0 }));
+        gossip.broadcast(byzantineNode.id, "preprepare", buildPayload({ block: fakeBlock, view: 0, term: 0 }));
 
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);

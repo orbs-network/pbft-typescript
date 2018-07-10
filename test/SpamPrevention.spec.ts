@@ -10,6 +10,7 @@ import { aNode } from "./builders/NodeBuilder";
 import { SilentLogger } from "./logger/SilentLogger";
 import { InMemoryPBFTStorage } from "./storage/InMemoryPBFTStorage";
 import { nextTick } from "./timeUtils";
+import { buildPayload } from "./payload/PayloadUtils";
 
 chai.use(sinonChai);
 
@@ -33,8 +34,8 @@ describe("Spam Prevention", () => {
 
         network.startConsensusOnAllNodes();
         await blocksProvider.provideNextBlock();
-        leader.pbft.gossip.unicast(leader.id, node.id, "preprepare", { block, view: 0, term: 0 });
-        leader.pbft.gossip.unicast(leader.id, node.id, "preprepare", { block, view: 0, term: 0 });
+        leader.pbft.gossip.unicast(leader.id, node.id, "preprepare", buildPayload({ block, view: 0, term: 0 }));
+        leader.pbft.gossip.unicast(leader.id, node.id, "preprepare", buildPayload({ block, view: 0, term: 0 }));
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
 

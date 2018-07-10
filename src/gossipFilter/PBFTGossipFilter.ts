@@ -1,6 +1,7 @@
 import { Gossip, MessageTypes } from "../gossip/Gossip";
 import { Network } from "../network/Network";
 import { PBFTMessagesHandler } from "./PBFTMessagesHandler";
+import { Payload } from "../gossip/Payload";
 
 export class PBFTGossipFilter {
     private gossipSubscriptionToken: number;
@@ -11,7 +12,7 @@ export class PBFTGossipFilter {
         this.subscribeToGossip();
     }
 
-    private onGossipMessage(message: MessageTypes, senderId: string, payload: any): void {
+    private onGossipMessage(message: MessageTypes, senderId: string, payload: Payload): void {
         if (this.messagesHandler === undefined) {
             return;
         }
@@ -24,7 +25,7 @@ export class PBFTGossipFilter {
             return;
         }
 
-        if (this.term !== payload.term) {
+        if (this.term !== payload.data.term) {
             return;
         }
 
@@ -53,7 +54,7 @@ export class PBFTGossipFilter {
     }
 
     private subscribeToGossip(): void {
-        this.gossipSubscriptionToken = this.gossip.subscribe((message: MessageTypes, senderId: string, payload: any) => this.onGossipMessage(message, senderId, payload));
+        this.gossipSubscriptionToken = this.gossip.subscribe((message: MessageTypes, senderId: string, payload: Payload) => this.onGossipMessage(message, senderId, payload));
     }
 
     private unsubscribeFromGossip(): void {

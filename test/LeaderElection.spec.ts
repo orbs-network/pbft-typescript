@@ -6,6 +6,7 @@ import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aSimpleNetwork } from "./builders/NetworkBuilder";
 import { InMemoryGossip } from "./gossip/InMemoryGossip";
 import { nextTick } from "./timeUtils";
+import { buildPayload } from "./payload/PayloadUtils";
 
 chai.use(sinonChai);
 
@@ -22,7 +23,7 @@ describe("Leader Election", () => {
         triggerElection();
         await blocksValidator.resolveAllValidations(true);
 
-        expect(unicastSpy).to.have.been.calledWith(testedNode.id, nextLeader.id, "view-change", { term: 0, newView: 1 });
+        expect(unicastSpy).to.have.been.calledWith(testedNode.id, nextLeader.id, "view-change", buildPayload({ term: 0, newView: 1 }));
 
         network.shutDown();
     });
@@ -89,12 +90,12 @@ describe("Leader Election", () => {
         network.startConsensusOnAllNodes();
         await blocksProvider.provideNextBlock();
 
-        gossip.onRemoteMessage(node0.id, "view-change", { term: 0, newView: 1 });
-        gossip.onRemoteMessage(node2.id, "view-change", { term: 0, newView: 1 });
-        gossip.onRemoteMessage(node3.id, "view-change", { term: 0, newView: 1 });
+        gossip.onRemoteMessage(node0.id, "view-change", buildPayload({ term: 0, newView: 1 }));
+        gossip.onRemoteMessage(node2.id, "view-change", buildPayload({ term: 0, newView: 1 }));
+        gossip.onRemoteMessage(node3.id, "view-change", buildPayload({ term: 0, newView: 1 }));
         await blocksProvider.provideNextBlock();
 
-        expect(multicastSpy).to.have.been.calledWith(node1.id, [node0.id, node2.id, node3.id], "new-view", { term: 0, view: 1, PP: { view: 1, term: 0, block: block2 } });
+        expect(multicastSpy).to.have.been.calledWith(node1.id, [node0.id, node2.id, node3.id], "new-view", buildPayload({ term: 0, view: 1, PP: buildPayload({ view: 1, term: 0, block: block2 }) }));
         network.shutDown();
     });
 
@@ -154,9 +155,9 @@ describe("Leader Election", () => {
         await nextTick(); // await for blockStorage.getTopMostBlock
         await blocksProvider.provideNextBlock();
 
-        expect(spy0).to.have.been.calledWith(node0.id, node1.id, "view-change", { term: 1, newView: 1 });
-        expect(spy1).to.have.been.calledWith(node1.id, [node0.id, node2.id, node3.id], "new-view", { term: 1, view: 1, PP: { term: 1, view: 1, block: block3 } });
-        expect(spy2).to.have.been.calledWith(node2.id, node1.id, "view-change", { term: 1, newView: 1 });
+        expect(spy0).to.have.been.calledWith(node0.id, node1.id, "view-change", buildPayload({ term: 1, newView: 1 }));
+        expect(spy1).to.have.been.calledWith(node1.id, [node0.id, node2.id, node3.id], "new-view", buildPayload({ term: 1, view: 1, PP: buildPayload({ term: 1, view: 1, block: block3 }) }));
+        expect(spy2).to.have.been.calledWith(node2.id, node1.id, "view-change", buildPayload({ term: 1, newView: 1 }));
 
         network.shutDown();
     });
