@@ -9,7 +9,7 @@ export class NodeMock implements Node {
 
     constructor(public pbft: PBFT, private blockStorage: InMemoryBlockStorage) {
         this.id = pbft.id;
-        this.pbft.registerToOnCommitted(block => this.onNewBlock(block));
+        this.pbft.registerOnCommitted(block => this.onNewBlock(block));
     }
 
     public async getLatestBlock(): Promise<Block> {
@@ -21,8 +21,9 @@ export class NodeMock implements Node {
         return this.pbft.isLeader();
     }
 
-    public onNewBlock(block: Block): void {
+    public onNewBlock(block: Block): Promise<void> {
         this.blockStorage.appendBlockToChain(block);
+        return Promise.resolve();
     }
 
     public startConsensus(): void {

@@ -6,7 +6,7 @@ import { Gossip } from "./gossip/Gossip";
 import { PBFTGossipFilter } from "./gossipFilter/PBFTGossipFilter";
 import { PBFTTerm } from "./PBFTTerm";
 
-export type onCommittedCB = (block: Block) => void;
+export type onCommittedCB = (block: Block) => Promise<void>;
 
 export class PBFT {
     private readonly onCommittedListeners: onCommittedCB[];
@@ -78,7 +78,7 @@ export class PBFT {
         }
     }
 
-    public registerToOnCommitted(bc: (block: Block) => void): void {
+    public registerOnCommitted(bc: onCommittedCB): void {
         this.onCommittedListeners.push(bc);
     }
 
