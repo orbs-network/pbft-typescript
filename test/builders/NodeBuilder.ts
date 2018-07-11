@@ -17,6 +17,7 @@ import { InMemoryNetwork } from "../network/InMemoryNetwork";
 import { Node } from "../network/Node";
 import { NodeMock } from "../network/NodeMock";
 import { InMemoryPBFTStorage } from "../storage/InMemoryPBFTStorage";
+import { KeyManager } from "../../src/KeyManager/KeyManager";
 
 export class NodeBuilder {
     private network: InMemoryNetwork;
@@ -109,6 +110,7 @@ export class NodeBuilder {
         const id = this.name || "Node";
         const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(id) : new SilentLogger();
         const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage(logger);
+        const keyManager: KeyManager = undefined; // TODO: implement
 
         return {
             id,
@@ -119,7 +121,8 @@ export class NodeBuilder {
             electionTriggerFactory,
             blocksProvider,
             blocksValidator,
-            blockStorage
+            blockStorage,
+            keyManager
         };
     }
 }

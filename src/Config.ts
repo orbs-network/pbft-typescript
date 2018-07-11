@@ -6,6 +6,7 @@ import { Gossip } from "./gossip/Gossip";
 import { Logger } from "./logger/Logger";
 import { Network } from "./network/Network";
 import { PBFTStorage } from "./storage/PBFTStorage";
+import { KeyManager } from "./keyManager/KeyManager";
 
 export interface Config {
     id: string;
@@ -17,4 +18,5 @@ export interface Config {
     blocksValidator: BlocksValidator;
     blocksProvider: BlocksProvider;
     blockStorage: BlockStorage;
+    keyManager: KeyManager;
 }
