@@ -43,10 +43,20 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] term should be taken from the height of the latest block (Use the BlockStorage)
 - [V] Implement "registerOnCommitted" to async.
 - [V] Implement "restart" to PBFT api
+- [V] KeyManager passed in config
 - [ ] Remove senderId from Gossip -> Use PK instead
-- [ ] KeyManager passed in config
 - [ ] KeyManager implementation. 
+- [ ] PBFT-BC add CalculateBlockHash internally 
+- [ ] PBFT-BC override RequestNewBlock - adds header.pbftData.prevBlockHash 
+- [ ] PBFT-BC onCommitted - adds header.pbftData.pbftProof
+- [ ] PBFT public interface {trigger `committed`, `verifyBlock`, `start`, `stop`, `restart`}
+- [ ] Network rename Committee
+- [ ] Committee interface: { `getCommitteeMembersPKs(height, seed)`, `sendToMembers([pk])`, `onMessage()`}
+- [ ] Move `isMemeber(pk)`, `getLeader(view)`, `getCommitteeCount()`, to PBFTTerm internal methods 
 - [ ] 
+- [ ] Rename this.term => this.height
+- [ ] BockProvider => rename BlockUtils
+- [ ] BlockUtils interface implement.
 - [ ] Have a better (Readable) tests solution to await nextTick
 - [ ] clear the pbftStorage
 - [ ] sign messages including the message type
@@ -57,3 +67,4 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [ ] Optimizations: IData - Signature only on hash(header).
 - [ ] Network: Responsible for MAP: PK - nodeAddress
 - [?] Sync from external source.
+- [ ] Rename PBFT to PBFTBlockChain
