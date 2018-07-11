@@ -1,6 +1,3 @@
 export interface Block {
-    header: {
-        hash: string;
-        prevBlockHash: string;
-    };
+    header: any;
 }
