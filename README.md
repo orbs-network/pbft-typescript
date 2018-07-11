@@ -46,6 +46,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [ ] Remove senderId from Gossip -> Use PK instead
 - [ ]
 - [ ] Have a better (Readable) tests solution to await nextTick
+- [ ] Rename Network interface
 - [ ] clear the pbftStorage
 - [ ] sign messages including the message type
 - [ ] trigger once, prepared, elected, new-view, committed.
