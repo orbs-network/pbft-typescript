@@ -2,6 +2,7 @@ import { Block } from "../../src/Block";
 import { BlocksProvider } from "../../src/blocksProvider/BlocksProvider";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { nextTick } from "../timeUtils";
+import { createHash } from "crypto";
 
 export class BlocksProviderMock implements BlocksProvider {
     private blocksPool = theGenesisBlock;
@@ -40,11 +41,19 @@ export class BlocksProviderMock implements BlocksProvider {
         return promise;
     }
 
+
     private getNextBlock(): Block {
         if (this.upCommingBlocks.length > 0) {
             return this.upCommingBlocks.shift();
         } else {
             return aBlock(this.blocksPool);
         }
+    }
+
+
+    public validateBlock(block: Block): Promise<boolean> {
+        return new Promise<boolean>((resolve, reject) => {
+            resolve(true);
+        });
     }
 }

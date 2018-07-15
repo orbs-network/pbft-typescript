@@ -17,7 +17,7 @@ describe("InMemory BlockStorage", () => {
     it("should return the genesis block on height 0", async () => {
         const blockStorage = new InMemoryBlockStorage();
 
-        const actual: string = await blockStorage.getBlockHashOnHeight(0);
+        const actual: string = await blockStorage.getHeight(0);
         const expected: string = theGenesisBlock.header.hash;
         expect(actual).to.equal(expected);
     });
@@ -41,7 +41,7 @@ describe("InMemory BlockStorage", () => {
         blockStorage.appendBlockToChain(block2);
         blockStorage.appendBlockToChain(block3);
 
-        const actual: Block = await blockStorage.getLastBlockHash();
+        const actual: Block = await blockStorage.getLastBlock();
         const expected = block3;
         expect(actual).to.equal(expected);
     });
@@ -55,7 +55,7 @@ describe("InMemory BlockStorage", () => {
         blockStorage.appendBlockToChain(block2);
         blockStorage.appendBlockToChain(block3);
 
-        const actual: number = await blockStorage.getBlockChainHeight();
+        const actual: number = await blockStorage.getHeight();
         expect(actual).to.equal(4);
     });
 });

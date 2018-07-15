@@ -13,6 +13,7 @@ import { InMemoryGossipDiscovery } from "../gossip/InMemoryGossipDiscovery";
 import { SilentLogger } from "../logger/SilentLogger";
 import { NetworkMock } from "../network/NetworkMock";
 import { InMemoryPBFTStorage } from "../storage/InMemoryPBFTStorage";
+import { KeyManager } from "../../src/keyManager/KeyManager";
 
 class ConfigBuilder {
     private name: string;
@@ -35,6 +36,7 @@ class ConfigBuilder {
         const gossip: Gossip = new InMemoryGossip(discovery, logger);
         const network: Network = new NetworkMock();
         const blockStorage: BlockStorage = new InMemoryBlockStorage();
+        const keyManager: KeyManager = undefined; // TODO: keymanager implementaion
 
         return {
             id,
@@ -45,7 +47,8 @@ class ConfigBuilder {
             electionTriggerFactory,
             blocksProvider,
             blocksValidator,
-            blockStorage
+            blockStorage,
+            keyManager
         };
     }
 }

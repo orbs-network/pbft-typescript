@@ -10,3 +10,5 @@ export { Network } from "./network/Network";
 export { Block } from "./Block";
 export { PBFTStorage } from "./storage/PBFTStorage";
 export { onCommittedCB, PBFT } from "./PBFT";
+export { KeyManager } from "./keyManager/KeyManager";
+export { InMemoryPBFTStorage } from "../test/storage/InMemoryPBFTStorage";

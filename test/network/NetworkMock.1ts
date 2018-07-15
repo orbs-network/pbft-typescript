@@ -1,0 +1,42 @@
+import { Network } from "../../src/network/Network";
+
+export class NetworkMock implements Network {
+    public nodes: string[] = ["Node0", "Node1", "Node2", "Node3"];
+    private seeds: Map<number, string> =  new Map([[0, "seed0"], [1, "seed2"]]);
+
+    // seeds; [0] = "seed1";
+    // getNetworkMembersPKs(height: number, seed: number): string[]; // committee
+    // sendToMembers(publicKeys: string[], messageType: string, message: Payload): void;
+    // subscribeToMessages(cb: (messageType: string, payload: Payload) => void): number;
+    // unsubscribeFromMessages(subscription: number): void;
+    // isMember(publicKey: string): boolean; // federation
+
+    getSeed(height: number) {
+        return this.seeds.get(height);
+    }
+
+    getNetworkMembersPKs(height: number): string[] {
+        const seed: string = this.getSeed(height);
+        if (seed === undefined)
+            return undefined;
+        return this.getNetworkMembers(height, seed);
+    }
+
+    private getNetworkMembers(height: number, seed: string): string[] {
+        return this.nodes;
+    }
+
+    getNodeIdBySeed(seed: number): string {
+        const index = seed % this.getNodesCount();
+        return this.nodes[index];
+    }
+
+    getNodesCount(): number {
+        return this.nodes.length;
+    }
+
+
+    isMember(nodeId: string): boolean {
+        return this.nodes.indexOf(nodeId) > -1;
+    }
+}
