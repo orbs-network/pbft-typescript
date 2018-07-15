@@ -54,6 +54,8 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [ ] Network rename Committee
 - [ ] Move `isMemeber(pk)`, `getLeader(view)`, `getCommitteeCount()`, to PBFTTerm internal methods 
 - [ ] Block interface {header}
+- [ ] Merge BlockValidator into BlocksProvider.
+- [ ] getNetworkMembersPKs(seed: string): string[]; // ordered 
 - [ ] 
 - [ ] Rename this.term => this.height
 - [ ] BockProvider => rename BlockUtils
