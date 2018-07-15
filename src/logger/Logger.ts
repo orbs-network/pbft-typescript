@@ -13,7 +13,7 @@ type StorePrepare = {
     term: number,
     view: number,
     blockHash: string,
-    senderId: string
+    senderPk: string
 };
 
 type StoreCommit = {
@@ -21,21 +21,21 @@ type StoreCommit = {
     term: number,
     view: number,
     blockHash: string,
-    senderId: string
+    senderPk: string
 };
 
 type StoreViewChange = {
     StorageType: "ViewChange",
     term: number,
     view: number,
-    senderId: string
+    senderPk: string
 };
 
 type StorageLogData = { Subject: "Storage" } & (StorePrePrepare | StorePrepare | StoreCommit | StoreViewChange);
 
 /// GOSSIP ///
-type GossipSendLogData = { Subject: "GossipSend", message: string, senderId: string, targetId: string, payload: any };
-type GossipReceiveLogData = { Subject: "GossipReceive", senderId: string, payload: any };
+type GossipSendLogData = { Subject: "GossipSend", message: string, targetId: string, payload: any };
+type GossipReceiveLogData = { Subject: "GossipReceive", senderPk: string, payload: any };
 
 // FLOW
 type FlowElected = {
@@ -56,7 +56,7 @@ type FlowLeaderChange = {
     FlowType: "LeaderChange",
     term: number,
     newView: number,
-    leaderId: string
+    leaderPk: string
 };
 
 type FlowLogData = { Subject: "Flow" } & (FlowElected | FlowCommit | FlowLeaderChange);

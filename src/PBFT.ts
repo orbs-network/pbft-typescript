@@ -2,8 +2,7 @@ import { Block } from "./Block";
 import { BlockStorage } from "./blockStorage/BlockStorage";
 import { BlocksValidator } from "./blocksValidator/BlocksValidator";
 import { Config } from "./Config";
-import { Gossip } from "./gossip/Gossip";
-import { PBFTGossipFilter } from "./gossipFilter/PBFTGossipFilter";
+import { NetworkMessagesFilter } from "./networkMessagesFilter/NetworkMessagesFilter";
 import { PBFTTerm } from "./PBFTTerm";
 import { InMemoryBlockStorage } from "../test/blockStorage/InMemoryBlockStorage";
 
@@ -13,22 +12,15 @@ export class PBFT {
     private readonly onCommittedListeners: onCommittedCB[];
     private readonly blockStorage: BlockStorage;
     private pbftTerm: PBFTTerm;
-    private pbftGossipFilter: PBFTGossipFilter;
+    private NetworkMessagesFilter: NetworkMessagesFilter;
     private readonly pbftTermConfig: Config;
-
-    public readonly id: string;
-    public readonly gossip: Gossip;
 
     constructor(config: Config) {
         this.onCommittedListeners = [];
-        this.id = config.id;
         this.blockStorage = config.blockStorage || new InMemoryBlockStorage();
 
         this.pbftTermConfig = this.createTermConfig(config);
-        this.pbftGossipFilter = new PBFTGossipFilter(config.gossip, this.id, config.network);
-
-        // config
-        this.gossip = config.gossip;
+        this.NetworkMessagesFilter = new NetworkMessagesFilter(config.networkCommunication, config.keyManager.getMyPublicKey());
     }
 
     private notifyCommitted(block: Block): Promise<any> {
@@ -67,12 +59,12 @@ export class PBFT {
             await this.notifyCommitted(block);
             await this.createPBFTTerm();
         });
-        this.pbftGossipFilter.setTerm(term, this.pbftTerm);
+        this.NetworkMessagesFilter.setTerm(term, this.pbftTerm);
     }
 
     public isLeader(): boolean {
         if (this.pbftTerm !== undefined) {
-            return this.pbftTerm.leaderId() === this.id;
+            return this.pbftTerm.isLeader();
         }
     }
 
@@ -98,6 +90,6 @@ export class PBFT {
     public dispose(): any {
         this.onCommittedListeners.length = 0;
         this.disposePBFTTerm();
-        this.pbftGossipFilter.dispose();
+        this.NetworkMessagesFilter.dispose();
     }
 }

@@ -3,7 +3,6 @@ import { BlockStorage } from "../../src/blockStorage/BlockStorage";
 import { BlocksValidator } from "../../src/blocksValidator/BlocksValidator";
 import { Config } from "../../src/Config";
 import { ElectionTriggerFactory } from "../../src/electionTrigger/ElectionTrigger";
-import { Gossip } from "../../src/gossip/Gossip";
 import { Logger } from "../../src/logger/Logger";
 import { PBFT } from "../../src/PBFT";
 import { PBFTStorage } from "../../src/storage/PBFTStorage";
@@ -13,18 +12,17 @@ import { BlocksValidatorMock } from "../blocksValidator/BlocksValidatorMock";
 import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
 import { ConsoleLogger } from "../logger/ConsoleLogger";
 import { SilentLogger } from "../logger/SilentLogger";
-import { InMemoryNetwork } from "../network/InMemoryNetwork";
 import { Node } from "../network/Node";
-import { NodeMock } from "../network/NodeMock";
 import { InMemoryPBFTStorage } from "../storage/InMemoryPBFTStorage";
 import { KeyManager } from "../../src/KeyManager/KeyManager";
+import { InMemoryNetworkCommunicaiton } from "../networkCommunication/InMemoryNetworkCommunicaiton";
+import { NetworkCommunication } from "../../src";
 
 export class NodeBuilder {
-    private network: InMemoryNetwork;
+    private networkCommunication: NetworkCommunication;
     private name: string;
     private pbftStorage: PBFTStorage;
     private logger: Logger;
-    private gossip: Gossip;
     private electionTriggerFactory: ElectionTriggerFactory;
     private blocksValidator: BlocksValidator;
     private blocksProvider: BlocksProvider;
@@ -35,9 +33,9 @@ export class NodeBuilder {
     constructor() {
     }
 
-    public thatIsPartOf(network: InMemoryNetwork): this {
-        if (!this.network) {
-            this.network = network;
+    public thatIsPartOf(networkCommunication: InMemoryNetworkCommunicaiton): this {
+        if (!this.networkCommunication) {
+            this.networkCommunication = networkCommunication;
         }
         return this;
     }
@@ -77,13 +75,6 @@ export class NodeBuilder {
         return this;
     }
 
-    public communicatesVia(gossip: Gossip): this {
-        if (!this.gossip) {
-            this.gossip = gossip;
-        }
-        return this;
-    }
-
     public electingLeaderUsing(electionTriggerFactory: ElectionTriggerFactory): this {
         if (!this.electionTriggerFactory) {
             this.electionTriggerFactory = electionTriggerFactory;
@@ -97,9 +88,7 @@ export class NodeBuilder {
     }
 
     public build(): Node {
-        const config: Config = this.buildConfig();
-        const pbft = new PBFT(config);
-        return new NodeMock(pbft, config.blockStorage as InMemoryBlockStorage);
+        return new Node("dummy pk", this.buildConfig());
     }
 
     private buildConfig(): Config {
@@ -107,15 +96,12 @@ export class NodeBuilder {
         const blocksValidator: BlocksValidator = this.blocksValidator ? this.blocksValidator : new BlocksValidatorMock();
         const blocksProvider: BlocksProvider = this.blocksProvider ? this.blocksProvider : new BlocksProviderMock();
         const blockStorage: BlockStorage = new InMemoryBlockStorage();
-        const id = this.name || "Node";
-        const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(id) : new SilentLogger();
-        const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage(logger);
         const keyManager: KeyManager = undefined; // TODO: implement
+        const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(keyManager.getMyPublicKey()) : new SilentLogger();
+        const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage(logger);
 
         return {
-            id,
-            network: this.network,
-            gossip: this.gossip,
+            networkCommunication: this.networkCommunication,
             logger,
             pbftStorage,
             electionTriggerFactory,

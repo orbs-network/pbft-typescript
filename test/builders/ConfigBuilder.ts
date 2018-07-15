@@ -1,18 +1,18 @@
 import { BlockStorage } from "../../src/blockStorage/BlockStorage";
 import { ElectionTriggerFactory } from "../../src/electionTrigger/ElectionTrigger";
-import { Gossip } from "../../src/gossip/Gossip";
 import { Logger } from "../../src/logger/Logger";
-import { Network } from "../../src/network/Network";
 import { PBFTStorage } from "../../src/storage/PBFTStorage";
 import { BlocksProviderMock } from "../blocksProvider/BlocksProviderMock";
 import { InMemoryBlockStorage } from "../blockStorage/InMemoryBlockStorage";
 import { BlocksValidatorMock } from "../blocksValidator/BlocksValidatorMock";
 import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
-import { InMemoryGossip } from "../gossip/InMemoryGossip";
-import { InMemoryGossipDiscovery } from "../gossip/InMemoryGossipDiscovery";
+import { Gossip } from "../gossip/Gossip";
+import { GossipDiscovery } from "../gossip/GossipDiscovery";
 import { SilentLogger } from "../logger/SilentLogger";
-import { NetworkMock } from "../network/NetworkMock";
 import { InMemoryPBFTStorage } from "../storage/InMemoryPBFTStorage";
+import { KeyManager } from "../../src/KeyManager/KeyManager";
+import { NetworkCommunication } from "../../src";
+import { InMemoryNetworkCommunicaiton } from "../networkCommunication/InMemoryNetworkCommunicaiton";
 
 class ConfigBuilder {
     private name: string;
@@ -31,21 +31,23 @@ class ConfigBuilder {
         const id = this.name || "Node";
         const logger: Logger = new SilentLogger();
         const pbftStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
-        const discovery: InMemoryGossipDiscovery = new InMemoryGossipDiscovery();
-        const gossip: Gossip = new InMemoryGossip(discovery, logger);
-        const network: Network = new NetworkMock();
+        const discovery: GossipDiscovery = new GossipDiscovery();
+        const gossip: Gossip = new Gossip(discovery, logger);
+        const networkCommunication: NetworkCommunication = new InMemoryNetworkCommunicaiton(discovery, gossip);
         const blockStorage: BlockStorage = new InMemoryBlockStorage();
+        const keyManager: KeyManager = undefined;
 
         return {
             id,
-            network,
             gossip,
+            networkCommunication,
             logger,
             pbftStorage,
             electionTriggerFactory,
             blocksProvider,
             blocksValidator,
-            blockStorage
+            blockStorage,
+            keyManager
         };
     }
 }

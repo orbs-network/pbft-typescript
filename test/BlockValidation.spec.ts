@@ -6,9 +6,9 @@ import { Block } from "../src/Block";
 import { BlocksProviderMock } from "./blocksProvider/BlocksProviderMock";
 import { BlocksValidatorMock } from "./blocksValidator/BlocksValidatorMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aNetwork } from "./builders/NetworkBuilder";
-import { InMemoryNetwork } from "./network/InMemoryNetwork";
+import { aTestNetwork } from "./builders/NetworkBuilder";
 import { nextTick } from "./timeUtils";
+import { TestNetwork } from "./network/TestNetwork";
 
 chai.use(sinonChai);
 
@@ -16,13 +16,13 @@ describe("Block Validation", () => {
     let block: Block;
     let blocksValidator: BlocksValidatorMock;
     let blocksProvider: BlocksProviderMock;
-    let network: InMemoryNetwork;
+    let testNetwork: TestNetwork;
 
     beforeEach(() => {
         block = aBlock(theGenesisBlock);
         blocksValidator = new BlocksValidatorMock();
         blocksProvider = new BlocksProviderMock([block]);
-        network = aNetwork()
+        testNetwork = aTestNetwork()
             .validateUsing(blocksValidator)
             .gettingBlocksVia(blocksProvider)
             .with(4).nodes
@@ -30,26 +30,26 @@ describe("Block Validation", () => {
     });
 
     afterEach(() => {
-        network.shutDown();
+        testNetwork.shutDown();
     });
 
     it("should call validateBlock on onPrepare", async () => {
         const spy = sinon.spy(blocksValidator, "validateBlock");
-        network.startConsensusOnAllNodes();
+        testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
 
         expect(spy).to.have.been.calledWith(block);
-        expect(network.nodes).to.agreeOnBlock(block);
+        expect(testNetwork.nodes).to.agreeOnBlock(block);
     });
 
     it("should not reach consensus if validateBlock returned false", async () => {
-        network.startConsensusOnAllNodes();
+        testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(false);
 
-        expect(network.nodes).to.not.agreeOnBlock(block);
+        expect(testNetwork.nodes).to.not.agreeOnBlock(block);
     });
 });

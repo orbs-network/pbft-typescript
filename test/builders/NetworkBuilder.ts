@@ -6,36 +6,36 @@ import { Logger } from "../../src/logger/Logger";
 import { BlocksProviderMock } from "../blocksProvider/BlocksProviderMock";
 import { BlocksValidatorMock } from "../blocksValidator/BlocksValidatorMock";
 import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
-import { InMemoryGossip } from "../gossip/InMemoryGossip";
-import { InMemoryGossipDiscovery } from "../gossip/InMemoryGossipDiscovery";
+import { Gossip } from "../gossip/Gossip";
+import { GossipDiscovery } from "../gossip/GossipDiscovery";
 import { ConsoleLogger } from "../logger/ConsoleLogger";
 import { SilentLogger } from "../logger/SilentLogger";
-import { InMemoryNetwork } from "../network/InMemoryNetwork";
-import { Node } from "../network/Node";
 import { aBlock, theGenesisBlock } from "./BlockBuilder";
 import { aNode, NodeBuilder } from "./NodeBuilder";
-
+import { Node } from "../network/Node";
+import { InMemoryNetworkCommunicaiton } from "../networkCommunication/InMemoryNetworkCommunicaiton";
+import { TestNetwork } from "../network/TestNetwork";
 export interface LoggerConstructor {
     new (id: string): Logger;
 }
 export class With {
-    constructor(private networkBuilder: NetworkBuilder, private count: number) {
+    constructor(private testNetworkBuilder: TestNetworkBuilder, private count: number) {
 
     }
     get nodes() {
-        this.networkBuilder.countOfNodes = this.count;
-        return this.networkBuilder;
+        this.testNetworkBuilder.countOfNodes = this.count;
+        return this.testNetworkBuilder;
     }
 }
 
-class NetworkBuilder {
-    private network: InMemoryNetwork;
+class TestNetworkBuilder {
     private loggerCtor: LoggerConstructor = SilentLogger;
     private customNodes: NodeBuilder[] = [];
     private electionTriggerFactory: ElectionTriggerFactory;
     private blocksValidator: BlocksValidator;
-    private blocksPool: Block[] = [];
     private blocksProvider: BlocksProvider;
+    private blocksPool: Block[];
+    private testNetwork: TestNetwork;
 
     public countOfNodes: number = 0;
     public and = this;
@@ -82,22 +82,23 @@ class NetworkBuilder {
         return this;
     }
 
-    public build(): InMemoryNetwork {
-        this.network = new InMemoryNetwork();
-        this.createNodes();
-        return this.network;
+    public build(): TestNetwork {
+        const discovery = new GossipDiscovery();
+        this.testNetwork = new TestNetwork(discovery);
+        this.createNodes(discovery);
+        return this.testNetwork;
     }
 
-    private buildNode(builder: NodeBuilder, id: string, discovery: InMemoryGossipDiscovery): Node {
+    private buildNode(builder: NodeBuilder, id: string, discovery: GossipDiscovery): Node {
         const logger: Logger = new this.loggerCtor(id);
-        const gossip = new InMemoryGossip(discovery, logger);
         const electionTriggerFactory: ElectionTriggerFactory = this.electionTriggerFactory ? this.electionTriggerFactory : view => new ElectionTriggerMock(view);
         const blocksValidator: BlocksValidator = this.blocksValidator ? this.blocksValidator : new BlocksValidatorMock();
         const blocksProvider: BlocksProvider = this.blocksProvider ? this.blocksProvider : new BlocksProviderMock();
+        const gossip = new Gossip(discovery, logger);
         discovery.registerGossip(id, gossip);
+        const networkCommunication: InMemoryNetworkCommunicaiton = new InMemoryNetworkCommunicaiton(discovery, gossip);
         return builder
-            .thatIsPartOf(this.network)
-            .communicatesVia(gossip)
+            .thatIsPartOf(networkCommunication)
             .gettingBlocksVia(blocksProvider)
             .electingLeaderUsing(electionTriggerFactory)
             .validateUsing(blocksValidator)
@@ -106,9 +107,7 @@ class NetworkBuilder {
             .build();
     }
 
-    private createNodes(): void {
-        const discovery = new InMemoryGossipDiscovery();
-
+    private createNodes(discovery: GossipDiscovery): void {
         const nodes: Node[] = [];
 
         for (let i = 0; i < this.countOfNodes; i++) {
@@ -118,12 +117,12 @@ class NetworkBuilder {
 
         const customNodes = this.customNodes.map((nodeBuilder, idx) => this.buildNode(nodeBuilder, `Custom-Node${idx}`, discovery));
         nodes.push(...customNodes);
-        this.network.registerNodes(nodes);
+        this.testNetwork.registerNodes(nodes);
     }
 }
 
-export const aNetwork = () => new NetworkBuilder();
-export const aSimpleNetwork = (countOfNodes: number = 4, blocksPool?: Block[]) => {
+export const aTestNetwork = () => new TestNetworkBuilder();
+export const aSimpleTestNetwork = (countOfNodes: number = 4, blocksPool?: Block[]) => {
     const block1 = aBlock(theGenesisBlock);
     const block2 = aBlock(block1);
     const block3 = aBlock(block2);
@@ -138,7 +137,7 @@ export const aSimpleNetwork = (countOfNodes: number = 4, blocksPool?: Block[]) =
     const triggerElection = () => electionTriggers.map(e => e.trigger());
     const blocksValidator = new BlocksValidatorMock();
     const blocksProvider = new BlocksProviderMock(blocksPool);
-    const network = aNetwork()
+    const testNetwork = aTestNetwork()
         .validateUsing(blocksValidator)
         .electingLeaderUsing(electionTriggerFactory)
         .gettingBlocksVia(blocksProvider)
@@ -146,7 +145,7 @@ export const aSimpleNetwork = (countOfNodes: number = 4, blocksPool?: Block[]) =
         .build();
 
     return {
-        network,
+        testNetwork,
         blocksValidator,
         blocksProvider,
         blocksPool,

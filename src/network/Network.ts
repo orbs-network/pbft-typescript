@@ -1,6 +1,0 @@
-export interface Network {
-    getNodeIdBySeed(seed: number): string;
-    getNodesCount(): number;
-    getAllNodesIds(): string[];
-    isMember(nodeId: string): boolean;
-}

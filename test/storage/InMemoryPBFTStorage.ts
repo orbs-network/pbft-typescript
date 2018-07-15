@@ -30,19 +30,19 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         return this.prePrepareStorage.get(key);
     }
 
-    storePrepare(term: number, view: number, blockHash: string, senderId: string): boolean {
+    storePrepare(term: number, view: number, blockHash: string, senderPk: string): boolean {
         const key = term.toString() + "_" + view.toString() + "_" + blockHash;
         const prepares = this.prepareStorage.get(key);
         if (prepares) {
-            if (prepares.indexOf(senderId) === -1) {
-                prepares.push(senderId);
+            if (prepares.indexOf(senderPk) === -1) {
+                prepares.push(senderPk);
             } else {
                 return false;
             }
         } else {
-            this.prepareStorage.set(key, [senderId]);
+            this.prepareStorage.set(key, [senderPk]);
         }
-        this.logger.log({ Subject: "Storage", StorageType: "Prepare", term, view, blockHash, senderId });
+        this.logger.log({ Subject: "Storage", StorageType: "Prepare", term, view, blockHash, senderPk });
         return true;
     }
 
@@ -51,19 +51,19 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         return this.prepareStorage.get(key) || [];
     }
 
-    storeCommit(term: number, view: number, blockHash: string, senderId: string): boolean {
+    storeCommit(term: number, view: number, blockHash: string, senderPk: string): boolean {
         const key = term.toString() + "_" + view.toString() + "_" + blockHash;
         const commits = this.commitStorage.get(key);
         if (commits) {
-            if (commits.indexOf(senderId) === -1) {
-                commits.push(senderId);
+            if (commits.indexOf(senderPk) === -1) {
+                commits.push(senderPk);
             } else {
                 return false;
             }
         } else {
-            this.commitStorage.set(key, [senderId]);
+            this.commitStorage.set(key, [senderPk]);
         }
-        this.logger.log({ Subject: "Storage", StorageType: "Commit", term, view, blockHash, senderId });
+        this.logger.log({ Subject: "Storage", StorageType: "Commit", term, view, blockHash, senderPk });
         return true;
     }
 
@@ -72,19 +72,19 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         return this.commitStorage.get(key) || [];
     }
 
-    storeViewChange(term: number, view: number, senderId: string): boolean {
+    storeViewChange(term: number, view: number, senderPk: string): boolean {
         const key = term.toString() + "_" + view.toString();
         const senders = this.viewChangeStorage.get(key);
         if (senders) {
-            if (senders.indexOf(senderId) === -1) {
-                senders.push(senderId);
+            if (senders.indexOf(senderPk) === -1) {
+                senders.push(senderPk);
             } else {
                 return false;
             }
         } else {
-            this.viewChangeStorage.set(key, [senderId]);
+            this.viewChangeStorage.set(key, [senderPk]);
         }
-        this.logger.log({ Subject: "Storage", StorageType: "ViewChange", term, view, senderId });
+        this.logger.log({ Subject: "Storage", StorageType: "ViewChange", term, view, senderPk });
         return true;
     }
 

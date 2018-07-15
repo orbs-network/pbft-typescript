@@ -44,16 +44,16 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] Implement "registerOnCommitted" to async.
 - [V] Implement "restart" to PBFT api
 - [V] KeyManager passed in config
+- [ ] Committee interface: { `getCommitteeMembersPKs(height, seed)`, `sendToMembers([pk])`, `onMessage()`}
+- [ ] Move `isMemeber(pk)`, `getLeader(view)`, `getCommitteeCount()`, to PBFTTerm internal methods
 - [ ] Remove senderId from Gossip -> Use PK instead
-- [ ] KeyManager implementation. 
-- [ ] PBFT-BC add CalculateBlockHash internally 
-- [ ] PBFT-BC override RequestNewBlock - adds header.pbftData.prevBlockHash 
+- [ ] KeyManager implementation.
+- [ ] PBFT-BC add CalculateBlockHash internally
+- [ ] PBFT-BC override RequestNewBlock - adds header.pbftData.prevBlockHash
 - [ ] PBFT-BC onCommitted - adds header.pbftData.pbftProof
 - [ ] PBFT public interface {trigger `committed`, `verifyBlock`, `start`, `stop`, `restart`}
 - [ ] Network rename Committee
-- [ ] Committee interface: { `getCommitteeMembersPKs(height, seed)`, `sendToMembers([pk])`, `onMessage()`}
-- [ ] Move `isMemeber(pk)`, `getLeader(view)`, `getCommitteeCount()`, to PBFTTerm internal methods 
-- [ ] 
+
 - [ ] Rename this.term => this.height
 - [ ] BockProvider => rename BlockUtils
 - [ ] BlockUtils interface implement.

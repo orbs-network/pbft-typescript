@@ -5,7 +5,7 @@ import { PBFTStorage } from "../src/storage/PBFTStorage";
 import { BlocksProviderMock } from "./blocksProvider/BlocksProviderMock";
 import { BlocksValidatorMock } from "./blocksValidator/BlocksValidatorMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aNetwork } from "./builders/NetworkBuilder";
+import { aTestNetwork } from "./builders/NetworkBuilder";
 import { aNode } from "./builders/NodeBuilder";
 import { SilentLogger } from "./logger/SilentLogger";
 import { InMemoryPBFTStorage } from "./storage/InMemoryPBFTStorage";
@@ -22,25 +22,26 @@ describe("Spam Prevention", () => {
         const block = aBlock(theGenesisBlock);
         const blocksValidator = new BlocksValidatorMock();
         const blocksProvider = new BlocksProviderMock([block]);
-        const network = aNetwork()
+        const testNetwork = aTestNetwork()
             .with(4).nodes
             .withCustomNode(nodeBuilder)
             .gettingBlocksVia(blocksProvider)
             .validateUsing(blocksValidator)
             .build();
 
-        const leader = network.nodes[0];
-        const node = network.nodes[4];
+        const leader = testNetwork.nodes[0];
+        const node = testNetwork.nodes[4];
 
-        network.startConsensusOnAllNodes();
+        testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
-        leader.pbft.gossip.unicast(leader.id, node.id, "preprepare", buildPayload({ block, view: 0, term: 1 }));
-        leader.pbft.gossip.unicast(leader.id, node.id, "preprepare", buildPayload({ block, view: 0, term: 1 }));
+        const gossip = testNetwork.getNodeGossip(leader.pk);
+        gossip.unicast(node.pk, "preprepare", buildPayload({ block, view: 0, term: 1 }));
+        gossip.unicast(node.pk, "preprepare", buildPayload({ block, view: 0, term: 1 }));
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
 
         expect(inspectedStorage.getPrepare(1, 0, block.header.hash).length).to.equal(4);
-        network.shutDown();
+        testNetwork.shutDown();
     });
 });

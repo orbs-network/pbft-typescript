@@ -3,17 +3,17 @@ import { BlocksProvider } from "./blocksProvider/BlocksProvider";
 import { BlocksValidator } from "./blocksValidator/BlocksValidator";
 import { Config } from "./Config";
 import { ElectionTriggerFactory } from "./electionTrigger/ElectionTrigger";
-import { Gossip } from "./gossip/Gossip";
 import { CommitPayload, NewViewPayload, PreparePayload, PrePreparePayload, ViewChangePayload } from "./gossip/Payload";
 import { Logger } from "./logger/Logger";
-import { Network } from "./network/Network";
 import { PBFTStorage } from "./storage/PBFTStorage";
 import { ViewState } from "./ViewState";
+import { NetworkCommunication } from "./networkCommunication/NetworkCommunication";
+import { KeyManager } from "./KeyManager/KeyManager";
 
 export type onNewBlockCB = (block: Block) => void;
 
 export class PBFTTerm {
-    private readonly network: Network;
+    private readonly networkCommunication: NetworkCommunication;
     private readonly pbftStorage: PBFTStorage;
     private readonly logger: Logger;
     private view: number;
@@ -22,18 +22,16 @@ export class PBFTTerm {
     private CB: Block;
     private disposed: boolean = false;
     private committedLocally: boolean = false;
+    private keyManager: KeyManager;
 
-    public readonly id: string;
     public readonly blocksValidator: BlocksValidator;
     public readonly blocksProvider: BlocksProvider;
     public readonly electionTriggerFactory: ElectionTriggerFactory;
-    public readonly gossip: Gossip;
 
     constructor(config: Config, private readonly term: number, private onCommittedBlock: (block: Block) => void) {
         // config
-        this.id = config.id;
-        this.network = config.network;
-        this.gossip = config.gossip;
+        this.keyManager = config.keyManager;
+        this.networkCommunication = config.networkCommunication;
         this.pbftStorage = config.pbftStorage;
         this.logger = config.logger;
         this.electionTriggerFactory = config.electionTriggerFactory;
@@ -46,7 +44,7 @@ export class PBFTTerm {
 
     public async startTerm(): Promise<void> {
         this.initView(0);
-        if (this.isLeader(this.id)) {
+        if (this.isLeader()) {
             this.CB = await this.blocksProvider.requestNewBlock(this.term);
             if (this.disposed) {
                 return;
@@ -89,13 +87,19 @@ export class PBFTTerm {
         this.stopViewState();
     }
 
-    public leaderId(): string {
-        return this.network.getNodeIdBySeed(this.view);
+    public leaderPk(): string {
+        return this.calcLeaderPk(this.term, this.view);
+    }
+
+    private calcLeaderPk(term: number, view: number): string {
+        const membersPks = this.networkCommunication.getMembersPKs(view);
+        const index = view % membersPks.length;
+        return membersPks[index];
     }
 
     private onLeaderChange(): void {
         this.initView(this.view + 1);
-        this.logger.log({ Subject: "Flow", FlowType: "LeaderChange", leaderId: this.leaderId(), term: this.term, newView: this.view });
+        this.logger.log({ Subject: "Flow", FlowType: "LeaderChange", leaderPk: this.leaderPk(), term: this.term, newView: this.view });
         const payload: ViewChangePayload = {
             pk: "pk",
             signature: "signature",
@@ -104,11 +108,11 @@ export class PBFTTerm {
                 newView: this.view
             }
         };
-        this.pbftStorage.storeViewChange(this.term, this.view, this.id);
-        if (this.isLeader(this.id)) {
+        this.pbftStorage.storeViewChange(this.term, this.view, this.keyManager.getMyPublicKey());
+        if (this.isLeader()) {
             this.checkElected(this.term, this.view);
         } else {
-            this.gossip.unicast(this.id, this.leaderId(), "view-change", payload);
+            this.networkCommunication.sendToMembers([this.leaderPk()], "view-change", payload);
         }
     }
 
@@ -122,7 +126,7 @@ export class PBFTTerm {
                 term
             }
         };
-        this.gossip.multicast(this.id, this.getOtherNodesIds(), "preprepare", payload);
+        this.networkCommunication.sendToMembers(this.getOtherNodesIds(), "preprepare", payload);
     }
 
     private broadcastPrepare(term: number, view: number, block: Block): void {
@@ -135,11 +139,11 @@ export class PBFTTerm {
                 term
             }
         };
-        this.gossip.multicast(this.id, this.getOtherNodesIds(), "prepare", payload);
+        this.networkCommunication.sendToMembers(this.getOtherNodesIds(), "prepare", payload);
     }
 
-    public async onReceivePrePrepare(senderId: string, payload: PrePreparePayload): Promise<void> {
-        if (await this.validatePrePreapare(senderId, payload)) {
+    public async onReceivePrePrepare(payload: PrePreparePayload): Promise<void> {
+        if (await this.validatePrePreapare(payload)) {
             this.processPrePrepare(payload);
         }
     }
@@ -152,23 +156,24 @@ export class PBFTTerm {
         }
 
         this.CB = block;
-        this.pbftStorage.storePrepare(term, view, block.header.hash, this.id);
+        this.pbftStorage.storePrepare(term, view, block.header.hash, this.keyManager.getMyPublicKey());
         this.pbftStorage.storePrePrepare(term, view, block);
         this.broadcastPrepare(term, view, block);
         this.checkPrepared(term, view, block.header.hash);
     }
 
-    private async validatePrePreapare(senderId: string, payload: PrePreparePayload): Promise<boolean> {
-        const { view, term, block } = payload.data;
+    private async validatePrePreapare(payload: PrePreparePayload): Promise<boolean> {
+        const { data, pk: senderPk } = payload;
+        const { view, term, block } = data;
 
         if (this.checkPrePrepare(term, view)) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", already prepared` });
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderPk}", already prepared` });
             return false;
         }
 
-        const wanaBeLeaderId = this.network.getNodeIdBySeed(view);
-        if (wanaBeLeaderId !== senderId) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block rejected because it was not sent by the current leader (${view})` });
+        const wanaBeLeaderId = this.calcLeaderPk(term, view);
+        if (wanaBeLeaderId !== senderPk) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderPk}", block rejected because it was not sent by the current leader (${view})` });
             return false;
         }
 
@@ -178,7 +183,7 @@ export class PBFTTerm {
         }
 
         if (!isValidBlock) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderId}", block is invalid` });
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderPk}", block is invalid` });
             return false;
         }
 
@@ -189,39 +194,41 @@ export class PBFTTerm {
         return this.pbftStorage.getPrePrepare(term, view) !== undefined;
     }
 
-    public onReceivePrepare(senderId: string, payload: PreparePayload): void {
-        const { term, view, blockHash } = payload.data;
+    public onReceivePrepare(payload: PreparePayload): void {
+        const { pk: senderPk, data } = payload;
+        const { term, view, blockHash } = data;
         if (this.view > view) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], blockHash:[${blockHash}], onReceivePrepare from "${senderId}", prepare not logged because of unrelated view` });
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], blockHash:[${blockHash}], onReceivePrepare from "${senderPk}", prepare not logged because of unrelated view` });
             return;
         }
 
-        if (this.isLeader(senderId)) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], blockHash:[${blockHash}], onReceivePrepare from "${senderId}", prepare not logged as we don't accept prepare from the leader` });
+        if (this.leaderPk() === senderPk) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], blockHash:[${blockHash}], onReceivePrepare from "${senderPk}", prepare not logged as we don't accept prepare from the leader` });
             return;
         }
 
-        this.pbftStorage.storePrepare(term, view, blockHash, senderId);
+        this.pbftStorage.storePrepare(term, view, blockHash, senderPk);
 
         if (this.view === view) {
             this.checkPrepared(term, view, blockHash);
         }
     }
 
-    public onReceiveViewChange(senderId: string, payload: ViewChangePayload): void {
-        const { newView, term } = payload.data;
-        const leaderToBeId = this.network.getNodeIdBySeed(newView);
-        if (leaderToBeId !== this.id) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], newView:[${newView}], onReceiveViewChange from "${senderId}", ignored because the newView doesn't match me as the leader` });
+    public onReceiveViewChange(payload: ViewChangePayload): void {
+        const { pk: senderPk, data } = payload;
+        const { newView, term } = data;
+        const leaderToBePk = this.calcLeaderPk(term, newView);
+        if (leaderToBePk !== this.keyManager.getMyPublicKey()) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], newView:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the newView doesn't match me as the leader` });
             return;
         }
 
         if (this.view > newView) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderId}", ignored because of unrelated view` });
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because of unrelated view` });
             return;
         }
 
-        this.pbftStorage.storeViewChange(term, newView, senderId);
+        this.pbftStorage.storeViewChange(term, newView, senderPk);
         this.checkElected(term, newView);
     }
 
@@ -264,7 +271,7 @@ export class PBFTTerm {
             }
         };
         this.pbftStorage.storePrePrepare(this.term, this.view, block);
-        this.gossip.multicast(this.id, this.getOtherNodesIds(), "new-view", newViewPayload);
+        this.networkCommunication.sendToMembers(this.getOtherNodesIds(), "new-view", newViewPayload);
     }
 
     private checkPrepared(term: number, view: number, blockHash: string) {
@@ -277,7 +284,7 @@ export class PBFTTerm {
     }
 
     private onPrepared(term: number, view: number, blockHash: string): void {
-        this.pbftStorage.storeCommit(term, view, blockHash, this.id);
+        this.pbftStorage.storeCommit(term, view, blockHash, this.keyManager.getMyPublicKey());
         const payload: CommitPayload = {
             pk: "pk",
             signature: "signature",
@@ -287,13 +294,14 @@ export class PBFTTerm {
                 blockHash
             }
         };
-        this.gossip.multicast(this.id, this.getOtherNodesIds(), "commit", payload);
+        this.networkCommunication.sendToMembers(this.getOtherNodesIds(), "commit", payload);
         this.checkCommit(term, view, blockHash);
     }
 
-    public onReceiveCommit(senderId: string, payload: CommitPayload): void {
-        const { term, view, blockHash } = payload.data;
-        this.pbftStorage.storeCommit(term, view, blockHash, senderId);
+    public onReceiveCommit(payload: CommitPayload): void {
+        const { pk: senderPk, data } = payload;
+        const { term, view, blockHash } = data;
+        this.pbftStorage.storeCommit(term, view, blockHash, senderPk);
 
         this.checkCommit(term, view, blockHash);
     }
@@ -307,40 +315,41 @@ export class PBFTTerm {
         }
     }
 
-    public async onReceiveNewView(senderId: string, payload: NewViewPayload): Promise<void> {
-        const { PP, view, term } = payload.data;
-        const wanaBeLeaderId = this.network.getNodeIdBySeed(view);
-        if (wanaBeLeaderId !== senderId) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderId}", rejected because it match the new id (${view})` });
+    public async onReceiveNewView(payload: NewViewPayload): Promise<void> {
+        const { pk: senderPk, data } = payload;
+        const { PP, view, term } = data;
+        const wanaBeLeaderId = this.calcLeaderPk(term, view);
+        if (wanaBeLeaderId !== senderPk) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", rejected because it match the new id (${view})` });
             return;
         }
 
         if (this.view > view) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderId}", view is from the past` });
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", view is from the past` });
             return;
         }
 
         if (view !== PP.data.view) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderId}", view doesn't match PP.view` });
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", view doesn't match PP.view` });
             return;
         }
 
-        if (await this.validatePrePreapare(senderId, PP)) {
+        if (await this.validatePrePreapare(PP)) {
             this.initView(view);
             this.processPrePrepare(PP);
         }
     }
 
     private getF(): number {
-        return Math.floor((this.network.getNodesCount() - 1) / 3);
+        return Math.floor((this.networkCommunication.getMembersPKs(this.view).length - 1) / 3);
     }
 
     private getOtherNodesIds(): string[] {
-        return this.network.getAllNodesIds().filter(id => id !== this.id);
+        return this.networkCommunication.getMembersPKs(this.view).filter(pk => pk !== this.keyManager.getMyPublicKey());
     }
 
-    private isLeader(senderId: string): boolean {
-        return this.leaderId() === senderId;
+    public isLeader(): boolean {
+        return this.leaderPk() === this.keyManager.getMyPublicKey();
     }
 
     private countElected(term: number, view: number): number {

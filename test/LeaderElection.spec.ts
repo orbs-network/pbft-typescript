@@ -3,8 +3,7 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aSimpleNetwork } from "./builders/NetworkBuilder";
-import { InMemoryGossip } from "./gossip/InMemoryGossip";
+import { aSimpleTestNetwork } from "./builders/NetworkBuilder";
 import { nextTick } from "./timeUtils";
 import { buildPayload } from "./payload/PayloadUtils";
 
@@ -12,32 +11,33 @@ chai.use(sinonChai);
 
 describe("Leader Election", () => {
     it("should notify the next leader when the timeout expired", async () => {
-        const { network, blocksProvider, blocksValidator, triggerElection } = aSimpleNetwork(5);
+        const { testNetwork, blocksProvider, blocksValidator, triggerElection } = aSimpleTestNetwork(5);
 
-        const testedNode = network.nodes[4];
-        const nextLeader = network.nodes[1];
-        const unicastSpy = sinon.spy(testedNode.pbft.gossip, "unicast");
+        const testedNode = testNetwork.nodes[4];
+        const nextLeader = testNetwork.nodes[1];
+        const gossip = testNetwork.getNodeGossip(testedNode.pk);
+        const unicastSpy = sinon.spy(gossip, "unicast");
 
-        network.startConsensusOnAllNodes();
+        testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         triggerElection();
         await blocksValidator.resolveAllValidations(true);
 
-        expect(unicastSpy).to.have.been.calledWith(testedNode.id, nextLeader.id, "view-change", buildPayload({ term: 1, newView: 1 }));
+        expect(unicastSpy).to.have.been.calledWith(testedNode.pk, nextLeader.pk, "view-change", buildPayload({ term: 1, newView: 1 }));
 
-        network.shutDown();
+        testNetwork.shutDown();
     });
 
     it("should cycle back to the first node on view-change", async () => {
-        const { network, blocksProvider, triggerElection } = aSimpleNetwork();
+        const { testNetwork, blocksProvider, triggerElection } = aSimpleTestNetwork();
 
-        const node0 = network.nodes[0];
-        const node1 = network.nodes[1];
-        const node2 = network.nodes[2];
-        const node3 = network.nodes[3];
+        const node0 = testNetwork.nodes[0];
+        const node1 = testNetwork.nodes[1];
+        const node2 = testNetwork.nodes[2];
+        const node3 = testNetwork.nodes[3];
 
-        network.startConsensusOnAllNodes(); // view 0
+        testNetwork.startConsensusOnAllNodes(); // view 0
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
 
@@ -74,46 +74,46 @@ describe("Leader Election", () => {
         expect(node2.isLeader()).to.be.false;
         expect(node3.isLeader()).to.be.false;
 
-        network.shutDown();
+        testNetwork.shutDown();
     });
 
     it("should count 2f+1 view-change to be elected", async () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(block1);
-        const { network, blocksProvider, blocksValidator } = aSimpleNetwork(4, [block1, block2]);
+        const { testNetwork, blocksProvider, blocksValidator } = aSimpleTestNetwork(4, [block1, block2]);
 
-        const node0 = network.nodes[0];
-        const node1 = network.nodes[1];
-        const node2 = network.nodes[2];
-        const node3 = network.nodes[3];
+        const node0 = testNetwork.nodes[0];
+        const node1 = testNetwork.nodes[1];
+        const node2 = testNetwork.nodes[2];
+        const node3 = testNetwork.nodes[3];
 
-        const gossip = node1.pbft.gossip as InMemoryGossip;
+        const gossip = testNetwork.getNodeGossip(node1.pk);
         const multicastSpy = sinon.spy(gossip, "multicast");
-        network.startConsensusOnAllNodes();
+        testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
 
-        gossip.onRemoteMessage(node0.id, "view-change", buildPayload({ term: 1, newView: 1 }));
-        gossip.onRemoteMessage(node2.id, "view-change", buildPayload({ term: 1, newView: 1 }));
-        gossip.onRemoteMessage(node3.id, "view-change", buildPayload({ term: 1, newView: 1 }));
+        gossip.onRemoteMessage("view-change", buildPayload({ term: 1, newView: 1 }));
+        gossip.onRemoteMessage("view-change", buildPayload({ term: 1, newView: 1 }));
+        gossip.onRemoteMessage("view-change", buildPayload({ term: 1, newView: 1 }));
         await blocksProvider.provideNextBlock();
 
-        expect(multicastSpy).to.have.been.calledWith(node1.id, [node0.id, node2.id, node3.id], "new-view", buildPayload({ term: 1, view: 1, PP: buildPayload({ view: 1, term: 1, block: block2 }) }));
-        network.shutDown();
+        expect(multicastSpy).to.have.been.calledWith(node1.pk, [node0.pk, node2.pk, node3.pk], "new-view", buildPayload({ term: 1, view: 1, PP: buildPayload({ view: 1, term: 1, block: block2 }) }));
+        testNetwork.shutDown();
     });
 
     it("should accept a block constructed by the new leader", async () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(block1);
         const block3 = aBlock(block1);
-        const { network, blocksProvider, blocksValidator, triggerElection } = aSimpleNetwork(4, [block1, block2, block3]);
+        const { testNetwork, blocksProvider, blocksValidator, triggerElection } = aSimpleTestNetwork(4, [block1, block2, block3]);
 
         // block1
-        network.startConsensusOnAllNodes();
+        testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
-        expect(network.nodes).to.agreeOnBlock(block1);
+        expect(testNetwork.nodes).to.agreeOnBlock(block1);
 
         // starting block2
         await blocksProvider.provideNextBlock();
@@ -122,23 +122,23 @@ describe("Leader Election", () => {
 
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
-        expect(network.nodes).to.agreeOnBlock(block3);
+        expect(testNetwork.nodes).to.agreeOnBlock(block3);
 
-        network.shutDown();
+        testNetwork.shutDown();
     });
 
     it("should cycle back to the first node on view-change", async () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(block1);
         const block3 = aBlock(block1);
-        const { network, blocksProvider, blocksValidator, triggerElection } = aSimpleNetwork(4, [block1, block2, block3]);
+        const { testNetwork, blocksProvider, blocksValidator, triggerElection } = aSimpleTestNetwork(4, [block1, block2, block3]);
 
-        const node0 = network.nodes[0];
-        const node1 = network.nodes[1];
-        const node2 = network.nodes[2];
-        const node3 = network.nodes[3];
+        const node0 = testNetwork.nodes[0];
+        const node1 = testNetwork.nodes[1];
+        const node2 = testNetwork.nodes[2];
+        const node3 = testNetwork.nodes[3];
 
-        network.startConsensusOnAllNodes();
+        testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await nextTick(); // await for blockStorage.getLastBlockHash
@@ -150,9 +150,13 @@ describe("Leader Election", () => {
         expect(node2.isLeader()).to.false;
         expect(node3.isLeader()).to.false;
 
-        const spy0 = sinon.spy(node0.pbft.gossip, "unicast");
-        const spy1 = sinon.spy(node1.pbft.gossip, "multicast");
-        const spy2 = sinon.spy(node2.pbft.gossip, "unicast");
+        const gossip0 = testNetwork.getNodeGossip(node0.pk);
+        const gossip1 = testNetwork.getNodeGossip(node1.pk);
+        const gossip2 = testNetwork.getNodeGossip(node2.pk);
+
+        const spy0 = sinon.spy(gossip0, "unicast");
+        const spy1 = sinon.spy(gossip1, "multicast");
+        const spy2 = sinon.spy(gossip2, "unicast");
 
         await blocksProvider.provideNextBlock();
         triggerElection();
@@ -162,50 +166,50 @@ describe("Leader Election", () => {
         await blocksProvider.provideNextBlock();
         await nextTick(); // await for blockStorage.getLastBlockHash
 
-        expect(spy0).to.have.been.calledWith(node0.id, node1.id, "view-change", buildPayload({ term: 2, newView: 1 }));
-        expect(spy1).to.have.been.calledWith(node1.id, [node0.id, node2.id, node3.id], "new-view", buildPayload({ term: 2, view: 1, PP: buildPayload({ term: 2, view: 1, block: block3 }) }));
-        expect(spy2).to.have.been.calledWith(node2.id, node1.id, "view-change", buildPayload({ term: 2, newView: 1 }));
+        expect(spy0).to.have.been.calledWith(node0.pk, node1.pk, "view-change", buildPayload({ term: 2, newView: 1 }));
+        expect(spy1).to.have.been.calledWith(node1.pk, [node0.pk, node2.pk, node3.pk], "new-view", buildPayload({ term: 2, view: 1, PP: buildPayload({ term: 2, view: 1, block: block3 }) }));
+        expect(spy2).to.have.been.calledWith(node2.pk, node1.pk, "view-change", buildPayload({ term: 2, newView: 1 }));
 
-        network.shutDown();
+        testNetwork.shutDown();
     });
 
     it("should not fire new-view if count of view-change is less than 2f+1", async () => {
-        const { network, blocksProvider, blocksValidator } = aSimpleNetwork();
-        const leader = network.nodes[0];
-        const node1 = network.nodes[1];
-        const node2 = network.nodes[2];
+        const { testNetwork, blocksProvider, blocksValidator } = aSimpleTestNetwork();
+        const leader = testNetwork.nodes[0];
+        const node1 = testNetwork.nodes[1];
+        const node2 = testNetwork.nodes[2];
 
-        const gossip = node1.pbft.gossip as InMemoryGossip;
+        const gossip = testNetwork.getNodeGossip(node1.pk);
         const broadcastSpy = sinon.spy(gossip, "broadcast");
 
-        network.startConsensusOnAllNodes();
+        testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
-        gossip.onRemoteMessage("view-change", leader.id, { newView: 1 });
-        gossip.onRemoteMessage("view-change", node2.id, { newView: 1 });
+        gossip.onRemoteMessage("view-change", buildPayload({ newView: 1 }));
+        gossip.onRemoteMessage("view-change", buildPayload({ newView: 1 }));
         await blocksValidator.resolveAllValidations(true);
 
         expect(broadcastSpy).to.not.have.been.called;
-        network.shutDown();
+        testNetwork.shutDown();
     });
 
     it("should not count view-change votes from the same node", async () => {
-        const { network, blocksProvider, blocksValidator } = aSimpleNetwork();
-        const leader = network.nodes[0];
-        const node1 = network.nodes[1];
+        const { testNetwork, blocksProvider, blocksValidator } = aSimpleTestNetwork();
+        const leader = testNetwork.nodes[0];
+        const node1 = testNetwork.nodes[1];
 
-        const gossip = node1.pbft.gossip as InMemoryGossip;
+        const gossip = testNetwork.getNodeGossip(node1.pk);
         const broadcastSpy = sinon.spy(gossip, "broadcast");
 
-        network.startConsensusOnAllNodes();
+        testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
-        gossip.onRemoteMessage("view-change", leader.id, { newView: 1 });
-        gossip.onRemoteMessage("view-change", leader.id, { newView: 1 });
-        gossip.onRemoteMessage("view-change", leader.id, { newView: 1 });
+        gossip.onRemoteMessage("view-change", buildPayload({ newView: 1 }));
+        gossip.onRemoteMessage("view-change", buildPayload({ newView: 1 }));
+        gossip.onRemoteMessage("view-change", buildPayload({ newView: 1 }));
         await blocksValidator.resolveAllValidations(true);
 
         expect(broadcastSpy).to.not.have.been.called;
-        network.shutDown();
+        testNetwork.shutDown();
     });
 });

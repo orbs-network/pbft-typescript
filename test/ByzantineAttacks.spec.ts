@@ -4,9 +4,8 @@ import * as sinonChai from "sinon-chai";
 import { CommitPayload, PreparePayload, PrePreparePayload } from "../src/gossip/Payload";
 import { PBFTStorage } from "../src/storage/PBFTStorage";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aNetwork, aSimpleNetwork } from "./builders/NetworkBuilder";
+import { aTestNetwork, aSimpleTestNetwork } from "./builders/NetworkBuilder";
 import { aNode } from "./builders/NodeBuilder";
-import { InMemoryGossip } from "./gossip/InMemoryGossip";
 import { SilentLogger } from "./logger/SilentLogger";
 import { InMemoryPBFTStorage } from "./storage/InMemoryPBFTStorage";
 import { nextTick, wait } from "./timeUtils";
@@ -20,20 +19,22 @@ describe("Byzantine Attacks", () => {
         const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
         const leaderBuilder = aNode().storingOn(inspectedStorage);
         const block = aBlock(theGenesisBlock);
-        const network = aNetwork()
+        const testNetwork = aTestNetwork()
             .blocksInPool([block])
             .withCustomNode(leaderBuilder)
             .with(3).nodes
             .build();
 
-        const leader = network.nodes[0];
+        const leader = testNetwork.nodes[0];
         const term = 0;
         const view = 0;
-        leader.pbft.gossip.unicast(leader.id, leader.id, "preprepare", buildPayload({ block, view, term }));
+
+        const gossip = testNetwork.getNodeGossip(leader.pk);
+        gossip.unicast(leader.pk, "preprepare", buildPayload({ block, view, term }));
         await nextTick();
 
         expect(inspectedStorage.getPrepare(term, view, block.header.hash).length).to.equal(0);
-        network.shutDown();
+        testNetwork.shutDown();
     });
 
     xit("should ignore prepare messages pretend to be me", async () => {
@@ -41,24 +42,25 @@ describe("Byzantine Attacks", () => {
         const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
         const leaderNodeBuilder = aNode().storingOn(inspectedStorage);
         const block = aBlock(theGenesisBlock);
-        const network = aNetwork()
+        const testNetwork = aTestNetwork()
             .blocksInPool([block])
             .withCustomNode(leaderNodeBuilder)
             .with(3).nodes
             .build();
 
-        const leader = network.nodes[0];
-        network.startConsensusOnAllNodes();
+        const leader = testNetwork.nodes[0];
+        testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
 
-        const byzantineNode = network.nodes[3];
+        const byzantineNode = testNetwork.nodes[3];
         const term = 0;
         const view = 0;
-        byzantineNode.pbft.gossip.unicast(leader.id, leader.id, "prepare", buildPayload({ blockHash: block.header.hash, view, term }));
+        const gossip = testNetwork.getNodeGossip(byzantineNode.pk);
+        gossip.unicast(leader.pk, "prepare", buildPayload({ blockHash: block.header.hash, view, term }));
         await nextTick();
 
         expect(inspectedStorage.getPrepare(term, view, block.header.hash).length).to.equal(3);
-        network.shutDown();
+        testNetwork.shutDown();
     });
 
     xit("should ignore prepare that came from the leader, we count the leader only on the preprepare", async () => {
@@ -66,31 +68,33 @@ describe("Byzantine Attacks", () => {
         const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
         const nodeBuilder = aNode().storingOn(inspectedStorage);
         const block = aBlock(theGenesisBlock);
-        const network = aNetwork().blocksInPool([block]).with(3).nodes.withCustomNode(nodeBuilder).build();
+        const testNetwork = aTestNetwork().blocksInPool([block]).with(3).nodes.withCustomNode(nodeBuilder).build();
 
-        const leader = network.nodes[0];
-        const node = network.nodes[1];
-        leader.pbft.gossip.unicast(leader.id, node.id, "prepare", buildPayload({ blockHash: block.header.hash, view: 0, term: 1 }));
-        leader.pbft.gossip.unicast(leader.id, node.id, "preprepare", buildPayload({ block, view: 0, term: 1 }));
+        const leader = testNetwork.nodes[0];
+        const node = testNetwork.nodes[1];
+
+        const gossip = testNetwork.getNodeGossip(leader.pk);
+        gossip.unicast(node.pk, "prepare", buildPayload({ blockHash: block.header.hash, view: 0, term: 1 }));
+        gossip.unicast(node.pk, "preprepare", buildPayload({ block, view: 0, term: 1 }));
         await nextTick();
 
         expect(await node.getLatestBlock()).to.not.deep.equal(block);
-        network.shutDown();
+        testNetwork.shutDown();
     });
 
     it("Block validation is completed after new election, old validation should be ignored", async () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
-        const { network, blocksProvider, blocksValidator, triggerElection } = aSimpleNetwork(4, [block1, block2]);
+        const { testNetwork, blocksProvider, blocksValidator, triggerElection } = aSimpleTestNetwork(4, [block1, block2]);
 
-        const leader = network.nodes[0];
-        const node1 = network.nodes[1];
-        const node2 = network.nodes[2];
-        const node3 = network.nodes[3];
+        const leader = testNetwork.nodes[0];
+        const node1 = testNetwork.nodes[1];
+        const node2 = testNetwork.nodes[2];
+        const node3 = testNetwork.nodes[3];
 
-        const leaderGossip = leader.pbft.gossip as InMemoryGossip;
-        leaderGossip.setOutGoingWhiteList([node1.id, node2.id]);
-        network.startConsensusOnAllNodes();
+        const leaderGossip = testNetwork.getNodeGossip(leader.pk);
+        leaderGossip.setOutGoingWhiteListPKs([node1.pk, node2.pk]);
+        testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await nextTick(); // await for blockStorage.getLastBlockHash
@@ -105,7 +109,7 @@ describe("Byzantine Attacks", () => {
         expect(await node2.getLatestBlock()).to.equal(block2);
         expect(await node3.getLatestBlock()).to.equal(block2);
         expect(await node3.getLatestBlock()).to.equal(block2);
-        network.shutDown();
+        testNetwork.shutDown();
     });
 
     it("A scenario where a node should not get committed on a block without the commit phase", async () => {
@@ -148,24 +152,24 @@ describe("Byzantine Attacks", () => {
 
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
-        const { network, blocksProvider, blocksValidator, triggerElection } = aSimpleNetwork(4, [block1, block2]);
+        const { testNetwork, blocksProvider, blocksValidator, triggerElection } = aSimpleTestNetwork(4, [block1, block2]);
 
-        const node0 = network.nodes[0];
-        const node1 = network.nodes[1];
-        const node2 = network.nodes[2];
-        const node3 = network.nodes[3];
+        const node0 = testNetwork.nodes[0];
+        const node1 = testNetwork.nodes[1];
+        const node2 = testNetwork.nodes[2];
+        const node3 = testNetwork.nodes[3];
 
-        const gossip0 = node0.pbft.gossip as InMemoryGossip;
-        const gossip1 = node1.pbft.gossip as InMemoryGossip;
-        const gossip2 = node2.pbft.gossip as InMemoryGossip;
-        const gossip3 = node3.pbft.gossip as InMemoryGossip;
+        const gossip0 = testNetwork.getNodeGossip(node0.pk);
+        const gossip1 = testNetwork.getNodeGossip(node1.pk);
+        const gossip2 = testNetwork.getNodeGossip(node2.pk);
+        const gossip3 = testNetwork.getNodeGossip(node3.pk);
 
-        gossip0.setOutGoingWhiteList([node1.id, node2.id]);
-        gossip1.setOutGoingWhiteList([node2.id]);
-        gossip2.setOutGoingWhiteList([]);
-        gossip3.setOutGoingWhiteList([]);
+        gossip0.setOutGoingWhiteListPKs([node1.pk, node2.pk]);
+        gossip1.setOutGoingWhiteListPKs([node2.pk]);
+        gossip2.setOutGoingWhiteListPKs([]);
+        gossip3.setOutGoingWhiteListPKs([]);
 
-        network.startConsensusOnAllNodes();
+        testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await nextTick(); // await for blockStorage.getLastBlockHash
@@ -176,11 +180,11 @@ describe("Byzantine Attacks", () => {
         expect(await node2.getLatestBlock()).to.equal(theGenesisBlock);
         expect(await node3.getLatestBlock()).to.equal(theGenesisBlock);
 
-        gossip0.clearOutGoingWhiteList();
-        gossip1.clearOutGoingWhiteList();
-        gossip2.clearOutGoingWhiteList();
-        gossip3.clearOutGoingWhiteList();
-        gossip3.setIncomingWhiteList([]);
+        gossip0.clearOutGoingWhiteListPKs();
+        gossip1.clearOutGoingWhiteListPKs();
+        gossip2.clearOutGoingWhiteListPKs();
+        gossip3.clearOutGoingWhiteListPKs();
+        gossip3.setIncomingWhiteListPKs([]);
 
         // elect node2 as the leader
         triggerElection();
@@ -195,43 +199,41 @@ describe("Byzantine Attacks", () => {
         expect(await node2.getLatestBlock()).to.equal(block2);
         expect(await node3.getLatestBlock()).to.equal(theGenesisBlock);
 
-        network.shutDown();
+        testNetwork.shutDown();
     });
 
     it("should not process gossip messages from nodes that are not part of the network (isMember = false)", async () => {
-        const network = aNetwork()
+        const testNetwork = aTestNetwork()
             .with(4)
             .nodes
             .build();
 
-        const node0 = network.nodes[0];
-        const node1 = network.nodes[1];
-        const node2 = network.nodes[2];
-        const node3 = network.nodes[3];
-        const gossip1: InMemoryGossip = node1.pbft.gossip as InMemoryGossip;
-        const gossip2: InMemoryGossip = node2.pbft.gossip as InMemoryGossip;
-        const gossip3: InMemoryGossip = node3.pbft.gossip as InMemoryGossip;
+        const node0 = testNetwork.nodes[0];
+        const node1 = testNetwork.nodes[1];
+        const node2 = testNetwork.nodes[2];
+        const gossip1 = testNetwork.getNodeGossip(node1.pk);
+        const gossip2 = testNetwork.getNodeGossip(node2.pk);
 
         // node0, if faking other messages
         const block1 = aBlock(theGenesisBlock);
         const PPpayload1: PrePreparePayload = buildPayload({ term: 1, view: 0, block: block1 });
         const Ppayload1: PreparePayload = buildPayload({ term: 1, view: 0, blockHash: block1.header.hash });
         const Cpayload1: CommitPayload = buildPayload({ term: 1, view: 0, blockHash: block1.header.hash });
-        gossip1.onRemoteMessage(node0.id, "preprepare", PPpayload1); // node1 causing preprepare on node1
-        gossip1.onRemoteMessage("node1000", "prepare", Ppayload1); // node1 pretending to send prepare as node1000
-        gossip1.onRemoteMessage("node2000", "prepare", Ppayload1); // node1 pretending to send prepare as node2000
-        gossip1.onRemoteMessage("node1000", "commit", Cpayload1); // node1 pretending to send commit as node1000
-        gossip1.onRemoteMessage("node2000", "commit", Cpayload1); // node1 pretending to send commit as node2000
+        gossip1.onRemoteMessage("preprepare", PPpayload1); // node1 causing preprepare on node1
+        gossip1.onRemoteMessage("prepare", Ppayload1); // node1 pretending to send prepare as node1000
+        gossip1.onRemoteMessage("prepare", Ppayload1); // node1 pretending to send prepare as node2000
+        gossip1.onRemoteMessage("commit", Cpayload1); // node1 pretending to send commit as node1000
+        gossip1.onRemoteMessage("commit", Cpayload1); // node1 pretending to send commit as node2000
 
         const block2 = aBlock(theGenesisBlock);
         const PPpayload2: PrePreparePayload = buildPayload({ term: 1, view: 0, block: block2 });
         const Ppayload2: PreparePayload = buildPayload({ term: 1, view: 0, blockHash: block2.header.hash });
         const Cpayload2: CommitPayload = buildPayload({ term: 1, view: 0, blockHash: block2.header.hash });
-        gossip2.onRemoteMessage(node0.id, "preprepare", PPpayload2); // node1 causing preprepare on node2
-        gossip2.onRemoteMessage("node1000", "prepare", Ppayload2); // node1 pretending to send prepare as node1000
-        gossip2.onRemoteMessage("node2000", "prepare", Ppayload2); // node1 pretending to send prepare as node2000
-        gossip2.onRemoteMessage("node1000", "commit", Cpayload2); // node1 pretending to send commit as node1000
-        gossip2.onRemoteMessage("node2000", "commit", Cpayload2); // node1 pretending to send commit as node2000
+        gossip2.onRemoteMessage("preprepare", PPpayload2); // node1 causing preprepare on node2
+        gossip2.onRemoteMessage("prepare", Ppayload2); // node1 pretending to send prepare as node1000
+        gossip2.onRemoteMessage("prepare", Ppayload2); // node1 pretending to send prepare as node2000
+        gossip2.onRemoteMessage("commit", Cpayload2); // node1 pretending to send commit as node1000
+        gossip2.onRemoteMessage("commit", Cpayload2); // node1 pretending to send commit as node2000
 
         await nextTick();
         expect(await node1.getLatestBlock()).to.not.equal(block1);
@@ -240,7 +242,7 @@ describe("Byzantine Attacks", () => {
         expect(await node1.getLatestBlock()).to.not.equal(block1);
         expect(await node2.getLatestBlock()).to.not.equal(block2);
 
-        network.shutDown();
+        testNetwork.shutDown();
     });
 
 });
