@@ -1,6 +1,6 @@
 {
   "name": "pbft-typescript",
-  "version": "0.0.15",
+  "version": "0.0.18",
   "description": "",
   "repository": {
     "type": "git",
@@ -21,11 +21,13 @@
   "license": "MIT",
   "dependencies": {
     "@types/chai": "^4.1.3",
+    "@types/json-stable-stringify": "^1.0.32",
     "@types/mocha": "^5.2.0",
     "@types/node": "^10.0.4",
     "@types/sinon": "^4.3.1",
     "@types/sinon-chai": "^2.7.29",
     "chai": "^4.1.2",
+    "json-stable-stringify": "^1.0.1",
     "mocha": "^5.1.1",
     "sinon": "^5.0.6",
     "sinon-chai": "^3.0.0",

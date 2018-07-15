@@ -1,9 +1,9 @@
 import { CommitPayload, NewViewPayload, PreparePayload, PrePreparePayload, ViewChangePayload } from "../gossip/Payload";
 
 export interface PBFTMessagesHandler {
-    onReceivePrePrepare(senderId: string, payload: PrePreparePayload): any;
-    onReceivePrepare(senderId: string, payload: PreparePayload): any;
-    onReceiveViewChange(senderId: string, payload: ViewChangePayload): any;
-    onReceiveCommit(senderId: string, payload: CommitPayload): any;
-    onReceiveNewView(senderId: string, payload: NewViewPayload): any;
+    onReceivePrePrepare(payload: PrePreparePayload): any;
+    onReceivePrepare(payload: PreparePayload): any;
+    onReceiveViewChange(payload: ViewChangePayload): any;
+    onReceiveCommit(payload: CommitPayload): any;
+    onReceiveNewView(payload: NewViewPayload): any;
 }

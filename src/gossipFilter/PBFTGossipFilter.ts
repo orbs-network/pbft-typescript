@@ -8,20 +8,16 @@ export class PBFTGossipFilter {
     private term: number;
     private messagesHandler: PBFTMessagesHandler;
 
-    constructor(private readonly gossip: Gossip, private id: string, private readonly network: Network) {
+    constructor(private readonly network: Network) {
         this.subscribeToGossip();
     }
 
-    private onGossipMessage(message: MessageTypes, senderId: string, payload: Payload): void {
+    private onGossipMessage(messageType: MessageTypes, payload: Payload): void {
         if (this.messagesHandler === undefined) {
             return;
         }
 
-        if (senderId === this.id) {
-            return;
-        }
-
-        if (this.network.isMember(senderId) === false) {
+        if (this.network.isMember(payload.pk) === false) {
             return;
         }
 
@@ -29,37 +25,37 @@ export class PBFTGossipFilter {
             return;
         }
 
-        switch (message) {
+        switch (messageType) {
             case "preprepare": {
-                this.messagesHandler.onReceivePrePrepare(senderId, payload);
+                this.messagesHandler.onReceivePrePrepare(payload);
                 break;
             }
             case "prepare": {
-                this.messagesHandler.onReceivePrepare(senderId, payload);
+                this.messagesHandler.onReceivePrepare(payload);
                 break;
             }
             case "commit": {
-                this.messagesHandler.onReceiveCommit(senderId, payload);
+                this.messagesHandler.onReceiveCommit(payload);
                 break;
             }
             case "view-change": {
-                this.messagesHandler.onReceiveViewChange(senderId, payload);
+                this.messagesHandler.onReceiveViewChange(payload);
                 break;
             }
             case "new-view": {
-                this.messagesHandler.onReceiveNewView(senderId, payload);
+                this.messagesHandler.onReceiveNewView(payload);
                 break;
             }
         }
     }
 
     private subscribeToGossip(): void {
-        this.gossipSubscriptionToken = this.gossip.subscribe((message: MessageTypes, senderId: string, payload: Payload) => this.onGossipMessage(message, senderId, payload));
+        this.gossipSubscriptionToken = this.network.subscribeToMessages(this.onGossipMessage);
     }
 
     private unsubscribeFromGossip(): void {
         if (this.gossipSubscriptionToken) {
-            this.gossip.unsubscribe(this.gossipSubscriptionToken);
+            this.network.unsubscribeFromMessages(this.gossipSubscriptionToken);
             this.gossipSubscriptionToken = undefined;
         }
     }

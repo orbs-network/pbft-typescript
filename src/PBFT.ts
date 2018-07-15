@@ -1,34 +1,67 @@
 import { Block } from "./Block";
 import { BlockStorage } from "./blockStorage/BlockStorage";
-import { BlocksValidator } from "./blocksValidator/BlocksValidator";
 import { Config } from "./Config";
 import { Gossip } from "./gossip/Gossip";
 import { PBFTGossipFilter } from "./gossipFilter/PBFTGossipFilter";
-import { PBFTTerm } from "./PBFTTerm";
+import { PBFTTerm, ConfigTerm, BlockUtils } from "./PBFTTerm";
 import { InMemoryBlockStorage } from "../test/blockStorage/InMemoryBlockStorage";
+import { BlocksProvider } from "./blocksProvider/BlocksProvider";
+import { createHash,  HexBase64Latin1Encoding } from "crypto";
+import * as stringify from "json-stable-stringify";
+import { KeyManager } from "./keyManager/KeyManager";
+import { Network } from "./network/Network";
 
 export type onCommittedCB = (block: Block) => Promise<void>;
+
+class PBFTBlockUtils implements BlockUtils {
+    public constructor(
+        private readonly blockProvider: BlocksProvider,
+        private readonly blockStorage: BlockStorage) {
+    }
+
+    public async requestNewBlock(height: number): Promise<Block> {
+        return this.blockProvider.requestNewBlock(height);
+    }
+
+    public async validateBlock(block: Block): Promise<boolean> {
+        const lastBlock: Block = await this.blockStorage.getLastBlock();
+        const lastBlockHash: string = this.calculateBlockHash(lastBlock);
+        if (lastBlockHash !== block.header.prevBlockHash) {
+            return false;
+        }
+        return this.blockProvider.validateBlock(block);
+    }
+
+    public calculateBlockHash(block: Block): string {
+        const hash = createHash("sha256");
+        hash.update(stringify(block.header));
+        return hash.digest("base64");
+    }
+}
 
 export class PBFT {
     private readonly onCommittedListeners: onCommittedCB[];
     private readonly blockStorage: BlockStorage;
+    // private readonly blocksProvider: BlocksProvider;
     private pbftTerm: PBFTTerm;
     private pbftGossipFilter: PBFTGossipFilter;
-    private readonly pbftTermConfig: Config;
+    private readonly pbftTermConfig: ConfigTerm;
 
-    public readonly id: string;
+    public readonly network: Network;
+    public readonly keyManager: KeyManager;
     public readonly gossip: Gossip;
 
     constructor(config: Config) {
         this.onCommittedListeners = [];
-        this.id = config.id;
         this.blockStorage = config.blockStorage || new InMemoryBlockStorage();
+        // this.blocksProvider = config.blocksProvider;
 
         this.pbftTermConfig = this.createTermConfig(config);
-        this.pbftGossipFilter = new PBFTGossipFilter(config.gossip, this.id, config.network);
+        this.pbftGossipFilter = new PBFTGossipFilter(config.network);
 
         // config
-        this.gossip = config.gossip;
+        this.keyManager = config.keyManager;
+        this.network = config.network;
     }
 
     private notifyCommitted(block: Block): Promise<any> {
@@ -42,27 +75,20 @@ export class PBFT {
         }
     }
 
-    private createTermConfig(config: Config): Config {
-        const result: Config = { ...config };
-        result.blocksValidator = this.overrideBlockValidation(result.blocksValidator);
+    private createTermConfig(config: Config): ConfigTerm {
+        const blockUtils: BlockUtils = new PBFTBlockUtils(config.blocksProvider, config.blockStorage);
+        const result: ConfigTerm = {...config, blockUtils};
         return result;
     }
 
-    private overrideBlockValidation(blocksValidator: BlocksValidator): BlocksValidator {
-        return {
-            validateBlock: async (block: Block): Promise<boolean> => {
-                const topBlock: Block = await this.blockStorage.getLastBlockHash();
-                if (topBlock.header.hash !== block.header.prevBlockHash) {
-                    return false;
-                }
-                return blocksValidator.validateBlock(block);
-            }
-        };
-    }
+
 
     private async createPBFTTerm(): Promise<void> {
-        const term: number = await this.blockStorage.getBlockChainHeight();
-        this.pbftTerm = new PBFTTerm(this.pbftTermConfig, term, async block => {
+        const term: number = await this.blockStorage.getHeight(); // optimized - block.header.height
+        const lastBlock: Block = await this.blockStorage.getLastBlock();
+        // const term: number = lastBlock.header.height;
+        const members: string[] = this.network.getNetworkMembersPKs(this.getSeed(lastBlock));
+        this.pbftTerm = new PBFTTerm(this.pbftTermConfig, term, members, async block => {
             this.disposePBFTTerm();
             await this.notifyCommitted(block);
             await this.createPBFTTerm();
@@ -70,9 +96,13 @@ export class PBFT {
         this.pbftGossipFilter.setTerm(term, this.pbftTerm);
     }
 
+    private getSeed(block: Block): string {
+        return block.header.toString();
+    }
+
     public isLeader(): boolean {
         if (this.pbftTerm !== undefined) {
-            return this.pbftTerm.leaderId() === this.id;
+            return this.pbftTerm.getCurrentLeader() === this.keyManager.getMyPublicKey();
         }
     }
 
