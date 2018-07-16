@@ -24,7 +24,7 @@ describe("Leader Election", () => {
         triggerElection();
         await blocksValidator.resolveAllValidations(true);
 
-        expect(unicastSpy).to.have.been.calledWith(testedNode.pk, nextLeader.pk, "view-change", aPayload(testedNode.pk, { term: 1, newView: 1 }));
+        expect(unicastSpy).to.have.been.calledWith(nextLeader.pk, "view-change", aPayload(testedNode.pk, { term: 1, newView: 1 }));
 
         testNetwork.shutDown();
     });
@@ -80,7 +80,7 @@ describe("Leader Election", () => {
     it("should count 2f+1 view-change to be elected", async () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(block1);
-        const { testNetwork, blocksProvider, blocksValidator } = aSimpleTestNetwork(4, [block1, block2]);
+        const { testNetwork, blocksProvider } = aSimpleTestNetwork(4, [block1, block2]);
 
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -93,12 +93,12 @@ describe("Leader Election", () => {
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
 
-        gossip.onRemoteMessage("view-change", aPayload(node1.pk, { term: 1, newView: 1 }));
-        gossip.onRemoteMessage("view-change", aPayload(node1.pk, { term: 1, newView: 1 }));
-        gossip.onRemoteMessage("view-change", aPayload(node1.pk, { term: 1, newView: 1 }));
+        gossip.onRemoteMessage("view-change", aPayload(node0.pk, { term: 1, newView: 1 }));
+        gossip.onRemoteMessage("view-change", aPayload(node2.pk, { term: 1, newView: 1 }));
+        gossip.onRemoteMessage("view-change", aPayload(node3.pk, { term: 1, newView: 1 }));
         await blocksProvider.provideNextBlock();
 
-        expect(multicastSpy).to.have.been.calledWith(node1.pk, [node0.pk, node2.pk, node3.pk], "new-view", aPayload(node1.pk, { term: 1, view: 1, PP: aPayload(node1.pk, { view: 1, term: 1, block: block2 }) }));
+        expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", aPayload(node1.pk, { term: 1, view: 1, PP: aPayload(node1.pk, { view: 1, term: 1, block: block2 }) }));
         testNetwork.shutDown();
     });
 
@@ -166,9 +166,9 @@ describe("Leader Election", () => {
         await blocksProvider.provideNextBlock();
         await nextTick(); // await for blockStorage.getLastBlockHash
 
-        expect(spy0).to.have.been.calledWith(node0.pk, node1.pk, "view-change", aPayload(node0.pk, { term: 2, newView: 1 }));
-        expect(spy1).to.have.been.calledWith(node1.pk, [node0.pk, node2.pk, node3.pk], "new-view", aPayload(node1.pk, { term: 2, view: 1, PP: aPayload(node1.pk, { term: 2, view: 1, block: block3 }) }));
-        expect(spy2).to.have.been.calledWith(node2.pk, node1.pk, "view-change", aPayload(node2.pk, { term: 2, newView: 1 }));
+        expect(spy0).to.have.been.calledWith(node1.pk, "view-change", aPayload(node0.pk, { term: 2, newView: 1 }));
+        expect(spy1).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", aPayload(node1.pk, { term: 2, view: 1, PP: aPayload(node1.pk, { term: 2, view: 1, block: block3 }) }));
+        expect(spy2).to.have.been.calledWith(node1.pk, "view-change", aPayload(node2.pk, { term: 2, newView: 1 }));
 
         testNetwork.shutDown();
     });

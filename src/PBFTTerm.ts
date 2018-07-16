@@ -101,7 +101,7 @@ export class PBFTTerm {
         this.initView(this.view + 1);
         this.logger.log({ Subject: "Flow", FlowType: "LeaderChange", leaderPk: this.leaderPk(), term: this.term, newView: this.view });
         const payload: ViewChangePayload = {
-            pk: "pk",
+            pk: this.keyManager.getMyPublicKey(),
             signature: "signature",
             data: {
                 term: this.term,
@@ -118,7 +118,7 @@ export class PBFTTerm {
 
     private broadcastPrePrepare(term: number, view: number, block: Block): void {
         const payload: PrePreparePayload = {
-            pk: "pk",
+            pk: this.keyManager.getMyPublicKey(),
             signature: "signature",
             data: {
                 block,
@@ -131,7 +131,7 @@ export class PBFTTerm {
 
     private broadcastPrepare(term: number, view: number, block: Block): void {
         const payload: PreparePayload = {
-            pk: "pk",
+            pk: this.keyManager.getMyPublicKey(),
             signature: "signature",
             data: {
                 blockHash: block.header.hash,
@@ -251,7 +251,7 @@ export class PBFTTerm {
         }
 
         const PP: PrePreparePayload = {
-            pk: "pk",
+            pk: this.keyManager.getMyPublicKey(),
             signature: "signature",
             data: {
                 term: this.term,
@@ -262,7 +262,7 @@ export class PBFTTerm {
         this.CB = block;
         this.logger.log({ Subject: "Flow", FlowType: "Elected", term: this.term, view, blockHash: block.header.hash });
         const newViewPayload: NewViewPayload = {
-            pk: "pk",
+            pk: this.keyManager.getMyPublicKey(),
             signature: "signature",
             data: {
                 term: this.term,
@@ -286,7 +286,7 @@ export class PBFTTerm {
     private onPrepared(term: number, view: number, blockHash: string): void {
         this.pbftStorage.storeCommit(term, view, blockHash, this.keyManager.getMyPublicKey());
         const payload: CommitPayload = {
-            pk: "pk",
+            pk: this.keyManager.getMyPublicKey(),
             signature: "signature",
             data: {
                 term,

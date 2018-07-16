@@ -13,6 +13,7 @@ import { KeyManager } from "../../src/KeyManager/KeyManager";
 import { NetworkCommunication } from "../../src";
 import { InMemoryNetworkCommunicaiton } from "../networkCommunication/InMemoryNetworkCommunicaiton";
 import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
+import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 
 class ConfigBuilder {
     private publicKey: string;
@@ -34,7 +35,7 @@ class ConfigBuilder {
         const gossip: Gossip = new Gossip(discovery, logger);
         const networkCommunication: NetworkCommunication = new InMemoryNetworkCommunicaiton(discovery, gossip);
         const blockStorage: BlockStorage = new InMemoryBlockStorage();
-        const keyManager: KeyManager = undefined;
+        const keyManager: KeyManager = new KeyManagerMock(this.publicKey);
 
         return {
             networkCommunication,
