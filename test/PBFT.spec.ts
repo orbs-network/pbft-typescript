@@ -35,7 +35,7 @@ describe("PBFT", () => {
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
         await nextTick(); // await for notifyCommitted
-        const preprepareCounter = (spy: sinon.SinonSpy) => spy.getCalls().filter(c => c.args[2] === "preprepare").length;
+        const preprepareCounter = (spy: sinon.SinonSpy) => spy.getCalls().filter(c => c.args[1] === "preprepare").length;
 
         expect(preprepareCounter(spy0)).to.equal(1);
         expect(preprepareCounter(spy1)).to.equal(0);
