@@ -88,10 +88,10 @@ export class PBFTTerm {
     }
 
     public leaderPk(): string {
-        return this.calcLeaderPk(this.term, this.view);
+        return this.calcLeaderPk(this.view);
     }
 
-    private calcLeaderPk(term: number, view: number): string {
+    private calcLeaderPk(view: number): string {
         const membersPks = this.networkCommunication.getMembersPKs(view);
         const index = view % membersPks.length;
         return membersPks[index];
@@ -171,7 +171,7 @@ export class PBFTTerm {
             return false;
         }
 
-        const wanaBeLeaderId = this.calcLeaderPk(term, view);
+        const wanaBeLeaderId = this.calcLeaderPk(view);
         if (wanaBeLeaderId !== senderPk) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderPk}", block rejected because it was not sent by the current leader (${view})` });
             return false;
@@ -217,14 +217,14 @@ export class PBFTTerm {
     public onReceiveViewChange(payload: ViewChangePayload): void {
         const { pk: senderPk, data } = payload;
         const { newView, term } = data;
-        const leaderToBePk = this.calcLeaderPk(term, newView);
-        if (leaderToBePk !== this.keyManager.getMyPublicKey()) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], newView:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the newView doesn't match me as the leader` });
+        if (this.view > newView) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because of unrelated view` });
             return;
         }
 
-        if (this.view > newView) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because of unrelated view` });
+        const leaderToBePk = this.calcLeaderPk(newView);
+        if (leaderToBePk !== this.keyManager.getMyPublicKey()) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], newView:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the newView doesn't match me as the leader` });
             return;
         }
 
@@ -318,7 +318,7 @@ export class PBFTTerm {
     public async onReceiveNewView(payload: NewViewPayload): Promise<void> {
         const { pk: senderPk, data } = payload;
         const { PP, view, term } = data;
-        const wanaBeLeaderId = this.calcLeaderPk(term, view);
+        const wanaBeLeaderId = this.calcLeaderPk(view);
         if (wanaBeLeaderId !== senderPk) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", rejected because it match the new id (${view})` });
             return;
