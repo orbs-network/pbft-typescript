@@ -91,7 +91,7 @@ class TestNetworkBuilder {
 
     private buildNode(builder: NodeBuilder, pk: string, discovery: GossipDiscovery): Node {
         const logger: Logger = new this.loggerCtor(pk);
-        const electionTriggerFactory: ElectionTriggerFactory = this.electionTriggerFactory ? this.electionTriggerFactory : view => new ElectionTriggerMock(view);
+        const electionTriggerFactory: ElectionTriggerFactory = this.electionTriggerFactory ? this.electionTriggerFactory : () => new ElectionTriggerMock();
         const blocksValidator: BlocksValidator = this.blocksValidator ? this.blocksValidator : new BlocksValidatorMock();
         const blocksProvider: BlocksProvider = this.blocksProvider ? this.blocksProvider : new BlocksProviderMock();
         const gossip = new Gossip(discovery, logger);
@@ -129,8 +129,8 @@ export const aSimpleTestNetwork = (countOfNodes: number = 4, blocksPool?: Block[
     const block4 = aBlock(block3);
     blocksPool = blocksPool || [block1, block2, block3, block4];
     const electionTriggers: ElectionTriggerMock[] = [];
-    const electionTriggerFactory = (view: number) => {
-        const t = new ElectionTriggerMock(view);
+    const electionTriggerFactory = () => {
+        const t = new ElectionTriggerMock();
         electionTriggers.push(t);
         return t;
     };

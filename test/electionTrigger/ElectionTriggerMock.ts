@@ -3,9 +3,6 @@ import { ElectionTrigger } from "../../src/electionTrigger/ElectionTrigger";
 export class ElectionTriggerMock implements ElectionTrigger {
     private listeners: Array<() => void> = [];
 
-    constructor(private view: number) {
-    }
-
     public register(cb: () => void): number {
         this.listeners.push(cb);
         return this.listeners.length - 1;
