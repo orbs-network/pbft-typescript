@@ -32,11 +32,11 @@ describe("Network Messages Filter", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         const gossip = testNetwork.getNodeGossip(node1.pk);
-        gossip.broadcast("preprepare", buildPayload({ term: 3, view: 0, block }));
-        gossip.broadcast("prepare", buildPayload({ term: 3, view: 0, blockHash: block.header.hash }));
-        gossip.broadcast("commit", buildPayload({ term: 3, view: 0, blockHash: block.header.hash }));
-        gossip.broadcast("view-change", buildPayload({ term: 3, newView: 0 }));
-        gossip.broadcast("new-view", buildPayload({ term: 3, view: 0, PP: undefined }));
+        gossip.broadcast("preprepare", buildPayload(node1.pk, { term: 3, view: 0, block }));
+        gossip.broadcast("prepare", buildPayload(node1.pk, { term: 3, view: 0, blockHash: block.header.hash }));
+        gossip.broadcast("commit", buildPayload(node1.pk, { term: 3, view: 0, blockHash: block.header.hash }));
+        gossip.broadcast("view-change", buildPayload(node1.pk, { term: 3, newView: 0 }));
+        gossip.broadcast("new-view", buildPayload(node1.pk, { term: 3, view: 0, PP: undefined }));
 
         expect(PPSpy).to.have.been.calledOnce;
         expect(PSpy).to.have.been.calledOnce;
@@ -64,11 +64,11 @@ describe("Network Messages Filter", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         const gossip = testNetwork.getNodeGossip(node1.pk);
-        gossip.broadcast("preprepare", buildPayload({ term: 3, view: 0, block }));
-        gossip.broadcast("prepare", buildPayload({ term: 3, view: 0, blockHash: block.header.hash }));
-        gossip.broadcast("commit", buildPayload({ term: 3, view: 0, blockHash: block.header.hash }));
-        gossip.broadcast("view-change", buildPayload({ term: 3, newView: 0 }));
-        gossip.broadcast("new-view", buildPayload({ term: 3, view: 0, PP: undefined }));
+        gossip.broadcast("preprepare", buildPayload(node1.pk, { term: 3, view: 0, block }));
+        gossip.broadcast("prepare", buildPayload(node1.pk, { term: 3, view: 0, blockHash: block.header.hash }));
+        gossip.broadcast("commit", buildPayload(node1.pk, { term: 3, view: 0, blockHash: block.header.hash }));
+        gossip.broadcast("view-change", buildPayload(node1.pk, { term: 3, newView: 0 }));
+        gossip.broadcast("new-view", buildPayload(node1.pk, { term: 3, view: 0, PP: undefined }));
 
         expect(PPSpy).to.not.have.been.calledOnce;
         expect(PSpy).to.not.have.been.calledOnce;
@@ -77,7 +77,7 @@ describe("Network Messages Filter", () => {
         expect(NVSpy).to.not.have.been.calledOnce;
     });
 
-    it("should ignore messages with my id", async () => {
+    it("should ignore messages with my public key", async () => {
         // a network with 4 nodes
         const { testNetwork } = aSimpleTestNetwork();
         const node0 = testNetwork.nodes[0];
@@ -95,11 +95,11 @@ describe("Network Messages Filter", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         const gossip = testNetwork.getNodeGossip(node0.pk);
-        gossip.broadcast("preprepare", buildPayload({ term: 3, view: 0, block }));
-        gossip.broadcast("prepare", buildPayload({ term: 3, view: 0, blockHash: block.header.hash }));
-        gossip.broadcast("commit", buildPayload({ term: 3, view: 0, blockHash: block.header.hash }));
-        gossip.broadcast("view-change", buildPayload({ term: 3, newView: 0 }));
-        gossip.broadcast("new-view", buildPayload({ term: 3, view: 0, PP: undefined }));
+        gossip.broadcast("preprepare", buildPayload(node0.pk, { term: 3, view: 0, block }));
+        gossip.broadcast("prepare", buildPayload(node0.pk, { term: 3, view: 0, blockHash: block.header.hash }));
+        gossip.broadcast("commit", buildPayload(node0.pk, { term: 3, view: 0, blockHash: block.header.hash }));
+        gossip.broadcast("view-change", buildPayload(node0.pk, { term: 3, newView: 0 }));
+        gossip.broadcast("new-view", buildPayload(node0.pk, { term: 3, view: 0, PP: undefined }));
 
         expect(PPSpy).to.not.have.been.calledOnce;
         expect(PSpy).to.not.have.been.calledOnce;
@@ -127,11 +127,11 @@ describe("Network Messages Filter", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         const gossip = testNetwork.getNodeGossip(node1.pk);
-        gossip.broadcast("preprepare", buildPayload({ term: 3, view: 0, block }));
-        gossip.broadcast("prepare", buildPayload({ term: 3, view: 0, blockHash: block.header.hash }));
-        gossip.broadcast("commit", buildPayload({ term: 3, view: 0, blockHash: block.header.hash }));
-        gossip.broadcast("view-change", buildPayload({ term: 3, newView: 0 }));
-        gossip.broadcast("new-view", buildPayload({ term: 3, view: 0, PP: undefined }));
+        gossip.broadcast("preprepare", buildPayload("External Node Pk", { term: 3, view: 0, block }));
+        gossip.broadcast("prepare", buildPayload("External Node Pk", { term: 3, view: 0, blockHash: block.header.hash }));
+        gossip.broadcast("commit", buildPayload("External Node Pk", { term: 3, view: 0, blockHash: block.header.hash }));
+        gossip.broadcast("view-change", buildPayload("External Node Pk", { term: 3, newView: 0 }));
+        gossip.broadcast("new-view", buildPayload("External Node Pk", { term: 3, view: 0, PP: undefined }));
 
         expect(PPSpy).to.not.have.been.calledOnce;
         expect(PSpy).to.not.have.been.calledOnce;

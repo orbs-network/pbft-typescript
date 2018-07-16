@@ -4,7 +4,7 @@ import { BlocksValidator } from "../../src/blocksValidator/BlocksValidator";
 import { Config } from "../../src/Config";
 import { ElectionTriggerFactory } from "../../src/electionTrigger/ElectionTrigger";
 import { Logger } from "../../src/logger/Logger";
-import { PBFT } from "../../src/PBFT";
+import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 import { PBFTStorage } from "../../src/storage/PBFTStorage";
 import { BlocksProviderMock } from "../blocksProvider/BlocksProviderMock";
 import { InMemoryBlockStorage } from "../blockStorage/InMemoryBlockStorage";
@@ -96,7 +96,7 @@ export class NodeBuilder {
         const blocksValidator: BlocksValidator = this.blocksValidator ? this.blocksValidator : new BlocksValidatorMock();
         const blocksProvider: BlocksProvider = this.blocksProvider ? this.blocksProvider : new BlocksProviderMock();
         const blockStorage: BlockStorage = new InMemoryBlockStorage();
-        const keyManager: KeyManager = undefined; // TODO: implement
+        const keyManager: KeyManager = new KeyManagerMock(this.publicKey);
         const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(keyManager.getMyPublicKey()) : new SilentLogger();
         const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage(logger);
 

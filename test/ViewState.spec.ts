@@ -15,7 +15,7 @@ describe("ViewState", () => {
     it("should hold a readonly view property", async () => {
         const view = Math.floor(Math.random());
         const cb = () => {};
-        const electionTriggerFactory: ElectionTriggerFactory = view => new ElectionTriggerMock(view);
+        const electionTriggerFactory: ElectionTriggerFactory = view => new ElectionTriggerMock();
         const viewState = new ViewState(electionTriggerFactory, view, cb);
         const actual = viewState.view;
         expect(actual).to.equal(view);
@@ -25,8 +25,8 @@ describe("ViewState", () => {
         const view = Math.floor(Math.random());
         const spy = sinon.spy();
         let electionTrigger: ElectionTriggerMock;
-        const electionTriggerFactory: ElectionTriggerFactory = view => {
-            electionTrigger = new ElectionTriggerMock(view);
+        const electionTriggerFactory: ElectionTriggerFactory = () => {
+            electionTrigger = new ElectionTriggerMock();
             return electionTrigger;
         };
         const viewState = new ViewState(electionTriggerFactory, view, spy);
@@ -38,8 +38,8 @@ describe("ViewState", () => {
         const view = Math.floor(Math.random());
         const spy = sinon.spy();
         let electionTrigger: ElectionTriggerMock;
-        const electionTriggerFactory: ElectionTriggerFactory = view => {
-            electionTrigger = new ElectionTriggerMock(view);
+        const electionTriggerFactory: ElectionTriggerFactory = () => {
+            electionTrigger = new ElectionTriggerMock();
             return electionTrigger;
         };
         const viewState = new ViewState(electionTriggerFactory, view, spy);
