@@ -1,4 +1,4 @@
-import { Payload } from "../../src/gossip/Payload";
+import { Payload } from "../../src/networkCommunication/Payload";
 
 export function buildPayload(data: any): Payload {
     return {

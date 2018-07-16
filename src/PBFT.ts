@@ -2,9 +2,9 @@ import { Block } from "./Block";
 import { BlockStorage } from "./blockStorage/BlockStorage";
 import { BlocksValidator } from "./blocksValidator/BlocksValidator";
 import { Config } from "./Config";
-import { NetworkMessagesFilter } from "./networkMessagesFilter/NetworkMessagesFilter";
 import { PBFTTerm } from "./PBFTTerm";
-import { InMemoryBlockStorage } from "../test/blockStorage/InMemoryBlockStorage";
+import { NetworkMessagesFilter } from "./networkCommunication/NetworkMessagesFilter";
+import { InMemoryPBFTStorage } from "./storage/InMemoryPBFTStorage";
 
 export type onCommittedCB = (block: Block) => Promise<void>;
 
@@ -17,10 +17,23 @@ export class PBFT {
 
     constructor(config: Config) {
         this.onCommittedListeners = [];
-        this.blockStorage = config.blockStorage || new InMemoryBlockStorage();
+        this.blockStorage = config.blockStorage;
 
-        this.pbftTermConfig = this.createTermConfig(config);
+        this.pbftTermConfig = this.buildTermConfig(config);
         this.NetworkMessagesFilter = new NetworkMessagesFilter(config.networkCommunication, config.keyManager.getMyPublicKey());
+    }
+
+    private buildTermConfig(config: Config): Config {
+        return {
+            blocksProvider: config.blocksProvider,
+            blocksValidator: this.overrideBlockValidation(config.blocksValidator),
+            blockStorage: config.blockStorage,
+            electionTriggerFactory: config.electionTriggerFactory,
+            keyManager: config.keyManager,
+            logger: config.logger,
+            networkCommunication: config.networkCommunication,
+            pbftStorage: config.pbftStorage || new InMemoryPBFTStorage(config.logger)
+        };
     }
 
     private notifyCommitted(block: Block): Promise<any> {
@@ -34,16 +47,10 @@ export class PBFT {
         }
     }
 
-    private createTermConfig(config: Config): Config {
-        const result: Config = { ...config };
-        result.blocksValidator = this.overrideBlockValidation(result.blocksValidator);
-        return result;
-    }
-
     private overrideBlockValidation(blocksValidator: BlocksValidator): BlocksValidator {
         return {
             validateBlock: async (block: Block): Promise<boolean> => {
-                const topBlock: Block = await this.blockStorage.getLastBlockHash();
+                const topBlock: Block = await this.blockStorage.getLastBlock();
                 if (topBlock.header.hash !== block.header.prevBlockHash) {
                     return false;
                 }

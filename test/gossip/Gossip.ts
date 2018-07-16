@@ -1,7 +1,7 @@
 import { Logger } from "../../src/logger/Logger";
 import { SilentLogger } from "../logger/SilentLogger";
 import { GossipDiscovery } from "./GossipDiscovery";
-import { Payload } from "../../src/gossip/Payload";
+import { Payload } from "../../src/networkCommunication/Payload";
 
 type GossipCallback = (messageType: string, payload: any) => void;
 type SubscriptionsValue = {

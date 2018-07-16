@@ -6,7 +6,7 @@ import { Block } from "../src/Block";
 import { BlocksProviderMock } from "./blocksProvider/BlocksProviderMock";
 import { BlocksValidatorMock } from "./blocksValidator/BlocksValidatorMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aTestNetwork } from "./builders/NetworkBuilder";
+import { aTestNetwork } from "./builders/TestNetworkBuilder";
 import { nextTick } from "./timeUtils";
 import { TestNetwork } from "./network/TestNetwork";
 

@@ -1,17 +1,17 @@
 import { Block } from "../../src/Block";
 
-export function aBlock(previousBlock: Block): Block {
+export function aBlock(previousBlock: Block, body: any = Math.random()): Block {
     return {
         header: {
-            prevBlockHash: previousBlock.header.hash,
-            hash: Math.floor(Math.random() * 1_000_000).toString()
-        }
+            prevBlockHash: previousBlock.header.hash
+        },
+        body
     };
 }
 
 export const theGenesisBlock: Block = {
     header: {
-        prevBlockHash: "0",
-        hash: "00000"
-    }
+        prevBlockHash: "0"
+    },
+    body: "The Genesis Block"
 };

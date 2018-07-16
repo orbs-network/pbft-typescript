@@ -4,7 +4,7 @@ import * as sinonChai from "sinon-chai";
 import { Logger } from "../../src/logger/Logger";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { SilentLogger } from "../logger/SilentLogger";
-import { InMemoryPBFTStorage } from "./InMemoryPBFTStorage";
+import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 
 chai.use(sinonChai);
 

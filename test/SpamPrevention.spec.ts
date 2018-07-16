@@ -5,12 +5,12 @@ import { PBFTStorage } from "../src/storage/PBFTStorage";
 import { BlocksProviderMock } from "./blocksProvider/BlocksProviderMock";
 import { BlocksValidatorMock } from "./blocksValidator/BlocksValidatorMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aTestNetwork } from "./builders/NetworkBuilder";
+import { aTestNetwork } from "./builders/TestNetworkBuilder";
 import { aNode } from "./builders/NodeBuilder";
 import { SilentLogger } from "./logger/SilentLogger";
-import { InMemoryPBFTStorage } from "./storage/InMemoryPBFTStorage";
 import { nextTick } from "./timeUtils";
 import { buildPayload } from "./payload/PayloadUtils";
+import { InMemoryPBFTStorage } from "../src/storage/InMemoryPBFTStorage";
 
 chai.use(sinonChai);
 

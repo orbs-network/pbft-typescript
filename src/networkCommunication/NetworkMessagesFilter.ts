@@ -1,6 +1,6 @@
 import { PBFTMessagesHandler } from "./PBFTMessagesHandler";
-import { Payload } from "../gossip/Payload";
-import { NetworkCommunication } from "../networkCommunication/NetworkCommunication";
+import { Payload } from "./Payload";
+import { NetworkCommunication } from "./NetworkCommunication";
 
 export class NetworkMessagesFilter {
     private networkMessagesSubscriptionToken: number;

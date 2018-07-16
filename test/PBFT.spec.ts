@@ -5,7 +5,7 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aSimpleTestNetwork } from "./builders/NetworkBuilder";
+import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
 import { Gossip } from "./gossip/Gossip";
 import { blockMatcher } from "./matchers/blockMatcher";
 import { nextTick } from "./timeUtils";

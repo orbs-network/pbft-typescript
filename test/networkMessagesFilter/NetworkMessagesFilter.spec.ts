@@ -4,11 +4,11 @@ import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { Block } from "../../src/Block";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
-import { aSimpleTestNetwork } from "../builders/NetworkBuilder";
+import { aSimpleTestNetwork } from "../builders/TestNetworkBuilder";
 import { PBFTMessagesHandlerMock } from "./PBFTMessagesHandlerMock";
 import { buildPayload } from "../payload/PayloadUtils";
-import { PBFTMessagesHandler } from "../../src/networkMessagesFilter/PBFTMessagesHandler";
-import { NetworkMessagesFilter } from "../../src/networkMessagesFilter/NetworkMessagesFilter";
+import { PBFTMessagesHandler } from "../../src/networkCommunication/PBFTMessagesHandler";
+import { NetworkMessagesFilter } from "../../src/networkCommunication/NetworkMessagesFilter";
 
 chai.use(sinonChai);
 

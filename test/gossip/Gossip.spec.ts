@@ -4,7 +4,7 @@ import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { Gossip } from "./Gossip";
 import { GossipDiscovery } from "./GossipDiscovery";
-import { Payload } from "../../src/gossip/Payload";
+import { Payload } from "../../src/networkCommunication/Payload";
 import { buildPayload } from "../payload/PayloadUtils";
 
 chai.use(sinonChai);

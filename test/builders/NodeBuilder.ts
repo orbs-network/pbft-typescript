@@ -13,10 +13,10 @@ import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
 import { ConsoleLogger } from "../logger/ConsoleLogger";
 import { SilentLogger } from "../logger/SilentLogger";
 import { Node } from "../network/Node";
-import { InMemoryPBFTStorage } from "../storage/InMemoryPBFTStorage";
-import { KeyManager } from "../../src/KeyManager/KeyManager";
+import { KeyManager } from "../../src/keyManager/KeyManager";
 import { InMemoryNetworkCommunicaiton } from "../networkCommunication/InMemoryNetworkCommunicaiton";
 import { NetworkCommunication } from "../../src";
+import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 
 export class NodeBuilder {
     private networkCommunication: NetworkCommunication;

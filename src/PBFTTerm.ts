@@ -3,12 +3,12 @@ import { BlocksProvider } from "./blocksProvider/BlocksProvider";
 import { BlocksValidator } from "./blocksValidator/BlocksValidator";
 import { Config } from "./Config";
 import { ElectionTriggerFactory } from "./electionTrigger/ElectionTrigger";
-import { CommitPayload, NewViewPayload, PreparePayload, PrePreparePayload, ViewChangePayload } from "./gossip/Payload";
+import { CommitPayload, NewViewPayload, PreparePayload, PrePreparePayload, ViewChangePayload } from "./networkCommunication/Payload";
 import { Logger } from "./logger/Logger";
 import { PBFTStorage } from "./storage/PBFTStorage";
 import { ViewState } from "./ViewState";
 import { NetworkCommunication } from "./networkCommunication/NetworkCommunication";
-import { KeyManager } from "./KeyManager/KeyManager";
+import { KeyManager } from "./keyManager/KeyManager";
 
 export type onNewBlockCB = (block: Block) => void;
 

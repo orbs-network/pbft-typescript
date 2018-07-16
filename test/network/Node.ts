@@ -12,7 +12,7 @@ export class Node {
     }
 
     public async getLatestBlock(): Promise<Block> {
-        const block: Block = await this.config.blockStorage.getLastBlockHash();
+        const block: Block = await this.config.blockStorage.getLastBlock();
         return block;
     }
 

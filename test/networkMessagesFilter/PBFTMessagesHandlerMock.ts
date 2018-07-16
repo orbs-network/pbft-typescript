@@ -1,5 +1,5 @@
-import { CommitPayload, NewViewPayload, PreparePayload, PrePreparePayload, ViewChangePayload } from "../../src/gossip/Payload";
-import { PBFTMessagesHandler } from "../../src/networkMessagesFilter/PBFTMessagesHandler";
+import { CommitPayload, NewViewPayload, PreparePayload, PrePreparePayload, ViewChangePayload } from "../../src/networkCommunication/Payload";
+import { PBFTMessagesHandler } from "../../src/networkCommunication/PBFTMessagesHandler";
 
 export class PBFTMessagesHandlerMock implements PBFTMessagesHandler {
     public onReceivePrePrepare(payload: PrePreparePayload): any {

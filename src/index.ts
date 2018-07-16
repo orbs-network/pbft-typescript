@@ -4,7 +4,7 @@ export { BlocksValidator } from "./blocksValidator/BlocksValidator";
 export { Config } from "./Config";
 export { TimerBasedElectionTrigger } from "./electionTrigger/TimerBasedElectionTrigger";
 export { ElectionTrigger, ElectionTriggerFactory } from "./electionTrigger/ElectionTrigger";
-export { NetworkCommunication } from "./NetworkCommunication/NetworkCommunication";
+export { NetworkCommunication } from "./networkCommunication/NetworkCommunication";
 export { Logger, LogTypes } from "./logger/Logger";
 export { Block } from "./Block";
 export { PBFTStorage } from "./storage/PBFTStorage";

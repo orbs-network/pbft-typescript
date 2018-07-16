@@ -1,6 +1,6 @@
-import { Logger } from "../../src/logger/Logger";
-import { PBFTStorage } from "../../src/storage/PBFTStorage";
-import { Block } from "../../src/Block";
+import { Logger } from "../logger/Logger";
+import { PBFTStorage } from "./PBFTStorage";
+import { Block } from "../Block";
 
 export class InMemoryPBFTStorage implements PBFTStorage {
     private prePrepareStorage: Map<string, Block>;

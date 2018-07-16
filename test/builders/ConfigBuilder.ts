@@ -9,10 +9,10 @@ import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
 import { Gossip } from "../gossip/Gossip";
 import { GossipDiscovery } from "../gossip/GossipDiscovery";
 import { SilentLogger } from "../logger/SilentLogger";
-import { InMemoryPBFTStorage } from "../storage/InMemoryPBFTStorage";
 import { KeyManager } from "../../src/KeyManager/KeyManager";
 import { NetworkCommunication } from "../../src";
 import { InMemoryNetworkCommunicaiton } from "../networkCommunication/InMemoryNetworkCommunicaiton";
+import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 
 class ConfigBuilder {
     private name: string;

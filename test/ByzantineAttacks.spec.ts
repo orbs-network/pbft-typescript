@@ -1,15 +1,15 @@
 import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
-import { CommitPayload, PreparePayload, PrePreparePayload } from "../src/gossip/Payload";
+import { CommitPayload, PreparePayload, PrePreparePayload } from "../src/networkCommunication/Payload";
 import { PBFTStorage } from "../src/storage/PBFTStorage";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aTestNetwork, aSimpleTestNetwork } from "./builders/NetworkBuilder";
+import { aTestNetwork, aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
 import { aNode } from "./builders/NodeBuilder";
 import { SilentLogger } from "./logger/SilentLogger";
-import { InMemoryPBFTStorage } from "./storage/InMemoryPBFTStorage";
 import { nextTick, wait } from "./timeUtils";
 import { buildPayload } from "./payload/PayloadUtils";
+import { InMemoryPBFTStorage } from "../src/storage/InMemoryPBFTStorage";
 
 chai.use(sinonChai);
 
