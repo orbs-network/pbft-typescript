@@ -1,42 +1,48 @@
 import { Block } from "./Block";
-import { BlocksProvider } from "./blocksProvider/BlocksProvider";
-import { BlocksValidator } from "./blocksValidator/BlocksValidator";
-import { Config } from "./Config";
+import { BlockUtils } from "./blockUtils/BlockUtils";
 import { ElectionTriggerFactory } from "./electionTrigger/ElectionTrigger";
-import { CommitPayload, NewViewPayload, PreparePayload, PrePreparePayload, ViewChangePayload } from "./networkCommunication/Payload";
+import { KeyManager } from "./keyManager/KeyManager";
 import { Logger } from "./logger/Logger";
+import { NetworkCommunication } from "./networkCommunication/NetworkCommunication";
+import { CommitPayload, NewViewPayload, PreparePayload, PrePreparePayload, ViewChangePayload } from "./networkCommunication/Payload";
 import { PBFTStorage } from "./storage/PBFTStorage";
 import { ViewState } from "./ViewState";
-import { NetworkCommunication } from "./networkCommunication/NetworkCommunication";
-import { KeyManager } from "./keyManager/KeyManager";
 
 export type onNewBlockCB = (block: Block) => void;
 
+export interface TermConfig {
+    electionTriggerFactory: ElectionTriggerFactory;
+    networkCommunication: NetworkCommunication;
+    pbftStorage: PBFTStorage;
+    keyManager: KeyManager;
+    logger: Logger;
+    blockUtils: BlockUtils;
+}
+
 export class PBFTTerm {
+    private readonly electionTriggerFactory: ElectionTriggerFactory;
     private readonly networkCommunication: NetworkCommunication;
+    private readonly blockUtils: BlockUtils;
     private readonly pbftStorage: PBFTStorage;
+    private readonly keyManager: KeyManager;
     private readonly logger: Logger;
+
     private view: number;
     private electedOnView: number;
     private viewState: ViewState;
     private CB: Block;
     private disposed: boolean = false;
     private committedLocally: boolean = false;
-    private keyManager: KeyManager;
 
-    public readonly blocksValidator: BlocksValidator;
-    public readonly blocksProvider: BlocksProvider;
-    public readonly electionTriggerFactory: ElectionTriggerFactory;
 
-    constructor(config: Config, private readonly term: number, private onCommittedBlock: (block: Block) => void) {
+    constructor(config: TermConfig, private readonly term: number, private onCommittedBlock: (block: Block) => void) {
         // config
         this.keyManager = config.keyManager;
         this.networkCommunication = config.networkCommunication;
         this.pbftStorage = config.pbftStorage;
         this.logger = config.logger;
         this.electionTriggerFactory = config.electionTriggerFactory;
-        this.blocksValidator = config.blocksValidator;
-        this.blocksProvider = config.blocksProvider;
+        this.blockUtils = config.blockUtils;
 
         this.view = 0;
         this.startTerm();
@@ -45,7 +51,7 @@ export class PBFTTerm {
     public async startTerm(): Promise<void> {
         this.initView(0);
         if (this.isLeader()) {
-            this.CB = await this.blocksProvider.requestNewBlock(this.term);
+            this.CB = await this.blockUtils.requestNewBlock(this.term);
             if (this.disposed) {
                 return;
             }
@@ -177,7 +183,7 @@ export class PBFTTerm {
             return false;
         }
 
-        const isValidBlock = await this.blocksValidator.validateBlock(block);
+        const isValidBlock = await this.blockUtils.validateBlock(block);
         if (this.disposed) {
             return false;
         }
@@ -245,7 +251,7 @@ export class PBFTTerm {
         }
         this.initView(view);
         this.electedOnView = view;
-        const block: Block = await this.blocksProvider.requestNewBlock(this.term);
+        const block: Block = await this.blockUtils.requestNewBlock(this.term);
         if (this.disposed) {
             return;
         }

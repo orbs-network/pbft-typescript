@@ -49,17 +49,17 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] Network rename NetworkCommunication
 - [V] Block interface {header}
 - [V] getNetworkMembersPKs(seed: string): string[]; // ordered
+- [V] getHeight should by async
 - [ ] Merge BlockValidator into BlocksProvider.
-- [ ] getHeight should by async
 - [ ] KeyManager implementation.
+
+## None Blockers
+
 - [ ] PBFT-BC add CalculateBlockHash internally
 - [ ] PBFT-BC override RequestNewBlock - adds header.pbftData.prevBlockHash
 - [ ] PBFT-BC onCommitted - adds header.pbftData.pbftProof
 - [ ] PBFT public interface {trigger `committed`, `verifyBlock`, `start`, `stop`, `restart`}
 - [ ] Move `isMemeber(pk)`, `getLeader(view)`, `getCommitteeCount()`, to PBFTTerm internal methods
-
-## None Blockers
-
 - [ ] Rename this.term => this.height
 - [ ] BockProvider => rename BlockUtils
 - [ ] BlockUtils interface implement.

@@ -1,9 +1,12 @@
 import { Block } from "../../src/Block";
+import { BlockUtils } from "../../src/blockUtils/BlockUtils";
 
-export function aBlock(previousBlock: Block, body: any = Math.random()): Block {
+const genBody = () => (Math.floor(Math.random() * 100_000_000)).toString();
+
+export function aBlock(previousBlock: Block, body: any = genBody()): Block {
     return {
         header: {
-            prevBlockHash: previousBlock.header.hash
+            prevBlockHash: BlockUtils.calculateBlockHash(previousBlock)
         },
         body
     };

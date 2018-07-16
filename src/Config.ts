@@ -8,12 +8,12 @@ import { PBFTStorage } from "./storage/PBFTStorage";
 import { KeyManager } from "./keyManager/KeyManager";
 
 export interface Config {
-    networkCommunication: NetworkCommunication;
-    pbftStorage: PBFTStorage;
-    logger: Logger;
     electionTriggerFactory: ElectionTriggerFactory;
+    networkCommunication: NetworkCommunication;
     blocksValidator: BlocksValidator;
     blocksProvider: BlocksProvider;
     blockStorage: BlockStorage;
+    pbftStorage?: PBFTStorage;
     keyManager: KeyManager;
+    logger: Logger;
 }

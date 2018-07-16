@@ -2,37 +2,36 @@ import { Block } from "./Block";
 import { BlockStorage } from "./blockStorage/BlockStorage";
 import { BlocksValidator } from "./blocksValidator/BlocksValidator";
 import { Config } from "./Config";
-import { PBFTTerm } from "./PBFTTerm";
+import { PBFTTerm, TermConfig } from "./PBFTTerm";
 import { NetworkMessagesFilter } from "./networkCommunication/NetworkMessagesFilter";
 import { InMemoryPBFTStorage } from "./storage/InMemoryPBFTStorage";
+import { BlockUtils } from "./blockUtils/BlockUtils";
 
 export type onCommittedCB = (block: Block) => Promise<void>;
 
 export class PBFT {
     private readonly onCommittedListeners: onCommittedCB[];
     private readonly blockStorage: BlockStorage;
+    private readonly pbftTermConfig: TermConfig;
     private pbftTerm: PBFTTerm;
-    private NetworkMessagesFilter: NetworkMessagesFilter;
-    private readonly pbftTermConfig: Config;
+    private networkMessagesFilter: NetworkMessagesFilter;
 
     constructor(config: Config) {
         this.onCommittedListeners = [];
         this.blockStorage = config.blockStorage;
 
-        this.pbftTermConfig = this.buildTermConfig(config);
-        this.NetworkMessagesFilter = new NetworkMessagesFilter(config.networkCommunication, config.keyManager.getMyPublicKey());
+        this.pbftTermConfig = PBFT.buildTermConfig(config);
+        this.networkMessagesFilter = new NetworkMessagesFilter(config.networkCommunication, config.keyManager.getMyPublicKey());
     }
 
-    private buildTermConfig(config: Config): Config {
+    public static buildTermConfig(config: Config): TermConfig {
         return {
-            blocksProvider: config.blocksProvider,
-            blocksValidator: this.overrideBlockValidation(config.blocksValidator),
-            blockStorage: config.blockStorage,
             electionTriggerFactory: config.electionTriggerFactory,
+            networkCommunication: config.networkCommunication,
+            pbftStorage: config.pbftStorage || new InMemoryPBFTStorage(config.logger),
             keyManager: config.keyManager,
             logger: config.logger,
-            networkCommunication: config.networkCommunication,
-            pbftStorage: config.pbftStorage || new InMemoryPBFTStorage(config.logger)
+            blockUtils: new BlockUtils(config.blocksValidator, config.blocksProvider, config.blockStorage)
         };
     }
 
@@ -47,18 +46,6 @@ export class PBFT {
         }
     }
 
-    private overrideBlockValidation(blocksValidator: BlocksValidator): BlocksValidator {
-        return {
-            validateBlock: async (block: Block): Promise<boolean> => {
-                const topBlock: Block = await this.blockStorage.getLastBlock();
-                if (topBlock.header.hash !== block.header.prevBlockHash) {
-                    return false;
-                }
-                return blocksValidator.validateBlock(block);
-            }
-        };
-    }
-
     private async createPBFTTerm(): Promise<void> {
         const term: number = await this.blockStorage.getBlockChainHeight();
         this.pbftTerm = new PBFTTerm(this.pbftTermConfig, term, async block => {
@@ -66,7 +53,7 @@ export class PBFT {
             await this.notifyCommitted(block);
             await this.createPBFTTerm();
         });
-        this.NetworkMessagesFilter.setTerm(term, this.pbftTerm);
+        this.networkMessagesFilter.setTerm(term, this.pbftTerm);
     }
 
     public isLeader(): boolean {
@@ -97,6 +84,6 @@ export class PBFT {
     public dispose(): any {
         this.onCommittedListeners.length = 0;
         this.disposePBFTTerm();
-        this.NetworkMessagesFilter.dispose();
+        this.networkMessagesFilter.dispose();
     }
 }
