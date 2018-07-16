@@ -44,19 +44,22 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] Implement "registerOnCommitted" to async.
 - [V] Implement "restart" to PBFT api
 - [V] KeyManager passed in config
-- [ ] Committee interface: { `getCommitteeMembersPKs(height, seed)`, `sendToMembers([pk])`, `subscribeToMessages(cb)`, `unsubscribeFromMessages`}
-- [ ] Remove senderId from Gossip -> Use PK instead
+- [V] NetworkCommunication interface: { `getMembersPKs(height, seed)`, `sendToMembers([pk])`, `subscribeToMessages(cb)`, `unsubscribeFromMessages`}
+- [V] Remove senderId from Gossip -> Use PK instead
+- [V] Network rename NetworkCommunication
+- [V] Block interface {header}
+- [V] getNetworkMembersPKs(seed: string): string[]; // ordered
+- [ ] Merge BlockValidator into BlocksProvider.
+- [ ] getHeight should by async
 - [ ] KeyManager implementation.
 - [ ] PBFT-BC add CalculateBlockHash internally
 - [ ] PBFT-BC override RequestNewBlock - adds header.pbftData.prevBlockHash
 - [ ] PBFT-BC onCommitted - adds header.pbftData.pbftProof
 - [ ] PBFT public interface {trigger `committed`, `verifyBlock`, `start`, `stop`, `restart`}
-- [ ] Network rename Committee
-- [ ] Move `isMemeber(pk)`, `getLeader(view)`, `getCommitteeCount()`, to PBFTTerm internal methods 
-- [ ] Block interface {header}
-- [ ] Merge BlockValidator into BlocksProvider.
-- [ ] getNetworkMembersPKs(seed: string): string[]; // ordered 
-- [ ] 
+- [ ] Move `isMemeber(pk)`, `getLeader(view)`, `getCommitteeCount()`, to PBFTTerm internal methods
+
+## None Blockers
+
 - [ ] Rename this.term => this.height
 - [ ] BockProvider => rename BlockUtils
 - [ ] BlockUtils interface implement.
