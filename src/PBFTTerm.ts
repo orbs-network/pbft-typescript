@@ -64,6 +64,7 @@ export class PBFTTerm {
                 if (this.disposed) {
                     return;
                 }
+                this.logger.log({ Subject: "Warning", message: `PBFTTerm got a block ${this.CB}, term ${this.term}`});
                 this.pbftStorage.storePrePrepare(this.term, this.view, this.CB);
                 this.broadcastPrePrepare(this.term, this.view, this.CB);
             }
@@ -110,12 +111,13 @@ export class PBFTTerm {
         this.initView(this.view + 1);
         this.logger.log({ Subject: "Flow", FlowType: "LeaderChange", leaderId: this.getCurrentLeader(), term: this.term, newView: this.view });
         const data = { term: this.term, newView: this.view };
+        const myPublicKey: string = this.keyManager.getMyPublicKey();
         const payload: ViewChangePayload = {
-            pk: this.keyManager.getMyPublicKey(),
+            pk: myPublicKey,
             signature: this.keyManager.sign(data),
             data: data
         };
-        const myPublicKey: string = this.keyManager.getMyPublicKey();
+
         this.pbftStorage.storeViewChange(this.term, this.view, myPublicKey);
         if (this.isLeader(myPublicKey)) {
             this.checkElected(this.term, this.view);
@@ -371,7 +373,7 @@ export class PBFTTerm {
         return this.networkMembers.indexOf(publicKey) > -1;
     }
 
-    private getLeader(view: number) {
+    private getLeader(view: number): string {
         const index = view % this.networkMembers.length;
         return this.networkMembers[index];
     }
