@@ -36,8 +36,8 @@ describe("Spam Prevention", () => {
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         const gossip = testNetwork.getNodeGossip(leader.pk);
-        gossip.unicast(node.pk, "preprepare", buildPayload({ block, view: 0, term: 1 }));
-        gossip.unicast(node.pk, "preprepare", buildPayload({ block, view: 0, term: 1 }));
+        gossip.unicast(node.pk, "preprepare", buildPayload(node.pk, { block, view: 0, term: 1 }));
+        gossip.unicast(node.pk, "preprepare", buildPayload(node.pk, { block, view: 0, term: 1 }));
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
 

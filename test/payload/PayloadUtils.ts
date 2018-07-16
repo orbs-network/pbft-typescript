@@ -1,8 +1,8 @@
 import { Payload } from "../../src/networkCommunication/Payload";
 
-export function buildPayload(data: any): Payload {
+export function buildPayload(senderPk: string, data: any): Payload {
     return {
-        pk: "pk",
+        pk: senderPk,
         signature: "signature",
         data
     };

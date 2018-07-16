@@ -11,7 +11,6 @@ describe("Gossip Discovery", () => {
 
     it("should create an instance", () => {
         const instance = new GossipDiscovery();
-
         expect(instance).to.not.be.undefined;
     });
 
