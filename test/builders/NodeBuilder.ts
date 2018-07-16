@@ -20,7 +20,7 @@ import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 
 export class NodeBuilder {
     private networkCommunication: NetworkCommunication;
-    private name: string;
+    private publicKey: string;
     private pbftStorage: PBFTStorage;
     private logger: Logger;
     private electionTriggerFactory: ElectionTriggerFactory;
@@ -40,9 +40,9 @@ export class NodeBuilder {
         return this;
     }
 
-    public named(name: string): this {
-        if (!this.name) {
-            this.name = name;
+    public withPk(publicKey: string): this {
+        if (!this.publicKey) {
+            this.publicKey = publicKey;
         }
         return this;
     }
@@ -88,7 +88,7 @@ export class NodeBuilder {
     }
 
     public build(): Node {
-        return new Node("dummy pk", this.buildConfig());
+        return new Node(this.publicKey, this.buildConfig());
     }
 
     private buildConfig(): Config {

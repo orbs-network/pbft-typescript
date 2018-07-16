@@ -7,7 +7,7 @@ import { InMemoryBlockStorage } from "./InMemoryBlockStorage";
 
 chai.use(sinonChai);
 
-describe.only("InMemory BlockStorage", () => {
+describe("InMemory BlockStorage", () => {
     it("should be able to initialize BlockStorage", () => {
         const blockStorage = new InMemoryBlockStorage();
         expect(blockStorage).to.not.be.undefined;

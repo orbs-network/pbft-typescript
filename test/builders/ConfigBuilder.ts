@@ -15,11 +15,11 @@ import { InMemoryNetworkCommunicaiton } from "../networkCommunication/InMemoryNe
 import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 
 class ConfigBuilder {
-    private name: string;
+    private publicKey: string;
 
-    public named(name: string): this {
-        if (!this.name) {
-            this.name = name;
+    public withPk(publicKey: string): this {
+        if (!this.publicKey) {
+            this.publicKey = publicKey;
         }
         return this;
     }
@@ -28,7 +28,6 @@ class ConfigBuilder {
         const electionTriggerFactory: ElectionTriggerFactory = view => new ElectionTriggerMock(view);
         const blocksValidator = new BlocksValidatorMock();
         const blocksProvider = new BlocksProviderMock();
-        const id = this.name || "Node";
         const logger: Logger = new SilentLogger();
         const pbftStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
         const discovery: GossipDiscovery = new GossipDiscovery();
@@ -38,14 +37,12 @@ class ConfigBuilder {
         const keyManager: KeyManager = undefined;
 
         return {
-            id,
-            gossip,
             networkCommunication,
-            logger,
             pbftStorage,
+            logger,
             electionTriggerFactory,
-            blocksProvider,
             blocksValidator,
+            blocksProvider,
             blockStorage,
             keyManager
         };

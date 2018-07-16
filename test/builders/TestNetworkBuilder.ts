@@ -89,20 +89,20 @@ class TestNetworkBuilder {
         return this.testNetwork;
     }
 
-    private buildNode(builder: NodeBuilder, id: string, discovery: GossipDiscovery): Node {
-        const logger: Logger = new this.loggerCtor(id);
+    private buildNode(builder: NodeBuilder, pk: string, discovery: GossipDiscovery): Node {
+        const logger: Logger = new this.loggerCtor(pk);
         const electionTriggerFactory: ElectionTriggerFactory = this.electionTriggerFactory ? this.electionTriggerFactory : view => new ElectionTriggerMock(view);
         const blocksValidator: BlocksValidator = this.blocksValidator ? this.blocksValidator : new BlocksValidatorMock();
         const blocksProvider: BlocksProvider = this.blocksProvider ? this.blocksProvider : new BlocksProviderMock();
         const gossip = new Gossip(discovery, logger);
-        discovery.registerGossip(id, gossip);
+        discovery.registerGossip(pk, gossip);
         const networkCommunication: InMemoryNetworkCommunicaiton = new InMemoryNetworkCommunicaiton(discovery, gossip);
         return builder
             .thatIsPartOf(networkCommunication)
             .gettingBlocksVia(blocksProvider)
             .electingLeaderUsing(electionTriggerFactory)
             .validateUsing(blocksValidator)
-            .named(id)
+            .withPk(pk)
             .thatLogsTo(logger)
             .build();
     }
@@ -111,11 +111,11 @@ class TestNetworkBuilder {
         const nodes: Node[] = [];
 
         for (let i = 0; i < this.countOfNodes; i++) {
-            const node = this.buildNode(aNode(), `Node${i}`, discovery);
+            const node = this.buildNode(aNode(), `Node ${i} pk`, discovery);
             nodes.push(node);
         }
 
-        const customNodes = this.customNodes.map((nodeBuilder, idx) => this.buildNode(nodeBuilder, `Custom-Node${idx}`, discovery));
+        const customNodes = this.customNodes.map((nodeBuilder, idx) => this.buildNode(nodeBuilder, `Custom-Node ${idx} pk`, discovery));
         nodes.push(...customNodes);
         this.testNetwork.registerNodes(nodes);
     }

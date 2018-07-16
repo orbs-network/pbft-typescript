@@ -5,10 +5,6 @@ export class BlocksValidatorMock implements BlocksValidator {
     private promiseList: Promise<boolean>[] = [];
     private resolveList: Function[] = [];
 
-    constructor() {
-
-    }
-
     public async resolveLastValidation(isValid: boolean): Promise<any> {
         if (this.resolveList.length === 0) {
             return Promise.resolve();

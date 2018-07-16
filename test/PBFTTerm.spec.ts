@@ -12,12 +12,13 @@ import { ElectionTriggerMock } from "./electionTrigger/ElectionTriggerMock";
 import { blockMatcher } from "./matchers/blockMatcher";
 import { nextTick } from "./timeUtils";
 import { buildPayload } from "./payload/PayloadUtils";
+import { Config } from "../src";
 chai.use(sinonChai);
 chai.use(blockMatcher);
 
 describe("PBFTTerm", () => {
-    const init = (nodeId = "DummyNode") => {
-        const config = aConfig().named(nodeId).build();
+    const init = (publicKey = "Dummy Node Public Key") => {
+        const config = aConfig().withPk(publicKey).build();
         const electionTriggers: ElectionTriggerMock[] = [];
         config.electionTriggerFactory = (view: number) => {
             const t = new ElectionTriggerMock(view);
