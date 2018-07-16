@@ -2,7 +2,7 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
-import { buildPayload } from "../payload/PayloadUtils";
+import { aPayload } from "../builders/PayloadBuilder";
 import { Gossip } from "./Gossip";
 import { GossipDiscovery } from "./GossipDiscovery";
 
@@ -21,7 +21,7 @@ describe("Gossip", () => {
         discovery.registerGossip(broadcasterPk, broadcaster);
         const spy = sinon.spy();
         const message = Math.random().toString();
-        const payload = buildPayload(broadcasterPk, "Data");
+        const payload = aPayload(broadcasterPk, "Data");
 
         listener.subscribe(spy);
         broadcaster.broadcast(message, payload);
@@ -43,7 +43,7 @@ describe("Gossip", () => {
         const spy1 = sinon.spy();
         const spy2 = sinon.spy();
         const message = Math.random().toString();
-        const payload = buildPayload(broadcasterPk, "Data");
+        const payload = aPayload(broadcasterPk, "Data");
         listener1.subscribe(spy1);
         listener2.subscribe(spy2);
         broadcaster.broadcast(message, payload);
@@ -69,7 +69,7 @@ describe("Gossip", () => {
         const spy2 = sinon.spy();
         const spy3 = sinon.spy();
         const message = Math.random().toString();
-        const payload = buildPayload(broadcasterPk, "Data");
+        const payload = aPayload(broadcasterPk, "Data");
         listener1.subscribe(spy1);
         listener2.subscribe(spy2);
         listener3.subscribe(spy3);
@@ -95,7 +95,7 @@ describe("Gossip", () => {
         listener.subscribe(spy2);
         listener.unsubscribe(subscriptionToken);
 
-        const payload = buildPayload(broadcasterPk, "Data");
+        const payload = aPayload(broadcasterPk, "Data");
         broadcaster.broadcast(message, payload);
         expect(spy1).to.not.have.been.called;
         expect(spy2).to.have.been.calledOnce;
@@ -110,7 +110,7 @@ describe("Gossip", () => {
         discovery.registerGossip(listenerPk, listener);
         discovery.registerGossip(broadcasterPk, broadcaster);
         const spy = sinon.spy();
-        const payload = buildPayload(broadcasterPk, "Data");
+        const payload = aPayload(broadcasterPk, "Data");
         const message = Math.random().toString();
         listener.subscribe(spy);
 
@@ -129,7 +129,7 @@ describe("Gossip", () => {
         discovery.registerGossip("broadcaster", broadcaster);
         const spy1 = sinon.spy();
         const spy2 = sinon.spy();
-        const payload = buildPayload(broadcasterPk, "Data");
+        const payload = aPayload(broadcasterPk, "Data");
         const message = Math.random().toString();
         listener1.subscribe(spy1);
         listener2.subscribe(spy2);
@@ -181,7 +181,7 @@ describe("Gossip", () => {
             it("should ignore all messages if outGoing list is empty", () => {
                 gossip1.setOutGoingWhiteListPKs([]);
 
-                gossip1.broadcast(message, buildPayload(gossip1Pk, "Data"));
+                gossip1.broadcast(message, aPayload(gossip1Pk, "Data"));
                 expect(spy2).to.not.have.been.called;
                 expect(spy3).to.not.have.been.called;
                 expect(spy4).to.not.have.been.called;
@@ -190,18 +190,18 @@ describe("Gossip", () => {
             it("should ignore unicast messages that don't apply to the outgoing white list", () => {
                 gossip1.setOutGoingWhiteListPKs(["gossip3"]);
 
-                gossip1.unicast("gossip2", message, buildPayload(gossip2Pk, "Data"));
-                gossip1.unicast("gossip3", message, buildPayload(gossip3Pk, "Data"));
-                gossip1.unicast("gossip4", message, buildPayload(gossip4Pk, "Data"));
+                gossip1.unicast("gossip2", message, aPayload(gossip2Pk, "Data"));
+                gossip1.unicast("gossip3", message, aPayload(gossip3Pk, "Data"));
+                gossip1.unicast("gossip4", message, aPayload(gossip4Pk, "Data"));
                 expect(spy2).to.not.have.been.called;
-                expect(spy3).to.have.been.calledWith(message, buildPayload(gossip3Pk, "Data"));
+                expect(spy3).to.have.been.calledWith(message, aPayload(gossip3Pk, "Data"));
                 expect(spy4).to.not.have.been.called;
             });
 
             it("should keep sending messages after the outGoing list was cleared", () => {
                 gossip1.setOutGoingWhiteListPKs(["gossip3"]);
 
-                const payload = buildPayload(gossip1Pk, "Data");
+                const payload = aPayload(gossip1Pk, "Data");
                 gossip1.broadcast(message, payload);
                 expect(spy2).to.not.have.been.called;
                 expect(spy3).to.have.been.calledWith(message, payload);
@@ -216,7 +216,7 @@ describe("Gossip", () => {
 
             it("should ignore broadcast messages that don't apply to the outgoing white list", () => {
                 gossip1.setOutGoingWhiteListPKs(["gossip3"]);
-                const payload = buildPayload(gossip1Pk, "Data");
+                const payload = aPayload(gossip1Pk, "Data");
 
                 gossip1.broadcast(message, payload);
                 expect(spy2).to.not.have.been.called;
@@ -231,7 +231,7 @@ describe("Gossip", () => {
                 gossip3.setIncomingWhiteListPKs([]);
                 gossip4.setIncomingWhiteListPKs([]);
 
-                const payload = buildPayload(gossip1Pk, "Data");
+                const payload = aPayload(gossip1Pk, "Data");
                 gossip1.broadcast(message, payload);
                 expect(spy2).to.not.have.been.called;
                 expect(spy3).to.not.have.been.called;
@@ -241,9 +241,9 @@ describe("Gossip", () => {
             it("should ignore unicast messages that don't apply to the incoming white list", () => {
                 gossip4.setIncomingWhiteListPKs([gossip2Pk]);
 
-                const payload1 = buildPayload(gossip1Pk, "Data");
-                const payload2 = buildPayload(gossip2Pk, "Data");
-                const payload3 = buildPayload(gossip3Pk, "Data");
+                const payload1 = aPayload(gossip1Pk, "Data");
+                const payload2 = aPayload(gossip2Pk, "Data");
+                const payload3 = aPayload(gossip3Pk, "Data");
                 gossip1.unicast("gossip4", message, payload1);
                 gossip2.unicast("gossip4", message, payload2);
                 gossip3.unicast("gossip4", message, payload3);
@@ -255,7 +255,7 @@ describe("Gossip", () => {
                 gossip3.setIncomingWhiteListPKs([gossip1Pk]);
                 gossip4.setIncomingWhiteListPKs([]);
 
-                const payload = buildPayload(gossip1Pk, "Data");
+                const payload = aPayload(gossip1Pk, "Data");
                 gossip1.broadcast(message, payload);
                 expect(spy2).to.not.have.been.called;
                 expect(spy3).to.have.been.calledWith(message, payload);
@@ -273,8 +273,8 @@ describe("Gossip", () => {
             it("should ignore broadcast messages that don't apply to the incoming white list", () => {
                 gossip4.setIncomingWhiteListPKs([gossip2Pk]);
 
-                const payload1 = buildPayload(gossip1Pk, "Data");
-                const payload2 = buildPayload(gossip2Pk, "Data");
+                const payload1 = aPayload(gossip1Pk, "Data");
+                const payload2 = aPayload(gossip2Pk, "Data");
                 gossip1.broadcast(message, payload1);
                 gossip2.broadcast(message, payload2);
                 expect(spy4).to.have.been.calledOnce.calledWith(message, payload2);

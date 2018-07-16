@@ -9,7 +9,7 @@ import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
 import { Gossip } from "./gossip/Gossip";
 import { blockMatcher } from "./matchers/blockMatcher";
 import { nextTick } from "./timeUtils";
-import { buildPayload } from "./payload/PayloadUtils";
+import { aPayload } from "./builders/PayloadBuilder";
 
 chai.use(sinonChai);
 chai.use(blockMatcher);
@@ -125,10 +125,10 @@ describe("PBFT", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         const gossip = testNetwork.getNodeGossip(byzantineNode.pk);
-        gossip.broadcast("preprepare", buildPayload(byzantineNode.pk, { block: fakeBlock, view: 0, term: 1 }));
-        gossip.broadcast("preprepare", buildPayload(byzantineNode.pk, { block: fakeBlock, view: 0, term: 1 }));
-        gossip.broadcast("preprepare", buildPayload(byzantineNode.pk, { block: fakeBlock, view: 0, term: 1 }));
-        gossip.broadcast("preprepare", buildPayload(byzantineNode.pk, { block: fakeBlock, view: 0, term: 1 }));
+        gossip.broadcast("preprepare", aPayload(byzantineNode.pk, { block: fakeBlock, view: 0, term: 1 }));
+        gossip.broadcast("preprepare", aPayload(byzantineNode.pk, { block: fakeBlock, view: 0, term: 1 }));
+        gossip.broadcast("preprepare", aPayload(byzantineNode.pk, { block: fakeBlock, view: 0, term: 1 }));
+        gossip.broadcast("preprepare", aPayload(byzantineNode.pk, { block: fakeBlock, view: 0, term: 1 }));
 
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);

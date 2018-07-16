@@ -9,7 +9,7 @@ import { aTestNetwork } from "./builders/TestNetworkBuilder";
 import { aNode } from "./builders/NodeBuilder";
 import { SilentLogger } from "./logger/SilentLogger";
 import { nextTick } from "./timeUtils";
-import { buildPayload } from "./payload/PayloadUtils";
+import { aPayload } from "./builders/PayloadBuilder";
 import { InMemoryPBFTStorage } from "../src/storage/InMemoryPBFTStorage";
 
 chai.use(sinonChai);
@@ -36,8 +36,8 @@ describe("Spam Prevention", () => {
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         const gossip = testNetwork.getNodeGossip(leader.pk);
-        gossip.unicast(node.pk, "preprepare", buildPayload(node.pk, { block, view: 0, term: 1 }));
-        gossip.unicast(node.pk, "preprepare", buildPayload(node.pk, { block, view: 0, term: 1 }));
+        gossip.unicast(node.pk, "preprepare", aPayload(node.pk, { block, view: 0, term: 1 }));
+        gossip.unicast(node.pk, "preprepare", aPayload(node.pk, { block, view: 0, term: 1 }));
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
 
