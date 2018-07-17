@@ -52,6 +52,7 @@ describe("PBFT", () => {
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
+        await nextTick();
 
         expect(testNetwork.nodes).to.agreeOnBlock(blocksPool[0]);
         testNetwork.shutDown();
@@ -64,6 +65,7 @@ describe("PBFT", () => {
         await blocksProvider.provideNextBlock();
         await nextTick(); // await for blockStorage.getLastBlockHash
         await blocksValidator.resolveAllValidations(true);
+        await nextTick();
 
         expect(testNetwork.nodes).to.not.agreeOnBlock(blocksPool[0]);
         testNetwork.shutDown();
@@ -111,6 +113,7 @@ describe("PBFT", () => {
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
+        await nextTick();
 
         expect(testNetwork.nodes.splice(0, 3)).to.agreeOnBlock(blocksPool[0]);
     });
@@ -130,8 +133,10 @@ describe("PBFT", () => {
         gossip.broadcast("preprepare", aPayload(byzantineNode.pk, { block: fakeBlock, view: 0, term: 1 }));
         gossip.broadcast("preprepare", aPayload(byzantineNode.pk, { block: fakeBlock, view: 0, term: 1 }));
 
+        await nextTick();
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
+        await nextTick();
 
         expect(testNetwork.nodes).to.agreeOnBlock(goodBlock);
         testNetwork.shutDown();
@@ -151,6 +156,7 @@ describe("PBFT", () => {
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
+        await nextTick();
 
         expect(testNetwork.nodes.splice(0, 4)).to.agreeOnBlock(blocksPool[0]);
         testNetwork.shutDown();
@@ -237,6 +243,7 @@ describe("PBFT", () => {
         // processing block1, should be agreed by all nodes
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
+        await nextTick();
         expect(testNetwork.nodes).to.agreeOnBlock(block1);
 
         // processing block 2
@@ -250,8 +257,9 @@ describe("PBFT", () => {
         expect(node3.isLeader()).to.be.false;
         await blocksValidator.resolveAllValidations(true);
 
-        await blocksProvider.provideNextBlock();
+        await blocksProvider.provideNextBlock(); 
         await blocksValidator.resolveAllValidations(true);
+        await nextTick();
         expect(testNetwork.nodes).to.agreeOnBlock(block3);
 
         testNetwork.shutDown();

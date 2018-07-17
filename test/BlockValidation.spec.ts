@@ -39,6 +39,7 @@ describe("Block Validation", () => {
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
+        await nextTick();
 
         expect(spy).to.have.been.calledWith(block);
         expect(testNetwork.nodes).to.agreeOnBlock(block);
@@ -49,6 +50,7 @@ describe("Block Validation", () => {
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(false);
+        await nextTick();
 
         expect(testNetwork.nodes).to.not.agreeOnBlock(block);
     });

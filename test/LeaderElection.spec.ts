@@ -113,15 +113,19 @@ describe("Leader Election", () => {
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
+        await nextTick();
         expect(testNetwork.nodes).to.agreeOnBlock(block1);
 
         // starting block2
         await blocksProvider.provideNextBlock();
         triggerElection(); // triggeting election before block2 was accepted, this will cause block3 to be accepted
         await blocksValidator.resolveAllValidations(true);
+        await nextTick();
 
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
+        await nextTick();
+
         expect(testNetwork.nodes).to.agreeOnBlock(block3);
 
         testNetwork.shutDown();
