@@ -9,3 +9,4 @@ export { Logger, LogTypes } from "./logger/Logger";
 export { Block } from "./Block";
 export { PBFTStorage } from "./storage/PBFTStorage";
 export { onCommittedCB, PBFT } from "./PBFT";
+export { KeyManager } from "./keyManager/KeyManager";
