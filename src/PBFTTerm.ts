@@ -203,13 +203,20 @@ export class PBFTTerm {
     public onReceivePrepare(payload: PreparePayload): void {
         const { pk: senderPk, data } = payload;
         const { term, view, blockHash } = data;
+        const metaData = {
+            method: "onReceivePrepare",
+            term,
+            view,
+            blockHash,
+            senderPk
+        };
         if (this.view > view) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], blockHash:[${blockHash}], onReceivePrepare from "${senderPk}", prepare not logged because of unrelated view` });
+            this.logger.log({ Subject: "Warning", message: `unrelated view`, metaData });
             return;
         }
 
         if (this.leaderPk() === senderPk) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], blockHash:[${blockHash}], onReceivePrepare from "${senderPk}", prepare not logged as we don't accept prepare from the leader` });
+            this.logger.log({ Subject: "Warning", message: `prepare received from leader is forbidden`, metaData});
             return;
         }
 

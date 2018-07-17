@@ -31,7 +31,7 @@ export class PBFT {
             pbftStorage: config.pbftStorage || new InMemoryPBFTStorage(config.logger),
             keyManager: config.keyManager,
             logger: config.logger,
-            blockUtils: new BlockUtils(config.blocksValidator, config.blocksProvider, config.blockStorage)
+            blockUtils: new BlockUtils(config.blocksValidator, config.blocksProvider, config.blockStorage, config.logger)
         };
     }
 
