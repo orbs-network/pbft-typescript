@@ -18,14 +18,18 @@ export class BlockUtils {
     public async requestNewBlock(height: number): Promise<Block> {
         const lastBlock: Block = await this.blockStorage.getLastBlock();
         const newBlock: Block = await this.blockProvider.requestNewBlock(height);
-        newBlock.header.prevBlockHash = BlockUtils.calculateBlockHash(lastBlock);
+        newBlock.header.consensus = {
+            consensus: "PBFT",
+            prevBlockHash: BlockUtils.calculateBlockHash(lastBlock),
+            height: height
+        };
         return newBlock;
     }
 
     public async validateBlock(block: Block): Promise<boolean> {
         const lastBlock: Block = await this.blockStorage.getLastBlock();
         const lastBlockHash: string = BlockUtils.calculateBlockHash(lastBlock);
-        if (lastBlockHash !== block.header.prevBlockHash) {
+        if (lastBlockHash !== block.header.consensus.prevBlockHash) {
             return false;
         }
         return this.blockValidator.validateBlock(block);

@@ -50,6 +50,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] Block interface {header}
 - [V] getNetworkMembersPKs(seed: string): string[]; // ordered
 - [V] getHeight should by async
+- [ ] BlockUtils - change the flow of requestNewBlock and validate => add pbft-bc into header, such as header.consensus{ consensus: "PBFT", prevBlockHash: "FA141232A}
 - [ ] Merge BlockValidator into BlocksProvider.
 - [ ] KeyManager implementation.
 
