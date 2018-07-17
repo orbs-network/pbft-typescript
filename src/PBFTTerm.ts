@@ -52,6 +52,12 @@ export class PBFTTerm {
         this.initView(0);
         if (this.isLeader()) {
             this.CB = await this.blockUtils.requestNewBlock(this.term);
+            const metaData = {
+                method: "requestNewBlock",
+                height: this.term,
+                prevBlockHash: this.CB.header.prevBlockHash
+            };
+            this.logger.log({ Subject: "Info", message: `generated new block`, metaData });
             if (this.disposed) {
                 return;
             }
