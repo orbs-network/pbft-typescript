@@ -38,6 +38,7 @@ describe("Block Validation", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
+        await nextTick();
         await blocksValidator.resolveAllValidations(true);
         await nextTick();
 

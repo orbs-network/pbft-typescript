@@ -92,11 +92,14 @@ describe("Leader Election", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
+        await nextTick();
 
         gossip.onRemoteMessage("view-change", aPayload(node0.pk, { term: 1, newView: 1 }));
         gossip.onRemoteMessage("view-change", aPayload(node2.pk, { term: 1, newView: 1 }));
         gossip.onRemoteMessage("view-change", aPayload(node3.pk, { term: 1, newView: 1 }));
+        await nextTick();
         await blocksProvider.provideNextBlock();
+        await nextTick();
 
         expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", aPayload(node1.pk, { term: 1, view: 1, PP: aPayload(node1.pk, { view: 1, term: 1, block: block2 }) }));
         testNetwork.shutDown();
@@ -112,6 +115,7 @@ describe("Leader Election", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
+        await nextTick();
         await blocksValidator.resolveAllValidations(true);
         await nextTick();
         expect(testNetwork.nodes).to.agreeOnBlock(block1);
@@ -123,6 +127,7 @@ describe("Leader Election", () => {
         await nextTick();
 
         await blocksProvider.provideNextBlock();
+        await nextTick();
         await blocksValidator.resolveAllValidations(true);
         await nextTick();
 

@@ -15,77 +15,6 @@ import { BlockUtils } from "../src/blockUtils/BlockUtils";
 chai.use(sinonChai);
 
 describe("Byzantine Attacks", () => {
-    xit("should ignore preprepare messages pretend to be me", async () => {
-        const logger = new SilentLogger();
-        const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
-        const leaderBuilder = aNode().storingOn(inspectedStorage);
-        const block = aBlock(theGenesisBlock);
-        const testNetwork = aTestNetwork()
-            .blocksInPool([block])
-            .withCustomNode(leaderBuilder)
-            .with(3).nodes
-            .build();
-
-        const leader = testNetwork.nodes[0];
-        const term = 0;
-        const view = 0;
-
-        const gossip = testNetwork.getNodeGossip(leader.pk);
-        gossip.unicast(leader.pk, "preprepare", aPayload(leader.pk, { block, view, term }));
-        await nextTick();
-
-        const blockHash = BlockUtils.calculateBlockHash(block);
-        expect(inspectedStorage.getPrepare(term, view, blockHash).length).to.equal(0);
-        testNetwork.shutDown();
-    });
-
-    xit("should ignore prepare messages pretend to be me", async () => {
-        const logger = new SilentLogger();
-        const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
-        const leaderNodeBuilder = aNode().storingOn(inspectedStorage);
-        const block = aBlock(theGenesisBlock);
-        const testNetwork = aTestNetwork()
-            .blocksInPool([block])
-            .withCustomNode(leaderNodeBuilder)
-            .with(3).nodes
-            .build();
-
-        const leader = testNetwork.nodes[0];
-        testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockStorage.getBlockChainHeight();
-
-        const byzantineNode = testNetwork.nodes[3];
-        const term = 0;
-        const view = 0;
-        const gossip = testNetwork.getNodeGossip(byzantineNode.pk);
-        const blockHash = BlockUtils.calculateBlockHash(block);
-        gossip.unicast(leader.pk, "prepare", aPayload(byzantineNode.pk, { blockHash, view, term }));
-        await nextTick();
-
-        expect(inspectedStorage.getPrepare(term, view, blockHash).length).to.equal(3);
-        testNetwork.shutDown();
-    });
-
-    xit("should ignore prepare that came from the leader, we count the leader only on the preprepare", async () => {
-        const logger = new SilentLogger();
-        const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
-        const nodeBuilder = aNode().storingOn(inspectedStorage);
-        const block = aBlock(theGenesisBlock);
-        const testNetwork = aTestNetwork().blocksInPool([block]).with(3).nodes.withCustomNode(nodeBuilder).build();
-
-        const leader = testNetwork.nodes[0];
-        const node = testNetwork.nodes[1];
-
-        const gossip = testNetwork.getNodeGossip(leader.pk);
-        const blockHash = BlockUtils.calculateBlockHash(block);
-        gossip.unicast(node.pk, "prepare", aPayload(leader.pk, { blockHash, view: 0, term: 1 }));
-        gossip.unicast(node.pk, "preprepare", aPayload(leader.pk, { block, view: 0, term: 1 }));
-        await nextTick();
-
-        expect(await node.getLatestBlock()).to.not.deep.equal(block);
-        testNetwork.shutDown();
-    });
-
     it("Block validation is completed after new election, old validation should be ignored", async () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
@@ -99,14 +28,15 @@ describe("Byzantine Attacks", () => {
         const leaderGossip = testNetwork.getNodeGossip(leader.pk);
         leaderGossip.setOutGoingWhiteListPKs([node1.pk, node2.pk]);
         testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockStorage.getBlockChainHeight();
+        await nextTick();
         await blocksProvider.provideNextBlock();
-        await nextTick(); // await for blockStorage.getLastBlockHash
+        await nextTick();
 
         triggerElection();
 
+        await nextTick();
         await blocksProvider.provideNextBlock();
-        await nextTick(); // await for blockStorage.getLastBlockHash
+        await nextTick();
         await blocksValidator.resolveAllValidations(true);
 
         expect(await node1.getLatestBlock()).to.equal(block2);
@@ -174,9 +104,9 @@ describe("Byzantine Attacks", () => {
         gossip3.setOutGoingWhiteListPKs([]);
 
         testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockStorage.getBlockChainHeight();
+        await nextTick();
         await blocksProvider.provideNextBlock();
-        await nextTick(); // await for blockStorage.getLastBlockHash
+        await nextTick();
         await blocksValidator.resolveAllValidations(true);
 
         expect(await node0.getLatestBlock()).to.equal(theGenesisBlock);
@@ -195,7 +125,7 @@ describe("Byzantine Attacks", () => {
         await blocksValidator.resolveAllValidations(true);
 
         await blocksProvider.provideNextBlock();
-        await nextTick(); // await for blockStorage.getLastBlockHash
+        await nextTick();
         await blocksValidator.resolveAllValidations(true);
 
         expect(await node0.getLatestBlock()).to.equal(block2);

@@ -51,6 +51,7 @@ describe("PBFT", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
+        await nextTick();
         await blocksValidator.resolveAllValidations(true);
         await nextTick();
 
@@ -112,6 +113,7 @@ describe("PBFT", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
+        await nextTick();
         await blocksValidator.resolveAllValidations(true);
         await nextTick();
 
@@ -135,6 +137,7 @@ describe("PBFT", () => {
 
         await nextTick();
         await blocksProvider.provideNextBlock();
+        await nextTick();
         await blocksValidator.resolveAllValidations(true);
         await nextTick();
 
@@ -155,6 +158,7 @@ describe("PBFT", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
+        await nextTick();
         await blocksValidator.resolveAllValidations(true);
         await nextTick();
 
@@ -171,6 +175,7 @@ describe("PBFT", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
+        await nextTick();
         await blocksValidator.resolveAllValidations(true);
 
         // not in otder block
@@ -178,6 +183,7 @@ describe("PBFT", () => {
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
+
 
         expect(testNetwork.nodes).to.agreeOnBlock(block1);
         testNetwork.shutDown();
@@ -190,6 +196,7 @@ describe("PBFT", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
+        await nextTick();
         await blocksValidator.resolveAllValidations(true);
         await nextTick(); // await for notifyCommitted
 
@@ -210,6 +217,7 @@ describe("PBFT", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
+        await nextTick();
         await blocksValidator.resolveAllValidations(true);
         await nextTick(); // await for notifyCommitted
 
@@ -242,6 +250,7 @@ describe("PBFT", () => {
 
         // processing block1, should be agreed by all nodes
         await blocksProvider.provideNextBlock();
+        await nextTick();
         await blocksValidator.resolveAllValidations(true);
         await nextTick();
         expect(testNetwork.nodes).to.agreeOnBlock(block1);
@@ -258,6 +267,7 @@ describe("PBFT", () => {
         await blocksValidator.resolveAllValidations(true);
 
         await blocksProvider.provideNextBlock();
+        await nextTick();
         await blocksValidator.resolveAllValidations(true);
         await nextTick();
         expect(testNetwork.nodes).to.agreeOnBlock(block3);
