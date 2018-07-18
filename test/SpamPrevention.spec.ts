@@ -11,6 +11,7 @@ import { SilentLogger } from "./logger/SilentLogger";
 import { nextTick } from "./timeUtils";
 import { aPayload } from "./builders/PayloadBuilder";
 import { InMemoryPBFTStorage } from "../src/storage/InMemoryPBFTStorage";
+import { BlockUtils } from "../src/blockUtils/BlockUtils";
 
 chai.use(sinonChai);
 
@@ -36,12 +37,13 @@ describe("Spam Prevention", () => {
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blocksProvider.provideNextBlock();
         const gossip = testNetwork.getNodeGossip(leader.pk);
-        gossip.unicast(node.pk, "preprepare", aPayload(node.pk, { block, view: 0, term: 1 }));
-        gossip.unicast(node.pk, "preprepare", aPayload(node.pk, { block, view: 0, term: 1 }));
+        gossip.unicast(node.pk, "preprepare", aPayload(leader.pk, { block, view: 0, term: 1 }));
+        gossip.unicast(node.pk, "preprepare", aPayload(leader.pk, { block, view: 0, term: 1 }));
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
 
-        expect(inspectedStorage.getPrepare(1, 0, block.header.hash).length).to.equal(4);
+        const blockHash = BlockUtils.calculateBlockHash(block);
+        expect(inspectedStorage.getPrepare(1, 0, blockHash).length).to.equal(4);
         testNetwork.shutDown();
     });
 });

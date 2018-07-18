@@ -15,6 +15,7 @@ import { TestNetwork } from "./network/TestNetwork";
 import { nextTick } from "./timeUtils";
 import { BlocksValidatorMock } from "./blocksValidator/BlocksValidatorMock";
 import { PBFT } from "../src";
+import { BlockUtils } from "../src/blockUtils/BlockUtils";
 chai.use(sinonChai);
 chai.use(blockMatcher);
 
@@ -83,19 +84,20 @@ describe("PBFTTerm", () => {
 
         const spy = sinon.spy(node1Config.pbftStorage, "storePrepare");
         const block: Block = aBlock(theGenesisBlock);
+        const blockHash = BlockUtils.calculateBlockHash(block);
 
         // current view (1) => valid
-        node1PbftTerm.onReceivePrepare(aPayload(node0Pk, { term: 1, view: 1, blockHash: block.header.hash }));
+        node1PbftTerm.onReceivePrepare(aPayload(node0Pk, { term: 1, view: 1, blockHash }));
         expect(spy).to.have.been.called;
 
         // view from the future (2) => valid
         spy.resetHistory();
-        node1PbftTerm.onReceivePrepare(aPayload(node0Pk, { term: 1, view: 2, blockHash: block.header.hash }));
+        node1PbftTerm.onReceivePrepare(aPayload(node0Pk, { term: 1, view: 2, blockHash }));
         expect(spy).to.have.been.called;
 
         // view from the past (0) => invalid, should be ignored
         spy.resetHistory();
-        node1PbftTerm.onReceivePrepare(aPayload(node0Pk, { term: 1, view: 0, blockHash: block.header.hash }));
+        node1PbftTerm.onReceivePrepare(aPayload(node0Pk, { term: 1, view: 0, blockHash }));
         expect(spy).to.not.have.been.called;
     });
 

@@ -257,7 +257,7 @@ describe("PBFT", () => {
         expect(node3.isLeader()).to.be.false;
         await blocksValidator.resolveAllValidations(true);
 
-        await blocksProvider.provideNextBlock(); 
+        await blocksProvider.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
         await nextTick();
         expect(testNetwork.nodes).to.agreeOnBlock(block3);

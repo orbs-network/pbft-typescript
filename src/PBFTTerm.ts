@@ -142,11 +142,12 @@ export class PBFTTerm {
     }
 
     private broadcastPrepare(term: number, view: number, block: Block): void {
+        const blockHash: string = BlockUtils.calculateBlockHash(block);
         const payload: PreparePayload = {
             pk: this.keyManager.getMyPublicKey(),
             signature: "signature",
             data: {
-                blockHash: block.header.hash,
+                blockHash,
                 view,
                 term
             }
@@ -168,10 +169,11 @@ export class PBFTTerm {
         }
 
         this.CB = block;
-        this.pbftStorage.storePrepare(term, view, block.header.hash, this.keyManager.getMyPublicKey());
+        const blockHash: string = BlockUtils.calculateBlockHash(block);
+        this.pbftStorage.storePrepare(term, view, blockHash, this.keyManager.getMyPublicKey());
         this.pbftStorage.storePrePrepare(term, view, block);
         this.broadcastPrepare(term, view, block);
-        this.checkPrepared(term, view, block.header.hash);
+        this.checkPrepared(term, view, blockHash);
     }
 
     private async validatePrePreapare(payload: PrePreparePayload): Promise<boolean> {
@@ -279,7 +281,8 @@ export class PBFTTerm {
             }
         };
         this.CB = block;
-        this.logger.log({ Subject: "Flow", FlowType: "Elected", term: this.term, view, blockHash: block.header.hash });
+        const blockHash = BlockUtils.calculateBlockHash(block);
+        this.logger.log({ Subject: "Flow", FlowType: "Elected", term: this.term, view, blockHash });
         const newViewPayload: NewViewPayload = {
             pk: this.keyManager.getMyPublicKey(),
             signature: "signature",
@@ -381,7 +384,11 @@ export class PBFTTerm {
 
     private isPrePrepared(term: number, view: number, blockHash: string): boolean {
         const prePreparedBlock: Block = this.pbftStorage.getPrePrepare(term, view);
-        return prePreparedBlock && (prePreparedBlock.header.hash === blockHash);
+        if (prePreparedBlock) {
+            const prePreparedBlockHash = BlockUtils.calculateBlockHash(prePreparedBlock);
+            return prePreparedBlockHash === blockHash;
+        }
+        return false;
     }
 
     private commitBlock(block: Block): void {

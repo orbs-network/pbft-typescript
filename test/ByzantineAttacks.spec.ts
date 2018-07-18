@@ -10,6 +10,7 @@ import { SilentLogger } from "./logger/SilentLogger";
 import { nextTick, wait } from "./timeUtils";
 import { aPayload } from "./builders/PayloadBuilder";
 import { InMemoryPBFTStorage } from "../src/storage/InMemoryPBFTStorage";
+import { BlockUtils } from "../src/blockUtils/BlockUtils";
 
 chai.use(sinonChai);
 
@@ -33,7 +34,8 @@ describe("Byzantine Attacks", () => {
         gossip.unicast(leader.pk, "preprepare", aPayload(leader.pk, { block, view, term }));
         await nextTick();
 
-        expect(inspectedStorage.getPrepare(term, view, block.header.hash).length).to.equal(0);
+        const blockHash = BlockUtils.calculateBlockHash(block);
+        expect(inspectedStorage.getPrepare(term, view, blockHash).length).to.equal(0);
         testNetwork.shutDown();
     });
 
@@ -56,10 +58,11 @@ describe("Byzantine Attacks", () => {
         const term = 0;
         const view = 0;
         const gossip = testNetwork.getNodeGossip(byzantineNode.pk);
-        gossip.unicast(leader.pk, "prepare", aPayload(byzantineNode.pk, { blockHash: block.header.hash, view, term }));
+        const blockHash = BlockUtils.calculateBlockHash(block);
+        gossip.unicast(leader.pk, "prepare", aPayload(byzantineNode.pk, { blockHash, view, term }));
         await nextTick();
 
-        expect(inspectedStorage.getPrepare(term, view, block.header.hash).length).to.equal(3);
+        expect(inspectedStorage.getPrepare(term, view, blockHash).length).to.equal(3);
         testNetwork.shutDown();
     });
 
@@ -74,7 +77,8 @@ describe("Byzantine Attacks", () => {
         const node = testNetwork.nodes[1];
 
         const gossip = testNetwork.getNodeGossip(leader.pk);
-        gossip.unicast(node.pk, "prepare", aPayload(leader.pk, { blockHash: block.header.hash, view: 0, term: 1 }));
+        const blockHash = BlockUtils.calculateBlockHash(block);
+        gossip.unicast(node.pk, "prepare", aPayload(leader.pk, { blockHash, view: 0, term: 1 }));
         gossip.unicast(node.pk, "preprepare", aPayload(leader.pk, { block, view: 0, term: 1 }));
         await nextTick();
 
@@ -217,8 +221,9 @@ describe("Byzantine Attacks", () => {
         // node0, if faking other messages
         const block1 = aBlock(theGenesisBlock);
         const PPpayload1: PrePreparePayload = aPayload(node1.pk, { term: 1, view: 0, block: block1 });
-        const Ppayload1: PreparePayload = aPayload(node1.pk, { term: 1, view: 0, blockHash: block1.header.hash });
-        const Cpayload1: CommitPayload = aPayload(node1.pk, { term: 1, view: 0, blockHash: block1.header.hash });
+        const blockHash1 = BlockUtils.calculateBlockHash(block1);
+        const Ppayload1: PreparePayload = aPayload(node1.pk, { term: 1, view: 0, blockHash: blockHash1 });
+        const Cpayload1: CommitPayload = aPayload(node1.pk, { term: 1, view: 0, blockHash: blockHash1 });
         gossip1.onRemoteMessage("preprepare", PPpayload1); // node1 causing preprepare on node1
         gossip1.onRemoteMessage("prepare", Ppayload1); // node1 pretending to send prepare as node1000
         gossip1.onRemoteMessage("prepare", Ppayload1); // node1 pretending to send prepare as node2000
@@ -227,8 +232,9 @@ describe("Byzantine Attacks", () => {
 
         const block2 = aBlock(theGenesisBlock);
         const PPpayload2: PrePreparePayload = aPayload(node2.pk, { term: 1, view: 0, block: block2 });
-        const Ppayload2: PreparePayload = aPayload(node2.pk, { term: 1, view: 0, blockHash: block2.header.hash });
-        const Cpayload2: CommitPayload = aPayload(node2.pk, { term: 1, view: 0, blockHash: block2.header.hash });
+        const blockHash2 = BlockUtils.calculateBlockHash(block2);
+        const Ppayload2: PreparePayload = aPayload(node2.pk, { term: 1, view: 0, blockHash: blockHash2 });
+        const Cpayload2: CommitPayload = aPayload(node2.pk, { term: 1, view: 0, blockHash: blockHash2 });
         gossip2.onRemoteMessage("preprepare", PPpayload2); // node1 causing preprepare on node2
         gossip2.onRemoteMessage("prepare", Ppayload2); // node1 pretending to send prepare as node1000
         gossip2.onRemoteMessage("prepare", Ppayload2); // node1 pretending to send prepare as node2000
