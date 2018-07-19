@@ -1,16 +1,12 @@
 import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
+import { calculateBlockHash } from "../src/blockUtils/BlockUtils";
 import { CommitPayload, PreparePayload, PrePreparePayload } from "../src/networkCommunication/Payload";
-import { PBFTStorage } from "../src/storage/PBFTStorage";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aTestNetwork, aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
-import { aNode } from "./builders/NodeBuilder";
-import { SilentLogger } from "./logger/SilentLogger";
-import { nextTick, wait } from "./timeUtils";
 import { aPayload } from "./builders/PayloadBuilder";
-import { InMemoryPBFTStorage } from "../src/storage/InMemoryPBFTStorage";
-import { BlockUtils } from "../src/blockUtils/BlockUtils";
+import { aSimpleTestNetwork, aTestNetwork } from "./builders/TestNetworkBuilder";
+import { nextTick } from "./timeUtils";
 
 chai.use(sinonChai);
 
@@ -39,10 +35,10 @@ describe("Byzantine Attacks", () => {
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
 
-        expect(await node1.getLatestBlock()).to.equal(block2);
-        expect(await node2.getLatestBlock()).to.equal(block2);
-        expect(await node3.getLatestBlock()).to.equal(block2);
-        expect(await node3.getLatestBlock()).to.equal(block2);
+        expect(await node1.getLatestCommittedBlock()).to.equal(block2);
+        expect(await node2.getLatestCommittedBlock()).to.equal(block2);
+        expect(await node3.getLatestCommittedBlock()).to.equal(block2);
+        expect(await node3.getLatestCommittedBlock()).to.equal(block2);
         testNetwork.shutDown();
     });
 
@@ -109,10 +105,10 @@ describe("Byzantine Attacks", () => {
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
 
-        expect(await node0.getLatestBlock()).to.equal(theGenesisBlock);
-        expect(await node1.getLatestBlock()).to.equal(theGenesisBlock);
-        expect(await node2.getLatestBlock()).to.equal(theGenesisBlock);
-        expect(await node3.getLatestBlock()).to.equal(theGenesisBlock);
+        expect(await node0.getLatestCommittedBlock()).to.equal(theGenesisBlock);
+        expect(await node1.getLatestCommittedBlock()).to.equal(theGenesisBlock);
+        expect(await node2.getLatestCommittedBlock()).to.equal(theGenesisBlock);
+        expect(await node3.getLatestCommittedBlock()).to.equal(theGenesisBlock);
 
         gossip0.clearOutGoingWhiteListPKs();
         gossip1.clearOutGoingWhiteListPKs();
@@ -128,10 +124,10 @@ describe("Byzantine Attacks", () => {
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
 
-        expect(await node0.getLatestBlock()).to.equal(block2);
-        expect(await node1.getLatestBlock()).to.equal(block2);
-        expect(await node2.getLatestBlock()).to.equal(block2);
-        expect(await node3.getLatestBlock()).to.equal(theGenesisBlock);
+        expect(await node0.getLatestCommittedBlock()).to.equal(block2);
+        expect(await node1.getLatestCommittedBlock()).to.equal(block2);
+        expect(await node2.getLatestCommittedBlock()).to.equal(block2);
+        expect(await node3.getLatestCommittedBlock()).to.equal(theGenesisBlock);
 
         testNetwork.shutDown();
     });
@@ -151,7 +147,7 @@ describe("Byzantine Attacks", () => {
         // node0, if faking other messages
         const block1 = aBlock(theGenesisBlock);
         const PPpayload1: PrePreparePayload = aPayload(node1.pk, { term: 1, view: 0, block: block1 });
-        const blockHash1 = BlockUtils.calculateBlockHash(block1);
+        const blockHash1 = calculateBlockHash(block1);
         const Ppayload1: PreparePayload = aPayload(node1.pk, { term: 1, view: 0, blockHash: blockHash1 });
         const Cpayload1: CommitPayload = aPayload(node1.pk, { term: 1, view: 0, blockHash: blockHash1 });
         gossip1.onRemoteMessage("preprepare", PPpayload1); // node1 causing preprepare on node1
@@ -162,7 +158,7 @@ describe("Byzantine Attacks", () => {
 
         const block2 = aBlock(theGenesisBlock);
         const PPpayload2: PrePreparePayload = aPayload(node2.pk, { term: 1, view: 0, block: block2 });
-        const blockHash2 = BlockUtils.calculateBlockHash(block2);
+        const blockHash2 = calculateBlockHash(block2);
         const Ppayload2: PreparePayload = aPayload(node2.pk, { term: 1, view: 0, blockHash: blockHash2 });
         const Cpayload2: CommitPayload = aPayload(node2.pk, { term: 1, view: 0, blockHash: blockHash2 });
         gossip2.onRemoteMessage("preprepare", PPpayload2); // node1 causing preprepare on node2
@@ -172,11 +168,11 @@ describe("Byzantine Attacks", () => {
         gossip2.onRemoteMessage("commit", Cpayload2); // node1 pretending to send commit as node2000
 
         await nextTick();
-        expect(await node1.getLatestBlock()).to.not.equal(block1);
-        expect(await node2.getLatestBlock()).to.not.equal(block2);
+        expect(await node1.getLatestCommittedBlock()).to.not.equal(block1);
+        expect(await node2.getLatestCommittedBlock()).to.not.equal(block2);
 
-        expect(await node1.getLatestBlock()).to.not.equal(block1);
-        expect(await node2.getLatestBlock()).to.not.equal(block2);
+        expect(await node1.getLatestCommittedBlock()).to.not.equal(block1);
+        expect(await node2.getLatestCommittedBlock()).to.not.equal(block2);
 
         testNetwork.shutDown();
     });

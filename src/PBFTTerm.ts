@@ -1,5 +1,5 @@
 import { Block } from "./Block";
-import { BlockUtils } from "./blockUtils/BlockUtils";
+import { BlockUtils, calculateBlockHash } from "./blockUtils/BlockUtils";
 import { ElectionTriggerFactory } from "./electionTrigger/ElectionTrigger";
 import { KeyManager } from "./keyManager/KeyManager";
 import { Logger } from "./logger/Logger";
@@ -142,7 +142,7 @@ export class PBFTTerm {
     }
 
     private broadcastPrepare(term: number, view: number, block: Block): void {
-        const blockHash: string = BlockUtils.calculateBlockHash(block);
+        const blockHash: string = calculateBlockHash(block);
         const payload: PreparePayload = {
             pk: this.keyManager.getMyPublicKey(),
             signature: "signature",
@@ -169,7 +169,7 @@ export class PBFTTerm {
         }
 
         this.CB = block;
-        const blockHash: string = BlockUtils.calculateBlockHash(block);
+        const blockHash: string = calculateBlockHash(block);
         this.pbftStorage.storePrepare(term, view, blockHash, this.keyManager.getMyPublicKey());
         this.pbftStorage.storePrePrepare(term, view, block);
         this.broadcastPrepare(term, view, block);
@@ -281,7 +281,7 @@ export class PBFTTerm {
             }
         };
         this.CB = block;
-        const blockHash = BlockUtils.calculateBlockHash(block);
+        const blockHash = calculateBlockHash(block);
         this.logger.log({ Subject: "Flow", FlowType: "Elected", term: this.term, view, blockHash });
         const newViewPayload: NewViewPayload = {
             pk: this.keyManager.getMyPublicKey(),
@@ -385,7 +385,7 @@ export class PBFTTerm {
     private isPrePrepared(term: number, view: number, blockHash: string): boolean {
         const prePreparedBlock: Block = this.pbftStorage.getPrePrepare(term, view);
         if (prePreparedBlock) {
-            const prePreparedBlockHash = BlockUtils.calculateBlockHash(prePreparedBlock);
+            const prePreparedBlockHash = calculateBlockHash(prePreparedBlock);
             return prePreparedBlockHash === blockHash;
         }
         return false;

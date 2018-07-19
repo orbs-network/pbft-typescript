@@ -1,44 +1,34 @@
+import { createHash } from "crypto";
+import * as stringify from "json-stable-stringify";
 import { Block } from "../Block";
-import { BlockStorage } from "../blockStorage/BlockStorage";
 import { BlocksProvider } from "../blocksProvider/BlocksProvider";
 import { BlocksValidator } from "../blocksValidator/BlocksValidator";
-import * as stringify from "json-stable-stringify";
-import { createHash } from "crypto";
 
+export const calculateBlockHash = (block: Block): string => createHash("sha256").update(stringify(block)).digest("base64");
 
 export class BlockUtils {
-
+    private lastCommittedBlockHash: string;
 
     public constructor(
         private readonly blockValidator: BlocksValidator,
-        private readonly blockProvider: BlocksProvider,
-        private readonly blockStorage: BlockStorage) {
+        private readonly blockProvider: BlocksProvider) {
+    }
+
+    public setLastCommittedBlockHash(lastCommittedBlockHash: string): void {
+        this.lastCommittedBlockHash = lastCommittedBlockHash;
     }
 
     public async requestNewBlock(height: number): Promise<Block> {
-        const lastBlock: Block = await this.blockStorage.getLastBlock();
         const newBlock: Block = await this.blockProvider.requestNewBlock(height);
-        newBlock.header.prevBlockHash = BlockUtils.calculateBlockHash(lastBlock);
-        // newBlock.header.consensus = {
-        //     consensus: "PBFT",
-        //     prevBlockHash: BlockUtils.calculateBlockHash(lastBlock),
-        //     height: height
-        // };
+        newBlock.header.prevBlockHash = this.lastCommittedBlockHash;
         return newBlock;
     }
 
     public async validateBlock(block: Block): Promise<boolean> {
-        const lastBlock: Block = await this.blockStorage.getLastBlock();
-        const lastBlockHash: string = BlockUtils.calculateBlockHash(lastBlock);
-        if (lastBlockHash !== block.header.prevBlockHash) {
-        // if (lastBlockHash !== block.header.consensus.prevBlockHash) {
+        if (this.lastCommittedBlockHash !== block.header.prevBlockHash) {
             return false;
         }
         return this.blockValidator.validateBlock(block);
-    }
-
-    public static calculateBlockHash(block: Block): string {
-        return createHash("sha256").update(stringify(block.header)).digest("base64");
     }
 }
 

@@ -43,17 +43,4 @@ describe("InMemory BlockStorage", () => {
         const expected = block3;
         expect(actual).to.equal(expected);
     });
-
-    it("should return the block chain height", async () => {
-        const blockStorage = new InMemoryBlockStorage();
-        const block1: Block = aBlock(theGenesisBlock);
-        const block2: Block = aBlock(block1);
-        const block3: Block = aBlock(block2);
-        blockStorage.appendBlockToChain(block1);
-        blockStorage.appendBlockToChain(block2);
-        blockStorage.appendBlockToChain(block3);
-
-        const actual: number = await blockStorage.getBlockChainHeight();
-        expect(actual).to.equal(4);
-    });
 });

@@ -1,4 +1,7 @@
 export interface Block {
-    header: any;
+    header: {
+        height: number;
+        prevBlockHash: string;
+    };
     body: any;
 }

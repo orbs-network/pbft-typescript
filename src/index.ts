@@ -1,5 +1,4 @@
 export { BlocksProvider } from "./blocksProvider/BlocksProvider";
-export { BlockStorage } from "./blockStorage/BlockStorage";
 export { BlocksValidator } from "./blocksValidator/BlocksValidator";
 export { Config } from "./Config";
 export { TimerBasedElectionTrigger } from "./electionTrigger/TimerBasedElectionTrigger";

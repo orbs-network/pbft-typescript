@@ -1,12 +1,13 @@
 import { Block } from "../../src/Block";
-import { BlockUtils } from "../../src/blockUtils/BlockUtils";
+import { calculateBlockHash } from "../../src/blockUtils/BlockUtils";
 
 const genBody = () => (Math.floor(Math.random() * 100_000_000)).toString();
 
 export function aBlock(previousBlock: Block, body: any = genBody()): Block {
     return {
         header: {
-            prevBlockHash: BlockUtils.calculateBlockHash(previousBlock)
+            height: previousBlock.header.height + 1,
+            prevBlockHash: calculateBlockHash(previousBlock)
         },
         body
     };
@@ -14,6 +15,7 @@ export function aBlock(previousBlock: Block, body: any = genBody()): Block {
 
 export const theGenesisBlock: Block = {
     header: {
+        height: 0,
         prevBlockHash: "0"
     },
     body: "The Genesis Block"

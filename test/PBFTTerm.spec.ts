@@ -6,7 +6,7 @@ import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { Block } from "../src/Block";
 import { Config } from "../src/Config";
-import { PBFTTerm } from "../src/PBFTTerm";
+import { PBFTTerm, TermConfig } from "../src/PBFTTerm";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aPayload } from "./builders/PayloadBuilder";
 import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
@@ -15,7 +15,7 @@ import { TestNetwork } from "./network/TestNetwork";
 import { nextTick } from "./timeUtils";
 import { BlocksValidatorMock } from "./blocksValidator/BlocksValidatorMock";
 import { PBFT } from "../src";
-import { BlockUtils } from "../src/blockUtils/BlockUtils";
+import { BlockUtils, calculateBlockHash } from "../src/blockUtils/BlockUtils";
 chai.use(sinonChai);
 chai.use(blockMatcher);
 
@@ -49,8 +49,15 @@ describe("PBFTTerm", () => {
         testNetwork.shutDown();
     });
 
+    function createPBFTTerm(config: Config): PBFTTerm {
+        const pbftTermConfig: TermConfig = PBFT.buildTermConfig(config);
+        pbftTermConfig.blockUtils.setLastCommittedBlockHash(calculateBlockHash(theGenesisBlock));
+        const pbftTerm: PBFTTerm = new PBFTTerm(pbftTermConfig, 0, () => { });
+        return pbftTerm;
+    }
+
     it("onNewView should not accept views from the past", async () => {
-        const pbftTerm: PBFTTerm = new PBFTTerm(PBFT.buildTermConfig(node0Config), 0, () => { });
+        const pbftTerm: PBFTTerm = createPBFTTerm(node0Config);
         expect(pbftTerm.getView()).to.equal(0);
         triggerElection();
         expect(pbftTerm.getView()).to.equal(1);
@@ -60,7 +67,7 @@ describe("PBFTTerm", () => {
     });
 
     it("onViewChange should not accept views from the past", async () => {
-        const node1PbftTerm: PBFTTerm = new PBFTTerm(PBFT.buildTermConfig(node1Config), 0, () => { });
+        const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
         expect(node1PbftTerm.getView()).to.equal(0);
         triggerElection();
         expect(node1PbftTerm.getView()).to.equal(1);
@@ -77,14 +84,14 @@ describe("PBFTTerm", () => {
     });
 
     it("onReceivePrepare should not accept views from the past", async () => {
-        const node1PbftTerm: PBFTTerm = new PBFTTerm(PBFT.buildTermConfig(node1Config), 0, () => { });
+        const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
         expect(node1PbftTerm.getView()).to.equal(0);
         triggerElection();
         expect(node1PbftTerm.getView()).to.equal(1);
 
         const spy = sinon.spy(node1Config.pbftStorage, "storePrepare");
         const block: Block = aBlock(theGenesisBlock);
-        const blockHash = BlockUtils.calculateBlockHash(block);
+        const blockHash = calculateBlockHash(block);
 
         // current view (1) => valid
         node1PbftTerm.onReceivePrepare(aPayload(node0Pk, { term: 1, view: 1, blockHash }));
@@ -102,7 +109,9 @@ describe("PBFTTerm", () => {
     });
 
     it("onReceivePrePrepare should accept views that match its current view", async () => {
-        const node1PbftTerm: PBFTTerm = new PBFTTerm(PBFT.buildTermConfig(node1Config), 0, () => { });
+        const pbftTermConfig: TermConfig = PBFT.buildTermConfig(node1Config);
+        pbftTermConfig.blockUtils.setLastCommittedBlockHash(calculateBlockHash(theGenesisBlock));
+        const node1PbftTerm: PBFTTerm = new PBFTTerm(pbftTermConfig, 0, () => { });
         expect(node1PbftTerm.getView()).to.equal(0);
         triggerElection();
         expect(node1PbftTerm.getView()).to.equal(1);
@@ -132,7 +141,7 @@ describe("PBFTTerm", () => {
     });
 
     it("onReceivePrepare should not accept messages from the leader", async () => {
-        const node1PbftTerm: PBFTTerm = new PBFTTerm(PBFT.buildTermConfig(node1Config), 0, () => { });
+        const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
 
         const spy = sinon.spy(node1Config.pbftStorage, "storePrepare");
         // not from the leader => ok
@@ -146,7 +155,7 @@ describe("PBFTTerm", () => {
     });
 
     it("onReceivePrePrepare should not accept messages not from the leader", async () => {
-        const node1PbftTerm: PBFTTerm = new PBFTTerm(PBFT.buildTermConfig(node1Config), 0, () => { });
+        const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
         const block: Block = aBlock(theGenesisBlock);
 
         const spy = sinon.spy(node1Config.blocksValidator, "validateBlock");
@@ -162,7 +171,7 @@ describe("PBFTTerm", () => {
     });
 
     it("onReceiveNewView should not accept messages that don't match the leader", async () => {
-        const node1PbftTerm: PBFTTerm = new PBFTTerm(PBFT.buildTermConfig(node1Config), 0, () => { });
+        const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
 
         const block: Block = aBlock(theGenesisBlock);
 
@@ -180,7 +189,7 @@ describe("PBFTTerm", () => {
     });
 
     it("onReceiveViewChange should not accept messages that don't match me as the leader", async () => {
-        const node1PbftTerm: PBFTTerm = new PBFTTerm(PBFT.buildTermConfig(node1Config), 0, () => { });
+        const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
         const spy = sinon.spy(node1Config.pbftStorage, "storeViewChange");
 
         // match me as a leader => ok
@@ -194,7 +203,7 @@ describe("PBFTTerm", () => {
     });
 
     it("onReceiveNewView should not accept messages don't match the PP.view", async () => {
-        const node0PbftTerm: PBFTTerm = new PBFTTerm(PBFT.buildTermConfig(node0Config), 0, () => { });
+        const node0PbftTerm: PBFTTerm = createPBFTTerm(node0Config);
 
         const block: Block = aBlock(theGenesisBlock);
 
@@ -212,7 +221,7 @@ describe("PBFTTerm", () => {
     });
 
     it("onReceiveNewView should not accept messages that don't pass validation", async () => {
-        const node0PbftTerm: PBFTTerm = new PBFTTerm(PBFT.buildTermConfig(node0Config), 0, () => { });
+        const node0PbftTerm: PBFTTerm = createPBFTTerm(node0Config);
 
         const block: Block = aBlock(theGenesisBlock);
 

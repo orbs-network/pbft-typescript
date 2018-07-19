@@ -1,17 +1,17 @@
 import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
+import { calculateBlockHash } from "../src/blockUtils/BlockUtils";
+import { InMemoryPBFTStorage } from "../src/storage/InMemoryPBFTStorage";
 import { PBFTStorage } from "../src/storage/PBFTStorage";
 import { BlocksProviderMock } from "./blocksProvider/BlocksProviderMock";
 import { BlocksValidatorMock } from "./blocksValidator/BlocksValidatorMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aTestNetwork } from "./builders/TestNetworkBuilder";
 import { aNode } from "./builders/NodeBuilder";
+import { aPayload } from "./builders/PayloadBuilder";
+import { aTestNetwork } from "./builders/TestNetworkBuilder";
 import { SilentLogger } from "./logger/SilentLogger";
 import { nextTick } from "./timeUtils";
-import { aPayload } from "./builders/PayloadBuilder";
-import { InMemoryPBFTStorage } from "../src/storage/InMemoryPBFTStorage";
-import { BlockUtils } from "../src/blockUtils/BlockUtils";
 
 chai.use(sinonChai);
 
@@ -42,7 +42,7 @@ describe("Spam Prevention", () => {
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
 
-        const blockHash = BlockUtils.calculateBlockHash(block);
+        const blockHash = calculateBlockHash(block);
         expect(inspectedStorage.getPrepare(1, 0, blockHash).length).to.equal(4);
         testNetwork.shutDown();
     });

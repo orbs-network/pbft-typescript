@@ -3,13 +3,13 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { Block } from "../../src/Block";
+import { BlockUtils, calculateBlockHash } from "../../src/blockUtils/BlockUtils";
+import { NetworkMessagesFilter } from "../../src/networkCommunication/NetworkMessagesFilter";
+import { PBFTMessagesHandler } from "../../src/networkCommunication/PBFTMessagesHandler";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
+import { aPayload } from "../builders/PayloadBuilder";
 import { aSimpleTestNetwork } from "../builders/TestNetworkBuilder";
 import { PBFTMessagesHandlerMock } from "./PBFTMessagesHandlerMock";
-import { aPayload } from "../builders/PayloadBuilder";
-import { PBFTMessagesHandler } from "../../src/networkCommunication/PBFTMessagesHandler";
-import { NetworkMessagesFilter } from "../../src/networkCommunication/NetworkMessagesFilter";
-import { BlockUtils } from "../../src/blockUtils/BlockUtils";
 
 chai.use(sinonChai);
 
@@ -33,7 +33,7 @@ describe("Network Messages Filter", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         const gossip = testNetwork.getNodeGossip(node1.pk);
-        const blockHash = BlockUtils.calculateBlockHash(block);
+        const blockHash = calculateBlockHash(block);
         gossip.broadcast("preprepare", aPayload(node1.pk, { term: 3, view: 0, block }));
         gossip.broadcast("prepare", aPayload(node1.pk, { term: 3, view: 0, blockHash }));
         gossip.broadcast("commit", aPayload(node1.pk, { term: 3, view: 0, blockHash }));
@@ -66,7 +66,7 @@ describe("Network Messages Filter", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         const gossip = testNetwork.getNodeGossip(node1.pk);
-        const blockHash = BlockUtils.calculateBlockHash(block);
+        const blockHash = calculateBlockHash(block);
         gossip.broadcast("preprepare", aPayload(node1.pk, { term: 3, view: 0, block }));
         gossip.broadcast("prepare", aPayload(node1.pk, { term: 3, view: 0, blockHash }));
         gossip.broadcast("commit", aPayload(node1.pk, { term: 3, view: 0, blockHash }));
@@ -98,7 +98,7 @@ describe("Network Messages Filter", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         const gossip = testNetwork.getNodeGossip(node0.pk);
-        const blockHash = BlockUtils.calculateBlockHash(block);
+        const blockHash = calculateBlockHash(block);
         gossip.broadcast("preprepare", aPayload(node0.pk, { term: 3, view: 0, block }));
         gossip.broadcast("prepare", aPayload(node0.pk, { term: 3, view: 0, blockHash }));
         gossip.broadcast("commit", aPayload(node0.pk, { term: 3, view: 0, blockHash }));
@@ -131,7 +131,7 @@ describe("Network Messages Filter", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         const gossip = testNetwork.getNodeGossip(node1.pk);
-        const blockHash = BlockUtils.calculateBlockHash(block);
+        const blockHash = calculateBlockHash(block);
         gossip.broadcast("preprepare", aPayload("External Node Pk", { term: 3, view: 0, block }));
         gossip.broadcast("prepare", aPayload("External Node Pk", { term: 3, view: 0, blockHash }));
         gossip.broadcast("commit", aPayload("External Node Pk", { term: 3, view: 0, blockHash }));

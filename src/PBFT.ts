@@ -1,24 +1,20 @@
 import { Block } from "./Block";
-import { BlockStorage } from "./blockStorage/BlockStorage";
-import { BlocksValidator } from "./blocksValidator/BlocksValidator";
+import { BlockUtils, calculateBlockHash } from "./blockUtils/BlockUtils";
 import { Config } from "./Config";
-import { PBFTTerm, TermConfig } from "./PBFTTerm";
 import { NetworkMessagesFilter } from "./networkCommunication/NetworkMessagesFilter";
+import { PBFTTerm, TermConfig } from "./PBFTTerm";
 import { InMemoryPBFTStorage } from "./storage/InMemoryPBFTStorage";
-import { BlockUtils } from "./blockUtils/BlockUtils";
 
-export type onCommittedCB = (block: Block) => Promise<void>;
+export type onCommittedCB = (block: Block) => void;
 
 export class PBFT {
     private readonly onCommittedListeners: onCommittedCB[];
-    private readonly blockStorage: BlockStorage;
     private readonly pbftTermConfig: TermConfig;
     private pbftTerm: PBFTTerm;
     private networkMessagesFilter: NetworkMessagesFilter;
 
     constructor(config: Config) {
         this.onCommittedListeners = [];
-        this.blockStorage = config.blockStorage;
 
         this.pbftTermConfig = PBFT.buildTermConfig(config);
         this.networkMessagesFilter = new NetworkMessagesFilter(config.networkCommunication, config.keyManager.getMyPublicKey());
@@ -31,12 +27,12 @@ export class PBFT {
             pbftStorage: config.pbftStorage || new InMemoryPBFTStorage(config.logger),
             keyManager: config.keyManager,
             logger: config.logger,
-            blockUtils: new BlockUtils(config.blocksValidator, config.blocksProvider, config.blockStorage)
+            blockUtils: new BlockUtils(config.blocksValidator, config.blocksProvider)
         };
     }
 
-    private notifyCommitted(block: Block): Promise<any> {
-        return Promise.all(this.onCommittedListeners.map(cb => cb(block)));
+    private notifyCommitted(block: Block): void {
+        this.onCommittedListeners.map(cb => cb(block));
     }
 
     private disposePBFTTerm(): void {
@@ -46,14 +42,12 @@ export class PBFT {
         }
     }
 
-    private async createPBFTTerm(): Promise<void> {
-        const term: number = await this.blockStorage.getBlockChainHeight();
-        this.pbftTerm = new PBFTTerm(this.pbftTermConfig, term, async block => {
-            this.disposePBFTTerm();
-            await this.notifyCommitted(block);
-            await this.createPBFTTerm();
+    private createPBFTTerm(height: number): void {
+        this.pbftTerm = new PBFTTerm(this.pbftTermConfig, height, block => {
+            this.notifyCommitted(block);
+            this.start(block);
         });
-        this.networkMessagesFilter.setTerm(term, this.pbftTerm);
+        this.networkMessagesFilter.setTerm(height, this.pbftTerm);
     }
 
     public isLeader(): boolean {
@@ -66,19 +60,10 @@ export class PBFT {
         this.onCommittedListeners.push(bc);
     }
 
-    public start(): void {
-        if (this.pbftTerm === undefined) {
-            this.createPBFTTerm();
-        }
-    }
-
-    public stop(): void {
+    public start(lastCommittedBlock: Block): void {
+        this.pbftTermConfig.blockUtils.setLastCommittedBlockHash(calculateBlockHash(lastCommittedBlock));
         this.disposePBFTTerm();
-    }
-
-    public restart(): void {
-        this.stop();
-        this.start();
+        this.createPBFTTerm(lastCommittedBlock.header.height + 1);
     }
 
     public dispose(): any {

@@ -1,5 +1,4 @@
 import { BlocksProvider } from "../../src/blocksProvider/BlocksProvider";
-import { BlockStorage } from "../../src/blockStorage/BlockStorage";
 import { BlocksValidator } from "../../src/blocksValidator/BlocksValidator";
 import { Config } from "../../src/Config";
 import { ElectionTriggerFactory } from "../../src/electionTrigger/ElectionTrigger";
@@ -88,14 +87,13 @@ export class NodeBuilder {
     }
 
     public build(): Node {
-        return new Node(this.publicKey, this.buildConfig());
+        return new Node(this.publicKey, this.buildConfig(), new InMemoryBlockStorage());
     }
 
     private buildConfig(): Config {
         const electionTriggerFactory: ElectionTriggerFactory = this.electionTriggerFactory ? this.electionTriggerFactory : () => new ElectionTriggerMock();
         const blocksValidator: BlocksValidator = this.blocksValidator ? this.blocksValidator : new BlocksValidatorMock();
         const blocksProvider: BlocksProvider = this.blocksProvider ? this.blocksProvider : new BlocksProviderMock();
-        const blockStorage: BlockStorage = new InMemoryBlockStorage();
         const keyManager: KeyManager = new KeyManagerMock(this.publicKey);
         const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(keyManager.getMyPublicKey()) : new SilentLogger();
         const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage(logger);
@@ -107,7 +105,6 @@ export class NodeBuilder {
             electionTriggerFactory,
             blocksProvider,
             blocksValidator,
-            blockStorage,
             keyManager
         };
     }
