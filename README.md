@@ -50,18 +50,17 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] Block interface {header}
 - [V] getNetworkMembersPKs(seed: string): string[]; // ordered
 - [V] getHeight should by async
+- [ ] Decide on the Block interface
 - [ ] BlockUtils - change the flow of requestNewBlock and validate => add pbft-bc into header, such as header.consensus{ consensus: "PBFT", prevBlockHash: "FA141232A}
-- [ ] Merge BlockValidator into BlocksProvider.
-- [ ] KeyManager implementation.
 
 ## None Blockers
 
+- [ ] KeyManager implementation.
 - [ ] PBFT-BC add CalculateBlockHash internally
 - [ ] Change logging methodology - warning - added metadata
 - [ ] PBFT-BC override RequestNewBlock - adds header.pbftData.prevBlockHash
 - [ ] PBFT-BC onCommitted - adds header.pbftData.pbftProof
-- [ ] PBFT public interface {trigger `committed`, `verifyBlock`, `start`, `stop`, `restart`}
-- [ ] Move `isMemeber(pk)`, `getLeader(view)`, `getCommitteeCount()`, to PBFTTerm internal methods
+- [ ] PBFT public interface {trigger `committed`, `verifyBlock`, `start`, `dispose`}
 - [ ] Rename this.term => this.height
 - [ ] BockProvider => rename BlockUtils
 - [ ] BlockUtils interface implement.
