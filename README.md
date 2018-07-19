@@ -50,11 +50,21 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] Block interface {header}
 - [V] getNetworkMembersPKs(seed: string): string[]; // ordered
 - [V] getHeight should by async
-- [ ] Decide on the Block interface
-- [ ] BlockUtils - change the flow of requestNewBlock and validate => add pbft-bc into header, such as header.consensus{ consensus: "PBFT", prevBlockHash: "FA141232A}
+- [ ] Decide on the Block interface : Block {
+                                          header: {
+                                              height: number;
+                                              prevBlockHash: string;
+                                          };
+                                          body: any;
+                                      }
+- [ ] PBFT start method - public async start(blockHeader: any): Promise<void>
+- [ ] Working with headers when possible: PBFT - maintains lastBlockHeader, BlockUtils.setLastBlockHeader, PBFTTerm - term = lastBlockHeader.height
+- [ ] BlockUtils.calculateBlockHash(blockHeader) - bytes vs string?
+- [ ] BlockUtils - requestNewBlock and validate => use lastBlockHeader
 
 ## None Blockers
 
+- [ ] trigger once, prepared [preparedLocally=true], elected [ newViewLocally=view + timeoutTrigger.dispose(view)], new-view [newViewLocally=view] , committed [ committedLocally=true]. - needs testing
 - [ ] KeyManager implementation.
 - [ ] PBFT-BC add CalculateBlockHash internally
 - [ ] Change logging methodology - warning - added metadata
@@ -68,7 +78,6 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [ ] Rename Network interface
 - [ ] clear the pbftStorage
 - [ ] sign messages including the message type
-- [ ] trigger once, prepared, elected, new-view, committed.
 - [!] suggest block in new-view (inside PP), with proofs from other nodes.
 - [ ] documentation
 - [ ] monitoring
