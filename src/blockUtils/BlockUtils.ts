@@ -4,7 +4,7 @@ import { Block } from "../Block";
 import { BlocksProvider } from "../blocksProvider/BlocksProvider";
 import { BlocksValidator } from "../blocksValidator/BlocksValidator";
 
-export const calculateBlockHash = (block: Block): string => createHash("sha256").update(stringify(block)).digest("base64");
+export const calculateBlockHash = (block: Block): string => createHash("sha256").update(stringify(block.header)).update(stringify(block.body)).digest("base64");
 
 export class BlockUtils {
     private lastCommittedBlockHash: string;
