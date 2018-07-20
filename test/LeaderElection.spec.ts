@@ -122,6 +122,7 @@ describe("Leader Election", () => {
 
         // starting block2
         await blocksProvider.provideNextBlock();
+        await nextTick();
         triggerElection(); // triggeting election before block2 was accepted, this will cause block3 to be accepted
         await blocksValidator.resolveAllValidations(true);
         await nextTick();

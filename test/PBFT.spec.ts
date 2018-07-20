@@ -166,7 +166,7 @@ describe("PBFT", () => {
         testNetwork.shutDown();
     });
 
-    xit("should not accept a block if it is not pointing to the previous block", async () => {
+    it("should not accept a block if it is not pointing to the previous block", async () => {
         const block1 = aBlock(theGenesisBlock, "Block 1");
         const fakeBlock1 = aBlock(theGenesisBlock, "Fake Block 1");
         const notInOrderBlock = aBlock(fakeBlock1, "notInOrderBlock");

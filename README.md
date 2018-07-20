@@ -66,7 +66,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 
 ## None Blockers
 
-- [ ] trigger once, prepared [preparedLocally=true], elected [ newViewLocally=view + timeoutTrigger.dispose(view)], new-view [newViewLocally=view] , committed [ committedLocally=true]. - needs testing
+- [V] trigger once, prepared [preparedLocally=true], elected [ newViewLocally=view + timeoutTrigger.dispose(view)], new-view [newViewLocally=view] , committed [ committedLocally=true]. - needs testing
 - [ ] KeyManager implementation.
 - [ ] PBFT-BC add CalculateBlockHash internally
 - [ ] Change logging methodology - warning - added metadata

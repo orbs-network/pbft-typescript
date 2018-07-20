@@ -34,8 +34,9 @@ describe("Spam Prevention", () => {
         const node = testNetwork.nodes[4];
 
         testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockStorage.getBlockChainHeight();
+        await nextTick(); // await for blockStorage.getLastBlock();
         await blocksProvider.provideNextBlock();
+        await nextTick();
         const gossip = testNetwork.getNodeGossip(leader.pk);
         gossip.unicast(node.pk, "preprepare", aPayload(leader.pk, { block, view: 0, term: 1 }));
         gossip.unicast(node.pk, "preprepare", aPayload(leader.pk, { block, view: 0, term: 1 }));

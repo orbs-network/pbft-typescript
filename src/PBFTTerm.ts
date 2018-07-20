@@ -28,10 +28,11 @@ export class PBFTTerm {
     private readonly logger: Logger;
 
     private view: number;
-    private electedOnView: number;
+    private newViewLocally: number = -1;
     private viewState: ViewState;
     private CB: Block;
     private disposed: boolean = false;
+    private preparedLocally: boolean = false;
     private committedLocally: boolean = false;
 
 
@@ -72,7 +73,7 @@ export class PBFTTerm {
     }
 
     private initView(view: number) {
-        this.electedOnView = -1;
+        this.preparedLocally = false;
         this.view = view;
         this.CB = undefined;
         this.startViewState(this.view);
@@ -254,18 +255,17 @@ export class PBFTTerm {
     }
 
     private checkElected(term: number, view: number): void {
-        const countElected = this.countElected(term, view);
-        if (countElected >= this.getF() * 2 + 1) {
-            this.onElected(view);
+        if (this.newViewLocally < view) {
+            const countElected = this.countElected(term, view);
+            if (countElected >= this.getF() * 2 + 1) {
+                this.onElected(view);
+            }
         }
     }
 
     private async onElected(view: number) {
-        if (this.electedOnView === view) {
-            return;
-        }
+        this.newViewLocally = view;
         this.initView(view);
-        this.electedOnView = view;
         const block: Block = await this.blockUtils.requestNewBlock(this.term);
         if (this.disposed) {
             return;
@@ -297,15 +297,18 @@ export class PBFTTerm {
     }
 
     private checkPrepared(term: number, view: number, blockHash: string) {
-        if (this.isPrePrepared(term, view, blockHash)) {
-            const countPrepared = this.countPrepared(term, view, blockHash);
-            if (countPrepared >= this.getF() * 2) {
-                this.onPrepared(term, view, blockHash);
+        if (!this.preparedLocally) {
+            if (this.isPrePrepared(term, view, blockHash)) {
+                const countPrepared = this.countPrepared(term, view, blockHash);
+                if (countPrepared >= this.getF() * 2) {
+                    this.onPrepared(term, view, blockHash);
+                }
             }
         }
     }
 
     private onPrepared(term: number, view: number, blockHash: string): void {
+        this.preparedLocally = true;
         this.pbftStorage.storeCommit(term, view, blockHash, this.keyManager.getMyPublicKey());
         const payload: CommitPayload = {
             pk: this.keyManager.getMyPublicKey(),
@@ -329,10 +332,12 @@ export class PBFTTerm {
     }
 
     private checkCommit(term: number, view: number, blockHash: string): void {
-        if (this.isPrePrepared(term, view, blockHash)) {
-            const commits = this.pbftStorage.getCommit(term, view, blockHash).length;
-            if (commits >= this.getF() * 2 + 1) {
-                this.commitBlock(this.CB);
+        if (!this.committedLocally) {
+            if (this.isPrePrepared(term, view, blockHash)) {
+                const commits = this.pbftStorage.getCommit(term, view, blockHash).length;
+                if (commits >= this.getF() * 2 + 1) {
+                    this.commitBlock(this.CB);
+                }
             }
         }
     }
@@ -357,6 +362,7 @@ export class PBFTTerm {
         }
 
         if (await this.validatePrePreapare(PP)) {
+            this.newViewLocally = view;
             this.initView(view);
             this.processPrePrepare(PP);
         }
@@ -392,9 +398,6 @@ export class PBFTTerm {
     }
 
     private commitBlock(block: Block): void {
-        if (this.committedLocally) {
-            return;
-        }
         this.committedLocally = true;
         this.logger.log({ Subject: "Flow", FlowType: "Commit", term: this.term, view: this.view, block });
         this.stopViewState();
