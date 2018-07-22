@@ -33,7 +33,7 @@ describe("Spam Prevention", () => {
         const leader = testNetwork.nodes[0];
         const node = testNetwork.nodes[4];
 
-        await testNetwork.startConsensusOnAllNodes();
+        testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getLastBlock();
         await blocksProvider.provideNextBlock();
         await nextTick();
