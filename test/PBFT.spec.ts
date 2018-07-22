@@ -5,18 +5,17 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
+import { aPayload } from "./builders/PayloadBuilder";
 import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
-import { Gossip } from "./gossip/Gossip";
 import { blockMatcher } from "./matchers/blockMatcher";
 import { nextTick } from "./timeUtils";
-import { aPayload } from "./builders/PayloadBuilder";
 
 chai.use(sinonChai);
 chai.use(blockMatcher);
 
 describe("PBFT", () => {
     it("should send pre-prepare only if it's the leader", async () => {
-        const { testNetwork, blocksProvider, blocksValidator } = aSimpleTestNetwork();
+        const { testNetwork, blockUtils, blocksValidator } = aSimpleTestNetwork();
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
         const node2 = testNetwork.nodes[2];
@@ -32,7 +31,7 @@ describe("PBFT", () => {
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
-        await blocksProvider.provideNextBlock();
+        await blockUtils.provideNextBlock();
         await blocksValidator.resolveAllValidations(true);
         await nextTick(); // await for notifyCommitted
         const preprepareCounter = (spy: sinon.SinonSpy) => spy.getCalls().filter(c => c.args[1] === "preprepare").length;
@@ -46,11 +45,11 @@ describe("PBFT", () => {
     });
 
     it("should start a network, append a block, and make sure that all nodes recived it", async () => {
-        const { testNetwork, blocksProvider, blocksValidator, blocksPool } = aSimpleTestNetwork();
+        const { testNetwork, blockUtils, blocksValidator, blocksPool } = aSimpleTestNetwork();
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
-        await blocksProvider.provideNextBlock();
+        await blockUtils.provideNextBlock();
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
         await nextTick();
@@ -60,10 +59,10 @@ describe("PBFT", () => {
     });
 
     it("should ignore suggested block if they are not from the leader", async () => {
-        const { testNetwork, blocksProvider, blocksValidator, blocksPool } = aSimpleTestNetwork();
+        const { testNetwork, blockUtils, blocksValidator, blocksPool } = aSimpleTestNetwork();
 
         testNetwork.nodes[3].startConsensus(); // pretending to be the leader
-        await blocksProvider.provideNextBlock();
+        await blockUtils.provideNextBlock();
         await nextTick(); // await for blockStorage.getLastBlockHash
         await blocksValidator.resolveAllValidations(true);
         await nextTick();
@@ -75,7 +74,7 @@ describe("PBFT", () => {
     it("should reach consensus, in a network of 4 nodes, where the leader is byzantine and the other 3 nodes are loyal", async () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
-        const { testNetwork, blocksProvider, blocksValidator } = aSimpleTestNetwork(4, [block1, block2]);
+        const { testNetwork, blockUtils, blocksValidator } = aSimpleTestNetwork(4, [block1, block2]);
 
         const leader = testNetwork.nodes[0];
         const leaderGossip = testNetwork.getNodeGossip(leader.pk);
@@ -84,7 +83,7 @@ describe("PBFT", () => {
         leaderGossip.setOutGoingWhiteListPKs([testNetwork.nodes[1].pk, testNetwork.nodes[2].pk]);
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
-        await blocksProvider.provideNextBlock();
+        await blockUtils.provideNextBlock();
         await nextTick(); // await for blockStorage.getLastBlockHash
         await blocksValidator.resolveAllValidations(true);
 
@@ -92,7 +91,7 @@ describe("PBFT", () => {
         leaderGossip.setOutGoingWhiteListPKs([testNetwork.nodes[3].pk]);
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
-        await blocksProvider.provideNextBlock();
+        await blockUtils.provideNextBlock();
         await nextTick(); // await for blockStorage.getLastBlockHash
         await blocksValidator.resolveAllValidations(true);
         await nextTick(); // await for notifyCommitted
@@ -104,7 +103,7 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, in a network of 5 nodes, where one of the nodes is byzantine and the others are loyal", async () => {
-        const { testNetwork, blocksProvider, blocksValidator, blocksPool } = aSimpleTestNetwork(5);
+        const { testNetwork, blockUtils, blocksValidator, blocksPool } = aSimpleTestNetwork(5);
 
         const byzantineNode = testNetwork.nodes[4];
         const gossip = testNetwork.getNodeGossip(byzantineNode.pk);
@@ -112,7 +111,7 @@ describe("PBFT", () => {
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
-        await blocksProvider.provideNextBlock();
+        await blockUtils.provideNextBlock();
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
         await nextTick();
@@ -121,7 +120,7 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, even when a byzantine node is sending a bad block several times", async () => {
-        const { testNetwork, blocksProvider, blocksValidator, blocksPool } = aSimpleTestNetwork();
+        const { testNetwork, blockUtils, blocksValidator, blocksPool } = aSimpleTestNetwork();
         const goodBlock = blocksPool[0];
         const fakeBlock = aBlock(theGenesisBlock);
 
@@ -136,7 +135,7 @@ describe("PBFT", () => {
         gossip.broadcast("preprepare", aPayload(byzantineNode.pk, { block: fakeBlock, view: 0, term: 1 }));
 
         await nextTick();
-        await blocksProvider.provideNextBlock();
+        await blockUtils.provideNextBlock();
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
         await nextTick();
@@ -146,7 +145,7 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, in a network of 7 nodes, where two of the nodes is byzantine and the others are loyal", async () => {
-        const { testNetwork, blocksProvider, blocksValidator, blocksPool } = aSimpleTestNetwork(7);
+        const { testNetwork, blockUtils, blocksValidator, blocksPool } = aSimpleTestNetwork(7);
 
         const byzantineNode1 = testNetwork.nodes[5];
         const byzantineNode2 = testNetwork.nodes[6];
@@ -157,7 +156,7 @@ describe("PBFT", () => {
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
-        await blocksProvider.provideNextBlock();
+        await blockUtils.provideNextBlock();
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
         await nextTick();
@@ -167,12 +166,12 @@ describe("PBFT", () => {
     });
 
     it("should not process gossip messages after dispose", async () => {
-        const { testNetwork, blocksProvider, blocksValidator, blocksPool } = aSimpleTestNetwork();
+        const { testNetwork, blockUtils, blocksValidator, blocksPool } = aSimpleTestNetwork();
 
         // block 1
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
-        await blocksProvider.provideNextBlock();
+        await blockUtils.provideNextBlock();
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
         await nextTick(); // await for notifyCommitted
@@ -193,7 +192,7 @@ describe("PBFT", () => {
         // block 2 (After network shutdown)
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
-        await blocksProvider.provideNextBlock();
+        await blockUtils.provideNextBlock();
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
         await nextTick(); // await for notifyCommitted
@@ -208,7 +207,7 @@ describe("PBFT", () => {
         const block2 = aBlock(block1);
         const block3 = aBlock(block1);
         const block4 = aBlock(block3);
-        const { testNetwork, blocksProvider, blocksValidator, triggerElection } = aSimpleTestNetwork(4, [block1, block2, block3, block4]);
+        const { testNetwork, blockUtils, blocksValidator, triggerElection } = aSimpleTestNetwork(4, [block1, block2, block3, block4]);
 
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -226,14 +225,14 @@ describe("PBFT", () => {
         expect(node3.isLeader()).to.be.false;
 
         // processing block1, should be agreed by all nodes
-        await blocksProvider.provideNextBlock();
+        await blockUtils.provideNextBlock();
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
         await nextTick();
         expect(testNetwork.nodes).to.agreeOnBlock(block1);
 
         // processing block 2
-        await blocksProvider.provideNextBlock();
+        await blockUtils.provideNextBlock();
         await nextTick(); // await for notifyCommitted
 
         triggerElection(); // force leader election before the block was verified, goes to block 3
@@ -243,7 +242,7 @@ describe("PBFT", () => {
         expect(node3.isLeader()).to.be.false;
         await blocksValidator.resolveAllValidations(true);
 
-        await blocksProvider.provideNextBlock();
+        await blockUtils.provideNextBlock();
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
         await nextTick();

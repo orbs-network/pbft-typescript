@@ -3,15 +3,14 @@ import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
 import { InMemoryPBFTStorage } from "../src/storage/InMemoryPBFTStorage";
 import { PBFTStorage } from "../src/storage/PBFTStorage";
-import { BlocksProviderMock } from "./blocksProvider/BlocksProviderMock";
 import { BlocksValidatorMock } from "./blocksValidator/BlocksValidatorMock";
+import { BlockUtilsMock, calculateBlockHash } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNode } from "./builders/NodeBuilder";
 import { aPayload } from "./builders/PayloadBuilder";
 import { aTestNetwork } from "./builders/TestNetworkBuilder";
 import { SilentLogger } from "./logger/SilentLogger";
 import { nextTick } from "./timeUtils";
-import { calculateBlockHash } from "./blockUtils/BlockUtilsMock";
 
 chai.use(sinonChai);
 
@@ -22,11 +21,11 @@ describe("Spam Prevention", () => {
         const nodeBuilder = aNode().storingOn(inspectedStorage);
         const block = aBlock(theGenesisBlock);
         const blocksValidator = new BlocksValidatorMock();
-        const blocksProvider = new BlocksProviderMock([block]);
+        const blockUtils = new BlockUtilsMock(blocksValidator, [block]);
         const testNetwork = aTestNetwork()
             .with(4).nodes
             .withCustomNode(nodeBuilder)
-            .gettingBlocksVia(blocksProvider)
+            .gettingBlocksVia(blockUtils)
             .validateUsing(blocksValidator)
             .build();
 
@@ -35,7 +34,7 @@ describe("Spam Prevention", () => {
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getLastBlock();
-        await blocksProvider.provideNextBlock();
+        await blockUtils.provideNextBlock();
         await nextTick();
         const gossip = testNetwork.getNodeGossip(leader.pk);
         gossip.unicast(node.pk, "preprepare", aPayload(leader.pk, { block, view: 0, term: 1 }));

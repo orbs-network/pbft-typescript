@@ -1,8 +1,9 @@
+import { BlockUtils } from "../../src";
 import { Block } from "../../src/Block";
 import { ElectionTriggerFactory } from "../../src/electionTrigger/ElectionTrigger";
 import { Logger } from "../../src/logger/Logger";
-import { BlocksProviderMock } from "../blocksProvider/BlocksProviderMock";
 import { BlocksValidatorMock } from "../blocksValidator/BlocksValidatorMock";
+import { BlockUtilsMock } from "../blockUtils/BlockUtilsMock";
 import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
 import { Gossip } from "../gossip/Gossip";
 import { GossipDiscovery } from "../gossip/GossipDiscovery";
@@ -31,7 +32,7 @@ class TestNetworkBuilder {
     private customNodes: NodeBuilder[] = [];
     private electionTriggerFactory: ElectionTriggerFactory;
     private blocksValidator: BlocksValidatorMock;
-    private blocksProvider: BlocksProviderMock;
+    private blockUtils: BlockUtils;
     private blocksPool: Block[];
     private testNetwork: TestNetwork;
 
@@ -73,9 +74,9 @@ class TestNetworkBuilder {
         return this;
     }
 
-    public gettingBlocksVia(blocksProvider: BlocksProviderMock): this {
-        if (!this.blocksProvider) {
-            this.blocksProvider = blocksProvider;
+    public gettingBlocksVia(blockUtils: BlockUtils): this {
+        if (!this.blockUtils) {
+            this.blockUtils = blockUtils;
         }
         return this;
     }
@@ -91,13 +92,13 @@ class TestNetworkBuilder {
         const logger: Logger = new this.loggerCtor(pk);
         const electionTriggerFactory: ElectionTriggerFactory = this.electionTriggerFactory ? this.electionTriggerFactory : () => new ElectionTriggerMock();
         const blocksValidator: BlocksValidatorMock = this.blocksValidator ? this.blocksValidator : new BlocksValidatorMock();
-        const blocksProvider: BlocksProviderMock = this.blocksProvider ? this.blocksProvider : new BlocksProviderMock();
+        const blockUtils: BlockUtils = this.blockUtils ? this.blockUtils : new BlockUtilsMock(blocksValidator);
         const gossip = new Gossip(discovery, logger);
         discovery.registerGossip(pk, gossip);
         const networkCommunication: InMemoryNetworkCommunicaiton = new InMemoryNetworkCommunicaiton(discovery, gossip);
         return builder
             .thatIsPartOf(networkCommunication)
-            .gettingBlocksVia(blocksProvider)
+            .gettingBlocksVia(blockUtils)
             .electingLeaderUsing(electionTriggerFactory)
             .validateUsing(blocksValidator)
             .withPk(pk)
@@ -134,18 +135,18 @@ export const aSimpleTestNetwork = (countOfNodes: number = 4, blocksPool?: Block[
     };
     const triggerElection = () => electionTriggers.map(e => e.trigger());
     const blocksValidator = new BlocksValidatorMock();
-    const blocksProvider = new BlocksProviderMock(blocksPool);
+    const blockUtils = new BlockUtilsMock(blocksValidator, blocksPool);
     const testNetwork = aTestNetwork()
         .validateUsing(blocksValidator)
         .electingLeaderUsing(electionTriggerFactory)
-        .gettingBlocksVia(blocksProvider)
+        .gettingBlocksVia(blockUtils)
         .with(countOfNodes).nodes
         .build();
 
     return {
         testNetwork,
         blocksValidator,
-        blocksProvider,
+        blockUtils,
         blocksPool,
         triggerElection
     };

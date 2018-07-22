@@ -3,28 +3,28 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { Block } from "../src/Block";
-import { BlocksProviderMock } from "./blocksProvider/BlocksProviderMock";
 import { BlocksValidatorMock } from "./blocksValidator/BlocksValidatorMock";
+import { BlockUtilsMock } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aTestNetwork } from "./builders/TestNetworkBuilder";
-import { nextTick } from "./timeUtils";
 import { TestNetwork } from "./network/TestNetwork";
+import { nextTick } from "./timeUtils";
 
 chai.use(sinonChai);
 
 describe("Block Validation", () => {
     let block: Block;
     let blocksValidator: BlocksValidatorMock;
-    let blocksProvider: BlocksProviderMock;
+    let blockUtils: BlockUtilsMock;
     let testNetwork: TestNetwork;
 
     beforeEach(() => {
         block = aBlock(theGenesisBlock);
         blocksValidator = new BlocksValidatorMock();
-        blocksProvider = new BlocksProviderMock([block]);
+        blockUtils = new BlockUtilsMock(blocksValidator, [block]);
         testNetwork = aTestNetwork()
             .validateUsing(blocksValidator)
-            .gettingBlocksVia(blocksProvider)
+            .gettingBlocksVia(blockUtils)
             .with(4).nodes
             .build();
     });
@@ -37,7 +37,7 @@ describe("Block Validation", () => {
         const spy = sinon.spy(blocksValidator, "validateBlock");
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
-        await blocksProvider.provideNextBlock();
+        await blockUtils.provideNextBlock();
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
         await nextTick();
@@ -49,7 +49,7 @@ describe("Block Validation", () => {
     it("should not reach consensus if validateBlock returned false", async () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
-        await blocksProvider.provideNextBlock();
+        await blockUtils.provideNextBlock();
         await blocksValidator.resolveAllValidations(false);
         await nextTick();
 

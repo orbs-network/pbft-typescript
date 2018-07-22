@@ -3,28 +3,53 @@ import * as stringify from "json-stable-stringify";
 import { Block } from "../../src/Block";
 import { BlockUtils } from "../../src/blockUtils/BlockUtils";
 import { BlocksValidatorMock } from "../blocksValidator/BlocksValidatorMock";
-import { BlocksProviderMock } from "../blocksProvider/BlocksProviderMock";
+import { theGenesisBlock, aBlock } from "../builders/BlockBuilder";
+import { nextTick } from "../timeUtils";
 
 export const calculateBlockHash = (block: Block): Buffer => createHash("sha256").update(stringify(block.header)).update(stringify(block.body)).digest(); // .digest("base64");
 
 export class BlockUtilsMock implements BlockUtils {
-    private lastCommittedBlockHash: Buffer = new Buffer("");
+    private blocksPool = theGenesisBlock;
+    private blocksPromiseList: Promise<Block>[] = [];
+    private blocksResolveList: Function[] = [];
+    private upCommingBlocks: Block[] = [];
 
     public constructor(
         public readonly blockValidator: BlocksValidatorMock,
-        public readonly blockProvider: BlocksProviderMock) {
+        upCommingBlocks?: Block[]) {
+        if (upCommingBlocks !== undefined) {
+            this.upCommingBlocks = [...upCommingBlocks];
+        }
     }
 
-    public setLastCommittedBlockHash(lastCommittedBlockHash: Buffer): void {
-        this.lastCommittedBlockHash = new Buffer(lastCommittedBlockHash);
+    public async provideNextBlock(): Promise<any> {
+        if (this.blocksResolveList.length === 0) {
+            return Promise.resolve();
+        }
+
+        const resolve = this.blocksResolveList.pop();
+        const promise = this.blocksPromiseList.pop();
+        resolve(this.getNextBlock());
+        await promise;
+        return nextTick;
     }
 
-    public async requestNewBlock(height: number): Promise<Block> {
-        const newBlock: Block = await this.blockProvider.requestNewBlock();
-        newBlock.header.prevBlockHash = this.lastCommittedBlockHash;
-        return newBlock;
+    public requestNewBlock(): Promise<Block> {
+        const promise = new Promise<Block>(resolve => {
+            this.blocksResolveList.push(resolve);
+        });
+
+        this.blocksPromiseList.push(promise);
+        return promise;
     }
 
+    private getNextBlock(): Block {
+        if (this.upCommingBlocks.length > 0) {
+            return this.upCommingBlocks.shift();
+        } else {
+            return aBlock(this.blocksPool);
+        }
+    }
     public async validateBlock(block: Block): Promise<boolean> {
         return this.blockValidator.validateBlock(block);
     }

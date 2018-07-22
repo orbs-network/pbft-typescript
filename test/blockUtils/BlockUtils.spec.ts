@@ -5,7 +5,6 @@ import * as stringify from "json-stable-stringify";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { Block } from "../../src/Block";
-import { BlocksProviderMock } from "../blocksProvider/BlocksProviderMock";
 import { BlocksValidatorMock } from "../blocksValidator/BlocksValidatorMock";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { nextTick } from "../timeUtils";
@@ -16,30 +15,18 @@ chai.use(sinonChai);
 describe("Block Utils", () => {
     it("should be able to initialize BlockUtils", () => {
         const blockValidator = new BlocksValidatorMock();
-        const blockProvider = new BlocksProviderMock();
-        const blockUtils = new BlockUtilsMock(blockValidator, blockProvider);
+        const block1: Block = aBlock(theGenesisBlock);
+        const block2: Block = aBlock(block1);
+        const blockUtils = new BlockUtilsMock(blockValidator, [block1, block2]);
         expect(blockUtils).to.not.be.undefined;
-    });
-
-    it("should called the blockProvider's requestNewBlock", () => {
-        const providedBlock: Block = aBlock(theGenesisBlock);
-        const blockValidator = new BlocksValidatorMock();
-        const blockProvider = new BlocksProviderMock([providedBlock]);
-        const blockUtils = new BlockUtilsMock(blockValidator, blockProvider);
-        const spy = sinon.spy(blockProvider, "requestNewBlock");
-        blockUtils.requestNewBlock(2)
-            .then(block => {
-                expect(spy).to.have.been.calledWith(2);
-                expect(block).to.equal(providedBlock);
-            });
-        blockProvider.provideNextBlock();
     });
 
     it("should calculate the given block hash", () => {
         const block: Block = aBlock(theGenesisBlock, Math.random());
         const blockValidator = new BlocksValidatorMock();
-        const blockProvider = new BlocksProviderMock();
-        const blockUtils = new BlockUtilsMock(blockValidator, blockProvider);
+        const block1: Block = aBlock(theGenesisBlock);
+        const block2: Block = aBlock(block1);
+        const blockUtils = new BlockUtilsMock(blockValidator, [block1, block2]);
 
         const actual = blockUtils.calculateBlockHash(block);
         const expected = createHash("sha256").update(stringify(block.header)).update(stringify(block.body)).digest(); // "base64");
@@ -49,20 +36,17 @@ describe("Block Utils", () => {
 
     describe("Validator", () => {
         let blockValidator: BlocksValidatorMock;
-        let blockProvider: BlocksProviderMock;
         let blockUtils: BlockUtilsMock;
         let nextBlock: Block;
 
         beforeEach(() => {
-            blockValidator = new BlocksValidatorMock();
-            blockProvider = new BlocksProviderMock();
-            blockUtils = new BlockUtilsMock(blockValidator, blockProvider);
-
             const block1: Block = aBlock(theGenesisBlock);
             const block2: Block = aBlock(block1);
             const block3: Block = aBlock(block2);
-            blockUtils.setLastCommittedBlockHash(blockUtils.calculateBlockHash(block3));
             nextBlock = aBlock(block3);
+
+            blockValidator = new BlocksValidatorMock();
+            blockUtils = new BlockUtilsMock(blockValidator, [block1, block2, block3]);
         });
 
         it("should called the blockValidator's validateBlock", async () => {

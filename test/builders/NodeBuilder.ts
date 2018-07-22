@@ -5,7 +5,6 @@ import { KeyManager } from "../../src/keyManager/KeyManager";
 import { Logger } from "../../src/logger/Logger";
 import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 import { PBFTStorage } from "../../src/storage/PBFTStorage";
-import { BlocksProviderMock } from "../blocksProvider/BlocksProviderMock";
 import { InMemoryBlockStorage } from "../blockStorage/InMemoryBlockStorage";
 import { BlocksValidatorMock } from "../blocksValidator/BlocksValidatorMock";
 import { BlockUtilsMock } from "../blockUtils/BlockUtilsMock";
@@ -23,7 +22,7 @@ export class NodeBuilder {
     private logger: Logger;
     private electionTriggerFactory: ElectionTriggerFactory;
     private blocksValidator: BlocksValidatorMock;
-    private blocksProvider: BlocksProviderMock;
+    private blockUtils: BlockUtils;
     private logsToConsole: boolean = false;
 
     public and = this;
@@ -66,9 +65,9 @@ export class NodeBuilder {
         return this;
     }
 
-    public gettingBlocksVia(blocksProvider: BlocksProviderMock): this {
-        if (!this.blocksProvider) {
-            this.blocksProvider = blocksProvider;
+    public gettingBlocksVia(blockUtils: BlockUtils): this {
+        if (!this.blockUtils) {
+            this.blockUtils = blockUtils;
         }
         return this;
     }
@@ -92,8 +91,7 @@ export class NodeBuilder {
     private buildConfig(): Config {
         const electionTriggerFactory: ElectionTriggerFactory = this.electionTriggerFactory ? this.electionTriggerFactory : () => new ElectionTriggerMock();
         const blocksValidator: BlocksValidatorMock = this.blocksValidator ? this.blocksValidator : new BlocksValidatorMock();
-        const blocksProvider: BlocksProviderMock = this.blocksProvider ? this.blocksProvider : new BlocksProviderMock();
-        const blockUtils: BlockUtils = new BlockUtilsMock(blocksValidator, blocksProvider);
+        const blockUtils: BlockUtils = this.blockUtils ? this.blockUtils : new BlockUtilsMock(blocksValidator);
         const keyManager: KeyManager = new KeyManagerMock(this.publicKey);
         const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(keyManager.getMyPublicKey()) : new SilentLogger();
         const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage(logger);

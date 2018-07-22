@@ -2,11 +2,11 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
 import { CommitPayload, PreparePayload, PrePreparePayload } from "../src/networkCommunication/Payload";
+import { calculateBlockHash } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aPayload } from "./builders/PayloadBuilder";
 import { aSimpleTestNetwork, aTestNetwork } from "./builders/TestNetworkBuilder";
 import { nextTick } from "./timeUtils";
-import { calculateBlockHash } from "./blockUtils/BlockUtilsMock";
 
 chai.use(sinonChai);
 
@@ -14,7 +14,7 @@ describe("Byzantine Attacks", () => {
     it("Block validation is completed after new election, old validation should be ignored", async () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
-        const { testNetwork, blocksProvider, blocksValidator, triggerElection } = aSimpleTestNetwork(4, [block1, block2]);
+        const { testNetwork, blockUtils, blocksValidator, triggerElection } = aSimpleTestNetwork(4, [block1, block2]);
 
         const leader = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -25,13 +25,13 @@ describe("Byzantine Attacks", () => {
         leaderGossip.setOutGoingWhiteListPKs([node1.pk, node2.pk]);
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
-        await blocksProvider.provideNextBlock();
+        await blockUtils.provideNextBlock();
         await nextTick();
 
         triggerElection();
 
         await nextTick();
-        await blocksProvider.provideNextBlock();
+        await blockUtils.provideNextBlock();
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
 
@@ -82,7 +82,7 @@ describe("Byzantine Attacks", () => {
 
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
-        const { testNetwork, blocksProvider, blocksValidator, triggerElection } = aSimpleTestNetwork(4, [block1, block2]);
+        const { testNetwork, blockUtils, blocksValidator, triggerElection } = aSimpleTestNetwork(4, [block1, block2]);
 
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -101,7 +101,7 @@ describe("Byzantine Attacks", () => {
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
-        await blocksProvider.provideNextBlock();
+        await blockUtils.provideNextBlock();
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
 
@@ -120,7 +120,7 @@ describe("Byzantine Attacks", () => {
         triggerElection();
         await blocksValidator.resolveAllValidations(true);
 
-        await blocksProvider.provideNextBlock();
+        await blockUtils.provideNextBlock();
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
 
