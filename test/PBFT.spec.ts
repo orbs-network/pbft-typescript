@@ -166,28 +166,6 @@ describe("PBFT", () => {
         testNetwork.shutDown();
     });
 
-    it("should not accept a block if it is not pointing to the previous block", async () => {
-        const block1 = aBlock(theGenesisBlock, "Block 1");
-        const fakeBlock1 = aBlock(theGenesisBlock, "Fake Block 1");
-        const notInOrderBlock = aBlock(fakeBlock1, "notInOrderBlock");
-        const { testNetwork, blocksProvider, blocksValidator } = aSimpleTestNetwork(4, [block1, notInOrderBlock]);
-
-        // block 1
-        testNetwork.startConsensusOnAllNodes();
-        await blocksProvider.provideNextBlock();
-        await nextTick();
-        await blocksValidator.resolveAllValidations(true);
-        await nextTick();
-
-        // not in order block (block 2)
-        await blocksProvider.provideNextBlock();
-        await blocksValidator.resolveAllValidations(true);
-        await nextTick();
-
-        expect(testNetwork.nodes).to.agreeOnBlock(block1);
-        testNetwork.shutDown();
-    });
-
     it("should not process gossip messages after dispose", async () => {
         const { testNetwork, blocksProvider, blocksValidator, blocksPool } = aSimpleTestNetwork();
 

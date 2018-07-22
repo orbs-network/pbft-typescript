@@ -1,9 +1,8 @@
 import { Block } from "../../src/Block";
-import { BlocksProvider } from "../../src/blocksProvider/BlocksProvider";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { nextTick } from "../timeUtils";
 
-export class BlocksProviderMock implements BlocksProvider {
+export class BlocksProviderMock {
     private blocksPool = theGenesisBlock;
     private promiseList: Promise<Block>[] = [];
     private resolveList: Function[] = [];

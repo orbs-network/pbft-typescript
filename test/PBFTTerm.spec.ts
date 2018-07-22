@@ -4,18 +4,18 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
+import { PBFT } from "../src";
 import { Block } from "../src/Block";
 import { Config } from "../src/Config";
 import { PBFTTerm, TermConfig } from "../src/PBFTTerm";
+import { BlocksValidatorMock } from "./blocksValidator/BlocksValidatorMock";
+import { BlockUtilsMock, calculateBlockHash } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aPayload } from "./builders/PayloadBuilder";
 import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
 import { blockMatcher } from "./matchers/blockMatcher";
 import { TestNetwork } from "./network/TestNetwork";
 import { nextTick } from "./timeUtils";
-import { BlocksValidatorMock } from "./blocksValidator/BlocksValidatorMock";
-import { PBFT } from "../src";
-import { BlockUtils, calculateBlockHash } from "../src/blockUtils/BlockUtils";
 chai.use(sinonChai);
 chai.use(blockMatcher);
 
@@ -38,8 +38,8 @@ describe("PBFTTerm", () => {
         triggerElection = testNetworkData.triggerElection;
         node0Config = testNetwork.nodes[0].config;
         node1Config = testNetwork.nodes[1].config;
-        node0BlocksValidator = node0Config.blocksValidator as BlocksValidatorMock;
-        node1BlocksValidator = node0Config.blocksValidator as BlocksValidatorMock;
+        node0BlocksValidator = (node0Config.blockUtils as BlockUtilsMock).blockValidator;
+        node1BlocksValidator = (node1Config.blockUtils as BlockUtilsMock).blockValidator;
         node0Pk = testNetwork.nodes[0].pk;
         node1Pk = testNetwork.nodes[1].pk;
         node2Pk = testNetwork.nodes[2].pk;
@@ -51,7 +51,6 @@ describe("PBFTTerm", () => {
 
     function createPBFTTerm(config: Config): PBFTTerm {
         const pbftTermConfig: TermConfig = PBFT.buildTermConfig(config);
-        pbftTermConfig.blockUtils.setLastCommittedBlockHash(calculateBlockHash(theGenesisBlock));
         const pbftTerm: PBFTTerm = new PBFTTerm(pbftTermConfig, 0, () => { });
         return pbftTerm;
     }
@@ -110,7 +109,6 @@ describe("PBFTTerm", () => {
 
     it("onReceivePrePrepare should accept views that match its current view", async () => {
         const pbftTermConfig: TermConfig = PBFT.buildTermConfig(node1Config);
-        pbftTermConfig.blockUtils.setLastCommittedBlockHash(calculateBlockHash(theGenesisBlock));
         const node1PbftTerm: PBFTTerm = new PBFTTerm(pbftTermConfig, 0, () => { });
         expect(node1PbftTerm.getView()).to.equal(0);
         triggerElection();
@@ -158,7 +156,7 @@ describe("PBFTTerm", () => {
         const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
         const block: Block = aBlock(theGenesisBlock);
 
-        const spy = sinon.spy(node1Config.blocksValidator, "validateBlock");
+        const spy = sinon.spy(node1Config.blockUtils, "validateBlock");
         // from the leader => ok
         node1PbftTerm.onReceivePrePrepare(aPayload(node0Pk, { term: 1, view: 0, block }));
         await nextTick();

@@ -1,6 +1,6 @@
 import { Block } from "../../src/Block";
-import { calculateBlockHash } from "../../src/blockUtils/BlockUtils";
 import { Node } from "../network/Node";
+import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 
 export const blockMatcher = (chai: any, utils: any) => {
     chai.Assertion.addMethod("agreeOnBlock", function (block: Block) {

@@ -1,7 +1,6 @@
 import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
-import { calculateBlockHash } from "../src/blockUtils/BlockUtils";
 import { InMemoryPBFTStorage } from "../src/storage/InMemoryPBFTStorage";
 import { PBFTStorage } from "../src/storage/PBFTStorage";
 import { BlocksProviderMock } from "./blocksProvider/BlocksProviderMock";
@@ -12,6 +11,7 @@ import { aPayload } from "./builders/PayloadBuilder";
 import { aTestNetwork } from "./builders/TestNetworkBuilder";
 import { SilentLogger } from "./logger/SilentLogger";
 import { nextTick } from "./timeUtils";
+import { calculateBlockHash } from "./blockUtils/BlockUtilsMock";
 
 chai.use(sinonChai);
 

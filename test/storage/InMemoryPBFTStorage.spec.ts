@@ -1,11 +1,11 @@
 import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
-import { calculateBlockHash } from "../../src/blockUtils/BlockUtils";
 import { Logger } from "../../src/logger/Logger";
 import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { SilentLogger } from "../logger/SilentLogger";
+import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 
 chai.use(sinonChai);
 

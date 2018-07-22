@@ -5,11 +5,11 @@ import * as stringify from "json-stable-stringify";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { Block } from "../../src/Block";
-import { BlockUtils, calculateBlockHash } from "../../src/blockUtils/BlockUtils";
 import { BlocksProviderMock } from "../blocksProvider/BlocksProviderMock";
 import { BlocksValidatorMock } from "../blocksValidator/BlocksValidatorMock";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { nextTick } from "../timeUtils";
+import { BlockUtilsMock } from "./BlockUtilsMock";
 
 chai.use(sinonChai);
 
@@ -17,7 +17,7 @@ describe("Block Utils", () => {
     it("should be able to initialize BlockUtils", () => {
         const blockValidator = new BlocksValidatorMock();
         const blockProvider = new BlocksProviderMock();
-        const blockUtils = new BlockUtils(blockValidator, blockProvider);
+        const blockUtils = new BlockUtilsMock(blockValidator, blockProvider);
         expect(blockUtils).to.not.be.undefined;
     });
 
@@ -25,7 +25,7 @@ describe("Block Utils", () => {
         const providedBlock: Block = aBlock(theGenesisBlock);
         const blockValidator = new BlocksValidatorMock();
         const blockProvider = new BlocksProviderMock([providedBlock]);
-        const blockUtils = new BlockUtils(blockValidator, blockProvider);
+        const blockUtils = new BlockUtilsMock(blockValidator, blockProvider);
         const spy = sinon.spy(blockProvider, "requestNewBlock");
         blockUtils.requestNewBlock(2)
             .then(block => {
@@ -37,8 +37,11 @@ describe("Block Utils", () => {
 
     it("should calculate the given block hash", () => {
         const block: Block = aBlock(theGenesisBlock, Math.random());
+        const blockValidator = new BlocksValidatorMock();
+        const blockProvider = new BlocksProviderMock();
+        const blockUtils = new BlockUtilsMock(blockValidator, blockProvider);
 
-        const actual = calculateBlockHash(block);
+        const actual = blockUtils.calculateBlockHash(block);
         const expected = createHash("sha256").update(stringify(block.header)).update(stringify(block.body)).digest(); // "base64");
 
         expect(actual).to.eql(expected);
@@ -47,18 +50,18 @@ describe("Block Utils", () => {
     describe("Validator", () => {
         let blockValidator: BlocksValidatorMock;
         let blockProvider: BlocksProviderMock;
-        let blockUtils: BlockUtils;
+        let blockUtils: BlockUtilsMock;
         let nextBlock: Block;
 
         beforeEach(() => {
             blockValidator = new BlocksValidatorMock();
             blockProvider = new BlocksProviderMock();
-            blockUtils = new BlockUtils(blockValidator, blockProvider);
+            blockUtils = new BlockUtilsMock(blockValidator, blockProvider);
 
             const block1: Block = aBlock(theGenesisBlock);
             const block2: Block = aBlock(block1);
             const block3: Block = aBlock(block2);
-            blockUtils.setLastCommittedBlockHash(calculateBlockHash(block3));
+            blockUtils.setLastCommittedBlockHash(blockUtils.calculateBlockHash(block3));
             nextBlock = aBlock(block3);
         });
 

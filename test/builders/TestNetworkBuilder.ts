@@ -1,6 +1,4 @@
 import { Block } from "../../src/Block";
-import { BlocksProvider } from "../../src/blocksProvider/BlocksProvider";
-import { BlocksValidator } from "../../src/blocksValidator/BlocksValidator";
 import { ElectionTriggerFactory } from "../../src/electionTrigger/ElectionTrigger";
 import { Logger } from "../../src/logger/Logger";
 import { BlocksProviderMock } from "../blocksProvider/BlocksProviderMock";
@@ -10,11 +8,11 @@ import { Gossip } from "../gossip/Gossip";
 import { GossipDiscovery } from "../gossip/GossipDiscovery";
 import { ConsoleLogger } from "../logger/ConsoleLogger";
 import { SilentLogger } from "../logger/SilentLogger";
+import { Node } from "../network/Node";
+import { TestNetwork } from "../network/TestNetwork";
+import { InMemoryNetworkCommunicaiton } from "../networkCommunication/InMemoryNetworkCommunicaiton";
 import { aBlock, theGenesisBlock } from "./BlockBuilder";
 import { aNode, NodeBuilder } from "./NodeBuilder";
-import { Node } from "../network/Node";
-import { InMemoryNetworkCommunicaiton } from "../networkCommunication/InMemoryNetworkCommunicaiton";
-import { TestNetwork } from "../network/TestNetwork";
 export interface LoggerConstructor {
     new (id: string): Logger;
 }
@@ -32,8 +30,8 @@ class TestNetworkBuilder {
     private loggerCtor: LoggerConstructor = SilentLogger;
     private customNodes: NodeBuilder[] = [];
     private electionTriggerFactory: ElectionTriggerFactory;
-    private blocksValidator: BlocksValidator;
-    private blocksProvider: BlocksProvider;
+    private blocksValidator: BlocksValidatorMock;
+    private blocksProvider: BlocksProviderMock;
     private blocksPool: Block[];
     private testNetwork: TestNetwork;
 
@@ -56,7 +54,7 @@ class TestNetworkBuilder {
         return this;
     }
 
-    public validateUsing(blocksValidator: BlocksValidator): this {
+    public validateUsing(blocksValidator: BlocksValidatorMock): this {
         this.blocksValidator = blocksValidator;
         return this;
     }
@@ -75,7 +73,7 @@ class TestNetworkBuilder {
         return this;
     }
 
-    public gettingBlocksVia(blocksProvider: BlocksProvider): this {
+    public gettingBlocksVia(blocksProvider: BlocksProviderMock): this {
         if (!this.blocksProvider) {
             this.blocksProvider = blocksProvider;
         }
@@ -92,8 +90,8 @@ class TestNetworkBuilder {
     private buildNode(builder: NodeBuilder, pk: string, discovery: GossipDiscovery): Node {
         const logger: Logger = new this.loggerCtor(pk);
         const electionTriggerFactory: ElectionTriggerFactory = this.electionTriggerFactory ? this.electionTriggerFactory : () => new ElectionTriggerMock();
-        const blocksValidator: BlocksValidator = this.blocksValidator ? this.blocksValidator : new BlocksValidatorMock();
-        const blocksProvider: BlocksProvider = this.blocksProvider ? this.blocksProvider : new BlocksProviderMock();
+        const blocksValidator: BlocksValidatorMock = this.blocksValidator ? this.blocksValidator : new BlocksValidatorMock();
+        const blocksProvider: BlocksProviderMock = this.blocksProvider ? this.blocksProvider : new BlocksProviderMock();
         const gossip = new Gossip(discovery, logger);
         discovery.registerGossip(pk, gossip);
         const networkCommunication: InMemoryNetworkCommunicaiton = new InMemoryNetworkCommunicaiton(discovery, gossip);

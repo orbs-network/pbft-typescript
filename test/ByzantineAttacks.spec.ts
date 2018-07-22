@@ -1,12 +1,12 @@
 import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
-import { calculateBlockHash } from "../src/blockUtils/BlockUtils";
 import { CommitPayload, PreparePayload, PrePreparePayload } from "../src/networkCommunication/Payload";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aPayload } from "./builders/PayloadBuilder";
 import { aSimpleTestNetwork, aTestNetwork } from "./builders/TestNetworkBuilder";
 import { nextTick } from "./timeUtils";
+import { calculateBlockHash } from "./blockUtils/BlockUtilsMock";
 
 chai.use(sinonChai);
 

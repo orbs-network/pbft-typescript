@@ -3,13 +3,13 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { Block } from "../../src/Block";
-import { BlockUtils, calculateBlockHash } from "../../src/blockUtils/BlockUtils";
 import { NetworkMessagesFilter } from "../../src/networkCommunication/NetworkMessagesFilter";
 import { PBFTMessagesHandler } from "../../src/networkCommunication/PBFTMessagesHandler";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { aPayload } from "../builders/PayloadBuilder";
 import { aSimpleTestNetwork } from "../builders/TestNetworkBuilder";
 import { PBFTMessagesHandlerMock } from "./PBFTMessagesHandlerMock";
+import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 
 chai.use(sinonChai);
 

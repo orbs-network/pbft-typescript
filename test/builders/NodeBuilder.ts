@@ -1,21 +1,20 @@
-import { BlocksProvider } from "../../src/blocksProvider/BlocksProvider";
-import { BlocksValidator } from "../../src/blocksValidator/BlocksValidator";
+import { BlockUtils, NetworkCommunication } from "../../src";
 import { Config } from "../../src/Config";
 import { ElectionTriggerFactory } from "../../src/electionTrigger/ElectionTrigger";
+import { KeyManager } from "../../src/keyManager/KeyManager";
 import { Logger } from "../../src/logger/Logger";
-import { KeyManagerMock } from "../keyManager/KeyManagerMock";
+import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 import { PBFTStorage } from "../../src/storage/PBFTStorage";
 import { BlocksProviderMock } from "../blocksProvider/BlocksProviderMock";
 import { InMemoryBlockStorage } from "../blockStorage/InMemoryBlockStorage";
 import { BlocksValidatorMock } from "../blocksValidator/BlocksValidatorMock";
+import { BlockUtilsMock } from "../blockUtils/BlockUtilsMock";
 import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
+import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 import { ConsoleLogger } from "../logger/ConsoleLogger";
 import { SilentLogger } from "../logger/SilentLogger";
 import { Node } from "../network/Node";
-import { KeyManager } from "../../src/keyManager/KeyManager";
 import { InMemoryNetworkCommunicaiton } from "../networkCommunication/InMemoryNetworkCommunicaiton";
-import { NetworkCommunication } from "../../src";
-import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 
 export class NodeBuilder {
     private networkCommunication: NetworkCommunication;
@@ -23,8 +22,8 @@ export class NodeBuilder {
     private pbftStorage: PBFTStorage;
     private logger: Logger;
     private electionTriggerFactory: ElectionTriggerFactory;
-    private blocksValidator: BlocksValidator;
-    private blocksProvider: BlocksProvider;
+    private blocksValidator: BlocksValidatorMock;
+    private blocksProvider: BlocksProviderMock;
     private logsToConsole: boolean = false;
 
     public and = this;
@@ -60,14 +59,14 @@ export class NodeBuilder {
         return this;
     }
 
-    public validateUsing(blocksValidator: BlocksValidator): this {
+    public validateUsing(blocksValidator: BlocksValidatorMock): this {
         if (!this.blocksValidator) {
             this.blocksValidator = blocksValidator;
         }
         return this;
     }
 
-    public gettingBlocksVia(blocksProvider: BlocksProvider): this {
+    public gettingBlocksVia(blocksProvider: BlocksProviderMock): this {
         if (!this.blocksProvider) {
             this.blocksProvider = blocksProvider;
         }
@@ -92,8 +91,9 @@ export class NodeBuilder {
 
     private buildConfig(): Config {
         const electionTriggerFactory: ElectionTriggerFactory = this.electionTriggerFactory ? this.electionTriggerFactory : () => new ElectionTriggerMock();
-        const blocksValidator: BlocksValidator = this.blocksValidator ? this.blocksValidator : new BlocksValidatorMock();
-        const blocksProvider: BlocksProvider = this.blocksProvider ? this.blocksProvider : new BlocksProviderMock();
+        const blocksValidator: BlocksValidatorMock = this.blocksValidator ? this.blocksValidator : new BlocksValidatorMock();
+        const blocksProvider: BlocksProviderMock = this.blocksProvider ? this.blocksProvider : new BlocksProviderMock();
+        const blockUtils: BlockUtils = new BlockUtilsMock(blocksValidator, blocksProvider);
         const keyManager: KeyManager = new KeyManagerMock(this.publicKey);
         const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(keyManager.getMyPublicKey()) : new SilentLogger();
         const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage(logger);
@@ -103,8 +103,7 @@ export class NodeBuilder {
             logger,
             pbftStorage,
             electionTriggerFactory,
-            blocksProvider,
-            blocksValidator,
+            blockUtils,
             keyManager
         };
     }

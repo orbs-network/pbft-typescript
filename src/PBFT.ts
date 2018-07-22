@@ -1,5 +1,4 @@
 import { Block } from "./Block";
-import { BlockUtils, calculateBlockHash } from "./blockUtils/BlockUtils";
 import { Config } from "./Config";
 import { NetworkMessagesFilter } from "./networkCommunication/NetworkMessagesFilter";
 import { PBFTTerm, TermConfig } from "./PBFTTerm";
@@ -27,7 +26,7 @@ export class PBFT {
             pbftStorage: config.pbftStorage || new InMemoryPBFTStorage(config.logger),
             keyManager: config.keyManager,
             logger: config.logger,
-            blockUtils: new BlockUtils(config.blocksValidator, config.blocksProvider)
+            blockUtils: config.blockUtils
         };
     }
 
@@ -45,7 +44,7 @@ export class PBFT {
     private createPBFTTerm(height: number): void {
         this.pbftTerm = new PBFTTerm(this.pbftTermConfig, height, block => {
             this.notifyCommitted(block);
-            this.start(block);
+            this.start(block.header.height + 1);
         });
         this.networkMessagesFilter.setTerm(height, this.pbftTerm);
     }
@@ -60,10 +59,9 @@ export class PBFT {
         this.onCommittedListeners.push(bc);
     }
 
-    public start(lastCommittedBlock: Block): void {
-        this.pbftTermConfig.blockUtils.setLastCommittedBlockHash(calculateBlockHash(lastCommittedBlock));
+    public start(height: number): void {
         this.disposePBFTTerm();
-        this.createPBFTTerm(lastCommittedBlock.header.height + 1);
+        this.createPBFTTerm(height);
     }
 
     public dispose(): any {

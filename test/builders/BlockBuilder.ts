@@ -1,5 +1,5 @@
 import { Block } from "../../src/Block";
-import { calculateBlockHash } from "../../src/blockUtils/BlockUtils";
+import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 
 const genBody = () => (Math.floor(Math.random() * 100_000_000)).toString();
 

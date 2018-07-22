@@ -1,5 +1,4 @@
 import { Block } from "./Block";
-import { BlockUtils, calculateBlockHash } from "./blockUtils/BlockUtils";
 import { ElectionTriggerFactory } from "./electionTrigger/ElectionTrigger";
 import { KeyManager } from "./keyManager/KeyManager";
 import { Logger } from "./logger/Logger";
@@ -7,6 +6,7 @@ import { NetworkCommunication } from "./networkCommunication/NetworkCommunicatio
 import { CommitPayload, NewViewPayload, PreparePayload, PrePreparePayload, ViewChangePayload } from "./networkCommunication/Payload";
 import { PBFTStorage } from "./storage/PBFTStorage";
 import { ViewState } from "./ViewState";
+import { BlockUtils } from "./blockUtils/BlockUtils";
 
 export type onNewBlockCB = (block: Block) => void;
 
@@ -143,7 +143,7 @@ export class PBFTTerm {
     }
 
     private broadcastPrepare(term: number, view: number, block: Block): void {
-        const blockHash: Buffer = calculateBlockHash(block);
+        const blockHash: Buffer = this.blockUtils.calculateBlockHash(block);
         const payload: PreparePayload = {
             pk: this.keyManager.getMyPublicKey(),
             signature: "signature",
@@ -170,7 +170,7 @@ export class PBFTTerm {
         }
 
         this.CB = block;
-        const blockHash: Buffer = calculateBlockHash(block);
+        const blockHash: Buffer = this.blockUtils.calculateBlockHash(block);
         this.pbftStorage.storePrepare(term, view, blockHash, this.keyManager.getMyPublicKey());
         this.pbftStorage.storePrePrepare(term, view, block);
         this.broadcastPrepare(term, view, block);
@@ -281,7 +281,7 @@ export class PBFTTerm {
             }
         };
         this.CB = block;
-        const blockHash = calculateBlockHash(block);
+        const blockHash = this.blockUtils.calculateBlockHash(block);
         this.logger.log({ Subject: "Flow", FlowType: "Elected", term: this.term, view, blockHash });
         const newViewPayload: NewViewPayload = {
             pk: this.keyManager.getMyPublicKey(),
@@ -398,7 +398,7 @@ export class PBFTTerm {
     private isPrePrepared(term: number, view: number, blockHash: Buffer): boolean {
         const prePreparedBlock: Block = this.pbftStorage.getPrePrepare(term, view);
         if (prePreparedBlock) {
-            const prePreparedBlockHash = calculateBlockHash(prePreparedBlock);
+            const prePreparedBlockHash = this.blockUtils.calculateBlockHash(prePreparedBlock);
             const metaData = {
                 method: "isPrePrepared",
                 height: this.term,

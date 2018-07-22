@@ -1,7 +1,6 @@
 import { Block } from "../../src/Block";
-import { BlocksValidator } from "../../src/blocksValidator/BlocksValidator";
 
-export class BlocksValidatorMock implements BlocksValidator {
+export class BlocksValidatorMock {
     private promiseList: Promise<boolean>[] = [];
     private resolveList: Function[] = [];
 
