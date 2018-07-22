@@ -29,6 +29,7 @@ describe("PBFTTerm", () => {
     let node0Pk: string;
     let node1Pk: string;
     let node2Pk: string;
+    let node3Pk: string;
 
     beforeEach(() => {
         const testNetworkData = aSimpleTestNetwork(4);
@@ -42,6 +43,7 @@ describe("PBFTTerm", () => {
         node0Pk = testNetwork.nodes[0].pk;
         node1Pk = testNetwork.nodes[1].pk;
         node2Pk = testNetwork.nodes[2].pk;
+        node3Pk = testNetwork.nodes[3].pk;
     });
 
     afterEach(() => {
@@ -79,6 +81,21 @@ describe("PBFTTerm", () => {
         spy.resetHistory();
         node1PbftTerm.onReceiveViewChange(aPayload(node0Pk, { term: 1, newView: 0 }));
         expect(spy).to.not.have.been.called;
+    });
+
+    it("onReceivePrepare should not accept more Prepares after 2f + 1", async () => {
+        const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
+
+        const spy = sinon.spy(node1Config.pbftStorage, "storeCommit");
+        const block: Block = aBlock(theGenesisBlock);
+        const blockHash = calculateBlockHash(block);
+
+        node1PbftTerm.onReceivePrePrepare(aPayload(node0Pk, { term: 1, view: 0, block }));
+        await nextTick();
+        await node1BlockUtils.resolveAllValidations(true);
+        node1PbftTerm.onReceivePrepare(aPayload(node2Pk, { term: 1, view: 0, blockHash }));
+        node1PbftTerm.onReceivePrepare(aPayload(node3Pk, { term: 1, view: 0, blockHash }));
+        expect(spy).to.have.been.calledOnce;
     });
 
     it("onReceivePrepare should not accept views from the past", async () => {

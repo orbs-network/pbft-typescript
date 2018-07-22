@@ -57,7 +57,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] Make BlockUtils external
 - [V] remove blockProvider & blockValidator
 - [V] PBFT.start should work with height
-- [ ] TDD trigger once
+- [V] TDD trigger once
 
 ## None Blockers
 
