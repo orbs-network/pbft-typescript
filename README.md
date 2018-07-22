@@ -55,8 +55,8 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] BlockUtils - requestNewBlock and validate => use lastBlockHeader
 - [V] KeyManager implementation.
 - [V] Make BlockUtils external
-- [ ] remove blockProvider & blockValidator
-- [ ] PBFT.start should work with height
+- [V] remove blockProvider & blockValidator
+- [V] PBFT.start should work with height
 - [ ] TDD trigger once
 
 ## None Blockers
