@@ -6,7 +6,6 @@ import { Logger } from "../../src/logger/Logger";
 import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 import { PBFTStorage } from "../../src/storage/PBFTStorage";
 import { InMemoryBlockStorage } from "../blockStorage/InMemoryBlockStorage";
-import { BlocksValidatorMock } from "../blocksValidator/BlocksValidatorMock";
 import { BlockUtilsMock } from "../blockUtils/BlockUtilsMock";
 import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
@@ -21,7 +20,6 @@ export class NodeBuilder {
     private pbftStorage: PBFTStorage;
     private logger: Logger;
     private electionTriggerFactory: ElectionTriggerFactory;
-    private blocksValidator: BlocksValidatorMock;
     private blockUtils: BlockUtils;
     private logsToConsole: boolean = false;
 
@@ -58,13 +56,6 @@ export class NodeBuilder {
         return this;
     }
 
-    public validateUsing(blocksValidator: BlocksValidatorMock): this {
-        if (!this.blocksValidator) {
-            this.blocksValidator = blocksValidator;
-        }
-        return this;
-    }
-
     public gettingBlocksVia(blockUtils: BlockUtils): this {
         if (!this.blockUtils) {
             this.blockUtils = blockUtils;
@@ -90,8 +81,7 @@ export class NodeBuilder {
 
     private buildConfig(): Config {
         const electionTriggerFactory: ElectionTriggerFactory = this.electionTriggerFactory ? this.electionTriggerFactory : () => new ElectionTriggerMock();
-        const blocksValidator: BlocksValidatorMock = this.blocksValidator ? this.blocksValidator : new BlocksValidatorMock();
-        const blockUtils: BlockUtils = this.blockUtils ? this.blockUtils : new BlockUtilsMock(blocksValidator);
+        const blockUtils: BlockUtils = this.blockUtils ? this.blockUtils : new BlockUtilsMock();
         const keyManager: KeyManager = new KeyManagerMock(this.publicKey);
         const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(keyManager.getMyPublicKey()) : new SilentLogger();
         const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage(logger);

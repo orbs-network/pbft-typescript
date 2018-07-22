@@ -2,7 +2,6 @@ import { createHash } from "crypto";
 import * as stringify from "json-stable-stringify";
 import { Block } from "../../src/Block";
 import { BlockUtils } from "../../src/blockUtils/BlockUtils";
-import { BlocksValidatorMock } from "../blocksValidator/BlocksValidatorMock";
 import { theGenesisBlock, aBlock } from "../builders/BlockBuilder";
 import { nextTick } from "../timeUtils";
 
@@ -14,9 +13,10 @@ export class BlockUtilsMock implements BlockUtils {
     private blocksResolveList: Function[] = [];
     private upCommingBlocks: Block[] = [];
 
-    public constructor(
-        public readonly blockValidator: BlocksValidatorMock,
-        upCommingBlocks?: Block[]) {
+    private validationsPromiseList: Promise<boolean>[] = [];
+    private validationsResolveList: Function[] = [];
+
+    public constructor(upCommingBlocks?: Block[]) {
         if (upCommingBlocks !== undefined) {
             this.upCommingBlocks = [...upCommingBlocks];
         }
@@ -50,8 +50,25 @@ export class BlockUtilsMock implements BlockUtils {
             return aBlock(this.blocksPool);
         }
     }
-    public async validateBlock(block: Block): Promise<boolean> {
-        return this.blockValidator.validateBlock(block);
+
+    public async resolveAllValidations(isValid: boolean): Promise<any> {
+        this.validationsResolveList.forEach(f => f(isValid));
+        this.validationsResolveList = [];
+        await this.afterAllValidations();
+    }
+
+    private afterAllValidations(): Promise<any> {
+        const result = Promise.all(this.validationsPromiseList);
+        this.validationsPromiseList = [];
+        return result;
+    }
+
+    public validateBlock(block: Block): Promise<boolean> {
+        const promise = new Promise<boolean>((resolve, reject) => {
+            this.validationsResolveList.push(resolve);
+        });
+        this.validationsPromiseList.push(promise);
+        return promise;
     }
 
     public calculateBlockHash(block: Block): Buffer {

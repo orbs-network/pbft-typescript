@@ -3,7 +3,6 @@ import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
 import { InMemoryPBFTStorage } from "../src/storage/InMemoryPBFTStorage";
 import { PBFTStorage } from "../src/storage/PBFTStorage";
-import { BlocksValidatorMock } from "./blocksValidator/BlocksValidatorMock";
 import { BlockUtilsMock, calculateBlockHash } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNode } from "./builders/NodeBuilder";
@@ -20,13 +19,11 @@ describe("Spam Prevention", () => {
         const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
         const nodeBuilder = aNode().storingOn(inspectedStorage);
         const block = aBlock(theGenesisBlock);
-        const blocksValidator = new BlocksValidatorMock();
-        const blockUtils = new BlockUtilsMock(blocksValidator, [block]);
+        const blockUtils = new BlockUtilsMock([block]);
         const testNetwork = aTestNetwork()
             .with(4).nodes
             .withCustomNode(nodeBuilder)
             .gettingBlocksVia(blockUtils)
-            .validateUsing(blocksValidator)
             .build();
 
         const leader = testNetwork.nodes[0];
@@ -40,7 +37,7 @@ describe("Spam Prevention", () => {
         gossip.unicast(node.pk, "preprepare", aPayload(leader.pk, { block, view: 0, term: 1 }));
         gossip.unicast(node.pk, "preprepare", aPayload(leader.pk, { block, view: 0, term: 1 }));
         await nextTick();
-        await blocksValidator.resolveAllValidations(true);
+        await blockUtils.resolveAllValidations(true);
         await nextTick();
 
         const blockHash = calculateBlockHash(block);

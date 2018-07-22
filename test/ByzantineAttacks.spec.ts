@@ -14,7 +14,7 @@ describe("Byzantine Attacks", () => {
     it("Block validation is completed after new election, old validation should be ignored", async () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
-        const { testNetwork, blockUtils, blocksValidator, triggerElection } = aSimpleTestNetwork(4, [block1, block2]);
+        const { testNetwork, blockUtils, triggerElection } = aSimpleTestNetwork(4, [block1, block2]);
 
         const leader = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -33,7 +33,7 @@ describe("Byzantine Attacks", () => {
         await nextTick();
         await blockUtils.provideNextBlock();
         await nextTick();
-        await blocksValidator.resolveAllValidations(true);
+        await blockUtils.resolveAllValidations(true);
 
         expect(await node1.getLatestCommittedBlock()).to.equal(block2);
         expect(await node2.getLatestCommittedBlock()).to.equal(block2);
@@ -82,7 +82,7 @@ describe("Byzantine Attacks", () => {
 
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
-        const { testNetwork, blockUtils, blocksValidator, triggerElection } = aSimpleTestNetwork(4, [block1, block2]);
+        const { testNetwork, blockUtils, triggerElection } = aSimpleTestNetwork(4, [block1, block2]);
 
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -103,7 +103,7 @@ describe("Byzantine Attacks", () => {
         await nextTick();
         await blockUtils.provideNextBlock();
         await nextTick();
-        await blocksValidator.resolveAllValidations(true);
+        await blockUtils.resolveAllValidations(true);
 
         expect(await node0.getLatestCommittedBlock()).to.equal(theGenesisBlock);
         expect(await node1.getLatestCommittedBlock()).to.equal(theGenesisBlock);
@@ -118,11 +118,11 @@ describe("Byzantine Attacks", () => {
 
         // elect node2 as the leader
         triggerElection();
-        await blocksValidator.resolveAllValidations(true);
+        await blockUtils.resolveAllValidations(true);
 
         await blockUtils.provideNextBlock();
         await nextTick();
-        await blocksValidator.resolveAllValidations(true);
+        await blockUtils.resolveAllValidations(true);
 
         expect(await node0.getLatestCommittedBlock()).to.equal(block2);
         expect(await node1.getLatestCommittedBlock()).to.equal(block2);

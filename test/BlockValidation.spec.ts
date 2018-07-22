@@ -3,7 +3,6 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { Block } from "../src/Block";
-import { BlocksValidatorMock } from "./blocksValidator/BlocksValidatorMock";
 import { BlockUtilsMock } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aTestNetwork } from "./builders/TestNetworkBuilder";
@@ -14,16 +13,13 @@ chai.use(sinonChai);
 
 describe("Block Validation", () => {
     let block: Block;
-    let blocksValidator: BlocksValidatorMock;
     let blockUtils: BlockUtilsMock;
     let testNetwork: TestNetwork;
 
     beforeEach(() => {
         block = aBlock(theGenesisBlock);
-        blocksValidator = new BlocksValidatorMock();
-        blockUtils = new BlockUtilsMock(blocksValidator, [block]);
+        blockUtils = new BlockUtilsMock([block]);
         testNetwork = aTestNetwork()
-            .validateUsing(blocksValidator)
             .gettingBlocksVia(blockUtils)
             .with(4).nodes
             .build();
@@ -34,12 +30,12 @@ describe("Block Validation", () => {
     });
 
     it("should call validateBlock on onPrepare", async () => {
-        const spy = sinon.spy(blocksValidator, "validateBlock");
+        const spy = sinon.spy(blockUtils, "validateBlock");
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blockUtils.provideNextBlock();
         await nextTick();
-        await blocksValidator.resolveAllValidations(true);
+        await blockUtils.resolveAllValidations(true);
         await nextTick();
 
         expect(spy).to.have.been.calledWithMatch(block);
@@ -50,7 +46,7 @@ describe("Block Validation", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blockUtils.provideNextBlock();
-        await blocksValidator.resolveAllValidations(false);
+        await blockUtils.resolveAllValidations(false);
         await nextTick();
 
         expect(testNetwork.nodes).to.not.agreeOnBlock(block);

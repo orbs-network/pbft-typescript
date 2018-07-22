@@ -11,7 +11,7 @@ chai.use(sinonChai);
 
 describe("Leader Election", () => {
     it("should notify the next leader when the timeout expired", async () => {
-        const { testNetwork, blockUtils, blocksValidator, triggerElection } = aSimpleTestNetwork(5);
+        const { testNetwork, blockUtils, triggerElection } = aSimpleTestNetwork(5);
 
         const testedNode = testNetwork.nodes[4];
         const nextLeader = testNetwork.nodes[1];
@@ -22,7 +22,7 @@ describe("Leader Election", () => {
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blockUtils.provideNextBlock();
         triggerElection();
-        await blocksValidator.resolveAllValidations(true);
+        await blockUtils.resolveAllValidations(true);
 
         expect(unicastSpy).to.have.been.calledWith(nextLeader.pk, "view-change", aPayload(testedNode.pk, { term: 1, newView: 1 }));
 
@@ -109,14 +109,14 @@ describe("Leader Election", () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(block1);
         const block3 = aBlock(block1);
-        const { testNetwork, blockUtils, blocksValidator, triggerElection } = aSimpleTestNetwork(4, [block1, block2, block3]);
+        const { testNetwork, blockUtils, triggerElection } = aSimpleTestNetwork(4, [block1, block2, block3]);
 
         // block1
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blockUtils.provideNextBlock();
         await nextTick();
-        await blocksValidator.resolveAllValidations(true);
+        await blockUtils.resolveAllValidations(true);
         await nextTick();
         expect(testNetwork.nodes).to.agreeOnBlock(block1);
 
@@ -124,12 +124,12 @@ describe("Leader Election", () => {
         await blockUtils.provideNextBlock();
         await nextTick();
         triggerElection(); // triggeting election before block2 was accepted, this will cause block3 to be accepted
-        await blocksValidator.resolveAllValidations(true);
+        await blockUtils.resolveAllValidations(true);
         await nextTick();
 
         await blockUtils.provideNextBlock();
         await nextTick();
-        await blocksValidator.resolveAllValidations(true);
+        await blockUtils.resolveAllValidations(true);
         await nextTick();
 
         expect(testNetwork.nodes).to.agreeOnBlock(block3);
@@ -141,7 +141,7 @@ describe("Leader Election", () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(block1);
         const block3 = aBlock(block1);
-        const { testNetwork, blockUtils, blocksValidator, triggerElection } = aSimpleTestNetwork(4, [block1, block2, block3]);
+        const { testNetwork, blockUtils, triggerElection } = aSimpleTestNetwork(4, [block1, block2, block3]);
 
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -152,7 +152,7 @@ describe("Leader Election", () => {
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blockUtils.provideNextBlock();
         await nextTick(); // await for blockStorage.getLastBlockHash
-        await blocksValidator.resolveAllValidations(true);
+        await blockUtils.resolveAllValidations(true);
         await nextTick(); // await for notifyCommitted
 
         expect(node0.isLeader()).to.true;
@@ -171,7 +171,7 @@ describe("Leader Election", () => {
         await blockUtils.provideNextBlock();
         triggerElection();
         await nextTick();
-        await blocksValidator.resolveAllValidations(true);
+        await blockUtils.resolveAllValidations(true);
         await nextTick(); // await for blockStorage.getLastBlockHash
         await blockUtils.provideNextBlock();
         await nextTick(); // await for blockStorage.getLastBlockHash
@@ -184,7 +184,7 @@ describe("Leader Election", () => {
     });
 
     it("should not fire new-view if count of view-change is less than 2f+1", async () => {
-        const { testNetwork, blockUtils, blocksValidator } = aSimpleTestNetwork();
+        const { testNetwork, blockUtils } = aSimpleTestNetwork();
         const leader = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
         const node2 = testNetwork.nodes[2];
@@ -197,14 +197,14 @@ describe("Leader Election", () => {
         await blockUtils.provideNextBlock();
         gossip.onRemoteMessage("view-change", aPayload(node1.pk, { newView: 1 }));
         gossip.onRemoteMessage("view-change", aPayload(node1.pk, { newView: 1 }));
-        await blocksValidator.resolveAllValidations(true);
+        await blockUtils.resolveAllValidations(true);
 
         expect(broadcastSpy).to.not.have.been.called;
         testNetwork.shutDown();
     });
 
     it("should not count view-change votes from the same node", async () => {
-        const { testNetwork, blockUtils, blocksValidator } = aSimpleTestNetwork();
+        const { testNetwork, blockUtils } = aSimpleTestNetwork();
         const leader = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
 
@@ -217,7 +217,7 @@ describe("Leader Election", () => {
         gossip.onRemoteMessage("view-change", aPayload(node1.pk, { newView: 1 }));
         gossip.onRemoteMessage("view-change", aPayload(node1.pk, { newView: 1 }));
         gossip.onRemoteMessage("view-change", aPayload(node1.pk, { newView: 1 }));
-        await blocksValidator.resolveAllValidations(true);
+        await blockUtils.resolveAllValidations(true);
 
         expect(broadcastSpy).to.not.have.been.called;
         testNetwork.shutDown();
