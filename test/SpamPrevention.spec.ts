@@ -33,7 +33,7 @@ describe("Spam Prevention", () => {
         const leader = testNetwork.nodes[0];
         const node = testNetwork.nodes[4];
 
-        testNetwork.startConsensusOnAllNodes();
+        await testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getLastBlock();
         await blocksProvider.provideNextBlock();
         await nextTick();
@@ -42,6 +42,7 @@ describe("Spam Prevention", () => {
         gossip.unicast(node.pk, "preprepare", aPayload(leader.pk, { block, view: 0, term: 1 }));
         await nextTick();
         await blocksValidator.resolveAllValidations(true);
+        await nextTick();
 
         const blockHash = calculateBlockHash(block);
         expect(inspectedStorage.getPrepare(1, 0, blockHash).length).to.equal(4);

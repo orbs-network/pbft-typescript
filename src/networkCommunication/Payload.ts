@@ -16,7 +16,7 @@ export interface PrePreparePayload extends Payload {
 
 export interface PreparePayload extends Payload {
     data: {
-        blockHash: string;
+        blockHash: Buffer;
         view: number;
         term: number;
     };
@@ -24,7 +24,7 @@ export interface PreparePayload extends Payload {
 
 export interface CommitPayload extends Payload {
     data: {
-        blockHash: string;
+        blockHash: Buffer;
         term: number;
         view: number;
     };

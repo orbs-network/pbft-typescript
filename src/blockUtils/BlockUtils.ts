@@ -4,18 +4,27 @@ import { Block } from "../Block";
 import { BlocksProvider } from "../blocksProvider/BlocksProvider";
 import { BlocksValidator } from "../blocksValidator/BlocksValidator";
 
-export const calculateBlockHash = (block: Block): string => createHash("sha256").update(stringify(block.header)).update(stringify(block.body)).digest("base64");
+export const calculateBlockHash = (block: Block): Buffer => createHash("sha256").update(stringify(block.header)).update(stringify(block.body)).digest(); // .digest("base64");
 
+// export function calculateBlockHash(block: Block): Buffer {
+//     const hash = createHash("sha256");
+
+//     hash.update(stringify(block.header));
+
+//     hash.update(stringify(block.body));
+//     // hash.update(stringify(block));
+//     return hash.digest();
+// }
 export class BlockUtils {
-    private lastCommittedBlockHash: string;
+    private lastCommittedBlockHash: Buffer = new Buffer("");
 
     public constructor(
         private readonly blockValidator: BlocksValidator,
         private readonly blockProvider: BlocksProvider) {
     }
 
-    public setLastCommittedBlockHash(lastCommittedBlockHash: string): void {
-        this.lastCommittedBlockHash = lastCommittedBlockHash;
+    public setLastCommittedBlockHash(lastCommittedBlockHash: Buffer): void {
+        this.lastCommittedBlockHash = new Buffer(lastCommittedBlockHash);
     }
 
     public async requestNewBlock(height: number): Promise<Block> {
@@ -25,7 +34,7 @@ export class BlockUtils {
     }
 
     public async validateBlock(block: Block): Promise<boolean> {
-        if (this.lastCommittedBlockHash !== block.header.prevBlockHash) {
+        if (!this.lastCommittedBlockHash.equals(block.header.prevBlockHash)) {
             return false;
         }
         return this.blockValidator.validateBlock(block);

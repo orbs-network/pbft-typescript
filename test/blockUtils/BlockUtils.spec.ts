@@ -39,9 +39,9 @@ describe("Block Utils", () => {
         const block: Block = aBlock(theGenesisBlock, Math.random());
 
         const actual = calculateBlockHash(block);
-        const expected = createHash("sha256").update(stringify(block.header)).update(stringify(block.body)).digest("base64");
+        const expected = createHash("sha256").update(stringify(block.header)).update(stringify(block.body)).digest(); // "base64");
 
-        expect(actual).to.equal(expected);
+        expect(actual).to.eql(expected);
     });
 
     describe("Validator", () => {

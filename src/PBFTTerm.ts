@@ -143,7 +143,7 @@ export class PBFTTerm {
     }
 
     private broadcastPrepare(term: number, view: number, block: Block): void {
-        const blockHash: string = calculateBlockHash(block);
+        const blockHash: Buffer = calculateBlockHash(block);
         const payload: PreparePayload = {
             pk: this.keyManager.getMyPublicKey(),
             signature: "signature",
@@ -170,7 +170,7 @@ export class PBFTTerm {
         }
 
         this.CB = block;
-        const blockHash: string = calculateBlockHash(block);
+        const blockHash: Buffer = calculateBlockHash(block);
         this.pbftStorage.storePrepare(term, view, blockHash, this.keyManager.getMyPublicKey());
         this.pbftStorage.storePrePrepare(term, view, block);
         this.broadcastPrepare(term, view, block);
@@ -296,10 +296,17 @@ export class PBFTTerm {
         this.networkCommunication.sendToMembers(this.getOtherNodesIds(), "new-view", newViewPayload);
     }
 
-    private checkPrepared(term: number, view: number, blockHash: string) {
+    private checkPrepared(term: number, view: number, blockHash: Buffer) {
         if (!this.preparedLocally) {
             if (this.isPrePrepared(term, view, blockHash)) {
                 const countPrepared = this.countPrepared(term, view, blockHash);
+                const metaData = {
+                    method: "checkPrepared",
+                    height: this.term,
+                    blockHash,
+                    countPrepared
+                };
+                this.logger.log({ Subject: "Info", message: `counting`, metaData });
                 if (countPrepared >= this.getF() * 2) {
                     this.onPrepared(term, view, blockHash);
                 }
@@ -307,7 +314,7 @@ export class PBFTTerm {
         }
     }
 
-    private onPrepared(term: number, view: number, blockHash: string): void {
+    private onPrepared(term: number, view: number, blockHash: Buffer): void {
         this.preparedLocally = true;
         this.pbftStorage.storeCommit(term, view, blockHash, this.keyManager.getMyPublicKey());
         const payload: CommitPayload = {
@@ -331,7 +338,7 @@ export class PBFTTerm {
         this.checkCommit(term, view, blockHash);
     }
 
-    private checkCommit(term: number, view: number, blockHash: string): void {
+    private checkCommit(term: number, view: number, blockHash: Buffer): void {
         if (!this.committedLocally) {
             if (this.isPrePrepared(term, view, blockHash)) {
                 const commits = this.pbftStorage.getCommit(term, view, blockHash).length;
@@ -384,15 +391,23 @@ export class PBFTTerm {
         return this.pbftStorage.countOfViewChange(term, view);
     }
 
-    private countPrepared(term: number, view: number, blockHash: string): number {
+    private countPrepared(term: number, view: number, blockHash: Buffer): number {
         return this.pbftStorage.getPrepare(term, view, blockHash).length;
     }
 
-    private isPrePrepared(term: number, view: number, blockHash: string): boolean {
+    private isPrePrepared(term: number, view: number, blockHash: Buffer): boolean {
         const prePreparedBlock: Block = this.pbftStorage.getPrePrepare(term, view);
         if (prePreparedBlock) {
             const prePreparedBlockHash = calculateBlockHash(prePreparedBlock);
-            return prePreparedBlockHash === blockHash;
+            const metaData = {
+                method: "isPrePrepared",
+                height: this.term,
+                prePreparedBlockHash,
+                blockHash,
+                eq: prePreparedBlockHash.equals(blockHash)
+            };
+            this.logger.log({ Subject: "Info", message: `isPrePrepared`, metaData });
+            return prePreparedBlockHash.equals(blockHash);
         }
         return false;
     }

@@ -42,7 +42,7 @@ describe("Block Validation", () => {
         await blocksValidator.resolveAllValidations(true);
         await nextTick();
 
-        expect(spy).to.have.been.calledWith(block);
+        expect(spy).to.have.been.calledWithMatch(block);
         expect(testNetwork.nodes).to.agreeOnBlock(block);
     });
 

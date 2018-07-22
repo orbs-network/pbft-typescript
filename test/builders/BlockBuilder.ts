@@ -16,7 +16,7 @@ export function aBlock(previousBlock: Block, body: any = genBody()): Block {
 export const theGenesisBlock: Block = {
     header: {
         height: 0,
-        prevBlockHash: "0"
+        prevBlockHash: new Buffer("0")
     },
     body: "The Genesis Block"
 };

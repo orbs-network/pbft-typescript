@@ -12,7 +12,7 @@ type StorePrepare = {
     StorageType: "Prepare",
     term: number,
     view: number,
-    blockHash: string,
+    blockHash: Buffer,
     senderPk: string
 };
 
@@ -20,7 +20,7 @@ type StoreCommit = {
     StorageType: "Commit",
     term: number,
     view: number,
-    blockHash: string,
+    blockHash: Buffer,
     senderPk: string
 };
 
@@ -42,7 +42,7 @@ type FlowElected = {
     FlowType: "Elected",
     term: number,
     view: number,
-    blockHash: string
+    blockHash: Buffer
 };
 
 type FlowCommit = {

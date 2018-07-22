@@ -30,8 +30,8 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         return this.prePrepareStorage.get(key);
     }
 
-    storePrepare(term: number, view: number, blockHash: string, senderPk: string): boolean {
-        const key = term.toString() + "_" + view.toString() + "_" + blockHash;
+    storePrepare(term: number, view: number, blockHash: Buffer, senderPk: string): boolean {
+        const key = term.toString() + "_" + view.toString() + "_" + blockHash.toString("hex");
         const prepares = this.prepareStorage.get(key);
         if (prepares) {
             if (prepares.indexOf(senderPk) === -1) {
@@ -46,13 +46,13 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         return true;
     }
 
-    getPrepare(term: number, view: number, blockHash: string): string[] {
-        const key = term.toString() + "_" + view.toString() + "_" + blockHash;
+    getPrepare(term: number, view: number, blockHash: Buffer): string[] {
+        const key = term.toString() + "_" + view.toString() + "_" + blockHash.toString("hex");
         return this.prepareStorage.get(key) || [];
     }
 
-    storeCommit(term: number, view: number, blockHash: string, senderPk: string): boolean {
-        const key = term.toString() + "_" + view.toString() + "_" + blockHash;
+    storeCommit(term: number, view: number, blockHash: Buffer, senderPk: string): boolean {
+        const key = term.toString() + "_" + view.toString() + "_" + blockHash.toString("hex");
         const commits = this.commitStorage.get(key);
         if (commits) {
             if (commits.indexOf(senderPk) === -1) {
@@ -67,8 +67,8 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         return true;
     }
 
-    getCommit(term: number, view: number, blockHash: string): string[] {
-        const key = term.toString() + "_" + view.toString() + "_" + blockHash;
+    getCommit(term: number, view: number, blockHash: Buffer): string[] {
+        const key = term.toString() + "_" + view.toString() + "_" + blockHash.toString("hex");
         return this.commitStorage.get(key) || [];
     }
 

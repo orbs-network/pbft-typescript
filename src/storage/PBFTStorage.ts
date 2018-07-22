@@ -8,10 +8,10 @@ import { Block } from "../Block";
 export interface PBFTStorage {
     storePrePrepare(term: number, view: number, block: Block): boolean;
     getPrePrepare(term: number, view: number): Block;
-    storePrepare(term: number, view: number, blockHash: string, senderId: string): boolean;
-    getPrepare(term: number, view: number, blockHash: string): string[];
-    storeCommit(term: number, view: number, blockHash: string, senderId: string): boolean;
-    getCommit(term: number, view: number, blockHash: string): string[];
+    storePrepare(term: number, view: number, blockHash: Buffer, senderId: string): boolean;
+    getPrepare(term: number, view: number, blockHash: Buffer): string[];
+    storeCommit(term: number, view: number, blockHash: Buffer, senderId: string): boolean;
+    getCommit(term: number, view: number, blockHash: Buffer): string[];
     storeViewChange(term: number, view: number, senderId: string): boolean;
     countOfViewChange(term: number, view: number): number;
 }
