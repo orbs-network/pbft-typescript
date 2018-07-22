@@ -50,38 +50,26 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] Block interface {header}
 - [V] getNetworkMembersPKs(seed: string): string[]; // ordered
 - [V] getHeight should by async
-- [?] BlockUtils - change the flow of requestNewBlock and validate => add pbft-bc into header, such as header.consensus{ consensus: "PBFT", prevBlockHash: "FA141232A}
-- [V] Decide on the Block interface : Block {
-                                          header: {
-                                              height: number;
-                                              prevBlockHash: string;
-                                          };
-                                          body: any;
-                                      }
-- [ ] PBFT start method - public async start(blockHeader: any): Promise<void>
-- [ ] Working with headers when possible: PBFT - maintains lastBlockHeader, BlockUtils.setLastBlockHeader, PBFTTerm - term = lastBlockHeader.height
-- [ ] BlockUtils.calculateBlockHash(blockHeader) - bytes vs string?
+- [V] BlockUtils.calculateBlockHash(blockHeader) - bytes vs string?
 - [V] Remove BlockStorage, instead cache the last committed block
 - [V] BlockUtils - requestNewBlock and validate => use lastBlockHeader
+- [V] KeyManager implementation.
+- [ ] Make BlockUtils external
+- [ ] PBFT.start should work with height
+- [ ] TDD trigger once
 
 ## None Blockers
 
-- [V] trigger once, prepared [preparedLocally=true], elected [ newViewLocally=view + timeoutTrigger.dispose(view)], new-view [newViewLocally=view] , committed [ committedLocally=true]. - needs testing
-- [ ] KeyManager implementation.
-- [ ] PBFT-BC add CalculateBlockHash internally
-- [ ] Change logging methodology - warning - added metadata
-- [ ] PBFT-BC override RequestNewBlock - adds header.pbftData.prevBlockHash
-- [ ] PBFT-BC onCommitted - adds header.pbftData.pbftProof
-- [ ] PBFT public interface {trigger `committed`, `verifyBlock`, `start`, `dispose`}
-- [ ] Rename this.term => this.height
-- [ ] Have a better (Readable) tests solution to await nextTick
-- [ ] Rename Network interface
-- [ ] clear the pbftStorage
 - [ ] sign messages including the message type
+- [ ] clear the pbftStorage
+- [ ] add isACommitteeMember to PBFTTerm
+- [ ] Rename this.term => this.height
+- [ ] Change logging methodology - warning - added metadata
+- [ ] PBFT-BC onCommitted - adds header.pbftData.pbftProof
+- [ ] implement `verifyBlock`
+- [ ] Have a better (Readable) tests solution to await nextTick
 - [!] suggest block in new-view (inside PP), with proofs from other nodes.
 - [ ] documentation
 - [ ] monitoring
 - [ ] Optimizations: IData - Signature only on hash(header).
-- [ ] Network: Responsible for MAP: PK - nodeAddress
-- [?] Sync from external source.
 - [ ] Rename PBFT to PBFTBlockChain
