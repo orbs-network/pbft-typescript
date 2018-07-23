@@ -3,9 +3,10 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aPayload } from "./builders/PayloadBuilder";
+import { aPayload, aPrePreparePayload } from "./builders/PayloadBuilder";
 import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
 import { nextTick } from "./timeUtils";
+import { calculateBlockHash } from "./blockUtils/BlockUtilsMock";
 
 chai.use(sinonChai);
 
@@ -101,7 +102,8 @@ describe("Leader Election", () => {
         await blockUtils.provideNextBlock();
         await nextTick();
 
-        expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", aPayload(node1.pk, { term: 1, view: 1, PP: aPayload(node1.pk, { view: 1, term: 1, block: block2 }) }));
+        const block2Hash = calculateBlockHash(block2);
+        expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", aPayload(node1.pk, { term: 1, view: 1, PP: aPrePreparePayload(node1.pk, { view: 1, term: 1, blockHash: block2Hash}, block2 ) }));
         testNetwork.shutDown();
     });
 
@@ -176,8 +178,9 @@ describe("Leader Election", () => {
         await blockUtils.provideNextBlock();
         await nextTick(); // await for blockStorage.getLastBlockHash
 
+        const block3Hash = calculateBlockHash(block3);
         expect(spy0).to.have.been.calledWith(node1.pk, "view-change", aPayload(node0.pk, { term: 2, newView: 1 }));
-        expect(spy1).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", aPayload(node1.pk, { term: 2, view: 1, PP: aPayload(node1.pk, { term: 2, view: 1, block: block3 }) }));
+        expect(spy1).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", aPayload(node1.pk, { term: 2, view: 1, PP: aPrePreparePayload(node1.pk, { term: 2, view: 1, blockHash: block3Hash }, block3) }));
         expect(spy2).to.have.been.calledWith(node1.pk, "view-change", aPayload(node2.pk, { term: 2, newView: 1 }));
 
         testNetwork.shutDown();

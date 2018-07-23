@@ -8,10 +8,11 @@ export interface Payload {
 
 export interface PrePreparePayload extends Payload {
     data: {
-        block: Block;
+        blockHash: Buffer;
         view: number;
         term: number;
     };
+    block: Block;
 }
 
 export interface PreparePayload extends Payload {

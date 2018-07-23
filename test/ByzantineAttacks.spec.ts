@@ -4,7 +4,7 @@ import * as sinonChai from "sinon-chai";
 import { CommitPayload, PreparePayload, PrePreparePayload } from "../src/networkCommunication/Payload";
 import { calculateBlockHash } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aPayload } from "./builders/PayloadBuilder";
+import { aPayload, aPrePreparePayload } from "./builders/PayloadBuilder";
 import { aSimpleTestNetwork, aTestNetwork } from "./builders/TestNetworkBuilder";
 import { nextTick } from "./timeUtils";
 
@@ -146,8 +146,8 @@ describe("Byzantine Attacks", () => {
 
         // node0, if faking other messages
         const block1 = aBlock(theGenesisBlock);
-        const PPpayload1: PrePreparePayload = aPayload(node1.pk, { term: 1, view: 0, block: block1 });
         const blockHash1 = calculateBlockHash(block1);
+        const PPpayload1: PrePreparePayload = aPrePreparePayload(node1.pk, { term: 1, view: 0, blockHash: blockHash1 }, block1);
         const Ppayload1: PreparePayload = aPayload(node1.pk, { term: 1, view: 0, blockHash: blockHash1 });
         const Cpayload1: CommitPayload = aPayload(node1.pk, { term: 1, view: 0, blockHash: blockHash1 });
         gossip1.onRemoteMessage("preprepare", PPpayload1); // node1 causing preprepare on node1
@@ -157,8 +157,8 @@ describe("Byzantine Attacks", () => {
         gossip1.onRemoteMessage("commit", Cpayload1); // node1 pretending to send commit as node2000
 
         const block2 = aBlock(theGenesisBlock);
-        const PPpayload2: PrePreparePayload = aPayload(node2.pk, { term: 1, view: 0, block: block2 });
         const blockHash2 = calculateBlockHash(block2);
+        const PPpayload2: PrePreparePayload = aPrePreparePayload(node2.pk, { term: 1, view: 0, blockHash: blockHash2 }, block2);
         const Ppayload2: PreparePayload = aPayload(node2.pk, { term: 1, view: 0, blockHash: blockHash2 });
         const Cpayload2: CommitPayload = aPayload(node2.pk, { term: 1, view: 0, blockHash: blockHash2 });
         gossip2.onRemoteMessage("preprepare", PPpayload2); // node1 causing preprepare on node2

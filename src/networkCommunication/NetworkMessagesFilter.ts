@@ -1,5 +1,5 @@
 import { PBFTMessagesHandler } from "./PBFTMessagesHandler";
-import { Payload } from "./Payload";
+import { Payload, PrePreparePayload } from "./Payload";
 import { NetworkCommunication } from "./NetworkCommunication";
 
 export class NetworkMessagesFilter {
@@ -31,7 +31,7 @@ export class NetworkMessagesFilter {
 
         switch (message) {
             case "preprepare": {
-                this.messagesHandler.onReceivePrePrepare(payload);
+                this.messagesHandler.onReceivePrePrepare(payload as PrePreparePayload);
                 break;
             }
             case "prepare": {

@@ -130,14 +130,16 @@ export class PBFTTerm {
     }
 
     private broadcastPrePrepare(term: number, view: number, block: Block): void {
+        const blockHash: Buffer = this.blockUtils.calculateBlockHash(block);
         const payload: PrePreparePayload = {
             pk: this.keyManager.getMyPublicKey(),
             signature: "signature",
             data: {
-                block,
+                blockHash,
                 view,
                 term
-            }
+            },
+            block,
         };
         this.networkCommunication.sendToMembers(this.getOtherNodesIds(), "preprepare", payload);
     }
@@ -163,14 +165,15 @@ export class PBFTTerm {
     }
 
     private processPrePrepare(payload: PrePreparePayload): void {
-        const { view, term, block } = payload.data;
+        const { view, term, blockHash } = payload.data;
+        const { block } = payload;
         if (this.view !== view) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], processPrePrepare, view doesn't match` });
             return;
         }
 
         this.CB = block;
-        const blockHash: Buffer = this.blockUtils.calculateBlockHash(block);
+        // const blockHash: Buffer = this.blockUtils.calculateBlockHash(block);
         this.pbftStorage.storePrepare(term, view, blockHash, this.keyManager.getMyPublicKey());
         this.pbftStorage.storePrePrepare(term, view, block);
         this.broadcastPrepare(term, view, block);
@@ -178,8 +181,8 @@ export class PBFTTerm {
     }
 
     private async validatePrePreapare(payload: PrePreparePayload): Promise<boolean> {
-        const { data, pk: senderPk } = payload;
-        const { view, term, block } = data;
+        const { data, block, pk: senderPk } = payload;
+        const { view, term, blockHash } = data;
 
         if (this.checkPrePrepare(term, view)) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderPk}", already prepared` });
@@ -225,7 +228,7 @@ export class PBFTTerm {
         }
 
         if (this.leaderPk() === senderPk) {
-            this.logger.log({ Subject: "Warning", message: `prepare received from leader is forbidden`, metaData});
+            this.logger.log({ Subject: "Warning", message: `prepare received from leader is forbidden`, metaData });
             return;
         }
 
@@ -271,17 +274,18 @@ export class PBFTTerm {
             return;
         }
 
+        const blockHash = this.blockUtils.calculateBlockHash(block);
         const PP: PrePreparePayload = {
             pk: this.keyManager.getMyPublicKey(),
             signature: "signature",
             data: {
                 term: this.term,
                 view,
-                block
-            }
+                blockHash
+            },
+            block
         };
         this.CB = block;
-        const blockHash = this.blockUtils.calculateBlockHash(block);
         this.logger.log({ Subject: "Flow", FlowType: "Elected", term: this.term, view, blockHash });
         const newViewPayload: NewViewPayload = {
             pk: this.keyManager.getMyPublicKey(),

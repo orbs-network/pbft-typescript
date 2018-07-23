@@ -6,7 +6,7 @@ import { PBFTStorage } from "../src/storage/PBFTStorage";
 import { BlockUtilsMock, calculateBlockHash } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNode } from "./builders/NodeBuilder";
-import { aPayload } from "./builders/PayloadBuilder";
+import { aPayload, aPrePreparePayload } from "./builders/PayloadBuilder";
 import { aTestNetwork } from "./builders/TestNetworkBuilder";
 import { SilentLogger } from "./logger/SilentLogger";
 import { nextTick } from "./timeUtils";
@@ -19,6 +19,7 @@ describe("Spam Prevention", () => {
         const inspectedStorage: PBFTStorage = new InMemoryPBFTStorage(logger);
         const nodeBuilder = aNode().storingOn(inspectedStorage);
         const block = aBlock(theGenesisBlock);
+        const blockHash = calculateBlockHash(block);
         const blockUtils = new BlockUtilsMock([block]);
         const testNetwork = aTestNetwork()
             .with(4).nodes
@@ -34,13 +35,12 @@ describe("Spam Prevention", () => {
         await blockUtils.provideNextBlock();
         await nextTick();
         const gossip = testNetwork.getNodeGossip(leader.pk);
-        gossip.unicast(node.pk, "preprepare", aPayload(leader.pk, { block, view: 0, term: 1 }));
-        gossip.unicast(node.pk, "preprepare", aPayload(leader.pk, { block, view: 0, term: 1 }));
+        gossip.unicast(node.pk, "preprepare", aPrePreparePayload(leader.pk, { blockHash, view: 0, term: 1 }, block));
+        gossip.unicast(node.pk, "preprepare", aPrePreparePayload(leader.pk, { blockHash, view: 0, term: 1 }, block));
         await nextTick();
         await blockUtils.resolveAllValidations(true);
         await nextTick();
 
-        const blockHash = calculateBlockHash(block);
         expect(inspectedStorage.getPrepare(1, 0, blockHash).length).to.equal(4);
         testNetwork.shutDown();
     });

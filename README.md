@@ -62,18 +62,10 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 ## None Blockers
 
 - [!] suggest block in new-view (inside PP), with proofs from other nodes.
-- [ ] PrePrepare Change Payload to:
-        - export interface PrePreparePayload extends Payload {
-                                                        data: {
-                                                            blockHash: Buffer;
-                                                            view: number;
-                                                            term: number;
-                                                        };
-                                                        block: Block;
-                                                    }
-- [ ] Storage - store payloads
-- [ ] GetLatestPreparedProof from storage
-- [ ] sign messages including the message type
+  - [ ] PrePrepare Compare given blockHash with the hash of the given block:
+  - [ ] Storage - store payloads
+  - [ ] GetLatestPreparedProof from storage
+  - [ ] sign messages
 - [ ] clear the pbftStorage
 - [ ] add isACommitteeMember to PBFTTerm
 - [ ] Rename this.term => this.height
