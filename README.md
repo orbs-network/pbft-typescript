@@ -57,10 +57,22 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] Make BlockUtils external
 - [V] remove blockProvider & blockValidator
 - [V] PBFT.start should work with height
-- [ ] TDD trigger once
+- [V] TDD trigger once
 
 ## None Blockers
 
+- [!] suggest block in new-view (inside PP), with proofs from other nodes.
+- [ ] PrePrepare Change Payload to:
+        - export interface PrePreparePayload extends Payload {
+                                                        data: {
+                                                            blockHash: Buffer;
+                                                            view: number;
+                                                            term: number;
+                                                        };
+                                                        block: Block;
+                                                    }
+- [ ] Storage - store payloads
+- [ ] GetLatestPreparedProof from storage
 - [ ] sign messages including the message type
 - [ ] clear the pbftStorage
 - [ ] add isACommitteeMember to PBFTTerm
@@ -69,7 +81,6 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [ ] PBFT-BC onCommitted - adds header.pbftData.pbftProof
 - [ ] implement `verifyBlock`
 - [ ] Have a better (Readable) tests solution to await nextTick
-- [!] suggest block in new-view (inside PP), with proofs from other nodes.
 - [ ] documentation
 - [ ] monitoring
 - [ ] Optimizations: IData - Signature only on hash(header).
