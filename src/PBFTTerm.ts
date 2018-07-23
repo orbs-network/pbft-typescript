@@ -195,6 +195,12 @@ export class PBFTTerm {
             return false;
         }
 
+        const givenBlockHash = this.blockUtils.calculateBlockHash(block);
+        if (givenBlockHash.equals(blockHash) === false) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderPk}", block rejected because it doesn't match the given blockHash (${view})` });
+            return false;
+        }
+
         const isValidBlock = await this.blockUtils.validateBlock(block);
         if (this.disposed) {
             return false;

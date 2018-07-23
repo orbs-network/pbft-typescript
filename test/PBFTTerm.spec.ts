@@ -183,6 +183,27 @@ describe("PBFTTerm", () => {
         // not from the leader => ignore
         spy.resetHistory();
         node1PbftTerm.onReceivePrePrepare(aPrePreparePayload(node2Pk, { term: 1, view: 0, blockHash }, block));
+        await nextTick();
+
+        expect(spy).to.not.have.been.called;
+    });
+
+    it("onReceivePrePrepare should not accept messages where the given block doesn't match the given blockHash", async () => {
+        const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
+        const block: Block = aBlock(theGenesisBlock);
+        const blockHash = calculateBlockHash(block);
+        const badBlockHash = calculateBlockHash(aBlock(block));
+
+        const spy = sinon.spy(node1Config.blockUtils, "validateBlock");
+        // blockHash match block's hash =>
+        node1PbftTerm.onReceivePrePrepare(aPrePreparePayload(node0Pk, { term: 1, view: 0, blockHash }, block));
+        await nextTick();
+        expect(spy).to.have.been.called;
+
+        // blockHash does NOT match block's hash =>
+        spy.resetHistory();
+        node1PbftTerm.onReceivePrePrepare(aPrePreparePayload(node2Pk, { term: 1, view: 2, blockHash: badBlockHash }, block));
+        await nextTick();
         expect(spy).to.not.have.been.called;
     });
 

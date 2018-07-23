@@ -62,7 +62,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 ## None Blockers
 
 - [!] suggest block in new-view (inside PP), with proofs from other nodes.
-  - [ ] PrePrepare Compare given blockHash with the hash of the given block:
+  - [V] PrePrepare Compare given blockHash with the hash of the given block
   - [ ] Storage - store payloads
   - [ ] GetLatestPreparedProof from storage
   - [ ] sign messages
