@@ -6,6 +6,7 @@ import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { SilentLogger } from "../logger/SilentLogger";
 import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
+import { aPrePreparePayload } from "../builders/PayloadBuilder";
 
 chai.use(sinonChai);
 
@@ -17,9 +18,10 @@ describe("PBFT In Memory Storage", () => {
         const term = Math.floor(Math.random() * 1000);
         const view = Math.floor(Math.random() * 1000);
         const block = aBlock(theGenesisBlock);
-        const firstTime = storage.storePrePrepare(term, view, block);
+        const payload = aPrePreparePayload("pk", {}, block);
+        const firstTime = storage.storePrePrepare(term, view, block, payload);
         expect(firstTime).to.be.true;
-        const secondstime = storage.storePrePrepare(term, view, block);
+        const secondstime = storage.storePrePrepare(term, view, block, payload);
         expect(secondstime).to.be.false;
     });
 
@@ -31,11 +33,11 @@ describe("PBFT In Memory Storage", () => {
         const senderId2 = Math.floor(Math.random() * 1000).toString();
         const block = aBlock(theGenesisBlock);
         const blockHash = calculateBlockHash(block);
-        const firstTime = storage.storePrepare(term, view, blockHash, senderId1);
+        const firstTime = storage.storePrepare(term, view, blockHash, senderId1, undefined);
         expect(firstTime).to.be.true;
-        const secondstime = storage.storePrepare(term, view, blockHash, senderId2);
+        const secondstime = storage.storePrepare(term, view, blockHash, senderId2, undefined);
         expect(secondstime).to.be.true;
-        const thirdTime = storage.storePrepare(term, view, blockHash, senderId2);
+        const thirdTime = storage.storePrepare(term, view, blockHash, senderId2, undefined);
         expect(thirdTime).to.be.false;
     });
 
@@ -47,11 +49,11 @@ describe("PBFT In Memory Storage", () => {
         const senderId2 = Math.floor(Math.random() * 1000).toString();
         const block = aBlock(theGenesisBlock);
         const blockHash = calculateBlockHash(block);
-        const firstTime = storage.storeCommit(term, view, blockHash, senderId1);
+        const firstTime = storage.storeCommit(term, view, blockHash, senderId1, undefined);
         expect(firstTime).to.be.true;
-        const secondstime = storage.storeCommit(term, view, blockHash, senderId2);
+        const secondstime = storage.storeCommit(term, view, blockHash, senderId2, undefined);
         expect(secondstime).to.be.true;
-        const thirdTime = storage.storeCommit(term, view, blockHash, senderId2);
+        const thirdTime = storage.storeCommit(term, view, blockHash, senderId2, undefined);
         expect(thirdTime).to.be.false;
     });
 
@@ -82,11 +84,11 @@ describe("PBFT In Memory Storage", () => {
         const block2 = aBlock(theGenesisBlock);
         const block1Hash = calculateBlockHash(block1);
         const block2Hash = calculateBlockHash(block2);
-        storage.storePrepare(term1, view1, block1Hash, sender1Id);
-        storage.storePrepare(term1, view1, block1Hash, sender2Id);
-        storage.storePrepare(term1, view1, block2Hash, sender2Id);
-        storage.storePrepare(term1, view2, block1Hash, sender3Id);
-        storage.storePrepare(term2, view1, block2Hash, sender3Id);
+        storage.storePrepare(term1, view1, block1Hash, sender1Id, undefined);
+        storage.storePrepare(term1, view1, block1Hash, sender2Id, undefined);
+        storage.storePrepare(term1, view1, block2Hash, sender2Id, undefined);
+        storage.storePrepare(term1, view2, block1Hash, sender3Id, undefined);
+        storage.storePrepare(term2, view1, block2Hash, sender3Id, undefined);
         const actual = storage.getPrepare(term1, view1, block1Hash);
         const expected = [sender1Id, sender2Id];
         expect(actual).to.deep.equal(expected);
@@ -105,10 +107,10 @@ describe("PBFT In Memory Storage", () => {
         const block2 = aBlock(theGenesisBlock);
         const block1Hash = calculateBlockHash(block1);
         const block2Hash = calculateBlockHash(block2);
-        storage.storeCommit(term1, view1, block1Hash, sender1Id);
-        storage.storeCommit(term1, view1, block1Hash, sender2Id);
-        storage.storeCommit(term1, view2, block1Hash, sender3Id);
-        storage.storeCommit(term2, view1, block2Hash, sender3Id);
+        storage.storeCommit(term1, view1, block1Hash, sender1Id, undefined);
+        storage.storeCommit(term1, view1, block1Hash, sender2Id, undefined);
+        storage.storeCommit(term1, view2, block1Hash, sender3Id, undefined);
+        storage.storeCommit(term2, view1, block2Hash, sender3Id, undefined);
         const actual = storage.getCommit(term1, view1, block1Hash);
         const expected = [sender1Id, sender2Id];
         expect(actual).to.deep.equal(expected);

@@ -1,6 +1,7 @@
 import { Logger } from "../logger/Logger";
-import { PBFTStorage } from "./PBFTStorage";
+import { PBFTStorage, PreparedProof } from "./PBFTStorage";
 import { Block } from "../Block";
+import { PrePreparePayload, PreparePayload, CommitPayload } from "../networkCommunication/Payload";
 
 export class InMemoryPBFTStorage implements PBFTStorage {
     private prePrepareStorage: Map<string, Block>;
@@ -15,7 +16,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         this.viewChangeStorage = new Map();
     }
 
-    storePrePrepare(term: number, view: number, block: Block): boolean {
+    storePrePrepare(term: number, view: number, block: Block, payload: PrePreparePayload): boolean {
         const key = term.toString() + "_" + view.toString();
         if (this.prePrepareStorage.get(key) !== undefined) {
             return false;
@@ -30,7 +31,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         return this.prePrepareStorage.get(key);
     }
 
-    storePrepare(term: number, view: number, blockHash: Buffer, senderPk: string): boolean {
+    storePrepare(term: number, view: number, blockHash: Buffer, senderPk: string, payload: PreparePayload): boolean {
         const key = term.toString() + "_" + view.toString() + "_" + blockHash.toString("hex");
         const prepares = this.prepareStorage.get(key);
         if (prepares) {
@@ -51,7 +52,11 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         return this.prepareStorage.get(key) || [];
     }
 
-    storeCommit(term: number, view: number, blockHash: Buffer, senderPk: string): boolean {
+    getLatestPreparedProff(term: number): PreparedProof {
+        return undefined;
+    }
+
+    storeCommit(term: number, view: number, blockHash: Buffer, senderPk: string, payload: CommitPayload): boolean {
         const key = term.toString() + "_" + view.toString() + "_" + blockHash.toString("hex");
         const commits = this.commitStorage.get(key);
         if (commits) {

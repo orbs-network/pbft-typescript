@@ -63,8 +63,9 @@ export class PBFTTerm {
                 return;
             }
 
-            this.pbftStorage.storePrePrepare(this.term, this.view, this.CB);
-            this.broadcastPrePrepare(this.term, this.view, this.CB);
+            const payload: PrePreparePayload = this.buildPrePreparePayload(this.term, this.view, this.CB);
+            this.pbftStorage.storePrePrepare(this.term, this.view, this.CB, payload);
+            this.broadcastPrePrepare(payload);
         }
     }
 
@@ -129,7 +130,7 @@ export class PBFTTerm {
         }
     }
 
-    private broadcastPrePrepare(term: number, view: number, block: Block): void {
+    private buildPrePreparePayload(term: number, view: number, block: Block): PrePreparePayload {
         const blockHash: Buffer = this.blockUtils.calculateBlockHash(block);
         const payload: PrePreparePayload = {
             pk: this.keyManager.getMyPublicKey(),
@@ -141,6 +142,25 @@ export class PBFTTerm {
             },
             block,
         };
+
+        return payload;
+    }
+
+    private buildPreparePayload(term: number, view: number, blockHash: Buffer): PreparePayload {
+        const payload: PreparePayload = {
+            pk: this.keyManager.getMyPublicKey(),
+            signature: "signature",
+            data: {
+                blockHash,
+                view,
+                term
+            }
+        };
+
+        return payload;
+    }
+
+    private broadcastPrePrepare(payload: PrePreparePayload): void {
         this.networkCommunication.sendToMembers(this.getOtherNodesIds(), "preprepare", payload);
     }
 
@@ -173,9 +193,9 @@ export class PBFTTerm {
         }
 
         this.CB = block;
-        // const blockHash: Buffer = this.blockUtils.calculateBlockHash(block);
-        this.pbftStorage.storePrepare(term, view, blockHash, this.keyManager.getMyPublicKey());
-        this.pbftStorage.storePrePrepare(term, view, block);
+        const preparePayoad: PreparePayload = this.buildPreparePayload(term, view, blockHash);
+        this.pbftStorage.storePrepare(term, view, blockHash, this.keyManager.getMyPublicKey(), preparePayoad);
+        this.pbftStorage.storePrePrepare(term, view, block, payload);
         this.broadcastPrepare(term, view, block);
         this.checkPrepared(term, view, blockHash);
     }
@@ -238,7 +258,7 @@ export class PBFTTerm {
             return;
         }
 
-        this.pbftStorage.storePrepare(term, view, blockHash, senderPk);
+        this.pbftStorage.storePrepare(term, view, blockHash, senderPk, payload);
 
         if (this.view === view) {
             this.checkPrepared(term, view, blockHash);
@@ -302,7 +322,7 @@ export class PBFTTerm {
                 PP
             }
         };
-        this.pbftStorage.storePrePrepare(this.term, this.view, block);
+        this.pbftStorage.storePrePrepare(this.term, this.view, block, PP);
         this.networkCommunication.sendToMembers(this.getOtherNodesIds(), "new-view", newViewPayload);
     }
 
@@ -326,7 +346,6 @@ export class PBFTTerm {
 
     private onPrepared(term: number, view: number, blockHash: Buffer): void {
         this.preparedLocally = true;
-        this.pbftStorage.storeCommit(term, view, blockHash, this.keyManager.getMyPublicKey());
         const payload: CommitPayload = {
             pk: this.keyManager.getMyPublicKey(),
             signature: "signature",
@@ -336,6 +355,7 @@ export class PBFTTerm {
                 blockHash
             }
         };
+        this.pbftStorage.storeCommit(term, view, blockHash, this.keyManager.getMyPublicKey(), payload);
         this.networkCommunication.sendToMembers(this.getOtherNodesIds(), "commit", payload);
         this.checkCommit(term, view, blockHash);
     }
@@ -343,7 +363,7 @@ export class PBFTTerm {
     public onReceiveCommit(payload: CommitPayload): void {
         const { pk: senderPk, data } = payload;
         const { term, view, blockHash } = data;
-        this.pbftStorage.storeCommit(term, view, blockHash, senderPk);
+        this.pbftStorage.storeCommit(term, view, blockHash, senderPk, payload);
 
         this.checkCommit(term, view, blockHash);
     }
