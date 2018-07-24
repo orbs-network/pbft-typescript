@@ -335,7 +335,7 @@ class PBFT {
 
     isPreparedProofValid(preparedProof: PreparedProof): boolean {
         const { preprepare, prepares } = preparedProof;
-        if (!preprepare || prepares) {
+        if (!preprepare || !prepares) {
             return false;
         }
 

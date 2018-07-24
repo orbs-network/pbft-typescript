@@ -65,6 +65,9 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
   - [V] PrePrepare Compare given blockHash with the hash of the given block
   - [V] Storage - store payloads
   - [V] GetLatestPreparedProof from storage
+  - [V] Add proof validator that can validate the prepred proof
+  - [ ] send the proof on new change
+  - [ ] on new view verify the proof
   - [ ] sign messages
 - [ ] clear the pbftStorage
 - [ ] add isACommitteeMember to PBFTTerm
