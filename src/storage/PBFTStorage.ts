@@ -1,5 +1,5 @@
 import { Block } from "../Block";
-import { PrePreparePayload, PreparePayload, CommitPayload } from "../networkCommunication/Payload";
+import { PrePreparePayload, PreparePayload, CommitPayload, ViewChangePayload } from "../networkCommunication/Payload";
 
 export interface PreparedProof {
     prepreparePayload: PrePreparePayload;
@@ -21,8 +21,11 @@ export interface PBFTStorage {
     getLatestPreparedProff(term: number): PreparedProof;
 
     storeCommit(term: number, view: number, blockHash: Buffer, senderId: string, payload: CommitPayload): boolean;
-    getCommit(term: number, view: number, blockHash: Buffer): string[];
+    getCommitSendersPks(term: number, view: number, blockHash: Buffer): string[];
+    getCommitPayloads(term: number, view: number, blockHash: Buffer): CommitPayload[];
 
-    storeViewChange(term: number, view: number, senderId: string): boolean;
+    storeViewChange(term: number, view: number, senderId: string, payload: ViewChangePayload): boolean;
     countOfViewChange(term: number, view: number): number;
+
+    clearTermLogs(term: number): void;
 }

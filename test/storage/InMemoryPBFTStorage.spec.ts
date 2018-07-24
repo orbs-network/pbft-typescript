@@ -15,6 +15,37 @@ chai.use(sinonChai);
 describe("PBFT In Memory Storage", () => {
     const logger: Logger = new SilentLogger();
 
+    it("should clear all storage data after calling clearTermLogs", () => {
+        const storage = new InMemoryPBFTStorage(logger);
+        const term = Math.floor(Math.random() * 1000);
+        const view = Math.floor(Math.random() * 1000);
+        const block = aBlock(theGenesisBlock);
+        const blockHash = calculateBlockHash(block);
+        const PPPayload = aPrePreparePayload("pk", {}, block);
+        const PPayload = aPayload("pk", {});
+        const CPayload = aPayload("pk", {});
+        const VCPayload = aPayload("pk", {});
+
+        // storing
+        storage.storePrePrepare(term, view, block, PPPayload);
+        storage.storePrepare(term, view, blockHash, "Dummy sender", PPayload);
+        storage.storeCommit(term, view, blockHash, "Dummy sender", CPayload);
+        storage.storeViewChange(term, view, "Dummy sender", VCPayload);
+
+        expect(storage.getPrePreparePayload(term, view)).to.not.be.undefined;
+        expect(storage.getPreparePayloads(term, view, blockHash).length).to.equal(1);
+        expect(storage.getCommitSendersPks(term, view, blockHash).length).to.equal(1);
+        expect(storage.countOfViewChange(term, view)).to.equal(1);
+
+        // clearing
+        storage.clearTermLogs(term);
+
+        expect(storage.getPrePreparePayload(term, view)).to.be.undefined;
+        expect(storage.getPreparePayloads(term, view, blockHash).length).to.equal(0);
+        expect(storage.getCommitSendersPks(term, view, blockHash).length).to.equal(0);
+        expect(storage.countOfViewChange(term, view)).to.equal(0);
+    });
+
     it("storing a preprepare returns true if it stored a new value, false if it already exists", () => {
         const storage = new InMemoryPBFTStorage(logger);
         const term = Math.floor(Math.random() * 1000);
@@ -65,11 +96,12 @@ describe("PBFT In Memory Storage", () => {
         const term = Math.floor(Math.random() * 1000);
         const senderId1 = Math.floor(Math.random() * 1000).toString();
         const senderId2 = Math.floor(Math.random() * 1000).toString();
-        const firstTime = storage.storeViewChange(term, view, senderId1);
+        const VCPayload = aPayload("pk", {});
+        const firstTime = storage.storeViewChange(term, view, senderId1, VCPayload);
         expect(firstTime).to.be.true;
-        const secondstime = storage.storeViewChange(term, view, senderId2);
+        const secondstime = storage.storeViewChange(term, view, senderId2, VCPayload);
         expect(secondstime).to.be.true;
-        const thirdTime = storage.storeViewChange(term, view, senderId2);
+        const thirdTime = storage.storeViewChange(term, view, senderId2, VCPayload);
         expect(thirdTime).to.be.false;
     });
 
@@ -113,7 +145,7 @@ describe("PBFT In Memory Storage", () => {
         storage.storeCommit(term1, view1, block1Hash, sender2Id, undefined);
         storage.storeCommit(term1, view2, block1Hash, sender3Id, undefined);
         storage.storeCommit(term2, view1, block2Hash, sender3Id, undefined);
-        const actual = storage.getCommit(term1, view1, block1Hash);
+        const actual = storage.getCommitSendersPks(term1, view1, block1Hash);
         const expected = [sender1Id, sender2Id];
         expect(actual).to.deep.equal(expected);
     });
@@ -129,10 +161,11 @@ describe("PBFT In Memory Storage", () => {
         const sender3Id = Math.random().toString();
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
-        storage.storeViewChange(term1, view1, sender1Id);
-        storage.storeViewChange(term1, view1, sender2Id);
-        storage.storeViewChange(term1, view2, sender3Id);
-        storage.storeViewChange(term2, view1, sender3Id);
+        const VCPayload = aPayload("pk", {});
+        storage.storeViewChange(term1, view1, sender1Id, VCPayload);
+        storage.storeViewChange(term1, view1, sender2Id, VCPayload);
+        storage.storeViewChange(term1, view2, sender3Id, VCPayload);
+        storage.storeViewChange(term2, view1, sender3Id, VCPayload);
         const actual = storage.countOfViewChange(term1, view1);
         expect(actual).to.deep.equal(2);
     });

@@ -1,6 +1,6 @@
 import { Block } from "../Block";
 import { Logger } from "../logger/Logger";
-import { CommitPayload, PreparePayload, PrePreparePayload } from "../networkCommunication/Payload";
+import { CommitPayload, PreparePayload, PrePreparePayload, ViewChangePayload } from "../networkCommunication/Payload";
 import { PBFTStorage, PreparedProof } from "./PBFTStorage";
 
 interface PrePrepareStore {
@@ -13,8 +13,8 @@ type TermViewMap<V> = Map<number, Map<number, V>>;
 export class InMemoryPBFTStorage implements PBFTStorage {
     private prePrepareStorage: TermViewMap<PrePrepareStore>;
     private prepareStorage: TermViewMap<Map<string, Map<string, PreparePayload>>>;
-    private commitStorage: Map<string, string[]>;
-    private viewChangeStorage: Map<string, string[]>;
+    private commitStorage: TermViewMap<Map<string, Map<string, CommitPayload>>>;
+    private viewChangeStorage: TermViewMap<Map<string, ViewChangePayload>>;
 
     constructor(private logger: Logger) {
         this.prePrepareStorage = new Map();
@@ -146,45 +146,102 @@ export class InMemoryPBFTStorage implements PBFTStorage {
     }
 
     storeCommit(term: number, view: number, blockHash: Buffer, senderPk: string, payload: CommitPayload): boolean {
-        const key = term.toString() + "_" + view.toString() + "_" + blockHash.toString("hex");
-        const commits = this.commitStorage.get(key);
-        if (commits) {
-            if (commits.indexOf(senderPk) === -1) {
-                commits.push(senderPk);
-            } else {
-                return false;
-            }
-        } else {
-            this.commitStorage.set(key, [senderPk]);
+        let viewsMap = this.commitStorage.get(term);
+        if (!viewsMap) {
+            viewsMap = new Map();
+            this.commitStorage.set(term, viewsMap);
         }
+
+        let blockHashesMap = viewsMap.get(view);
+        if (!blockHashesMap) {
+            blockHashesMap = new Map();
+            viewsMap.set(view, blockHashesMap);
+        }
+
+        const key = blockHash.toString("hex");
+        let sendersMap = blockHashesMap.get(key);
+        if (!sendersMap) {
+            sendersMap = new Map();
+            blockHashesMap.set(key, sendersMap);
+        }
+
+        if (sendersMap.get(senderPk) !== undefined) {
+            return false;
+        }
+        sendersMap.set(senderPk, payload);
+
         this.logger.log({ Subject: "Storage", StorageType: "Commit", term, view, blockHash, senderPk });
         return true;
     }
 
-    getCommit(term: number, view: number, blockHash: Buffer): string[] {
-        const key = term.toString() + "_" + view.toString() + "_" + blockHash.toString("hex");
-        return this.commitStorage.get(key) || [];
+    private getCommit(term: number, view: number, blockHash: Buffer): Map<string, CommitPayload> {
+        const viewsMap = this.commitStorage.get(term);
+        if (viewsMap) {
+            const blockHashesMap = viewsMap.get(view);
+            if (blockHashesMap) {
+                const blockHashKey = blockHash.toString("hex");
+                const sendersMap = blockHashesMap.get(blockHashKey);
+                return sendersMap;
+            }
+        }
     }
 
-    storeViewChange(term: number, view: number, senderPk: string): boolean {
-        const key = term.toString() + "_" + view.toString();
-        const senders = this.viewChangeStorage.get(key);
-        if (senders) {
-            if (senders.indexOf(senderPk) === -1) {
-                senders.push(senderPk);
-            } else {
-                return false;
-            }
-        } else {
-            this.viewChangeStorage.set(key, [senderPk]);
+    getCommitSendersPks(term: number, view: number, blockHash: Buffer): string[] {
+        const sendersMap = this.getCommit(term, view, blockHash);
+        if (sendersMap) {
+            return Array.from(sendersMap.keys());
         }
+
+        return [];
+    }
+
+    getCommitPayloads(term: number, view: number, blockHash: Buffer): CommitPayload[] {
+        const sendersMap = this.getCommit(term, view, blockHash);
+        if (sendersMap) {
+            return Array.from(sendersMap.values());
+        }
+
+        return [];
+    }
+
+    storeViewChange(term: number, view: number, senderPk: string, payload: ViewChangePayload): boolean {
+        let viewsMap = this.viewChangeStorage.get(term);
+        if (!viewsMap) {
+            viewsMap = new Map();
+            this.viewChangeStorage.set(term, viewsMap);
+        }
+
+        let sendersMap = viewsMap.get(view);
+        if (!sendersMap) {
+            sendersMap = new Map();
+            viewsMap.set(view, sendersMap);
+        }
+
+        if (sendersMap.get(senderPk) !== undefined) {
+            return false;
+        }
+        sendersMap.set(senderPk, payload);
+
         this.logger.log({ Subject: "Storage", StorageType: "ViewChange", term, view, senderPk });
         return true;
     }
 
     countOfViewChange(term: number, view: number): number {
-        const key = term.toString() + "_" + view.toString();
-        const viewChanges = this.viewChangeStorage.get(key) || [];
-        return viewChanges.length;
+        const viewsMap = this.viewChangeStorage.get(term);
+        if (viewsMap) {
+            const sendersMap = viewsMap.get(view);
+            if (sendersMap) {
+                return sendersMap.size;
+            }
+        }
+
+        return 0;
+    }
+
+    clearTermLogs(term: number): void {
+        this.prePrepareStorage.delete(term);
+        this.prepareStorage.delete(term);
+        this.commitStorage.delete(term);
+        this.viewChangeStorage.delete(term);
     }
 }

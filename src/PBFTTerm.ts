@@ -122,7 +122,7 @@ export class PBFTTerm {
                 newView: this.view
             }
         };
-        this.pbftStorage.storeViewChange(this.term, this.view, this.keyManager.getMyPublicKey());
+        this.pbftStorage.storeViewChange(this.term, this.view, this.keyManager.getMyPublicKey(), payload);
         if (this.isLeader()) {
             this.checkElected(this.term, this.view);
         } else {
@@ -279,7 +279,7 @@ export class PBFTTerm {
             return;
         }
 
-        this.pbftStorage.storeViewChange(term, newView, senderPk);
+        this.pbftStorage.storeViewChange(term, newView, senderPk, payload);
         this.checkElected(term, newView);
     }
 
@@ -371,7 +371,7 @@ export class PBFTTerm {
     private checkCommit(term: number, view: number, blockHash: Buffer): void {
         if (!this.committedLocally) {
             if (this.isPrePrepared(term, view, blockHash)) {
-                const commits = this.pbftStorage.getCommit(term, view, blockHash).length;
+                const commits = this.pbftStorage.getCommitSendersPks(term, view, blockHash).length;
                 if (commits >= this.getF() * 2 + 1) {
                     this.commitBlock(this.CB);
                 }

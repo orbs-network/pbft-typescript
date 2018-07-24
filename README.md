@@ -66,10 +66,14 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
   - [V] Storage - store payloads
   - [V] GetLatestPreparedProof from storage
   - [V] Add proof validator that can validate the prepred proof
+    - [ ] Should we test for "primary"/"calcLeaderPk"
+    - [ ] Should we test "isMember"?
+    - [ ] Should we "decrypt" the payloads?
   - [ ] send the proof on new change
   - [ ] on new view verify the proof
   - [ ] sign messages
-- [ ] clear the pbftStorage
+- [V] clear the pbftStorage
+- [ ] call the clear pbftStorage after commit.
 - [ ] add isACommitteeMember to PBFTTerm
 - [ ] Change logging methodology - warning - added metadata
 - [ ] PBFT-BC onCommitted - adds header.pbftData.pbftProof
