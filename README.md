@@ -63,12 +63,11 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 
 - [!] suggest block in new-view (inside PP), with proofs from other nodes.
   - [V] PrePrepare Compare given blockHash with the hash of the given block
-  - [ ] Storage - store payloads
-  - [ ] GetLatestPreparedProof from storage
+  - [V] Storage - store payloads
+  - [V] GetLatestPreparedProof from storage
   - [ ] sign messages
 - [ ] clear the pbftStorage
 - [ ] add isACommitteeMember to PBFTTerm
-- [ ] Rename this.term => this.height
 - [ ] Change logging methodology - warning - added metadata
 - [ ] PBFT-BC onCommitted - adds header.pbftData.pbftProof
 - [ ] implement `verifyBlock`
