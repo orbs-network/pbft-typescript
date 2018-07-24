@@ -3,7 +3,7 @@ import { PrePreparePayload, PreparePayload, CommitPayload } from "../networkComm
 
 export interface PreparedProof {
     prepreparePayload: PrePreparePayload;
-    preparePayload: PreparePayload[];
+    preparePayloads: PreparePayload[];
 }
 //
 // This API stores messages that the PBFT received.
@@ -12,12 +12,17 @@ export interface PreparedProof {
 //
 export interface PBFTStorage {
     storePrePrepare(term: number, view: number, block: Block, payload: PrePreparePayload): boolean;
-    getPrePrepare(term: number, view: number): Block;
+    getPrePrepareBlock(term: number, view: number): Block;
+    getPrePreparePayload(term: number, view: number): PrePreparePayload;
+
     storePrepare(term: number, view: number, blockHash: Buffer, senderId: string, payload: PreparePayload): boolean;
-    getPrepare(term: number, view: number, blockHash: Buffer): string[];
+    getPrepareSendersPks(term: number, view: number, blockHash: Buffer): string[];
+    getPreparePayloads(term: number, view: number, blockHash: Buffer): PreparePayload[];
     getLatestPreparedProff(term: number): PreparedProof;
+
     storeCommit(term: number, view: number, blockHash: Buffer, senderId: string, payload: CommitPayload): boolean;
     getCommit(term: number, view: number, blockHash: Buffer): string[];
+
     storeViewChange(term: number, view: number, senderId: string): boolean;
     countOfViewChange(term: number, view: number): number;
 }

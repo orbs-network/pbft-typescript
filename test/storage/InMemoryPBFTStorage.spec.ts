@@ -6,7 +6,9 @@ import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { SilentLogger } from "../logger/SilentLogger";
 import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
-import { aPrePreparePayload } from "../builders/PayloadBuilder";
+import { aPrePreparePayload, aPayload } from "../builders/PayloadBuilder";
+import { PrePreparePayload, PreparePayload } from "../../src/networkCommunication/Payload";
+import { PreparedProof } from "../../src/storage/PBFTStorage";
 
 chai.use(sinonChai);
 
@@ -33,11 +35,11 @@ describe("PBFT In Memory Storage", () => {
         const senderId2 = Math.floor(Math.random() * 1000).toString();
         const block = aBlock(theGenesisBlock);
         const blockHash = calculateBlockHash(block);
-        const firstTime = storage.storePrepare(term, view, blockHash, senderId1, undefined);
+        const firstTime = storage.storePrepare(term, view, blockHash, senderId1, aPayload(senderId1, Math.random()));
         expect(firstTime).to.be.true;
-        const secondstime = storage.storePrepare(term, view, blockHash, senderId2, undefined);
+        const secondstime = storage.storePrepare(term, view, blockHash, senderId2, aPayload(senderId2, Math.random()));
         expect(secondstime).to.be.true;
-        const thirdTime = storage.storePrepare(term, view, blockHash, senderId2, undefined);
+        const thirdTime = storage.storePrepare(term, view, blockHash, senderId2, aPayload(senderId2, Math.random()));
         expect(thirdTime).to.be.false;
     });
 
@@ -49,11 +51,11 @@ describe("PBFT In Memory Storage", () => {
         const senderId2 = Math.floor(Math.random() * 1000).toString();
         const block = aBlock(theGenesisBlock);
         const blockHash = calculateBlockHash(block);
-        const firstTime = storage.storeCommit(term, view, blockHash, senderId1, undefined);
+        const firstTime = storage.storeCommit(term, view, blockHash, senderId1, aPayload(senderId1, Math.random()));
         expect(firstTime).to.be.true;
-        const secondstime = storage.storeCommit(term, view, blockHash, senderId2, undefined);
+        const secondstime = storage.storeCommit(term, view, blockHash, senderId2, aPayload(senderId2, Math.random()));
         expect(secondstime).to.be.true;
-        const thirdTime = storage.storeCommit(term, view, blockHash, senderId2, undefined);
+        const thirdTime = storage.storeCommit(term, view, blockHash, senderId2, aPayload(senderId2, Math.random()));
         expect(thirdTime).to.be.false;
     });
 
@@ -89,7 +91,7 @@ describe("PBFT In Memory Storage", () => {
         storage.storePrepare(term1, view1, block2Hash, sender2Id, undefined);
         storage.storePrepare(term1, view2, block1Hash, sender3Id, undefined);
         storage.storePrepare(term2, view1, block2Hash, sender3Id, undefined);
-        const actual = storage.getPrepare(term1, view1, block1Hash);
+        const actual = storage.getPrepareSendersPks(term1, view1, block1Hash);
         const expected = [sender1Id, sender2Id];
         expect(actual).to.deep.equal(expected);
     });
@@ -133,5 +135,84 @@ describe("PBFT In Memory Storage", () => {
         storage.storeViewChange(term2, view1, sender3Id);
         const actual = storage.countOfViewChange(term1, view1);
         expect(actual).to.deep.equal(2);
+    });
+
+    describe("Proofs", () => {
+        const term = Math.floor(Math.random() * 1000);
+        const view = Math.floor(Math.random() * 1000);
+        const leaderId = Math.floor(Math.random() * 1000).toString();
+        const senderId1 = Math.floor(Math.random() * 1000).toString();
+        const senderId2 = Math.floor(Math.random() * 1000).toString();
+        const block = aBlock(theGenesisBlock);
+        const blockHash = calculateBlockHash(block);
+
+        const prePreparePayload: PrePreparePayload = aPrePreparePayload(leaderId, { view, term, blockHash }, block);
+        const preparePayload1: PreparePayload = aPayload(senderId1, { view, term, blockHash });
+        const preparePayload2: PreparePayload = aPayload(senderId2, { view, term, blockHash });
+
+        it("should return the prepare proof", () => {
+            const storage = new InMemoryPBFTStorage(logger);
+            storage.storePrePrepare(term, view, block, prePreparePayload);
+            storage.storePrepare(term, view, blockHash, senderId1, preparePayload1);
+            storage.storePrepare(term, view, blockHash, senderId2, preparePayload2);
+
+            const expectedProof: PreparedProof = {
+                prepreparePayload: prePreparePayload,
+                preparePayloads: [preparePayload1, preparePayload2]
+            };
+            const actualProof: PreparedProof = storage.getLatestPreparedProff(term);
+            expect(actualProof).to.deep.equal(expectedProof);
+        });
+
+        it("should return the latest (heighest view) prepare proof", () => {
+            const storage = new InMemoryPBFTStorage(logger);
+            const prePreparePayload10: PrePreparePayload = aPrePreparePayload(leaderId, { view: 10, term: 1, blockHash }, block);
+            const preparePayload10_1: PreparePayload = aPayload(senderId1, { view: 10, term: 1, blockHash });
+            const preparePayload10_2: PreparePayload = aPayload(senderId2, { view: 10, term: 1, blockHash });
+
+            const prePreparePayload20: PrePreparePayload = aPrePreparePayload(leaderId, { view: 20, term: 1, blockHash }, block);
+            const preparePayload20_1: PreparePayload = aPayload(senderId1, { view: 20, term: 1, blockHash });
+            const preparePayload20_2: PreparePayload = aPayload(senderId2, { view: 20, term: 1, blockHash });
+
+            const prePreparePayload30: PrePreparePayload = aPrePreparePayload(leaderId, { view: 30, term: 1, blockHash }, block);
+            const preparePayload30_1: PreparePayload = aPayload(senderId1, { view: 30, term: 1, blockHash });
+            const preparePayload30_2: PreparePayload = aPayload(senderId2, { view: 30, term: 1, blockHash });
+
+            storage.storePrePrepare(1, 10, block, prePreparePayload10);
+            storage.storePrepare(1, 10, blockHash, senderId1, preparePayload10_1);
+            storage.storePrepare(1, 10, blockHash, senderId2, preparePayload10_2);
+
+            storage.storePrePrepare(1, 30, block, prePreparePayload30);
+            storage.storePrepare(1, 30, blockHash, senderId1, preparePayload30_1);
+            storage.storePrepare(1, 30, blockHash, senderId2, preparePayload30_2);
+
+            storage.storePrePrepare(1, 20, block, prePreparePayload20);
+            storage.storePrepare(1, 20, blockHash, senderId1, preparePayload20_1);
+            storage.storePrepare(1, 20, blockHash, senderId2, preparePayload20_2);
+
+            const expectedProof: PreparedProof = {
+                prepreparePayload: prePreparePayload30,
+                preparePayloads: [preparePayload30_1, preparePayload30_2]
+            };
+            const actualProof: PreparedProof = storage.getLatestPreparedProff(1);
+            expect(actualProof).to.deep.equal(expectedProof);
+        });
+
+        it("should return the undefined is there was no PrePrepare", () => {
+            const storage = new InMemoryPBFTStorage(logger);
+            storage.storePrepare(term, view, blockHash, senderId1, preparePayload1);
+            storage.storePrepare(term, view, blockHash, senderId2, preparePayload2);
+
+            const actualProof: PreparedProof = storage.getLatestPreparedProff(term);
+            expect(actualProof).to.be.undefined;
+        });
+
+        it("should return the undefined is there was no Prepares", () => {
+            const storage = new InMemoryPBFTStorage(logger);
+            storage.storePrePrepare(term, view, block, prePreparePayload);
+
+            const actualProof: PreparedProof = storage.getLatestPreparedProff(term);
+            expect(actualProof).to.be.undefined;
+        });
     });
 });

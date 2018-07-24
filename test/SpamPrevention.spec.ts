@@ -41,7 +41,7 @@ describe("Spam Prevention", () => {
         await blockUtils.resolveAllValidations(true);
         await nextTick();
 
-        expect(inspectedStorage.getPrepare(1, 0, blockHash).length).to.equal(4);
+        expect(inspectedStorage.getPrepareSendersPks(1, 0, blockHash).length).to.equal(4);
         testNetwork.shutDown();
     });
 });

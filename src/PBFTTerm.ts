@@ -235,7 +235,7 @@ export class PBFTTerm {
     }
 
     private checkPrePrepare(term: number, view: number): boolean {
-        return this.pbftStorage.getPrePrepare(term, view) !== undefined;
+        return this.pbftStorage.getPrePrepareBlock(term, view) !== undefined;
     }
 
     public onReceivePrepare(payload: PreparePayload): void {
@@ -422,11 +422,11 @@ export class PBFTTerm {
     }
 
     private countPrepared(term: number, view: number, blockHash: Buffer): number {
-        return this.pbftStorage.getPrepare(term, view, blockHash).length;
+        return this.pbftStorage.getPrepareSendersPks(term, view, blockHash).length;
     }
 
     private isPrePrepared(term: number, view: number, blockHash: Buffer): boolean {
-        const prePreparedBlock: Block = this.pbftStorage.getPrePrepare(term, view);
+        const prePreparedBlock: Block = this.pbftStorage.getPrePrepareBlock(term, view);
         if (prePreparedBlock) {
             const prePreparedBlockHash = this.blockUtils.calculateBlockHash(prePreparedBlock);
             const metaData = {
