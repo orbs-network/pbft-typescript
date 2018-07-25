@@ -75,19 +75,18 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
   - [ ] send the proof on view change
   - [ ] on generate new-view add all the view-change proofs with a PP.
   - [ ] on new view verify the proof
-  - [ ] validate all signed messages
-- [ ] send the committee members pks in the PBFTTerm constructor
+- [ ] validate all signed messages
+- [ ] call the clear pbftStorage after commit.
 - [ ] Ask Eran, how byzantine tolerant should we be. and create tests accordingly
+- [V] set the committee members pks in the PBFTTerm constructor
 - [V] clear the pbftStorage
 - [ ] Think about view-change counting, when to count myself.
-- [ ] call the clear pbftStorage after commit.
 - [ ] add isACommitteeMember to PBFTTerm
 - [ ] Change logging methodology - warning - added metadata
 - [ ] Have a better (Readable) tests solution to await nextTick
 - [ ] documentation
 - [ ] monitoring
 - [ ] Optimizations: IData - Signature only on hash(header).
-- [ ] Rename PBFT to PBFTBlockChain
 
 ## V1 stuff
 
