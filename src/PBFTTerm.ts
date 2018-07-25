@@ -26,6 +26,7 @@ export class PBFTTerm {
     private readonly pbftStorage: PBFTStorage;
     private readonly keyManager: KeyManager;
     private readonly logger: Logger;
+    private readonly termMembersPKs: string[];
 
     private view: number;
     private newViewLocally: number = -1;
@@ -45,6 +46,7 @@ export class PBFTTerm {
         this.electionTriggerFactory = config.electionTriggerFactory;
         this.blockUtils = config.blockUtils;
 
+        this.termMembersPKs = this.networkCommunication.getMembersPKs(term);
         this.view = 0;
         this.startTerm();
     }
@@ -106,9 +108,8 @@ export class PBFTTerm {
     }
 
     private calcLeaderPk(view: number): string {
-        const membersPks = this.networkCommunication.getMembersPKs(view);
-        const index = view % membersPks.length;
-        return membersPks[index];
+        const index = view % this.termMembersPKs.length;
+        return this.termMembersPKs[index];
     }
 
     private onLeaderChange(): void {
@@ -386,11 +387,11 @@ export class PBFTTerm {
     }
 
     private getF(): number {
-        return Math.floor((this.networkCommunication.getMembersPKs(this.view).length - 1) / 3);
+        return Math.floor((this.termMembersPKs.length - 1) / 3);
     }
 
     private getOtherNodesIds(): string[] {
-        return this.networkCommunication.getMembersPKs(this.view).filter(pk => pk !== this.keyManager.getMyPublicKey());
+        return this.termMembersPKs.filter(pk => pk !== this.keyManager.getMyPublicKey());
     }
 
     public isLeader(): boolean {

@@ -1,7 +1,6 @@
+import { BlockUtils } from "../blockUtils/BlockUtils";
 import { KeyManager } from "../keyManager/KeyManager";
 import { PreparedProof } from "../storage/PBFTStorage";
-import { calculateBlockHash } from "../../test/blockUtils/BlockUtilsMock";
-import { BlockUtils } from "../blockUtils/BlockUtils";
 
 export function validatePrepared(
     preparedProof: PreparedProof,
