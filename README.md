@@ -68,7 +68,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
   - [V] Add proof validator that can validate the prepred proof
     - [V] Test for matching view/leader
     - [V] Make sure the preprepare hold a block
-    - [ ] count null as a valid proof
+    - [V] count null as a valid proof
     - [ ] Test that the pk is in the committee!
     - [ ] Verify the payloads
   - [ ] send the proof on view change

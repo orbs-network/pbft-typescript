@@ -41,6 +41,15 @@ describe("Proofs Validator", () => {
         expect(actual).to.be.false;
     });
 
+    it("should approve a proof that had no preprepare no no prepare", async () => {
+        const prepareProof: PreparedProof = {
+            prepreparePayload: undefined,
+            preparePayloads: undefined
+        };
+        const actual = validatePrepared(prepareProof, f, keyManager, blockUtils, calcLeaderPk);
+        expect(actual).to.be.true;
+    });
+
     it("should reject a proof that did not have enough prepares", async () => {
         const prepreparePayload = aPrePreparePayload("Leader PK", { term, view, blockHash }, undefined);
         const prepareProof: PreparedProof = {

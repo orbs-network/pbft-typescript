@@ -9,7 +9,12 @@ export function validatePrepared(
     keyManager: KeyManager,
     blockUtils: BlockUtils,
     calcLeaderPk: (view: number) => string): boolean {
+        
     const { preparePayloads, prepreparePayload } = preparedProof;
+    if (!preparePayloads && !prepreparePayload) {
+        return true;
+    }
+
     if (!preparePayloads || !prepreparePayload) {
         return false;
     }
@@ -24,7 +29,7 @@ export function validatePrepared(
     if (!block) {
         return false;
     }
-    
+
     if (calcLeaderPk(view) !== leaderPk) {
         return false;
     }
