@@ -33,7 +33,8 @@ export function validatePrepared(
     }
 
     const { view, term, blockHash } = prepreparePayload.data;
-    if (getLeaderPk(view) !== leaderPk) {
+    const leaderByView = getLeaderPk(view);
+    if (leaderByView !== leaderPk) {
         return false;
     }
 
@@ -44,6 +45,11 @@ export function validatePrepared(
 
     const allPreparesPKsAreMembers = preparePayloads.every(p => membersPKs.indexOf(p.pk) > -1);
     if (allPreparesPKsAreMembers == false) {
+        return false;
+    }
+
+    const allPrepraresAreNotLeaders = preparePayloads.every(p => p.pk !== leaderPk);
+    if (allPrepraresAreNotLeaders === false) {
         return false;
     }
 

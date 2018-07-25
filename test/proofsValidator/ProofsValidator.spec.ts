@@ -81,6 +81,19 @@ describe("Proofs Validator", () => {
         expect(actual).to.be.false;
     });
 
+    it("should reject a proof with a prepare from the leader", async () => {
+        const prepreparePayload = aPrePreparePayload(leaderKeyManager, { term: 0, view: 0, blockHash }, block);
+        const preparePayload1 = aPayload(leaderKeyManager, { term: 0, view: 0, blockHash });
+        const preparePayload2 = aPayload(node2KeyManager, { term: 0, view: 0, blockHash });
+
+        const prepareProof: PreparedProof = {
+            prepreparePayload: prepreparePayload,
+            preparePayloads: [preparePayload1, preparePayload2]
+        };
+        const actual = validatePrepared(prepareProof, f, keyManager, blockUtils, membersPKs, getLeaderPk);
+        expect(actual).to.be.false;
+    });
+
     it("should approve a proof that had no preprepare no no prepare", async () => {
         const prepareProof: PreparedProof = {
             prepreparePayload: undefined,

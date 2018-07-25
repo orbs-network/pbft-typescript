@@ -71,7 +71,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
     - [V] count null as a valid proof
     - [V] Verify the payloads
     - [V] Test that the pk is in the committee!
-    - [ ] Make sure that the prepares are not from the leader
+    - [V] Make sure that the prepares are not from the leader
   - [ ] send the proof on view change
   - [ ] on generate new-view add all the view-change proofs with a PP.
   - [ ] on new view verify the proof
