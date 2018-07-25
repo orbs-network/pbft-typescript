@@ -129,7 +129,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         }
     }
 
-    getLatestPreparedProff(term: number): PreparedProof {
+    getLatestPreparedProof(term: number): PreparedProof {
         const lastView = this.getLatestPrePrepareView(term);
         if (lastView !== undefined) {
             const prepreparePayload: PrePreparePayload = this.getPrePreparePayload(term, lastView);

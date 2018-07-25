@@ -193,7 +193,7 @@ describe("PBFT In Memory Storage", () => {
                 prepreparePayload: prePreparePayload,
                 preparePayloads: [preparePayload1, preparePayload2]
             };
-            const actualProof: PreparedProof = storage.getLatestPreparedProff(term);
+            const actualProof: PreparedProof = storage.getLatestPreparedProof(term);
             expect(actualProof).to.deep.equal(expectedProof);
         });
 
@@ -227,7 +227,7 @@ describe("PBFT In Memory Storage", () => {
                 prepreparePayload: prePreparePayload30,
                 preparePayloads: [preparePayload30_1, preparePayload30_2]
             };
-            const actualProof: PreparedProof = storage.getLatestPreparedProff(1);
+            const actualProof: PreparedProof = storage.getLatestPreparedProof(1);
             expect(actualProof).to.deep.equal(expectedProof);
         });
 
@@ -236,7 +236,7 @@ describe("PBFT In Memory Storage", () => {
             storage.storePrepare(term, view, blockHash, senderId1, preparePayload1);
             storage.storePrepare(term, view, blockHash, senderId2, preparePayload2);
 
-            const actualProof: PreparedProof = storage.getLatestPreparedProff(term);
+            const actualProof: PreparedProof = storage.getLatestPreparedProof(term);
             expect(actualProof).to.be.undefined;
         });
 
@@ -244,7 +244,7 @@ describe("PBFT In Memory Storage", () => {
             const storage = new InMemoryPBFTStorage(logger);
             storage.storePrePrepare(term, view, block, prePreparePayload);
 
-            const actualProof: PreparedProof = storage.getLatestPreparedProff(term);
+            const actualProof: PreparedProof = storage.getLatestPreparedProof(term);
             expect(actualProof).to.be.undefined;
         });
     });
