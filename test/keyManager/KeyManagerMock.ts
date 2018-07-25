@@ -3,8 +3,7 @@ import { KeyManager } from "../../src/keyManager/KeyManager";
 const PRIVATE_KEY_PREFIX = "PRIVATE_KEY";
 
 export class KeyManagerMock implements KeyManager {
-
-    constructor(private myPublicKey: string) {
+    constructor(private myPublicKey: string, private rejectedPKs: string[] = []) {
     }
 
     sign(object: any): string {
@@ -12,6 +11,10 @@ export class KeyManagerMock implements KeyManager {
     }
 
     verify(object: any, signature: string, publicKey: string): boolean {
+        if (this.rejectedPKs.indexOf(publicKey) > -1) {
+            return false;
+        }
+
         if (signature.indexOf(PRIVATE_KEY_PREFIX) === -1) {
             return false;
         }
