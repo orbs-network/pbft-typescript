@@ -9,6 +9,8 @@ import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 import { aPrePreparePayload, aPayload } from "../builders/PayloadBuilder";
 import { PrePreparePayload, PreparePayload } from "../../src/networkCommunication/Payload";
 import { PreparedProof } from "../../src/storage/PBFTStorage";
+import { KeyManager } from "../../src/keyManager/KeyManager";
+import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 
 chai.use(sinonChai);
 
@@ -21,7 +23,8 @@ describe("PBFT In Memory Storage", () => {
         const view = Math.floor(Math.random() * 1000);
         const block = aBlock(theGenesisBlock);
         const blockHash = calculateBlockHash(block);
-        const PPPayload = aPrePreparePayload("pk", {}, block);
+        const keyManager: KeyManager = new KeyManagerMock("PK");
+        const PPPayload = aPrePreparePayload(keyManager, {}, block);
         const PPayload = aPayload("pk", {});
         const CPayload = aPayload("pk", {});
         const VCPayload = aPayload("pk", {});
@@ -51,7 +54,8 @@ describe("PBFT In Memory Storage", () => {
         const term = Math.floor(Math.random() * 1000);
         const view = Math.floor(Math.random() * 1000);
         const block = aBlock(theGenesisBlock);
-        const payload = aPrePreparePayload("pk", {}, block);
+        const keyManager: KeyManager = new KeyManagerMock("PK");
+        const payload = aPrePreparePayload(keyManager, {}, block);
         const firstTime = storage.storePrePrepare(term, view, block, payload);
         expect(firstTime).to.be.true;
         const secondstime = storage.storePrePrepare(term, view, block, payload);
@@ -176,10 +180,13 @@ describe("PBFT In Memory Storage", () => {
         const leaderId = Math.floor(Math.random() * 1000).toString();
         const senderId1 = Math.floor(Math.random() * 1000).toString();
         const senderId2 = Math.floor(Math.random() * 1000).toString();
+        const leaderKeyManager: KeyManager = new KeyManagerMock(leaderId);
+        const node1KeyManager: KeyManager = new KeyManagerMock(senderId1);
+        const node2KeyManager: KeyManager = new KeyManagerMock(senderId2);
         const block = aBlock(theGenesisBlock);
         const blockHash = calculateBlockHash(block);
 
-        const prePreparePayload: PrePreparePayload = aPrePreparePayload(leaderId, { view, term, blockHash }, block);
+        const prePreparePayload: PrePreparePayload = aPrePreparePayload(leaderKeyManager, { view, term, blockHash }, block);
         const preparePayload1: PreparePayload = aPayload(senderId1, { view, term, blockHash });
         const preparePayload2: PreparePayload = aPayload(senderId2, { view, term, blockHash });
 
@@ -199,15 +206,15 @@ describe("PBFT In Memory Storage", () => {
 
         it("should return the latest (heighest view) prepare proof", () => {
             const storage = new InMemoryPBFTStorage(logger);
-            const prePreparePayload10: PrePreparePayload = aPrePreparePayload(leaderId, { view: 10, term: 1, blockHash }, block);
+            const prePreparePayload10: PrePreparePayload = aPrePreparePayload(leaderKeyManager, { view: 10, term: 1, blockHash }, block);
             const preparePayload10_1: PreparePayload = aPayload(senderId1, { view: 10, term: 1, blockHash });
             const preparePayload10_2: PreparePayload = aPayload(senderId2, { view: 10, term: 1, blockHash });
 
-            const prePreparePayload20: PrePreparePayload = aPrePreparePayload(leaderId, { view: 20, term: 1, blockHash }, block);
+            const prePreparePayload20: PrePreparePayload = aPrePreparePayload(leaderKeyManager, { view: 20, term: 1, blockHash }, block);
             const preparePayload20_1: PreparePayload = aPayload(senderId1, { view: 20, term: 1, blockHash });
             const preparePayload20_2: PreparePayload = aPayload(senderId2, { view: 20, term: 1, blockHash });
 
-            const prePreparePayload30: PrePreparePayload = aPrePreparePayload(leaderId, { view: 30, term: 1, blockHash }, block);
+            const prePreparePayload30: PrePreparePayload = aPrePreparePayload(leaderKeyManager, { view: 30, term: 1, blockHash }, block);
             const preparePayload30_1: PreparePayload = aPayload(senderId1, { view: 30, term: 1, blockHash });
             const preparePayload30_2: PreparePayload = aPayload(senderId2, { view: 30, term: 1, blockHash });
 

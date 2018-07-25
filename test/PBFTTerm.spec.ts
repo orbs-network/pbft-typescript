@@ -4,7 +4,7 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
-import { PBFT, BlockUtils } from "../src";
+import { PBFT, BlockUtils, KeyManager } from "../src";
 import { Block } from "../src/Block";
 import { Config } from "../src/Config";
 import { PBFTTerm, TermConfig } from "../src/PBFTTerm";
@@ -15,6 +15,7 @@ import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
 import { blockMatcher } from "./matchers/blockMatcher";
 import { TestNetwork } from "./network/TestNetwork";
 import { nextTick } from "./timeUtils";
+import { KeyManagerMock } from "./keyManager/KeyManagerMock";
 chai.use(sinonChai);
 chai.use(blockMatcher);
 
@@ -30,6 +31,10 @@ describe("PBFTTerm", () => {
     let node1Pk: string;
     let node2Pk: string;
     let node3Pk: string;
+    let node0KeyManager: KeyManager;
+    let node1KeyManager: KeyManager;
+    let node2KeyManager: KeyManager;
+    let node3KeyManager: KeyManager;
 
     beforeEach(() => {
         const testNetworkData = aSimpleTestNetwork(4);
@@ -44,6 +49,10 @@ describe("PBFTTerm", () => {
         node1Pk = testNetwork.nodes[1].pk;
         node2Pk = testNetwork.nodes[2].pk;
         node3Pk = testNetwork.nodes[3].pk;
+        node0KeyManager = testNetwork.nodes[0].config.keyManager;
+        node1KeyManager = testNetwork.nodes[1].config.keyManager;
+        node2KeyManager = testNetwork.nodes[2].config.keyManager;
+        node3KeyManager = testNetwork.nodes[3].config.keyManager;
     });
 
     afterEach(() => {
@@ -90,7 +99,7 @@ describe("PBFTTerm", () => {
         const block: Block = aBlock(theGenesisBlock);
         const blockHash = calculateBlockHash(block);
 
-        node1PbftTerm.onReceivePrePrepare(aPrePreparePayload(node0Pk, { term: 1, view: 0, blockHash }, block));
+        node1PbftTerm.onReceivePrePrepare(aPrePreparePayload(node0KeyManager, { term: 1, view: 0, blockHash }, block));
         await nextTick();
         await node1BlockUtils.resolveAllValidations(true);
         node1PbftTerm.onReceivePrepare(aPayload(node2Pk, { term: 1, view: 0, blockHash }));
@@ -135,21 +144,21 @@ describe("PBFTTerm", () => {
         const spy = sinon.spy(node1Config.pbftStorage, "storePrepare");
 
         // current view (1) => valid
-        node1PbftTerm.onReceivePrePrepare(aPrePreparePayload(node1Pk, { term: 1, view: 1, blockHash }, block));
+        node1PbftTerm.onReceivePrePrepare(aPrePreparePayload(node1KeyManager, { term: 1, view: 1, blockHash }, block));
         await nextTick();
         await node1BlockUtils.resolveAllValidations(true);
         expect(spy).to.have.been.called;
 
         // view from the future (2) => invalid, should be ignored
         spy.resetHistory();
-        node1PbftTerm.onReceivePrePrepare(aPrePreparePayload(node1Pk, { term: 1, view: 2, blockHash }, block));
+        node1PbftTerm.onReceivePrePrepare(aPrePreparePayload(node1KeyManager, { term: 1, view: 2, blockHash }, block));
         await nextTick();
         await node1BlockUtils.resolveAllValidations(true);
         expect(spy).to.not.have.been.called;
 
         // view from the past (0) => invalid, should be ignored
         spy.resetHistory();
-        node1PbftTerm.onReceivePrePrepare(aPrePreparePayload(node1Pk, { term: 1, view: 0, blockHash }, block));
+        node1PbftTerm.onReceivePrePrepare(aPrePreparePayload(node1KeyManager, { term: 1, view: 0, blockHash }, block));
         await nextTick();
         await node1BlockUtils.resolveAllValidations(true);
         expect(spy).to.not.have.been.called;
@@ -176,13 +185,13 @@ describe("PBFTTerm", () => {
 
         const spy = sinon.spy(node1Config.blockUtils, "validateBlock");
         // from the leader => ok
-        node1PbftTerm.onReceivePrePrepare(aPrePreparePayload(node0Pk, { term: 1, view: 0, blockHash }, block));
+        node1PbftTerm.onReceivePrePrepare(aPrePreparePayload(node0KeyManager, { term: 1, view: 0, blockHash }, block));
         await nextTick();
         expect(spy).to.have.been.called;
 
         // not from the leader => ignore
         spy.resetHistory();
-        node1PbftTerm.onReceivePrePrepare(aPrePreparePayload(node2Pk, { term: 1, view: 0, blockHash }, block));
+        node1PbftTerm.onReceivePrePrepare(aPrePreparePayload(node2KeyManager, { term: 1, view: 0, blockHash }, block));
         await nextTick();
 
         expect(spy).to.not.have.been.called;
@@ -196,13 +205,13 @@ describe("PBFTTerm", () => {
 
         const spy = sinon.spy(node1Config.blockUtils, "validateBlock");
         // blockHash match block's hash =>
-        node1PbftTerm.onReceivePrePrepare(aPrePreparePayload(node0Pk, { term: 1, view: 0, blockHash }, block));
+        node1PbftTerm.onReceivePrePrepare(aPrePreparePayload(node0KeyManager, { term: 1, view: 0, blockHash }, block));
         await nextTick();
         expect(spy).to.have.been.called;
 
         // blockHash does NOT match block's hash =>
         spy.resetHistory();
-        node1PbftTerm.onReceivePrePrepare(aPrePreparePayload(node2Pk, { term: 1, view: 2, blockHash: badBlockHash }, block));
+        node1PbftTerm.onReceivePrePrepare(aPrePreparePayload(node2KeyManager, { term: 1, view: 2, blockHash: badBlockHash }, block));
         await nextTick();
         expect(spy).to.not.have.been.called;
     });
@@ -214,13 +223,13 @@ describe("PBFTTerm", () => {
         const blockHash = calculateBlockHash(block);
 
         // from the leader => ok
-        node1PbftTerm.onReceiveNewView(aPayload(node2Pk, { term: 1, view: 2, PP: aPrePreparePayload(node2Pk, { term: 1, view: 2, blockHash }, block) }));
+        node1PbftTerm.onReceiveNewView(aPayload(node2Pk, { term: 1, view: 2, PP: aPrePreparePayload(node2KeyManager, { term: 1, view: 2, blockHash }, block) }));
         await nextTick();
         await node1BlockUtils.resolveAllValidations(true);
         expect(node1PbftTerm.getView()).to.equal(2);
 
         // not from the leader => ignore
-        node1PbftTerm.onReceiveNewView(aPayload(node2Pk, { term: 1, view: 3, PP: aPrePreparePayload(node2Pk, { term: 1, view: 3, blockHash }, block) }));
+        node1PbftTerm.onReceiveNewView(aPayload(node2Pk, { term: 1, view: 3, PP: aPrePreparePayload(node2KeyManager, { term: 1, view: 3, blockHash }, block) }));
         await nextTick();
         await node1BlockUtils.resolveAllValidations(true);
         expect(node1PbftTerm.getView()).to.equal(2);
@@ -247,13 +256,13 @@ describe("PBFTTerm", () => {
         const blockHash = calculateBlockHash(block);
 
         // same view => ok
-        node0PbftTerm.onReceiveNewView(aPayload(node1Pk, { term: 1, view: 1, PP: aPrePreparePayload(node1Pk, { term: 1, view: 1, blockHash }, block) }));
+        node0PbftTerm.onReceiveNewView(aPayload(node1Pk, { term: 1, view: 1, PP: aPrePreparePayload(node1KeyManager, { term: 1, view: 1, blockHash }, block) }));
         await nextTick();
         await node0BlockUtils.resolveAllValidations(true);
         expect(node0PbftTerm.getView()).to.equal(1);
 
         // miss matching view => ignore
-        node0PbftTerm.onReceiveNewView(aPayload(node1Pk, { term: 1, view: 1, PP: aPrePreparePayload(node1Pk, { term: 1, view: 2, blockHash }, block) }));
+        node0PbftTerm.onReceiveNewView(aPayload(node1Pk, { term: 1, view: 1, PP: aPrePreparePayload(node1KeyManager, { term: 1, view: 2, blockHash }, block) }));
         await nextTick();
         await node0BlockUtils.resolveAllValidations(true);
         expect(node0PbftTerm.getView()).to.equal(1);
@@ -266,13 +275,13 @@ describe("PBFTTerm", () => {
         const blockHash = calculateBlockHash(block);
 
         // pass validation => ok
-        node0PbftTerm.onReceiveNewView(aPayload(node1Pk, { term: 1, view: 1, PP: aPrePreparePayload(node1Pk, { term: 1, view: 1, blockHash }, block) }));
+        node0PbftTerm.onReceiveNewView(aPayload(node1Pk, { term: 1, view: 1, PP: aPrePreparePayload(node1KeyManager, { term: 1, view: 1, blockHash }, block) }));
         await nextTick();
         await node0BlockUtils.resolveAllValidations(true);
         expect(node0PbftTerm.getView()).to.equal(1);
 
         // doesn't pass validation => ignore
-        node0PbftTerm.onReceiveNewView(aPayload(node1Pk, { term: 1, view: 2, PP: aPrePreparePayload(node1Pk, { term: 1, view: 2, blockHash }, block) }));
+        node0PbftTerm.onReceiveNewView(aPayload(node1Pk, { term: 1, view: 2, PP: aPrePreparePayload(node1KeyManager, { term: 1, view: 2, blockHash }, block) }));
         await nextTick();
         await node0BlockUtils.resolveAllValidations(false);
         expect(node0PbftTerm.getView()).to.equal(1);
