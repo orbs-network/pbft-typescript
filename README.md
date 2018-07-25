@@ -67,10 +67,10 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
   - [V] GetLatestPreparedProof from storage
   - [V] Add proof validator that can validate the prepred proof
     - [V] Test for matching view/leader
+    - [V] Make sure the preprepare hold a block
+    - [ ] count null as a valid proof
     - [ ] Test that the pk is in the committee!
     - [ ] Verify the payloads
-    - [ ] Make sure the preprepare hold a block
-    - [ ] count null as a valid proof
   - [ ] send the proof on view change
   - [ ] on generate new-view add all the view-change proofs with a PP.
   - [ ] on new view verify the proof

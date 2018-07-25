@@ -21,11 +21,15 @@ export function validatePrepared(
     const { block, pk: leaderPk } = prepreparePayload;
     const { view, term, blockHash } = prepreparePayload.data;
 
+    if (!block) {
+        return false;
+    }
+    
     if (calcLeaderPk(view) !== leaderPk) {
         return false;
     }
 
-const allPreparesPkAreUnique = preparePayloads.reduce((prev, current) => prev.set(current.pk, true), new Map()).size === preparePayloads.length;
+    const allPreparesPkAreUnique = preparePayloads.reduce((prev, current) => prev.set(current.pk, true), new Map()).size === preparePayloads.length;
     if (!allPreparesPkAreUnique) {
         return false;
     }
