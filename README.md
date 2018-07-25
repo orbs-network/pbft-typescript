@@ -70,11 +70,12 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
     - [V] Make sure the preprepare hold a block
     - [V] count null as a valid proof
     - [V] Verify the payloads
-    - [ ] Test that the pk is in the committee!
+    - [V] Test that the pk is in the committee!
+    - [ ] Make sure that the prepares are not from the leader
   - [ ] send the proof on view change
   - [ ] on generate new-view add all the view-change proofs with a PP.
   - [ ] on new view verify the proof
-  - [ ] sign messages
+  - [ ] validate all signed messages
 - [ ] send the committee members pks in the PBFTTerm constructor
 - [ ] Ask Eran, how byzantine tolerant should we be. and create tests accordingly
 - [V] clear the pbftStorage
@@ -82,10 +83,13 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [ ] call the clear pbftStorage after commit.
 - [ ] add isACommitteeMember to PBFTTerm
 - [ ] Change logging methodology - warning - added metadata
-- [ ] PBFT-BC onCommitted - adds header.pbftData.pbftProof
-- [ ] implement `verifyBlock`
 - [ ] Have a better (Readable) tests solution to await nextTick
 - [ ] documentation
 - [ ] monitoring
 - [ ] Optimizations: IData - Signature only on hash(header).
 - [ ] Rename PBFT to PBFTBlockChain
+
+## V1 stuff
+
+- [ ] PBFT-BC onCommitted - adds header.pbftData.pbftProof
+- [ ] implement `verifyBlock`

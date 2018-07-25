@@ -7,7 +7,8 @@ export function validatePrepared(
     f: number,
     keyManager: KeyManager,
     blockUtils: BlockUtils,
-    calcLeaderPk: (view: number) => string): boolean {
+    membersPKs: string[],
+    getLeaderPk: (view: number) => string): boolean {
 
     const { preparePayloads, prepreparePayload } = preparedProof;
     if (!preparePayloads && !prepreparePayload) {
@@ -32,12 +33,17 @@ export function validatePrepared(
     }
 
     const { view, term, blockHash } = prepreparePayload.data;
-    if (calcLeaderPk(view) !== leaderPk) {
+    if (getLeaderPk(view) !== leaderPk) {
         return false;
     }
 
-    const allPreparesPkAreUnique = preparePayloads.reduce((prev, current) => prev.set(current.pk, true), new Map()).size === preparePayloads.length;
-    if (!allPreparesPkAreUnique) {
+    const allPreparesPksAreUnique = preparePayloads.reduce((prev, current) => prev.set(current.pk, true), new Map()).size === preparePayloads.length;
+    if (!allPreparesPksAreUnique) {
+        return false;
+    }
+
+    const allPreparesPKsAreMembers = preparePayloads.every(p => membersPKs.indexOf(p.pk) > -1);
+    if (allPreparesPKsAreMembers == false) {
         return false;
     }
 
