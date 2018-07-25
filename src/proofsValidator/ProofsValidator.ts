@@ -42,6 +42,10 @@ export function validatePrepared(
         return false;
     }
 
+    if (preparePayloads.every(p => keyManager.verify(p.data, p.signature, p.pk)) === false) {
+        return false;
+    }
+
     const isPrepareMisMatch = preparePayloads
         .map(p => p.data)
         .findIndex(p => p.view !== view || p.term !== term || p.blockHash !== blockHash) > -1;

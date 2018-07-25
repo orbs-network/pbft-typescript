@@ -45,8 +45,19 @@ describe("Proofs Validator", () => {
         expect(actual).to.be.false;
     });
 
-    it("should reject a proof that did not pass the signature validation", async () => {
+    it("should reject a proof that did not pass the preprepare signature validation", async () => {
         const keyManager = new KeyManagerMock("DUMMY PK", ["Leader PK"]);
+
+        const prepareProof: PreparedProof = {
+            prepreparePayload: prepreparePayload,
+            preparePayloads: [preparePayload1, preparePayload2]
+        };
+        const actual = validatePrepared(prepareProof, f, keyManager, blockUtils, calcLeaderPk);
+        expect(actual).to.be.false;
+    });
+
+    it("should reject a proof that did not pass the prepare signature validation", async () => {
+        const keyManager = new KeyManagerMock("DUMMY PK", ["Node 2"]);
 
         const prepareProof: PreparedProof = {
             prepreparePayload: prepreparePayload,
