@@ -35,11 +35,11 @@ declare function sign(privateKey: string, content: CPayload): DigestTypes.C;
 declare function sign(privateKey: string, content: VCPayload): DigestTypes.VC;
 declare function sign(privateKey: string, content: NVPayload): DigestTypes.NV;
 
-declare function decrypt(publicKey: string, encryptedData: DigestTypes.PP): PPPayload;
-declare function decrypt(publicKey: string, encryptedData: DigestTypes.P): PPayload;
-declare function decrypt(publicKey: string, encryptedData: DigestTypes.C): CPayload;
-declare function decrypt(publicKey: string, encryptedData: DigestTypes.VC): VCPayload;
-declare function decrypt(publicKey: string, encryptedData: DigestTypes.NV): NVPayload;
+declare function verify(publicKey: string, encryptedData: DigestTypes.PP): PPPayload;
+declare function verify(publicKey: string, encryptedData: DigestTypes.P): PPayload;
+declare function verify(publicKey: string, encryptedData: DigestTypes.C): CPayload;
+declare function verify(publicKey: string, encryptedData: DigestTypes.VC): VCPayload;
+declare function verify(publicKey: string, encryptedData: DigestTypes.NV): NVPayload;
 
 type Block = {
     height: number;
@@ -154,7 +154,7 @@ class PBFT {
     }
 
     onReceivePrePrepare(senderPublicKey: string, PP: PPMessage) {
-        const { message, view, term, blockHash } = decrypt(senderPublicKey, PP.payload);
+        const { message, view, term, blockHash } = verify(senderPublicKey, PP.payload);
         const B = PP.CB;
 
         if (message === "PRE-PREPARE") {
@@ -197,7 +197,7 @@ class PBFT {
     }
 
     onReceivePrepare(senderPublicKey, P: DigestTypes.P) {
-        const { message, view, term, blockHash } = decrypt(senderPublicKey, P);
+        const { message, view, term, blockHash } = verify(senderPublicKey, P);
 
         if (message === "PREPARE") {
             if (senderPublicKey !== this.myPublicKey) {
@@ -213,13 +213,13 @@ class PBFT {
 
     getPrepareCount(term: number, view: number, blockHash: string): number {
         const PLog = fetchFromLog(term, view, "PREPARE");
-        const PPayloads = PLog.map(p => decrypt(p.pk, p.data));
+        const PPayloads = PLog.map(p => verify(p.pk, p.data));
         return PPayloads.filter(PPayload => PPayload.blockHash === blockHash).length;
     }
 
     isPrePrepared(term: number, view: number, blockHash: string): boolean {
         const PPLog = fetchFromLog(term, view, "PRE-PREPARE");
-        const PPPayload = decrypt(PPLog.pk, PPLog.data.payload);
+        const PPPayload = verify(PPLog.pk, PPLog.data.payload);
         return PPPayload.blockHash === blockHash;
     }
 
@@ -247,7 +247,7 @@ class PBFT {
     }
 
     onReceiveCommit(senderPublicKey: string, C: DigestTypes.C) {
-        const { message, view, term, blockHash } = decrypt(senderPublicKey, C);
+        const { message, view, term, blockHash } = verify(senderPublicKey, C);
 
         if (message === "COMMIT") {
             if (senderPublicKey !== this.myPublicKey) {
@@ -296,7 +296,7 @@ class PBFT {
     }
 
     onReceiveViewChange(senderPublicKey: string, VC: DigestTypes.VC) {
-        const { message, view, term, preparedProof } = decrypt(senderPublicKey, VC);
+        const { message, view, term, preparedProof } = verify(senderPublicKey, VC);
 
         if (message === "VIEW-CHANGE") {
             if (senderPublicKey !== this.myPublicKey) {
@@ -318,7 +318,7 @@ class PBFT {
     }
 
     isViewChangeValid(term: number, view: number, viewChangeProof: { pk: string, data: DigestTypes.VC }): boolean {
-        const vcPayload = decrypt(viewChangeProof.pk, viewChangeProof.data);
+        const vcPayload = verify(viewChangeProof.pk, viewChangeProof.data);
         if (vcPayload.view !== view) {
             return false;
         }
@@ -348,7 +348,7 @@ class PBFT {
             return false;
         }
 
-        const { view, term, blockHash } = decrypt(preprepare.pk, preprepare.data.payload);
+        const { view, term, blockHash } = verify(preprepare.pk, preprepare.data.payload);
         if (primary(view) !== preprepare.pk) {
             return false;
         }
@@ -359,7 +359,7 @@ class PBFT {
         }
 
         const isPrepareMatch = prepares
-            .map(p => decrypt(p.pk, p.data))
+            .map(p => verify(p.pk, p.data))
             .findIndex(p => p.view !== view || p.term !== term || p.blockHash !== blockHash) === -1;
         const isValidDigest = HASH(CB) === blockHash;
         return isValidDigest && isPrepareMatch;
@@ -381,9 +381,9 @@ class PBFT {
         }
 
         const firstCommit = commits[0];
-        const { view, term, blockHash } = decrypt(firstCommit.pk, firstCommit.data);
+        const { view, term, blockHash } = verify(firstCommit.pk, firstCommit.data);
         const isCommitMatch = commits
-            .map(c => decrypt(c.pk, c.data))
+            .map(c => verify(c.pk, c.data))
             .findIndex(c => c.view !== view || c.term !== term || c.blockHash !== blockHash) === -1;
         return isCommitMatch;
     }
@@ -421,11 +421,11 @@ class PBFT {
     }
 
     extractBlock(viewChanges: { pk: string, data: DigestTypes.VC }[]): Block {
-        const preparedProofs = viewChanges.map(vc => decrypt(vc.pk, vc.data).preparedProof);
+        const preparedProofs = viewChanges.map(vc => verify(vc.pk, vc.data).preparedProof);
         const filtedPreparedProofs = preparedProofs.filter(preparedProof => preparedProof !== undefined);
         if (filtedPreparedProofs.length > 0) {
             const sortedPrepreparedProofs = filtedPreparedProofs.map(pp => {
-                return { payload: decrypt(pp.preprepare.pk, pp.preprepare.data.payload), CB: pp.preprepare.data.CB };
+                return { payload: verify(pp.preprepare.pk, pp.preprepare.data.payload), CB: pp.preprepare.data.CB };
             }
             ).sort((a, b) => a.payload.view - b.payload.view);
             const latestPrereparedProof = sortedPrepreparedProofs[0];
@@ -436,8 +436,8 @@ class PBFT {
     }
 
     onReceiveNewView(senderPublicKey: string, NV: DigestTypes.NV) {
-        const { message, newViewProof, PP } = decrypt(senderPublicKey, NV);
-        const { term, view, blockHash } = decrypt(senderPublicKey, PP.payload);
+        const { message, newViewProof, PP } = verify(senderPublicKey, NV);
+        const { term, view, blockHash } = verify(senderPublicKey, PP.payload);
 
         if (message === "NEW-VIEW") {
             if (senderPublicKey !== this.myPublicKey) {
