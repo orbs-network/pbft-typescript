@@ -129,10 +129,10 @@ describe("PBFT", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         const gossip = testNetwork.getNodeGossip(byzantineNode.pk);
-        gossip.broadcast("preprepare", aPayload(byzantineNode.pk, { block: fakeBlock, view: 0, term: 1 }));
-        gossip.broadcast("preprepare", aPayload(byzantineNode.pk, { block: fakeBlock, view: 0, term: 1 }));
-        gossip.broadcast("preprepare", aPayload(byzantineNode.pk, { block: fakeBlock, view: 0, term: 1 }));
-        gossip.broadcast("preprepare", aPayload(byzantineNode.pk, { block: fakeBlock, view: 0, term: 1 }));
+        gossip.broadcast("preprepare", aPayload(byzantineNode.config.keyManager, { block: fakeBlock, view: 0, term: 1 }));
+        gossip.broadcast("preprepare", aPayload(byzantineNode.config.keyManager, { block: fakeBlock, view: 0, term: 1 }));
+        gossip.broadcast("preprepare", aPayload(byzantineNode.config.keyManager, { block: fakeBlock, view: 0, term: 1 }));
+        gossip.broadcast("preprepare", aPayload(byzantineNode.config.keyManager, { block: fakeBlock, view: 0, term: 1 }));
 
         await nextTick();
         await blockUtils.provideNextBlock();

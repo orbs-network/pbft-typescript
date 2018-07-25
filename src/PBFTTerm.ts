@@ -114,13 +114,11 @@ export class PBFTTerm {
     private onLeaderChange(): void {
         this.initView(this.view + 1);
         this.logger.log({ Subject: "Flow", FlowType: "LeaderChange", leaderPk: this.leaderPk(), term: this.term, newView: this.view });
+        const data = { term: this.term, newView: this.view };
         const payload: ViewChangePayload = {
             pk: this.keyManager.getMyPublicKey(),
-            signature: "signature",
-            data: {
-                term: this.term,
-                newView: this.view
-            }
+            signature: this.keyManager.sign(data),
+            data
         };
         this.pbftStorage.storeViewChange(this.term, this.view, this.keyManager.getMyPublicKey(), payload);
         if (this.isLeader()) {
@@ -132,14 +130,11 @@ export class PBFTTerm {
 
     private buildPrePreparePayload(term: number, view: number, block: Block): PrePreparePayload {
         const blockHash: Buffer = this.blockUtils.calculateBlockHash(block);
+        const data = { blockHash, view, term };
         const payload: PrePreparePayload = {
             pk: this.keyManager.getMyPublicKey(),
-            signature: "signature",
-            data: {
-                blockHash,
-                view,
-                term
-            },
+            signature: this.keyManager.sign(data),
+            data,
             block,
         };
 
@@ -147,14 +142,11 @@ export class PBFTTerm {
     }
 
     private buildPreparePayload(term: number, view: number, blockHash: Buffer): PreparePayload {
+        const data = { blockHash, view, term };
         const payload: PreparePayload = {
             pk: this.keyManager.getMyPublicKey(),
-            signature: "signature",
-            data: {
-                blockHash,
-                view,
-                term
-            }
+            signature: this.keyManager.sign(data),
+            data
         };
 
         return payload;
@@ -166,14 +158,11 @@ export class PBFTTerm {
 
     private broadcastPrepare(term: number, view: number, block: Block): void {
         const blockHash: Buffer = this.blockUtils.calculateBlockHash(block);
+        const data = { blockHash, view, term };
         const payload: PreparePayload = {
             pk: this.keyManager.getMyPublicKey(),
-            signature: "signature",
-            data: {
-                blockHash,
-                view,
-                term
-            }
+            signature: this.keyManager.sign(data),
+            data
         };
         this.networkCommunication.sendToMembers(this.getOtherNodesIds(), "prepare", payload);
     }
@@ -301,26 +290,20 @@ export class PBFTTerm {
         }
 
         const blockHash = this.blockUtils.calculateBlockHash(block);
+        const dataPP = { term: this.term, view, blockHash };
         const PP: PrePreparePayload = {
             pk: this.keyManager.getMyPublicKey(),
-            signature: "signature",
-            data: {
-                term: this.term,
-                view,
-                blockHash
-            },
+            signature: this.keyManager.sign(dataPP),
+            data: dataPP,
             block
         };
         this.CB = block;
         this.logger.log({ Subject: "Flow", FlowType: "Elected", term: this.term, view, blockHash });
+        const dataNV = { term: this.term, view, PP };
         const newViewPayload: NewViewPayload = {
             pk: this.keyManager.getMyPublicKey(),
-            signature: "signature",
-            data: {
-                term: this.term,
-                view,
-                PP
-            }
+            signature: this.keyManager.sign(dataNV),
+            data: dataNV
         };
         this.pbftStorage.storePrePrepare(this.term, this.view, block, PP);
         this.networkCommunication.sendToMembers(this.getOtherNodesIds(), "new-view", newViewPayload);
@@ -346,14 +329,11 @@ export class PBFTTerm {
 
     private onPrepared(term: number, view: number, blockHash: Buffer): void {
         this.preparedLocally = true;
+        const data = { term, view, blockHash };
         const payload: CommitPayload = {
             pk: this.keyManager.getMyPublicKey(),
-            signature: "signature",
-            data: {
-                term,
-                view,
-                blockHash
-            }
+            signature: this.keyManager.sign(data),
+            data
         };
         this.pbftStorage.storeCommit(term, view, blockHash, this.keyManager.getMyPublicKey(), payload);
         this.networkCommunication.sendToMembers(this.getOtherNodesIds(), "commit", payload);

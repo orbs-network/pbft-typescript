@@ -15,6 +15,7 @@ describe("Proofs Validator", () => {
     const leaderKeyManager: KeyManager = new KeyManagerMock("Leader PK");
     const node1KeyManager: KeyManager = new KeyManagerMock("Node 1");
     const node2KeyManager: KeyManager = new KeyManagerMock("Node 2");
+    const node3KeyManager: KeyManager = new KeyManagerMock("Node 3");
     const blockUtils: BlockUtils = new BlockUtilsMock();
     const f = Math.floor(4 / 3);
     const term = 0;
@@ -22,8 +23,8 @@ describe("Proofs Validator", () => {
     const block: Block = aBlock(theGenesisBlock);
     const blockHash = calculateBlockHash(block);
     const prepreparePayload = aPrePreparePayload(leaderKeyManager, { term, view, blockHash }, block);
-    const preparePayload1 = aPayload("Node 1", { term, view, blockHash });
-    const preparePayload2 = aPayload("Node 2", { term, view, blockHash });
+    const preparePayload1 = aPayload(node1KeyManager, { term, view, blockHash });
+    const preparePayload2 = aPayload(node2KeyManager, { term, view, blockHash });
     const calcLeaderPk = (view: number) => ["Leader PK", "Node 1", "Node 2", "Node 3"][view];
 
     it("should reject a proof that did not have a preprepare", async () => {
@@ -85,9 +86,9 @@ describe("Proofs Validator", () => {
 
     it("should reject a proof with a mismatching view to leader", async () => {
         // Node 2 is the leader here, but it's sending view 0, which is indicating Node 1 as the leader
-        const prepreparePayload = aPrePreparePayload(leaderKeyManager, { term: 0, view: 0, blockHash }, block);
-        const preparePayload1 = aPayload("Node 1", { term: 0, view: 0, blockHash });
-        const preparePayload2 = aPayload("Node 3", { term: 0, view: 0, blockHash });
+        const prepreparePayload = aPrePreparePayload(node2KeyManager, { term: 0, view: 0, blockHash }, block);
+        const preparePayload1 = aPayload(node1KeyManager, { term: 0, view: 0, blockHash });
+        const preparePayload2 = aPayload(node3KeyManager, { term: 0, view: 0, blockHash });
         const calcLeaderPk = (view: number) => ["Node 1", "Node 2", "Node 3", "Node 4"][view];
 
         const prepareProof: PreparedProof = {
@@ -103,8 +104,8 @@ describe("Proofs Validator", () => {
         const goodPrepareProof: PreparedProof = {
             prepreparePayload: aPrePreparePayload(leaderKeyManager, { term: 5, view: 0, blockHash }, block),
             preparePayloads: [
-                aPayload("Node 1", { term: 5, view: 0, blockHash }),
-                aPayload("Node 2", { term: 5, view: 0, blockHash }),
+                aPayload(node1KeyManager, { term: 5, view: 0, blockHash }),
+                aPayload(node2KeyManager, { term: 5, view: 0, blockHash }),
             ]
         };
         const actualGood = validatePrepared(goodPrepareProof, f, keyManager, blockUtils, calcLeaderPk);
@@ -114,8 +115,8 @@ describe("Proofs Validator", () => {
         const badTermPrepareProof: PreparedProof = {
             prepreparePayload: aPrePreparePayload(leaderKeyManager, { term: 5, view: 0, blockHash }, block),
             preparePayloads: [
-                aPayload("Node 1", { term: 5, view: 0, blockHash }),
-                aPayload("Node 2", { term: 666, view: 0, blockHash }),
+                aPayload(node1KeyManager, { term: 5, view: 0, blockHash }),
+                aPayload(node2KeyManager, { term: 666, view: 0, blockHash }),
             ]
         };
         const actualBadTerm = validatePrepared(badTermPrepareProof, f, keyManager, blockUtils, calcLeaderPk);
@@ -125,8 +126,8 @@ describe("Proofs Validator", () => {
         const badViewPrepareProof: PreparedProof = {
             prepreparePayload: aPrePreparePayload(leaderKeyManager, { term: 5, view: 0, blockHash }, block),
             preparePayloads: [
-                aPayload("Node 1", { term: 5, view: 0, blockHash }),
-                aPayload("Node 2", { term: 5, view: 666, blockHash }),
+                aPayload(node1KeyManager, { term: 5, view: 0, blockHash }),
+                aPayload(node2KeyManager, { term: 5, view: 666, blockHash }),
             ]
         };
         const actualBadView = validatePrepared(badViewPrepareProof, f, keyManager, blockUtils, calcLeaderPk);
@@ -136,8 +137,8 @@ describe("Proofs Validator", () => {
         const badBlockHashPrepareProof: PreparedProof = {
             prepreparePayload: aPrePreparePayload(leaderKeyManager, { term: 5, view: 9, blockHash }, block),
             preparePayloads: [
-                aPayload("Node 1", { term: 5, view: 9, blockHash }),
-                aPayload("Node 2", { term: 5, view: 9, blockHash: "XXXX" }),
+                aPayload(node1KeyManager, { term: 5, view: 9, blockHash }),
+                aPayload(node2KeyManager, { term: 5, view: 9, blockHash: "XXXX" }),
             ]
         };
         const actualBadBlockHash = validatePrepared(badBlockHashPrepareProof, f, keyManager, blockUtils, calcLeaderPk);
@@ -149,8 +150,8 @@ describe("Proofs Validator", () => {
         const prepareProof: PreparedProof = {
             prepreparePayload: aPrePreparePayload(leaderKeyManager, { term: 5, view: 9, blockHash: mismatchingBlockHash }, block),
             preparePayloads: [
-                aPayload("Node 1", { term: 5, view: 9, blockHash: mismatchingBlockHash }),
-                aPayload("Node 2", { term: 5, view: 9, blockHash: mismatchingBlockHash }),
+                aPayload(node1KeyManager, { term: 5, view: 9, blockHash: mismatchingBlockHash }),
+                aPayload(node2KeyManager, { term: 5, view: 9, blockHash: mismatchingBlockHash }),
             ]
         };
         const actual = validatePrepared(prepareProof, f, keyManager, blockUtils, calcLeaderPk);
@@ -161,8 +162,8 @@ describe("Proofs Validator", () => {
         const prepareProof: PreparedProof = {
             prepreparePayload: aPrePreparePayload(leaderKeyManager, { term: 5, view: 9, blockHash }, block),
             preparePayloads: [
-                aPayload("Node 1", { term: 5, view: 9, blockHash }),
-                aPayload("Node 1", { term: 5, view: 9, blockHash }),
+                aPayload(node1KeyManager, { term: 5, view: 9, blockHash }),
+                aPayload(node1KeyManager, { term: 5, view: 9, blockHash }),
             ]
         };
         const actual = validatePrepared(prepareProof, f, keyManager, blockUtils, calcLeaderPk);

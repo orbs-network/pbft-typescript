@@ -25,15 +25,15 @@ describe("PBFT In Memory Storage", () => {
         const blockHash = calculateBlockHash(block);
         const keyManager: KeyManager = new KeyManagerMock("PK");
         const PPPayload = aPrePreparePayload(keyManager, {}, block);
-        const PPayload = aPayload("pk", {});
-        const CPayload = aPayload("pk", {});
-        const VCPayload = aPayload("pk", {});
+        const PPayload = aPayload(keyManager, {});
+        const CPayload = aPayload(keyManager, {});
+        const VCPayload = aPayload(keyManager, {});
 
         // storing
         storage.storePrePrepare(term, view, block, PPPayload);
-        storage.storePrepare(term, view, blockHash, "Dummy sender", PPayload);
-        storage.storeCommit(term, view, blockHash, "Dummy sender", CPayload);
-        storage.storeViewChange(term, view, "Dummy sender", VCPayload);
+        storage.storePrepare(term, view, blockHash, "PK", PPayload);
+        storage.storeCommit(term, view, blockHash, "PK", CPayload);
+        storage.storeViewChange(term, view, "PK", VCPayload);
 
         expect(storage.getPrePreparePayload(term, view)).to.not.be.undefined;
         expect(storage.getPreparePayloads(term, view, blockHash).length).to.equal(1);
@@ -68,13 +68,15 @@ describe("PBFT In Memory Storage", () => {
         const view = Math.floor(Math.random() * 1000);
         const senderId1 = Math.floor(Math.random() * 1000).toString();
         const senderId2 = Math.floor(Math.random() * 1000).toString();
+        const sender1KeyManager: KeyManager = new KeyManagerMock(senderId1);
+        const sender2KeyManager: KeyManager = new KeyManagerMock(senderId2);
         const block = aBlock(theGenesisBlock);
         const blockHash = calculateBlockHash(block);
-        const firstTime = storage.storePrepare(term, view, blockHash, senderId1, aPayload(senderId1, Math.random()));
+        const firstTime = storage.storePrepare(term, view, blockHash, senderId1, aPayload(sender1KeyManager, Math.random()));
         expect(firstTime).to.be.true;
-        const secondstime = storage.storePrepare(term, view, blockHash, senderId2, aPayload(senderId2, Math.random()));
+        const secondstime = storage.storePrepare(term, view, blockHash, senderId2, aPayload(sender2KeyManager, Math.random()));
         expect(secondstime).to.be.true;
-        const thirdTime = storage.storePrepare(term, view, blockHash, senderId2, aPayload(senderId2, Math.random()));
+        const thirdTime = storage.storePrepare(term, view, blockHash, senderId2, aPayload(sender2KeyManager, Math.random()));
         expect(thirdTime).to.be.false;
     });
 
@@ -84,13 +86,15 @@ describe("PBFT In Memory Storage", () => {
         const view = Math.floor(Math.random() * 1000);
         const senderId1 = Math.floor(Math.random() * 1000).toString();
         const senderId2 = Math.floor(Math.random() * 1000).toString();
+        const sender1KeyManager: KeyManager = new KeyManagerMock(senderId1);
+        const sender2KeyManager: KeyManager = new KeyManagerMock(senderId2);
         const block = aBlock(theGenesisBlock);
         const blockHash = calculateBlockHash(block);
-        const firstTime = storage.storeCommit(term, view, blockHash, senderId1, aPayload(senderId1, Math.random()));
+        const firstTime = storage.storeCommit(term, view, blockHash, senderId1, aPayload(sender1KeyManager, Math.random()));
         expect(firstTime).to.be.true;
-        const secondstime = storage.storeCommit(term, view, blockHash, senderId2, aPayload(senderId2, Math.random()));
+        const secondstime = storage.storeCommit(term, view, blockHash, senderId2, aPayload(sender2KeyManager, Math.random()));
         expect(secondstime).to.be.true;
-        const thirdTime = storage.storeCommit(term, view, blockHash, senderId2, aPayload(senderId2, Math.random()));
+        const thirdTime = storage.storeCommit(term, view, blockHash, senderId2, aPayload(sender2KeyManager, Math.random()));
         expect(thirdTime).to.be.false;
     });
 
@@ -100,12 +104,13 @@ describe("PBFT In Memory Storage", () => {
         const term = Math.floor(Math.random() * 1000);
         const senderId1 = Math.floor(Math.random() * 1000).toString();
         const senderId2 = Math.floor(Math.random() * 1000).toString();
-        const VCPayload = aPayload("pk", {});
-        const firstTime = storage.storeViewChange(term, view, senderId1, VCPayload);
+        const sender1KeyManager: KeyManager = new KeyManagerMock(senderId1);
+        const sender2KeyManager: KeyManager = new KeyManagerMock(senderId2);
+        const firstTime = storage.storeViewChange(term, view, senderId1, aPayload(sender1KeyManager, {}));
         expect(firstTime).to.be.true;
-        const secondstime = storage.storeViewChange(term, view, senderId2, VCPayload);
+        const secondstime = storage.storeViewChange(term, view, senderId2, aPayload(sender2KeyManager, {}));
         expect(secondstime).to.be.true;
-        const thirdTime = storage.storeViewChange(term, view, senderId2, VCPayload);
+        const thirdTime = storage.storeViewChange(term, view, senderId2, aPayload(sender2KeyManager, {}));
         expect(thirdTime).to.be.false;
     });
 
@@ -165,11 +170,13 @@ describe("PBFT In Memory Storage", () => {
         const sender3Id = Math.random().toString();
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
-        const VCPayload = aPayload("pk", {});
-        storage.storeViewChange(term1, view1, sender1Id, VCPayload);
-        storage.storeViewChange(term1, view1, sender2Id, VCPayload);
-        storage.storeViewChange(term1, view2, sender3Id, VCPayload);
-        storage.storeViewChange(term2, view1, sender3Id, VCPayload);
+        const sender1KeyManager: KeyManager = new KeyManagerMock(sender1Id);
+        const sender2KeyManager: KeyManager = new KeyManagerMock(sender2Id);
+        const sender3KeyManager: KeyManager = new KeyManagerMock(sender3Id);
+        storage.storeViewChange(term1, view1, sender1Id, aPayload(sender1KeyManager, {}));
+        storage.storeViewChange(term1, view1, sender2Id, aPayload(sender2KeyManager, {}));
+        storage.storeViewChange(term1, view2, sender3Id, aPayload(sender3KeyManager, {}));
+        storage.storeViewChange(term2, view1, sender3Id, aPayload(sender3KeyManager, {}));
         const actual = storage.countOfViewChange(term1, view1);
         expect(actual).to.deep.equal(2);
     });
@@ -181,14 +188,14 @@ describe("PBFT In Memory Storage", () => {
         const senderId1 = Math.floor(Math.random() * 1000).toString();
         const senderId2 = Math.floor(Math.random() * 1000).toString();
         const leaderKeyManager: KeyManager = new KeyManagerMock(leaderId);
-        const node1KeyManager: KeyManager = new KeyManagerMock(senderId1);
-        const node2KeyManager: KeyManager = new KeyManagerMock(senderId2);
+        const sender1KeyManager: KeyManager = new KeyManagerMock(senderId1);
+        const sender2KeyManager: KeyManager = new KeyManagerMock(senderId2);
         const block = aBlock(theGenesisBlock);
         const blockHash = calculateBlockHash(block);
 
         const prePreparePayload: PrePreparePayload = aPrePreparePayload(leaderKeyManager, { view, term, blockHash }, block);
-        const preparePayload1: PreparePayload = aPayload(senderId1, { view, term, blockHash });
-        const preparePayload2: PreparePayload = aPayload(senderId2, { view, term, blockHash });
+        const preparePayload1: PreparePayload = aPayload(sender1KeyManager, { view, term, blockHash });
+        const preparePayload2: PreparePayload = aPayload(sender2KeyManager, { view, term, blockHash });
 
         it("should return the prepare proof", () => {
             const storage = new InMemoryPBFTStorage(logger);
@@ -207,16 +214,16 @@ describe("PBFT In Memory Storage", () => {
         it("should return the latest (heighest view) prepare proof", () => {
             const storage = new InMemoryPBFTStorage(logger);
             const prePreparePayload10: PrePreparePayload = aPrePreparePayload(leaderKeyManager, { view: 10, term: 1, blockHash }, block);
-            const preparePayload10_1: PreparePayload = aPayload(senderId1, { view: 10, term: 1, blockHash });
-            const preparePayload10_2: PreparePayload = aPayload(senderId2, { view: 10, term: 1, blockHash });
+            const preparePayload10_1: PreparePayload = aPayload(sender1KeyManager, { view: 10, term: 1, blockHash });
+            const preparePayload10_2: PreparePayload = aPayload(sender2KeyManager, { view: 10, term: 1, blockHash });
 
             const prePreparePayload20: PrePreparePayload = aPrePreparePayload(leaderKeyManager, { view: 20, term: 1, blockHash }, block);
-            const preparePayload20_1: PreparePayload = aPayload(senderId1, { view: 20, term: 1, blockHash });
-            const preparePayload20_2: PreparePayload = aPayload(senderId2, { view: 20, term: 1, blockHash });
+            const preparePayload20_1: PreparePayload = aPayload(sender1KeyManager, { view: 20, term: 1, blockHash });
+            const preparePayload20_2: PreparePayload = aPayload(sender2KeyManager, { view: 20, term: 1, blockHash });
 
             const prePreparePayload30: PrePreparePayload = aPrePreparePayload(leaderKeyManager, { view: 30, term: 1, blockHash }, block);
-            const preparePayload30_1: PreparePayload = aPayload(senderId1, { view: 30, term: 1, blockHash });
-            const preparePayload30_2: PreparePayload = aPayload(senderId2, { view: 30, term: 1, blockHash });
+            const preparePayload30_1: PreparePayload = aPayload(sender1KeyManager, { view: 30, term: 1, blockHash });
+            const preparePayload30_2: PreparePayload = aPayload(sender2KeyManager, { view: 30, term: 1, blockHash });
 
             storage.storePrePrepare(1, 10, block, prePreparePayload10);
             storage.storePrepare(1, 10, blockHash, senderId1, preparePayload10_1);

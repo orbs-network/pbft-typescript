@@ -25,7 +25,7 @@ describe("Leader Election", () => {
         triggerElection();
         await blockUtils.resolveAllValidations(true);
 
-        expect(unicastSpy).to.have.been.calledWith(nextLeader.pk, "view-change", aPayload(testedNode.pk, { term: 1, newView: 1 }));
+        expect(unicastSpy).to.have.been.calledWith(nextLeader.pk, "view-change", aPayload(testedNode.config.keyManager, { term: 1, newView: 1 }));
 
         testNetwork.shutDown();
     });
@@ -95,15 +95,15 @@ describe("Leader Election", () => {
         await blockUtils.provideNextBlock();
         await nextTick();
 
-        gossip.onRemoteMessage("view-change", aPayload(node0.pk, { term: 1, newView: 1 }));
-        gossip.onRemoteMessage("view-change", aPayload(node2.pk, { term: 1, newView: 1 }));
-        gossip.onRemoteMessage("view-change", aPayload(node3.pk, { term: 1, newView: 1 }));
+        gossip.onRemoteMessage("view-change", aPayload(node0.config.keyManager, { term: 1, newView: 1 }));
+        gossip.onRemoteMessage("view-change", aPayload(node2.config.keyManager, { term: 1, newView: 1 }));
+        gossip.onRemoteMessage("view-change", aPayload(node3.config.keyManager, { term: 1, newView: 1 }));
         await nextTick();
         await blockUtils.provideNextBlock();
         await nextTick();
 
         const block2Hash = calculateBlockHash(block2);
-        expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", aPayload(node1.pk, { term: 1, view: 1, PP: aPrePreparePayload(node1.config.keyManager, { view: 1, term: 1, blockHash: block2Hash}, block2 ) }));
+        expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", aPayload(node1.config.keyManager, { term: 1, view: 1, PP: aPrePreparePayload(node1.config.keyManager, { term: 1, view: 1, blockHash: block2Hash}, block2 ) }));
         testNetwork.shutDown();
     });
 
@@ -179,9 +179,9 @@ describe("Leader Election", () => {
         await nextTick(); // await for blockStorage.getLastBlockHash
 
         const block3Hash = calculateBlockHash(block3);
-        expect(spy0).to.have.been.calledWith(node1.pk, "view-change", aPayload(node0.pk, { term: 2, newView: 1 }));
-        expect(spy1).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", aPayload(node1.pk, { term: 2, view: 1, PP: aPrePreparePayload(node1.config.keyManager, { term: 2, view: 1, blockHash: block3Hash }, block3) }));
-        expect(spy2).to.have.been.calledWith(node1.pk, "view-change", aPayload(node2.pk, { term: 2, newView: 1 }));
+        expect(spy0).to.have.been.calledWith(node1.pk, "view-change", aPayload(node0.config.keyManager, { term: 2, newView: 1 }));
+        expect(spy1).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", aPayload(node1.config.keyManager, { term: 2, view: 1, PP: aPrePreparePayload(node1.config.keyManager, { term: 2, view: 1, blockHash: block3Hash }, block3) }));
+        expect(spy2).to.have.been.calledWith(node1.pk, "view-change", aPayload(node2.config.keyManager, { term: 2, newView: 1 }));
 
         testNetwork.shutDown();
     });
@@ -198,8 +198,8 @@ describe("Leader Election", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blockUtils.provideNextBlock();
-        gossip.onRemoteMessage("view-change", aPayload(node1.pk, { newView: 1 }));
-        gossip.onRemoteMessage("view-change", aPayload(node1.pk, { newView: 1 }));
+        gossip.onRemoteMessage("view-change", aPayload(node1.config.keyManager, { newView: 1 }));
+        gossip.onRemoteMessage("view-change", aPayload(node1.config.keyManager, { newView: 1 }));
         await blockUtils.resolveAllValidations(true);
 
         expect(broadcastSpy).to.not.have.been.called;
@@ -217,9 +217,9 @@ describe("Leader Election", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         await blockUtils.provideNextBlock();
-        gossip.onRemoteMessage("view-change", aPayload(node1.pk, { newView: 1 }));
-        gossip.onRemoteMessage("view-change", aPayload(node1.pk, { newView: 1 }));
-        gossip.onRemoteMessage("view-change", aPayload(node1.pk, { newView: 1 }));
+        gossip.onRemoteMessage("view-change", aPayload(node1.config.keyManager, { newView: 1 }));
+        gossip.onRemoteMessage("view-change", aPayload(node1.config.keyManager, { newView: 1 }));
+        gossip.onRemoteMessage("view-change", aPayload(node1.config.keyManager, { newView: 1 }));
         await blockUtils.resolveAllValidations(true);
 
         expect(broadcastSpy).to.not.have.been.called;
