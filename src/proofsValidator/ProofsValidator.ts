@@ -3,7 +3,12 @@ import { PreparedProof } from "../storage/PBFTStorage";
 import { calculateBlockHash } from "../../test/blockUtils/BlockUtilsMock";
 import { BlockUtils } from "../blockUtils/BlockUtils";
 
-export function validatePrepared(preparedProof: PreparedProof, f: number, keyManager: KeyManager, blockUtils: BlockUtils): boolean {
+export function validatePrepared(
+    preparedProof: PreparedProof,
+    f: number,
+    keyManager: KeyManager,
+    blockUtils: BlockUtils,
+    calcLeaderPk: (view: number) => string): boolean {
     const { preparePayloads, prepreparePayload } = preparedProof;
     if (!preparePayloads || !prepreparePayload) {
         return false;
@@ -13,10 +18,14 @@ export function validatePrepared(preparedProof: PreparedProof, f: number, keyMan
         return false;
     }
 
-    const { block } = prepreparePayload;
+    const { block, pk: leaderPk } = prepreparePayload;
     const { view, term, blockHash } = prepreparePayload.data;
 
-    const allPreparesPkAreUnique = preparePayloads.reduce((prev, current) => prev.set(current.pk, true), new Map()).size === preparePayloads.length;
+    if (calcLeaderPk(view) !== leaderPk) {
+        return false;
+    }
+
+const allPreparesPkAreUnique = preparePayloads.reduce((prev, current) => prev.set(current.pk, true), new Map()).size === preparePayloads.length;
     if (!allPreparesPkAreUnique) {
         return false;
     }
