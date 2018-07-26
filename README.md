@@ -76,8 +76,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
   - [ ] on generate new-view add all the view-change proofs with a PP.
   - [ ] on new view verify the proof
 - [ ] validate all signed messages
-- [ ] call the clear pbftStorage after commit.
-- [ ] Ask Eran, how byzantine tolerant should we be. and create tests accordingly
+- [V] call the clear pbftStorage after commit.
 - [V] set the committee members pks in the PBFTTerm constructor
 - [V] clear the pbftStorage
 - [ ] Think about view-change counting, when to count myself.

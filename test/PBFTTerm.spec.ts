@@ -286,4 +286,25 @@ describe("PBFTTerm", () => {
         await node0BlockUtils.resolveAllValidations(false);
         expect(node0PbftTerm.getView()).to.equal(1);
     });
+
+    it("dipose should clear all the storage related to its term", async () => {
+        const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
+
+        const block: Block = aBlock(theGenesisBlock);
+        const blockHash = calculateBlockHash(block);
+
+        expect(node1Config.pbftStorage.getPrePrepareBlock(0, 0)).to.be.undefined;
+
+        // add preprepare to the storage
+        node1PbftTerm.onReceivePrePrepare(aPrePreparePayload(node0KeyManager, { term: 0, view: 0, blockHash }, block));
+        await nextTick();
+        await node1BlockUtils.resolveAllValidations(true);
+
+        expect(node1Config.pbftStorage.getPrePrepareBlock(0, 0)).to.be.equal(block);
+
+        node1PbftTerm.dispose();
+
+        expect(node1Config.pbftStorage.getPrePrepareBlock(0, 0)).to.be.undefined;
+
+    });
 });
