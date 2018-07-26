@@ -4,7 +4,7 @@ import { KeyManager } from "./keyManager/KeyManager";
 import { Logger } from "./logger/Logger";
 import { NetworkCommunication } from "./networkCommunication/NetworkCommunication";
 import { CommitPayload, NewViewPayload, PreparePayload, PrePreparePayload, ViewChangePayload } from "./networkCommunication/Payload";
-import { PBFTStorage } from "./storage/PBFTStorage";
+import { PBFTStorage, PreparedProof } from "./storage/PBFTStorage";
 import { ViewState } from "./ViewState";
 import { BlockUtils } from "./blockUtils/BlockUtils";
 
@@ -115,8 +115,9 @@ export class PBFTTerm {
 
     private onLeaderChange(): void {
         this.initView(this.view + 1);
+        const preparedProof: PreparedProof = this.pbftStorage.getLatestPreparedProof(this.term);
         this.logger.log({ Subject: "Flow", FlowType: "LeaderChange", leaderPk: this.leaderPk(), term: this.term, newView: this.view });
-        const data = { term: this.term, newView: this.view };
+        const data = { term: this.term, newView: this.view, preparedProof };
         const payload: ViewChangePayload = {
             pk: this.keyManager.getMyPublicKey(),
             signature: this.keyManager.sign(data),

@@ -1,4 +1,5 @@
 import { Block } from "../Block";
+import { PreparedProof } from "../storage/PBFTStorage";
 
 export interface Payload {
     pk: string;
@@ -35,6 +36,7 @@ export interface ViewChangePayload extends Payload {
     data: {
         term: number;
         newView: number;
+        preparedProof: PreparedProof;
     };
 }
 

@@ -16,6 +16,7 @@ import { blockMatcher } from "./matchers/blockMatcher";
 import { TestNetwork } from "./network/TestNetwork";
 import { nextTick } from "./timeUtils";
 import { KeyManagerMock } from "./keyManager/KeyManagerMock";
+import { InMemoryNetworkCommunicaiton } from "./networkCommunication/InMemoryNetworkCommunicaiton";
 chai.use(sinonChai);
 chai.use(blockMatcher);
 
@@ -306,5 +307,26 @@ describe("PBFTTerm", () => {
 
         expect(node1Config.pbftStorage.getPrePrepareBlock(0, 0)).to.be.undefined;
 
+    });
+
+    it("should send the prepared proof in the view-change", async () => {
+        const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
+        const block: Block = aBlock(theGenesisBlock);
+        const blockHash = calculateBlockHash(block);
+        const spy = sinon.spy(node1Config.networkCommunication, "sendToMembers");
+
+        // get node1 to be prepared on the block
+        node1Config.pbftStorage.storePrePrepare(0, 0, block, aPrePreparePayload(node0KeyManager, { term: 0, view: 0, blockHash }, block));
+        node1Config.pbftStorage.storePrepare(0, 0, blockHash, node2KeyManager.getMyPublicKey(), aPayload(node2KeyManager, { term: 0, view: 0, blockHash }));
+        node1Config.pbftStorage.storePrepare(0, 0, blockHash, node3KeyManager.getMyPublicKey(), aPayload(node3KeyManager, { term: 0, view: 0, blockHash }));
+        node1PbftTerm.onReceiveViewChange(aPayload(node0KeyManager, {term: 0, newView: 1}));
+        node1PbftTerm.onReceiveViewChange(aPayload(node2KeyManager, {term: 0, newView: 1}));
+        node1PbftTerm.onReceiveViewChange(aPayload(node3KeyManager, {term: 0, newView: 1}));
+        triggerElection();
+        nextTick();
+
+        const latestPreparedProof = node1Config.pbftStorage.getLatestPreparedProof(0);
+
+        expect(spy.args[0][2].data.preparedProof).to.deep.equal(latestPreparedProof);
     });
 });
