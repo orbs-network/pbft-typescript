@@ -78,6 +78,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
   - [ ] on generate new-view add all the view-change proofs with a PP.
   - [ ] on new view verify the proof
 - [ ] validate all signed messages
+- [ ] Check state still holds after async await functions (ex: when returning from requestNewBlock - view has changed)
 - [V] call the clear pbftStorage after commit.
 - [V] set the committee members pks in the PBFTTerm constructor
 - [V] clear the pbftStorage
