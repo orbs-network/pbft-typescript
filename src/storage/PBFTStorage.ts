@@ -18,7 +18,7 @@ export interface PBFTStorage {
     storePrepare(term: number, view: number, blockHash: Buffer, senderId: string, payload: PreparePayload): boolean;
     getPrepareSendersPks(term: number, view: number, blockHash: Buffer): string[];
     getPreparePayloads(term: number, view: number, blockHash: Buffer): PreparePayload[];
-    getLatestPreparedProof(term: number): PreparedProof;
+    getLatestPreparedProof(term: number, f: number): PreparedProof;
 
     storeCommit(term: number, view: number, blockHash: Buffer, senderId: string, payload: CommitPayload): boolean;
     getCommitSendersPks(term: number, view: number, blockHash: Buffer): string[];

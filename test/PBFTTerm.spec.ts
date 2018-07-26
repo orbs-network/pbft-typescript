@@ -325,7 +325,7 @@ describe("PBFTTerm", () => {
         triggerElection();
         nextTick();
 
-        const latestPreparedProof = node1Config.pbftStorage.getLatestPreparedProof(0);
+        const latestPreparedProof = node1Config.pbftStorage.getLatestPreparedProof(0, 1);
 
         expect(spy.args[0][2].data.preparedProof).to.deep.equal(latestPreparedProof);
     });

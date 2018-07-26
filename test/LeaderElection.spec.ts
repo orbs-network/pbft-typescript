@@ -26,7 +26,7 @@ describe("Leader Election", () => {
         triggerElection();
         await blockUtils.resolveAllValidations(true);
 
-        const node0PreparedProof: PreparedProof = testedNode.config.pbftStorage.getLatestPreparedProof(1);
+        const node0PreparedProof: PreparedProof = testedNode.config.pbftStorage.getLatestPreparedProof(1, 1);
         expect(unicastSpy).to.have.been.calledWith(nextLeader.pk, "view-change", aPayload(testedNode.config.keyManager, { term: 1, newView: 1, preparedProof: node0PreparedProof }));
 
         testNetwork.shutDown();
@@ -180,8 +180,8 @@ describe("Leader Election", () => {
         await blockUtils.provideNextBlock();
         await nextTick(); // await for blockStorage.getLastBlockHash
 
-        const node0PreparedProof: PreparedProof = node0.config.pbftStorage.getLatestPreparedProof(2);
-        const node2PreparedProof: PreparedProof = node2.config.pbftStorage.getLatestPreparedProof(2);
+        const node0PreparedProof: PreparedProof = node0.config.pbftStorage.getLatestPreparedProof(2, 1);
+        const node2PreparedProof: PreparedProof = node2.config.pbftStorage.getLatestPreparedProof(2, 1);
         const block3Hash = calculateBlockHash(block3);
         expect(spy0).to.have.been.calledWith(node1.pk, "view-change", aPayload(node0.config.keyManager, { term: 2, newView: 1, preparedProof: node0PreparedProof }));
         expect(spy1).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", aPayload(node1.config.keyManager, { term: 2, view: 1, PP: aPrePreparePayload(node1.config.keyManager, { term: 2, view: 1, blockHash: block3Hash }, block3) }));

@@ -58,11 +58,14 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] remove blockProvider & blockValidator
 - [V] PBFT.start should work with height
 - [V] TDD trigger once
-- [ ] Cache future messages and consume on each new term 
+- [ ] Cache future messages and consume on each new term
 - [ ] CommitBlock - commit the matching preprepared block in the pbftstorage - not the temp in state (this.CB)
   
-
 ## None Blockers
+
+- [V] call the clear pbftStorage after commit.
+- [V] set the committee members pks in the PBFTTerm constructor
+- [V] clear the pbftStorage
 - [!] suggest block in new-view (inside PP), with proofs from other nodes.
   - [V] PrePrepare Compare given blockHash with the hash of the given block
   - [V] Storage - store payloads
@@ -74,15 +77,12 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
     - [V] Verify the payloads
     - [V] Test that the pk is in the committee!
     - [V] Make sure that the prepares are not from the leader
-    - [ ] Send the prepared proof only if it's really prepared.
+    - [V] Prepared proof is valid only if it has 2f+1
   - [V] send the proof on view change
   - [ ] on generate new-view add all the view-change proofs with a PP.
   - [ ] on new view verify the proof
 - [ ] validate all signed messages
 - [ ] Check state still holds after async await functions (ex: when returning from requestNewBlock - view has changed)
-- [V] call the clear pbftStorage after commit.
-- [V] set the committee members pks in the PBFTTerm constructor
-- [V] clear the pbftStorage
 - [ ] Think about view-change counting, when to count myself.
 - [ ] add isACommitteeMember to PBFTTerm
 - [ ] Change logging methodology - warning - added metadata

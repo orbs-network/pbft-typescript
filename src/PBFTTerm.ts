@@ -99,6 +99,7 @@ export class PBFTTerm {
     }
 
     public dispose(): void {
+        this.pbftStorage.clearTermLogs(this.term);
         this.disposed = true;
         this.stopViewState();
     }
@@ -114,7 +115,7 @@ export class PBFTTerm {
 
     private onLeaderChange(): void {
         this.initView(this.view + 1);
-        const preparedProof: PreparedProof = this.pbftStorage.getLatestPreparedProof(this.term);
+        const preparedProof: PreparedProof = this.pbftStorage.getLatestPreparedProof(this.term, this.getF());
         this.logger.log({ Subject: "Flow", FlowType: "LeaderChange", leaderPk: this.leaderPk(), term: this.term, newView: this.view });
         const data = { term: this.term, newView: this.view, preparedProof };
         const payload: ViewChangePayload = {

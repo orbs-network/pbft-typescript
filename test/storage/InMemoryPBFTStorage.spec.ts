@@ -207,7 +207,7 @@ describe("PBFT In Memory Storage", () => {
                 prepreparePayload: prePreparePayload,
                 preparePayloads: [preparePayload1, preparePayload2]
             };
-            const actualProof: PreparedProof = storage.getLatestPreparedProof(term);
+            const actualProof: PreparedProof = storage.getLatestPreparedProof(term, 1);
             expect(actualProof).to.deep.equal(expectedProof);
         });
 
@@ -241,24 +241,37 @@ describe("PBFT In Memory Storage", () => {
                 prepreparePayload: prePreparePayload30,
                 preparePayloads: [preparePayload30_1, preparePayload30_2]
             };
-            const actualProof: PreparedProof = storage.getLatestPreparedProof(1);
+            const actualProof: PreparedProof = storage.getLatestPreparedProof(1, 1);
             expect(actualProof).to.deep.equal(expectedProof);
         });
 
-        it("should return the undefined is there was no PrePrepare", () => {
+        it("should return undefined if there was no PrePrepare", () => {
             const storage = new InMemoryPBFTStorage(logger);
             storage.storePrepare(term, view, blockHash, senderId1, preparePayload1);
             storage.storePrepare(term, view, blockHash, senderId2, preparePayload2);
 
-            const actualProof: PreparedProof = storage.getLatestPreparedProof(term);
+            const actualProof: PreparedProof = storage.getLatestPreparedProof(term, 1);
             expect(actualProof).to.be.undefined;
         });
 
-        it("should return the undefined is there was no Prepares", () => {
+        it("should return undefined if there was no Prepares", () => {
             const storage = new InMemoryPBFTStorage(logger);
             storage.storePrePrepare(term, view, block, prePreparePayload);
 
-            const actualProof: PreparedProof = storage.getLatestPreparedProof(term);
+            const actualProof: PreparedProof = storage.getLatestPreparedProof(term, 1);
+            expect(actualProof).to.be.undefined;
+        });
+
+        it("should return undefined where not enough Prepares", () => {
+            const storage = new InMemoryPBFTStorage(logger);
+            storage.storePrePrepare(term, view, block, prePreparePayload);
+            storage.storePrepare(term, view, blockHash, senderId1, preparePayload1);
+
+            const expectedProof: PreparedProof = {
+                prepreparePayload: prePreparePayload,
+                preparePayloads: [preparePayload1, preparePayload2]
+            };
+            const actualProof: PreparedProof = storage.getLatestPreparedProof(term, 3);
             expect(actualProof).to.be.undefined;
         });
     });
