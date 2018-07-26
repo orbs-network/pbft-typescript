@@ -58,9 +58,11 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [V] remove blockProvider & blockValidator
 - [V] PBFT.start should work with height
 - [V] TDD trigger once
+- [ ] Cache future messages and consume on each new term 
+- [ ] CommitBlock - commit the matching preprepared block in the pbftstorage - not the temp in state (this.CB)
+  
 
 ## None Blockers
-
 - [!] suggest block in new-view (inside PP), with proofs from other nodes.
   - [V] PrePrepare Compare given blockHash with the hash of the given block
   - [V] Storage - store payloads
@@ -77,6 +79,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
   - [ ] on generate new-view add all the view-change proofs with a PP.
   - [ ] on new view verify the proof
 - [ ] validate all signed messages
+- [ ] Check state still holds after async await functions (ex: when returning from requestNewBlock - view has changed)
 - [V] call the clear pbftStorage after commit.
 - [V] set the committee members pks in the PBFTTerm constructor
 - [V] clear the pbftStorage

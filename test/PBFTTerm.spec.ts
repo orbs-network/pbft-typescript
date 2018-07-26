@@ -319,9 +319,9 @@ describe("PBFTTerm", () => {
         node1Config.pbftStorage.storePrePrepare(0, 0, block, aPrePreparePayload(node0KeyManager, { term: 0, view: 0, blockHash }, block));
         node1Config.pbftStorage.storePrepare(0, 0, blockHash, node2KeyManager.getMyPublicKey(), aPayload(node2KeyManager, { term: 0, view: 0, blockHash }));
         node1Config.pbftStorage.storePrepare(0, 0, blockHash, node3KeyManager.getMyPublicKey(), aPayload(node3KeyManager, { term: 0, view: 0, blockHash }));
-        node1PbftTerm.onReceiveViewChange(aPayload(node0KeyManager, {term: 0, newView: 1}));
-        node1PbftTerm.onReceiveViewChange(aPayload(node2KeyManager, {term: 0, newView: 1}));
-        node1PbftTerm.onReceiveViewChange(aPayload(node3KeyManager, {term: 0, newView: 1}));
+        node1PbftTerm.onReceiveViewChange(aPayload(node0KeyManager, { term: 0, newView: 1 }));
+        node1PbftTerm.onReceiveViewChange(aPayload(node2KeyManager, { term: 0, newView: 1 }));
+        node1PbftTerm.onReceiveViewChange(aPayload(node3KeyManager, { term: 0, newView: 1 }));
         triggerElection();
         nextTick();
 

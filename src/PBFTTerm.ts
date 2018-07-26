@@ -101,7 +101,6 @@ export class PBFTTerm {
     public dispose(): void {
         this.disposed = true;
         this.stopViewState();
-        this.pbftStorage.clearTermLogs(this.term);
     }
 
     public leaderPk(): string {
