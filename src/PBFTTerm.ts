@@ -283,14 +283,14 @@ export class PBFTTerm {
 
     private checkElected(term: number, view: number): void {
         if (this.newViewLocally < view) {
-            const countElected = this.countElected(term, view);
-            if (countElected >= this.getF() * 2 + 1) {
-                this.onElected(view);
+            const viewChangeProof = this.pbftStorage.getViewChangeProof(term, view, this.getF());
+            if (viewChangeProof) {
+                this.onElected(view, viewChangeProof);
             }
         }
     }
 
-    private async onElected(view: number) {
+    private async onElected(view: number, viewChangeProof: ViewChangePayload[]) {
         this.newViewLocally = view;
         this.initView(view);
         const block: Block = await this.blockUtils.requestNewBlock(this.term);
@@ -404,10 +404,6 @@ export class PBFTTerm {
 
     public isLeader(): boolean {
         return this.leaderPk() === this.keyManager.getMyPublicKey();
-    }
-
-    private countElected(term: number, view: number): number {
-        return this.pbftStorage.countOfViewChange(term, view);
     }
 
     private countPrepared(term: number, view: number, blockHash: Buffer): number {

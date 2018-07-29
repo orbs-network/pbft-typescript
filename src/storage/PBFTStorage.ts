@@ -5,6 +5,7 @@ export interface PreparedProof {
     prepreparePayload: PrePreparePayload;
     preparePayloads: PreparePayload[];
 }
+
 //
 // This API stores messages that the PBFT received.
 // The only assumption is that a message will be stored only once per parameter
@@ -25,7 +26,7 @@ export interface PBFTStorage {
     getCommitPayloads(term: number, view: number, blockHash: Buffer): CommitPayload[];
 
     storeViewChange(term: number, view: number, senderId: string, payload: ViewChangePayload): boolean;
-    countOfViewChange(term: number, view: number): number;
+    getViewChangeProof(term: number, view: number, f: number): ViewChangePayload[];
 
     clearTermLogs(term: number): void;
 }

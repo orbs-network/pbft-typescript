@@ -226,16 +226,16 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         return true;
     }
 
-    countOfViewChange(term: number, view: number): number {
+    getViewChangeProof(term: number, view: number, f: number): ViewChangePayload[] {
         const viewsMap = this.viewChangeStorage.get(term);
         if (viewsMap) {
             const sendersMap = viewsMap.get(view);
-            if (sendersMap) {
-                return sendersMap.size;
+            if (sendersMap && sendersMap.size >= (f * 2 + 1)) {
+                return Array.from(sendersMap.values());
             }
         }
 
-        return 0;
+        return [];
     }
 
     clearTermLogs(term: number): void {
