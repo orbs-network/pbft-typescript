@@ -370,10 +370,20 @@ export class PBFTTerm {
 
     public async onReceiveNewView(payload: NewViewPayload): Promise<void> {
         const { pk: senderPk, data } = payload;
-        const { PP, view, term } = data;
+        const { PP, view, term, VCProof } = data;
         const wanaBeLeaderId = this.calcLeaderPk(view);
         if (wanaBeLeaderId !== senderPk) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", rejected because it match the new id (${view})` });
+            return;
+        }
+
+        if (!VCProof || !Array.isArray(VCProof)) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", VCProof is invalid proofs array` });
+            return;
+        }
+
+        if (VCProof.length < this.getF() * 2 + 1) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", VCProof has not enough VCs` });
             return;
         }
 

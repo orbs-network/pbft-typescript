@@ -7,7 +7,7 @@ import * as sinonChai from "sinon-chai";
 import { KeyManager, PBFT } from "../src";
 import { Block } from "../src/Block";
 import { Config } from "../src/Config";
-import { ViewChangePayload, PrePreparePayload } from "../src/networkCommunication/Payload";
+import { ViewChangePayload, PrePreparePayload, NewViewPayload } from "../src/networkCommunication/Payload";
 import { PBFTTerm, TermConfig } from "../src/PBFTTerm";
 import { PreparedProof } from "../src/storage/PBFTStorage";
 import { BlockUtilsMock, calculateBlockHash } from "./blockUtils/BlockUtilsMock";
@@ -24,10 +24,12 @@ describe("PBFTTerm", () => {
     let testNetwork: TestNetwork;
     let node0BlockUtils: BlockUtilsMock;
     let node1BlockUtils: BlockUtilsMock;
+    let node2BlockUtils: BlockUtilsMock;
 
     let triggerElection: () => void;
     let node0Config: Config;
     let node1Config: Config;
+    let node2Config: Config;
     let node0Pk: string;
     let node1Pk: string;
     let node2Pk: string;
@@ -44,8 +46,10 @@ describe("PBFTTerm", () => {
         triggerElection = testNetworkData.triggerElection;
         node0Config = testNetwork.nodes[0].config;
         node1Config = testNetwork.nodes[1].config;
+        node2Config = testNetwork.nodes[2].config;
         node0BlockUtils = node0Config.blockUtils as BlockUtilsMock;
         node1BlockUtils = node1Config.blockUtils as BlockUtilsMock;
+        node2BlockUtils = node2Config.blockUtils as BlockUtilsMock;
         node0Pk = testNetwork.nodes[0].pk;
         node1Pk = testNetwork.nodes[1].pk;
         node2Pk = testNetwork.nodes[2].pk;
@@ -222,15 +226,16 @@ describe("PBFTTerm", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         const blockHash = calculateBlockHash(block);
+        const VCProof: ViewChangePayload[] = [undefined, undefined, undefined];
 
         // from the leader => ok
-        node1PbftTerm.onReceiveNewView(aPayload(node2KeyManager, { term: 1, view: 2, PP: aPrePreparePayload(node2KeyManager, { term: 1, view: 2, blockHash }, block) }));
+        node1PbftTerm.onReceiveNewView(aPayload(node2KeyManager, { term: 1, view: 2, PP: aPrePreparePayload(node2KeyManager, { term: 1, view: 2, blockHash }, block), VCProof }));
         await nextTick();
         await node1BlockUtils.resolveAllValidations(true);
         expect(node1PbftTerm.getView()).to.equal(2);
 
         // not from the leader => ignore
-        node1PbftTerm.onReceiveNewView(aPayload(node2KeyManager, { term: 1, view: 3, PP: aPrePreparePayload(node2KeyManager, { term: 1, view: 3, blockHash }, block) }));
+        node1PbftTerm.onReceiveNewView(aPayload(node2KeyManager, { term: 1, view: 3, PP: aPrePreparePayload(node2KeyManager, { term: 1, view: 3, blockHash }, block), VCProof }));
         await nextTick();
         await node1BlockUtils.resolveAllValidations(true);
         expect(node1PbftTerm.getView()).to.equal(2);
@@ -255,15 +260,16 @@ describe("PBFTTerm", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         const blockHash = calculateBlockHash(block);
+        const VCProof: ViewChangePayload[] = [undefined, undefined, undefined];
 
         // same view => ok
-        node0PbftTerm.onReceiveNewView(aPayload(node1KeyManager, { term: 1, view: 1, PP: aPrePreparePayload(node1KeyManager, { term: 1, view: 1, blockHash }, block) }));
+        node0PbftTerm.onReceiveNewView(aPayload(node1KeyManager, { term: 1, view: 1, PP: aPrePreparePayload(node1KeyManager, { term: 1, view: 1, blockHash }, block), VCProof }));
         await nextTick();
         await node0BlockUtils.resolveAllValidations(true);
         expect(node0PbftTerm.getView()).to.equal(1);
 
         // miss matching view => ignore
-        node0PbftTerm.onReceiveNewView(aPayload(node1KeyManager, { term: 1, view: 1, PP: aPrePreparePayload(node1KeyManager, { term: 1, view: 2, blockHash }, block) }));
+        node0PbftTerm.onReceiveNewView(aPayload(node1KeyManager, { term: 1, view: 1, PP: aPrePreparePayload(node1KeyManager, { term: 1, view: 2, blockHash }, block), VCProof }));
         await nextTick();
         await node0BlockUtils.resolveAllValidations(true);
         expect(node0PbftTerm.getView()).to.equal(1);
@@ -274,15 +280,17 @@ describe("PBFTTerm", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         const blockHash = calculateBlockHash(block);
+        const preparedProof: PreparedProof = { prepreparePayload: undefined, preparePayloads: undefined };
+        const VCProof: ViewChangePayload[] = [undefined, undefined, undefined];
 
         // pass validation => ok
-        node0PbftTerm.onReceiveNewView(aPayload(node1KeyManager, { term: 1, view: 1, PP: aPrePreparePayload(node1KeyManager, { term: 1, view: 1, blockHash }, block) }));
+        node0PbftTerm.onReceiveNewView(aPayload(node1KeyManager, { term: 1, view: 1, PP: aPrePreparePayload(node1KeyManager, { term: 1, view: 1, blockHash }, block), VCProof }));
         await nextTick();
         await node0BlockUtils.resolveAllValidations(true);
         expect(node0PbftTerm.getView()).to.equal(1);
 
         // doesn't pass validation => ignore
-        node0PbftTerm.onReceiveNewView(aPayload(node1KeyManager, { term: 1, view: 2, PP: aPrePreparePayload(node1KeyManager, { term: 1, view: 2, blockHash }, block) }));
+        node0PbftTerm.onReceiveNewView(aPayload(node1KeyManager, { term: 1, view: 2, PP: aPrePreparePayload(node1KeyManager, { term: 1, view: 2, blockHash }, block), VCProof }));
         await nextTick();
         await node0BlockUtils.resolveAllValidations(false);
         expect(node0PbftTerm.getView()).to.equal(1);
@@ -341,5 +349,36 @@ describe("PBFTTerm", () => {
         node1PbftTerm.onReceiveViewChange(payload);
 
         expect(spy).to.not.have.been.called;
+    });
+
+    describe("view-change proofs", () => {
+        async function testProof(VCProof: ViewChangePayload[]) {
+            const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
+            const block: Block = aBlock(theGenesisBlock);
+            const blockHash = calculateBlockHash(block);
+            const prePreparePayload: PrePreparePayload = aPrePreparePayload(node2KeyManager, { term: 1, view: 2, blockHash }, block);
+            const newViewPayload: NewViewPayload = aPayload(node2KeyManager, { term: 1, view: 2, PP: prePreparePayload, VCProof });
+
+            expect(node1PbftTerm.getView()).to.equal(0);
+
+            node1PbftTerm.onReceiveNewView(newViewPayload);
+            await nextTick();
+            await node1BlockUtils.resolveAllValidations(true);
+
+            expect(node1PbftTerm.getView()).to.equal(0);
+        }
+
+        it("onNewView should not accept new view without view-change proofs", async () => {
+            await testProof(undefined);
+        });
+
+        it("onNewView should not accept new view with invalid view-change", async () => {
+            const badValue: any = 666;
+            await testProof(badValue);
+        });
+
+        it("onNewView should not accept new view without 2f+1 view-change proofs", async () => {
+            await testProof([]);
+        });
     });
 });
