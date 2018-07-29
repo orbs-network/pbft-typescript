@@ -105,7 +105,7 @@ describe("Leader Election", () => {
         await nextTick();
 
         const block2Hash = calculateBlockHash(block2);
-        expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", aPayload(node1.config.keyManager, { term: 1, view: 1, PP: aPrePreparePayload(node1.config.keyManager, { term: 1, view: 1, blockHash: block2Hash}, block2 ) }));
+        expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", aPayload(node1.config.keyManager, { term: 1, view: 1, PP: aPrePreparePayload(node1.config.keyManager, { term: 1, view: 1, blockHash: block2Hash }, block2) }));
         testNetwork.shutDown();
     });
 

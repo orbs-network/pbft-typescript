@@ -7,6 +7,7 @@ import { CommitPayload, NewViewPayload, PreparePayload, PrePreparePayload, ViewC
 import { PBFTStorage, PreparedProof } from "./storage/PBFTStorage";
 import { ViewState } from "./ViewState";
 import { BlockUtils } from "./blockUtils/BlockUtils";
+import { validatePrepared } from "./proofsValidator/ProofsValidator";
 
 export type onNewBlockCB = (block: Block) => void;
 
@@ -259,9 +260,14 @@ export class PBFTTerm {
 
     public onReceiveViewChange(payload: ViewChangePayload): void {
         const { pk: senderPk, data } = payload;
-        const { newView, term } = data;
+        const { newView, term, preparedProof } = data;
         if (this.view > newView) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because of unrelated view` });
+            return;
+        }
+
+        if (preparedProof && validatePrepared(preparedProof, this.getF(), this.keyManager, this.blockUtils, view => this.calcLeaderPk(view)) === false) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the preparedProof is invalid` });
             return;
         }
 

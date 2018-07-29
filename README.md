@@ -79,9 +79,11 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
     - [V] Make sure that the prepares are not from the leader
     - [V] Prepared proof is valid only if it has 2f+1
   - [V] send the proof on view change
+  - [V] validate the proof on view change
   - [ ] on generate new-view add all the view-change proofs with a PP.
   - [ ] on new view verify the proof
 - [ ] validate all signed messages
+- [ ] PBFT should hold history, and play it back on new term.
 - [ ] Check state still holds after async await functions (ex: when returning from requestNewBlock - view has changed)
 - [ ] Think about view-change counting, when to count myself.
 - [ ] add isACommitteeMember to PBFTTerm

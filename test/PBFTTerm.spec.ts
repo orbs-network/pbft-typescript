@@ -4,10 +4,12 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
-import { PBFT, BlockUtils, KeyManager } from "../src";
+import { KeyManager, PBFT } from "../src";
 import { Block } from "../src/Block";
 import { Config } from "../src/Config";
+import { ViewChangePayload, PrePreparePayload } from "../src/networkCommunication/Payload";
 import { PBFTTerm, TermConfig } from "../src/PBFTTerm";
+import { PreparedProof } from "../src/storage/PBFTStorage";
 import { BlockUtilsMock, calculateBlockHash } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aPayload, aPrePreparePayload } from "./builders/PayloadBuilder";
@@ -15,8 +17,6 @@ import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
 import { blockMatcher } from "./matchers/blockMatcher";
 import { TestNetwork } from "./network/TestNetwork";
 import { nextTick } from "./timeUtils";
-import { KeyManagerMock } from "./keyManager/KeyManagerMock";
-import { InMemoryNetworkCommunicaiton } from "./networkCommunication/InMemoryNetworkCommunicaiton";
 chai.use(sinonChai);
 chai.use(blockMatcher);
 
@@ -328,5 +328,18 @@ describe("PBFTTerm", () => {
         const latestPreparedProof = node1Config.pbftStorage.getLatestPreparedProof(0, 1);
 
         expect(spy.args[0][2].data.preparedProof).to.deep.equal(latestPreparedProof);
+    });
+
+    it("should ignore view-change with an invalid prepared proof", async () => {
+        const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
+        const spy = sinon.spy(node1Config.pbftStorage, "storeViewChange");
+
+        const block: Block = aBlock(theGenesisBlock);
+        const prepreparePayload: PrePreparePayload = aPrePreparePayload(node0Config.keyManager, {}, block);
+        const preparedProof: PreparedProof = { prepreparePayload, preparePayloads: undefined };
+        const payload: ViewChangePayload = aPayload(node0Config.keyManager, { term: 0, newView: 1, preparedProof });
+        node1PbftTerm.onReceiveViewChange(payload);
+
+        expect(spy).to.not.have.been.called;
     });
 });
