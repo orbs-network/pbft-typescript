@@ -8,6 +8,7 @@ import { aPayload, aPrePreparePayload } from "./builders/PayloadBuilder";
 import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
 import { nextTick } from "./timeUtils";
 import { PreparedProof } from "../src/storage/PBFTStorage";
+import { ViewChangePayload, NewViewPayload, PrePreparePayload } from "../src/networkCommunication/Payload";
 
 chai.use(sinonChai);
 
@@ -181,11 +182,17 @@ describe("Leader Election", () => {
         await nextTick(); // await for blockStorage.getLastBlockHash
 
         const node0PreparedProof: PreparedProof = node0.config.pbftStorage.getLatestPreparedProof(2, 1);
+        const node0VCExpectedPayload: ViewChangePayload = aPayload(node0.config.keyManager, { term: 2, newView: 1, preparedProof: node0PreparedProof });
+        expect(spy0).to.have.been.calledWith(node1.pk, "view-change", node0VCExpectedPayload);
+
         const node2PreparedProof: PreparedProof = node2.config.pbftStorage.getLatestPreparedProof(2, 1);
+        const node2VCExpectedPayload: ViewChangePayload = aPayload(node2.config.keyManager, { term: 2, newView: 1, preparedProof: node2PreparedProof });
+        expect(spy2).to.have.been.calledWith(node1.pk, "view-change", node2VCExpectedPayload);
+
         const block3Hash = calculateBlockHash(block3);
-        expect(spy0).to.have.been.calledWith(node1.pk, "view-change", aPayload(node0.config.keyManager, { term: 2, newView: 1, preparedProof: node0PreparedProof }));
-        expect(spy1).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", aPayload(node1.config.keyManager, { term: 2, view: 1, PP: aPrePreparePayload(node1.config.keyManager, { term: 2, view: 1, blockHash: block3Hash }, block3) }));
-        expect(spy2).to.have.been.calledWith(node1.pk, "view-change", aPayload(node2.config.keyManager, { term: 2, newView: 1, preparedProof: node2PreparedProof }));
+        const PPPayload: PrePreparePayload = aPrePreparePayload(node1.config.keyManager, { term: 2, view: 1, blockHash: block3Hash }, block3);
+        const node1NVExpectedPayload: NewViewPayload = aPayload(node1.config.keyManager, { term: 2, view: 1, PP: PPPayload });
+        expect(spy1).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", node1NVExpectedPayload);
 
         testNetwork.shutDown();
     });
