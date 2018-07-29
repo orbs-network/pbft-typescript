@@ -81,7 +81,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
   - [V] send the proof on view change
   - [V] validate the proof on view change
   - [V] on generate new-view add the view-change proof.
-  - [ ] extract ViewChange tests from onReceiveViewChange to a reusable function
+  - [V] extract ViewChange tests from onReceiveViewChange to a reusable function
   - [ ] onReceiveNewView verify the proof
     - [V] not undefined
     - [V] isArray

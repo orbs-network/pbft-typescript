@@ -259,26 +259,34 @@ export class PBFTTerm {
     }
 
     public onReceiveViewChange(payload: ViewChangePayload): void {
+        if (this.isViewChangePayloadValid(this.view, payload)) {
+            const { data, pk: senderPk } = payload;
+            const { newView, term } = data;
+            this.pbftStorage.storeViewChange(term, newView, senderPk, payload);
+            this.checkElected(term, newView);
+        }
+    }
+
+    private isViewChangePayloadValid(targetView: number, payload: ViewChangePayload): boolean {
         const { pk: senderPk, data } = payload;
         const { newView, term, preparedProof } = data;
-        if (this.view > newView) {
+        if (targetView > newView) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because of unrelated view` });
-            return;
+            return false;
         }
 
         if (preparedProof && validatePrepared(preparedProof, this.getF(), this.keyManager, this.blockUtils, view => this.calcLeaderPk(view)) === false) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the preparedProof is invalid` });
-            return;
+            return false;
         }
 
         const leaderToBePk = this.calcLeaderPk(newView);
         if (leaderToBePk !== this.keyManager.getMyPublicKey()) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], newView:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the newView doesn't match me as the leader` });
-            return;
+            return false;
         }
 
-        this.pbftStorage.storeViewChange(term, newView, senderPk, payload);
-        this.checkElected(term, newView);
+        return true;
     }
 
     private checkElected(term: number, view: number): void {
