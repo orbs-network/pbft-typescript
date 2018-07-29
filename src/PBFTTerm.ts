@@ -290,7 +290,7 @@ export class PBFTTerm {
         }
     }
 
-    private async onElected(view: number, viewChangeProof: ViewChangePayload[]) {
+    private async onElected(view: number, VCProof: ViewChangePayload[]) {
         this.newViewLocally = view;
         this.initView(view);
         const block: Block = await this.blockUtils.requestNewBlock(this.term);
@@ -308,7 +308,7 @@ export class PBFTTerm {
         };
         this.CB = block;
         this.logger.log({ Subject: "Flow", FlowType: "Elected", term: this.term, view, blockHash });
-        const dataNV = { term: this.term, view, PP };
+        const dataNV = { term: this.term, view, PP, VCProof };
         const newViewPayload: NewViewPayload = {
             pk: this.keyManager.getMyPublicKey(),
             signature: this.keyManager.sign(dataNV),

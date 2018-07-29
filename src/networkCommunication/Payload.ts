@@ -43,6 +43,7 @@ export interface ViewChangePayload extends Payload {
 export interface NewViewPayload extends Payload {
     data: {
         PP: PrePreparePayload;
+        VCProof: ViewChangePayload[];
         term: number;
         view: number;
     };

@@ -80,8 +80,8 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
     - [V] Prepared proof is valid only if it has 2f+1
   - [V] send the proof on view change
   - [V] validate the proof on view change
-  - [ ] on generate new-view add all the view-change proofs.
-  - [ ] on new view verify the proof
+  - [V] on generate new-view add the view-change proof.
+  - [ ] onReceiveNewView verify the proof
   - [ ] choose the "best" block (Out of view-change proofs) to offer on new-view
 - [ ] validate all signed messages
 - [ ] PBFT should hold history, and play it back on new term.

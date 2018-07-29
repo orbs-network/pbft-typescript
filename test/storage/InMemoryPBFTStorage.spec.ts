@@ -46,7 +46,7 @@ describe("PBFT In Memory Storage", () => {
         expect(storage.getPrePreparePayload(term, view)).to.be.undefined;
         expect(storage.getPreparePayloads(term, view, blockHash).length).to.equal(0);
         expect(storage.getCommitSendersPks(term, view, blockHash).length).to.equal(0);
-        expect(storage.getViewChangeProof(term, view, 0).length).to.equal(0);
+        expect(storage.getViewChangeProof(term, view, 0)).to.be.undefined;
     });
 
     it("storing a preprepare returns true if it stored a new value, false if it already exists", () => {
@@ -166,7 +166,6 @@ describe("PBFT In Memory Storage", () => {
                 const term1 = Math.floor(Math.random() * 1000);
                 const term2 = Math.floor(Math.random() * 1000);
                 const view1 = Math.floor(Math.random() * 1000);
-                const view2 = Math.floor(Math.random() * 1000);
                 const sender1Id = Math.random().toString();
                 const sender2Id = Math.random().toString();
                 const sender3Id = Math.random().toString();
@@ -175,10 +174,11 @@ describe("PBFT In Memory Storage", () => {
                 const sender3KeyManager: KeyManager = new KeyManagerMock(sender3Id);
                 storage.storeViewChange(term1, view1, sender1Id, aPayload(sender1KeyManager, {}));
                 storage.storeViewChange(term1, view1, sender2Id, aPayload(sender2KeyManager, {}));
-                storage.storeViewChange(term1, view2, sender3Id, aPayload(sender3KeyManager, {}));
+                storage.storeViewChange(term1, view1, sender3Id, aPayload(sender3KeyManager, {}));
                 storage.storeViewChange(term2, view1, sender3Id, aPayload(sender3KeyManager, {}));
-                const actual = storage.getViewChangeProof(term1, view1, 0);
-                expect(actual.length).to.deep.equal(2);
+                const actual = storage.getViewChangeProof(term1, view1, 1);
+                const expected = 1 * 2 + 1;
+                expect(actual.length).to.deep.equal(expected);
             });
         });
 

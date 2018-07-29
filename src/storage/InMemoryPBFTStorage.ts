@@ -230,12 +230,11 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         const viewsMap = this.viewChangeStorage.get(term);
         if (viewsMap) {
             const sendersMap = viewsMap.get(view);
-            if (sendersMap && sendersMap.size >= (f * 2 + 1)) {
-                return Array.from(sendersMap.values());
+            const minimumNodes = f * 2 + 1;
+            if (sendersMap && sendersMap.size >= minimumNodes) {
+                return Array.from(sendersMap.values()).slice(0, minimumNodes);
             }
         }
-
-        return [];
     }
 
     clearTermLogs(term: number): void {
