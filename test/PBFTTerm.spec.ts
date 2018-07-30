@@ -331,7 +331,6 @@ describe("PBFTTerm", () => {
         node0PbftTerm.onReceiveNewView(aPayload(node2KeyManager, { term: 1, view: 2, PP: aPrePreparePayload(node2KeyManager, { term: 1, view: 2, blockHash }, block), VCProof: VCProofBad }));
         await nextTick();
         await node0BlockUtils.resolveAllValidations(true);
-        await nextTick();
         expect(node0PbftTerm.getView()).to.equal(1);
     });
 
