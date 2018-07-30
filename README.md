@@ -66,7 +66,8 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [x] call the clear pbftStorage after commit.
 - [x] set the committee members pks in the PBFTTerm constructor
 - [x] clear the pbftStorage
-- [!] suggest block in new-view (inside PP), with proofs from other nodes.
+- [ ] suggest block in new-view (inside PP), with proofs from other nodes.
+  - [ ] choose the "best" block (Out of view-change proofs) to offer on new-view
   - [x] PrePrepare Compare given blockHash with the hash of the given block
   - [x] Storage - store payloads
   - [x] GetLatestPreparedProof from storage
@@ -76,7 +77,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
     - [x] count null as a valid proof
     - [x] Verify the payloads
     - [x] Test that the pk is in the committee!
-    - [ ] Make sure that the prepares are not from the leader
+    - [x] Make sure that the prepares are not from the leader
     - [x] Prepared proof is valid only if it has 2f+1
   - [x] send the proof on view change
   - [x] validate the proof on view change
@@ -90,7 +91,6 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
     - [x] all proofs senders a unique
     - [x] all VC terms match the given term
     - [x] all VC views match the given view
-  - [ ] choose the "best" block (Out of view-change proofs) to offer on new-view
 - [ ] validate all signed messages
 - [ ] Check state still holds after async await functions (ex: when returning from requestNewBlock - view has changed)
 - [ ] Think about view-change counting, when to count myself.

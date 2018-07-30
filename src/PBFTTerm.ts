@@ -275,7 +275,7 @@ export class PBFTTerm {
             return false;
         }
 
-        if (preparedProof && validatePrepared(preparedProof, this.getF(), this.keyManager, this.blockUtils, view => this.calcLeaderPk(view)) === false) {
+        if (preparedProof && validatePrepared(preparedProof, this.getF(), this.keyManager, this.blockUtils, this.termMembersPKs, view => this.calcLeaderPk(view)) === false) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the preparedProof is invalid` });
             return false;
         }

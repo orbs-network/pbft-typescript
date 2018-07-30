@@ -7,6 +7,7 @@ export function validatePrepared(
     f: number,
     keyManager: KeyManager,
     blockUtils: BlockUtils,
+    membersPKs: string[],
     calcLeaderPk: (view: number) => string): boolean {
 
     const { preparePayloads, prepreparePayload } = preparedProof;
@@ -38,6 +39,16 @@ export function validatePrepared(
 
     const allPreparesPkAreUnique = preparePayloads.reduce((prev, current) => prev.set(current.pk, true), new Map()).size === preparePayloads.length;
     if (!allPreparesPkAreUnique) {
+        return false;
+    }
+
+    const allPreparesPKsAreMembers = preparePayloads.every(p => membersPKs.indexOf(p.pk) > -1);
+    if (allPreparesPKsAreMembers == false) {
+        return false;
+    }
+
+    const allPrepraresAreNotLeaders = preparePayloads.every(p => p.pk !== leaderPk);
+    if (allPrepraresAreNotLeaders === false) {
         return false;
     }
 
