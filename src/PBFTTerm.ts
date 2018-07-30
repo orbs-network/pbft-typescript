@@ -267,10 +267,10 @@ export class PBFTTerm {
         }
     }
 
-    private isViewChangePayloadValid(targetLeaderPk: string, targetView: number, payload: ViewChangePayload): boolean {
+    private isViewChangePayloadValid(targetLeaderPk: string, view: number, payload: ViewChangePayload): boolean {
         const { pk: senderPk, data } = payload;
         const { newView, term, preparedProof } = data;
-        if (targetView > newView) {
+        if (view > newView) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because of unrelated view` });
             return false;
         }
@@ -376,12 +376,17 @@ export class PBFTTerm {
         }
     }
 
-    private validateViewChangeProof(targetView: number, VCProof: ViewChangePayload[]): boolean {
+    private validateViewChangeProof(targetTerm: number, targetView: number, VCProof: ViewChangePayload[]): boolean {
         if (!VCProof || !Array.isArray(VCProof)) {
             return false;
         }
 
         if (VCProof.length < this.getF() * 2 + 1) {
+            return false;
+        }
+
+        const allMatchTargetTerm = VCProof.every(viewChangePayload => viewChangePayload.data.term === targetTerm);
+        if (!allMatchTargetTerm) {
             return false;
         }
 
@@ -403,7 +408,7 @@ export class PBFTTerm {
             return;
         }
 
-        if (this.validateViewChangeProof(view, VCProof) === false) {
+        if (this.validateViewChangeProof(term, view, VCProof) === false) {
             this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", VCProof is invalid` });
             return;
         }
