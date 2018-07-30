@@ -306,7 +306,7 @@ describe("PBFTTerm", () => {
         expect(node0PbftTerm.getView()).to.equal(1);
     });
 
-    it.only("onReceiveNewView should not accept messages with VCProof with duplicate sender", async () => {
+    it("onReceiveNewView should not accept messages with VCProof with duplicate sender", async () => {
         const node0PbftTerm: PBFTTerm = createPBFTTerm(node0Config);
 
         const block: Block = aBlock(theGenesisBlock);
