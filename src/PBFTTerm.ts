@@ -390,6 +390,11 @@ export class PBFTTerm {
             return false;
         }
 
+        const allMatchTargetView = VCProof.every(viewChangePayload => viewChangePayload.data.newView === targetView);
+        if (!allMatchTargetView) {
+            return false;
+        }
+
         const allPkAreUnique = VCProof.reduce((prev, current) => prev.set(current.pk, true), new Map()).size === VCProof.length;
         if (!allPkAreUnique) {
             return false;

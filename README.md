@@ -82,14 +82,14 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
   - [x] validate the proof on view change
   - [x] on generate new-view add the view-change proof.
   - [x] extract ViewChange tests from onReceiveViewChange to a reusable function
-  - [ ] onReceiveNewView verify the proof
+  - [x] onReceiveNewView verify the proof
     - [x] not undefined
     - [x] isArray
     - [x] 2f+1 proofs
     - [x] validate using isViewChangePayloadValid
     - [x] all proofs senders a unique
     - [x] all VC terms match the given term
-    - [ ] all VC views match the given view
+    - [x] all VC views match the given view
   - [ ] choose the "best" block (Out of view-change proofs) to offer on new-view
 - [ ] validate all signed messages
 - [ ] Check state still holds after async await functions (ex: when returning from requestNewBlock - view has changed)
