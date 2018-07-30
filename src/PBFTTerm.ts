@@ -259,7 +259,7 @@ export class PBFTTerm {
     }
 
     public onReceiveViewChange(payload: ViewChangePayload): void {
-        if (this.isViewChangePayloadValid(this.view, payload)) {
+        if (this.isViewChangePayloadValid(this.keyManager.getMyPublicKey(), this.view, payload)) {
             const { data, pk: senderPk } = payload;
             const { newView, term } = data;
             this.pbftStorage.storeViewChange(term, newView, senderPk, payload);
@@ -267,7 +267,7 @@ export class PBFTTerm {
         }
     }
 
-    private isViewChangePayloadValid(targetView: number, payload: ViewChangePayload): boolean {
+    private isViewChangePayloadValid(targetLeaderPk: string, targetView: number, payload: ViewChangePayload): boolean {
         const { pk: senderPk, data } = payload;
         const { newView, term, preparedProof } = data;
         if (targetView > newView) {
@@ -281,8 +281,8 @@ export class PBFTTerm {
         }
 
         const leaderToBePk = this.calcLeaderPk(newView);
-        if (leaderToBePk !== this.keyManager.getMyPublicKey()) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], newView:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the newView doesn't match me as the leader` });
+        if (leaderToBePk !== targetLeaderPk) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], newView:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the newView doesn't match the target leader` });
             return false;
         }
 
@@ -376,6 +376,18 @@ export class PBFTTerm {
         }
     }
 
+    private validateViewChangeProof(targetView: number, VCProof: ViewChangePayload[]): boolean {
+        if (!VCProof || !Array.isArray(VCProof)) {
+            return false;
+        }
+
+        if (VCProof.length < this.getF() * 2 + 1) {
+            return false;
+        }
+
+        return VCProof.every(viewChangePayload => this.isViewChangePayloadValid(this.calcLeaderPk(targetView), targetView, viewChangePayload));
+    }
+
     public async onReceiveNewView(payload: NewViewPayload): Promise<void> {
         const { pk: senderPk, data } = payload;
         const { PP, view, term, VCProof } = data;
@@ -385,13 +397,8 @@ export class PBFTTerm {
             return;
         }
 
-        if (!VCProof || !Array.isArray(VCProof)) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", VCProof is invalid proofs array` });
-            return;
-        }
-
-        if (VCProof.length < this.getF() * 2 + 1) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", VCProof has not enough VCs` });
+        if (this.validateViewChangeProof(view, VCProof) === false) {
+            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", VCProof is invalid` });
             return;
         }
 

@@ -85,9 +85,10 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
   - [ ] onReceiveNewView verify the proof
     - [V] not undefined
     - [V] isArray
-    - [ ] called checkVCPayload
-    - [ ] 2f+1 proofs
+    - [V] 2f+1 proofs
+    - [V] validate using isViewChangePayloadValid
     - [ ] all proofs senders a unique
+    - [ ] all newView equal to the view on the new-view payload
   - [ ] choose the "best" block (Out of view-change proofs) to offer on new-view
 - [ ] validate all signed messages
 - [ ] PBFT should hold history, and play it back on new term.

@@ -30,6 +30,7 @@ describe("PBFTTerm", () => {
     let node0Config: Config;
     let node1Config: Config;
     let node2Config: Config;
+    let node3Config: Config;
     let node0Pk: string;
     let node1Pk: string;
     let node2Pk: string;
@@ -47,6 +48,7 @@ describe("PBFTTerm", () => {
         node0Config = testNetwork.nodes[0].config;
         node1Config = testNetwork.nodes[1].config;
         node2Config = testNetwork.nodes[2].config;
+        node3Config = testNetwork.nodes[3].config;
         node0BlockUtils = node0Config.blockUtils as BlockUtilsMock;
         node1BlockUtils = node1Config.blockUtils as BlockUtilsMock;
         node2BlockUtils = node2Config.blockUtils as BlockUtilsMock;
@@ -221,12 +223,15 @@ describe("PBFTTerm", () => {
         expect(spy).to.not.have.been.called;
     });
 
-    it("onReceiveNewView should not accept messages that don't match the leader", async () => {
+    it("onReceiveNewView should not accept messages that don't match the leader", async () => { 
         const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
 
         const block: Block = aBlock(theGenesisBlock);
         const blockHash = calculateBlockHash(block);
-        const VCProof: ViewChangePayload[] = [undefined, undefined, undefined];
+        const viewChange0: ViewChangePayload = aPayload(node0Config.keyManager, {term: 1, newView: 2, preparedProof: {prepreparePayload: undefined, preparePayloads: undefined}});
+        const viewChange1: ViewChangePayload = aPayload(node1Config.keyManager, {term: 1, newView: 2, preparedProof: {prepreparePayload: undefined, preparePayloads: undefined}});
+        const viewChange3: ViewChangePayload = aPayload(node3Config.keyManager, {term: 1, newView: 2, preparedProof: {prepreparePayload: undefined, preparePayloads: undefined}});
+        const VCProof: ViewChangePayload[] = [viewChange0, viewChange1, viewChange3];
 
         // from the leader => ok
         node1PbftTerm.onReceiveNewView(aPayload(node2KeyManager, { term: 1, view: 2, PP: aPrePreparePayload(node2KeyManager, { term: 1, view: 2, blockHash }, block), VCProof }));
@@ -260,7 +265,10 @@ describe("PBFTTerm", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         const blockHash = calculateBlockHash(block);
-        const VCProof: ViewChangePayload[] = [undefined, undefined, undefined];
+        const viewChange0: ViewChangePayload = aPayload(node0Config.keyManager, {term: 1, newView: 1, preparedProof: {prepreparePayload: undefined, preparePayloads: undefined}});
+        const viewChange1: ViewChangePayload = aPayload(node1Config.keyManager, {term: 1, newView: 1, preparedProof: {prepreparePayload: undefined, preparePayloads: undefined}});
+        const viewChange2: ViewChangePayload = aPayload(node2Config.keyManager, {term: 1, newView: 1, preparedProof: {prepreparePayload: undefined, preparePayloads: undefined}});
+        const VCProof: ViewChangePayload[] = [viewChange0, viewChange1, viewChange2];
 
         // same view => ok
         node0PbftTerm.onReceiveNewView(aPayload(node1KeyManager, { term: 1, view: 1, PP: aPrePreparePayload(node1KeyManager, { term: 1, view: 1, blockHash }, block), VCProof }));
@@ -280,8 +288,10 @@ describe("PBFTTerm", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         const blockHash = calculateBlockHash(block);
-        const preparedProof: PreparedProof = { prepreparePayload: undefined, preparePayloads: undefined };
-        const VCProof: ViewChangePayload[] = [undefined, undefined, undefined];
+        const viewChange0: ViewChangePayload = aPayload(node0Config.keyManager, {term: 1, newView: 1, preparedProof: {prepreparePayload: undefined, preparePayloads: undefined}});
+        const viewChange1: ViewChangePayload = aPayload(node1Config.keyManager, {term: 1, newView: 1, preparedProof: {prepreparePayload: undefined, preparePayloads: undefined}});
+        const viewChange2: ViewChangePayload = aPayload(node2Config.keyManager, {term: 1, newView: 1, preparedProof: {prepreparePayload: undefined, preparePayloads: undefined}});
+        const VCProof: ViewChangePayload[] = [viewChange0, viewChange1, viewChange2];
 
         // pass validation => ok
         node0PbftTerm.onReceiveNewView(aPayload(node1KeyManager, { term: 1, view: 1, PP: aPrePreparePayload(node1KeyManager, { term: 1, view: 1, blockHash }, block), VCProof }));
