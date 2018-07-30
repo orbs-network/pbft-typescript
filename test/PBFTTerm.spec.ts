@@ -300,9 +300,38 @@ describe("PBFTTerm", () => {
         expect(node0PbftTerm.getView()).to.equal(1);
 
         // doesn't pass validation => ignore
-        node0PbftTerm.onReceiveNewView(aPayload(node1KeyManager, { term: 1, view: 2, PP: aPrePreparePayload(node1KeyManager, { term: 1, view: 2, blockHash }, block), VCProof }));
+        node0PbftTerm.onReceiveNewView(aPayload(node2KeyManager, { term: 1, view: 2, PP: aPrePreparePayload(node2KeyManager, { term: 1, view: 2, blockHash }, block), VCProof }));
         await nextTick();
         await node0BlockUtils.resolveAllValidations(false);
+        expect(node0PbftTerm.getView()).to.equal(1);
+    });
+
+    it.only("onReceiveNewView should not accept messages with VCProof with duplicate sender", async () => {
+        const node0PbftTerm: PBFTTerm = createPBFTTerm(node0Config);
+
+        const block: Block = aBlock(theGenesisBlock);
+        const blockHash = calculateBlockHash(block);
+        const viewChange0_good: ViewChangePayload = aPayload(node0Config.keyManager, {term: 1, newView: 1, preparedProof: {prepreparePayload: undefined, preparePayloads: undefined}});
+        const viewChange1_good: ViewChangePayload = aPayload(node1Config.keyManager, {term: 1, newView: 1, preparedProof: {prepreparePayload: undefined, preparePayloads: undefined}});
+        const viewChange2_good: ViewChangePayload = aPayload(node2Config.keyManager, {term: 1, newView: 1, preparedProof: {prepreparePayload: undefined, preparePayloads: undefined}});
+        const VCProofGood: ViewChangePayload[] = [viewChange0_good, viewChange1_good, viewChange2_good];
+
+        // unique senders => ok
+        node0PbftTerm.onReceiveNewView(aPayload(node1KeyManager, { term: 1, view: 1, PP: aPrePreparePayload(node1KeyManager, { term: 1, view: 1, blockHash }, block), VCProof: VCProofGood }));
+        await nextTick();
+        await node0BlockUtils.resolveAllValidations(true);
+        expect(node0PbftTerm.getView()).to.equal(1);
+
+        const viewChange0_bad: ViewChangePayload = aPayload(node0Config.keyManager, {term: 1, newView: 2, preparedProof: {prepreparePayload: undefined, preparePayloads: undefined}});
+        const viewChange1_bad: ViewChangePayload = aPayload(node0Config.keyManager, {term: 1, newView: 2, preparedProof: {prepreparePayload: undefined, preparePayloads: undefined}});
+        const viewChange2_bad: ViewChangePayload = aPayload(node1Config.keyManager, {term: 1, newView: 2, preparedProof: {prepreparePayload: undefined, preparePayloads: undefined}});
+        const VCProofBad: ViewChangePayload[] = [viewChange0_bad, viewChange1_bad, viewChange2_bad];
+
+        // Diplicated sender (viewChange0_bad and viewChange1_bad are from node 0) => ignore
+        node0PbftTerm.onReceiveNewView(aPayload(node2KeyManager, { term: 1, view: 2, PP: aPrePreparePayload(node2KeyManager, { term: 1, view: 2, blockHash }, block), VCProof: VCProofBad }));
+        await nextTick();
+        await node0BlockUtils.resolveAllValidations(true);
+        await nextTick();
         expect(node0PbftTerm.getView()).to.equal(1);
     });
 

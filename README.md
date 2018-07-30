@@ -87,7 +87,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
     - [V] isArray
     - [V] 2f+1 proofs
     - [V] validate using isViewChangePayloadValid
-    - [ ] all proofs senders a unique
+    - [V] all proofs senders a unique
     - [ ] all newView equal to the view on the new-view payload
   - [ ] choose the "best" block (Out of view-change proofs) to offer on new-view
 - [ ] validate all signed messages

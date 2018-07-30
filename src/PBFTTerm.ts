@@ -385,6 +385,12 @@ export class PBFTTerm {
             return false;
         }
 
+        const allPkAreUnique = VCProof.reduce((prev, current) => prev.set(current.pk, true), new Map()).size === VCProof.length;
+        if (!allPkAreUnique) {
+            return false;
+        }
+
+
         return VCProof.every(viewChangePayload => this.isViewChangePayloadValid(this.calcLeaderPk(targetView), targetView, viewChangePayload));
     }
 
