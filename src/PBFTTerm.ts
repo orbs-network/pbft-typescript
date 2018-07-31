@@ -32,7 +32,6 @@ export class PBFTTerm {
     private view: number;
     private newViewLocally: number = -1;
     private viewState: ViewState;
-    private CB: Block;
     private disposed: boolean = false;
     private preparedLocally: boolean = false;
     private committedLocally: boolean = false;
@@ -55,19 +54,19 @@ export class PBFTTerm {
     public async startTerm(): Promise<void> {
         this.initView(0);
         if (this.isLeader()) {
-            this.CB = await this.blockUtils.requestNewBlock(this.term);
+            const block: Block = await this.blockUtils.requestNewBlock(this.term);
             const metaData = {
                 method: "requestNewBlock",
                 height: this.term,
-                prevBlockHash: this.CB.header.prevBlockHash
+                prevBlockHash: block.header.prevBlockHash
             };
             this.logger.log({ Subject: "Info", message: `generated new block`, metaData });
             if (this.disposed) {
                 return;
             }
 
-            const payload: PrePreparePayload = this.buildPrePreparePayload(this.term, this.view, this.CB);
-            this.pbftStorage.storePrePrepare(this.term, this.view, this.CB, payload);
+            const payload: PrePreparePayload = this.buildPrePreparePayload(this.term, this.view, block);
+            this.pbftStorage.storePrePrepare(this.term, this.view, block, payload);
             this.broadcastPrePrepare(payload);
         }
     }
@@ -79,7 +78,6 @@ export class PBFTTerm {
     private initView(view: number) {
         this.preparedLocally = false;
         this.view = view;
-        this.CB = undefined;
         this.startViewState(this.view);
     }
 
@@ -185,7 +183,6 @@ export class PBFTTerm {
             return;
         }
 
-        this.CB = block;
         const preparePayoad: PreparePayload = this.buildPreparePayload(term, view, blockHash);
         this.pbftStorage.storePrepare(term, view, blockHash, this.keyManager.getMyPublicKey(), preparePayoad);
         this.pbftStorage.storePrePrepare(term, view, block, payload);
@@ -314,7 +311,6 @@ export class PBFTTerm {
             data: dataPP,
             block
         };
-        this.CB = block;
         this.logger.log({ Subject: "Flow", FlowType: "Elected", term: this.term, view, blockHash });
         const dataNV = { term: this.term, view, PP, VCProof };
         const newViewPayload: NewViewPayload = {
@@ -370,7 +366,8 @@ export class PBFTTerm {
             if (this.isPrePrepared(term, view, blockHash)) {
                 const commits = this.pbftStorage.getCommitSendersPks(term, view, blockHash).length;
                 if (commits >= this.getF() * 2 + 1) {
-                    this.commitBlock(this.CB);
+                    const block = this.pbftStorage.getPrePrepareBlock(term, view);
+                    this.commitBlock(block);
                 }
             }
         }
@@ -472,6 +469,6 @@ export class PBFTTerm {
         this.committedLocally = true;
         this.logger.log({ Subject: "Flow", FlowType: "Commit", term: this.term, view: this.view, block });
         this.stopViewState();
-        this.onCommittedBlock(this.CB);
+        this.onCommittedBlock(block);
     }
 }
