@@ -2,13 +2,22 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
-import { aPayload } from "../builders/PayloadBuilder";
 import { Gossip } from "./Gossip";
 import { GossipDiscovery } from "./GossipDiscovery";
 import { KeyManager } from "../../src/keyManager/KeyManager";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
+import { Payload } from "../../src/networkCommunication/Payload";
 
 chai.use(sinonChai);
+
+function aPayload(keyManager: KeyManager, data: any): Payload {
+    return {
+        pk: keyManager.getMyPublicKey(),
+        signature: keyManager.sign(data),
+        data
+    };
+}
+
 
 describe("Gossip", () => {
     const genPk = () => Math.random().toString();

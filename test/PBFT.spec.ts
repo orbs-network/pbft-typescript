@@ -5,7 +5,7 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aPayload } from "./builders/PayloadBuilder";
+import { aPayload, aPrePreparePayload } from "./builders/PayloadBuilder";
 import { aSimpleTestNetwork, aTestNetwork } from "./builders/TestNetworkBuilder";
 import { blockMatcher } from "./matchers/blockMatcher";
 import { nextTick } from "./timeUtils";
@@ -132,10 +132,10 @@ describe("PBFT", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick(); // await for blockStorage.getBlockChainHeight();
         const gossip = testNetwork.getNodeGossip(byzantineNode.pk);
-        gossip.broadcast("preprepare", aPayload(byzantineNode.config.keyManager, { block: fakeBlock, view: 0, term: 1 }));
-        gossip.broadcast("preprepare", aPayload(byzantineNode.config.keyManager, { block: fakeBlock, view: 0, term: 1 }));
-        gossip.broadcast("preprepare", aPayload(byzantineNode.config.keyManager, { block: fakeBlock, view: 0, term: 1 }));
-        gossip.broadcast("preprepare", aPayload(byzantineNode.config.keyManager, { block: fakeBlock, view: 0, term: 1 }));
+        gossip.broadcast("preprepare", aPrePreparePayload(byzantineNode.config.keyManager, 1, 0, fakeBlock));
+        gossip.broadcast("preprepare", aPrePreparePayload(byzantineNode.config.keyManager, 1, 0, fakeBlock));
+        gossip.broadcast("preprepare", aPrePreparePayload(byzantineNode.config.keyManager, 1, 0, fakeBlock));
+        gossip.broadcast("preprepare", aPrePreparePayload(byzantineNode.config.keyManager, 1, 0, fakeBlock));
 
         await nextTick();
         await blockUtils.provideNextBlock();

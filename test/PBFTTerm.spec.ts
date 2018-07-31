@@ -12,7 +12,7 @@ import { PBFTTerm, TermConfig } from "../src/PBFTTerm";
 import { PreparedProof } from "../src/storage/PBFTStorage";
 import { BlockUtilsMock, calculateBlockHash } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aPayload, aPrePreparePayload } from "./builders/PayloadBuilder";
+import { aPayload, aPrePreparePayload, aPreparePayload } from "./builders/PayloadBuilder";
 import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
 import { blockMatcher } from "./matchers/blockMatcher";
 import { TestNetwork } from "./network/TestNetwork";
@@ -109,8 +109,8 @@ describe("PBFTTerm", () => {
         node1PbftTerm.onReceivePrePrepare(aPrePreparePayload(node0KeyManager, 1, 0, block));
         await nextTick();
         await node1BlockUtils.resolveAllValidations(true);
-        node1PbftTerm.onReceivePrepare(aPayload(node2KeyManager, { term: 1, view: 0, blockHash }));
-        node1PbftTerm.onReceivePrepare(aPayload(node3KeyManager, { term: 1, view: 0, blockHash }));
+        node1PbftTerm.onReceivePrepare(aPreparePayload(node2KeyManager, 1, 0, block));
+        node1PbftTerm.onReceivePrepare(aPreparePayload(node3KeyManager, 1, 0, block));
         expect(spy).to.have.been.calledOnce;
     });
 
@@ -122,20 +122,19 @@ describe("PBFTTerm", () => {
 
         const spy = sinon.spy(node1Config.pbftStorage, "storePrepare");
         const block: Block = aBlock(theGenesisBlock);
-        const blockHash = calculateBlockHash(block);
 
         // current view (1) => valid
-        node1PbftTerm.onReceivePrepare(aPayload(node0KeyManager, { term: 1, view: 1, blockHash }));
+        node1PbftTerm.onReceivePrepare(aPreparePayload(node0KeyManager, 1, 1, block));
         expect(spy).to.have.been.called;
 
         // view from the future (2) => valid
         spy.resetHistory();
-        node1PbftTerm.onReceivePrepare(aPayload(node0KeyManager, { term: 1, view: 2, blockHash }));
+        node1PbftTerm.onReceivePrepare(aPreparePayload(node0KeyManager, 1, 2, block));
         expect(spy).to.have.been.called;
 
         // view from the past (0) => invalid, should be ignored
         spy.resetHistory();
-        node1PbftTerm.onReceivePrepare(aPayload(node0KeyManager, { term: 1, view: 0, blockHash }));
+        node1PbftTerm.onReceivePrepare(aPreparePayload(node0KeyManager, 1, 0, block));
         expect(spy).to.not.have.been.called;
     });
 
@@ -147,7 +146,6 @@ describe("PBFTTerm", () => {
         expect(node1PbftTerm.getView()).to.equal(1);
 
         const block: Block = aBlock(theGenesisBlock);
-        const blockHash = calculateBlockHash(block);
         const spy = sinon.spy(node1Config.pbftStorage, "storePrepare");
 
         // current view (1) => valid
@@ -173,15 +171,16 @@ describe("PBFTTerm", () => {
 
     it("onReceivePrepare should not accept messages from the leader", async () => {
         const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
+        const block: Block = aBlock(theGenesisBlock);
 
         const spy = sinon.spy(node1Config.pbftStorage, "storePrepare");
         // not from the leader => ok
-        node1PbftTerm.onReceivePrepare(aPayload(node2KeyManager, { term: 1, view: 0, blockHash: "" }));
+        node1PbftTerm.onReceivePrepare(aPreparePayload(node2KeyManager, 1, 0, block));
         expect(spy).to.have.been.called;
 
         // from the leader => ignore
         spy.resetHistory();
-        node1PbftTerm.onReceivePrepare(aPayload(node0KeyManager, { term: 1, view: 0, blockHash: "" }));
+        node1PbftTerm.onReceivePrepare(aPreparePayload(node0KeyManager, 1, 0, block));
         expect(spy).to.not.have.been.called;
     });
 
@@ -438,8 +437,8 @@ describe("PBFTTerm", () => {
 
         // get node1 to be prepared on the block
         node1Config.pbftStorage.storePrePrepare(0, 0, block, aPrePreparePayload(node0KeyManager, 0, 0, block));
-        node1Config.pbftStorage.storePrepare(0, 0, blockHash, node2KeyManager.getMyPublicKey(), aPayload(node2KeyManager, { term: 0, view: 0, blockHash }));
-        node1Config.pbftStorage.storePrepare(0, 0, blockHash, node3KeyManager.getMyPublicKey(), aPayload(node3KeyManager, { term: 0, view: 0, blockHash }));
+        node1Config.pbftStorage.storePrepare(0, 0, blockHash, node2KeyManager.getMyPublicKey(), aPreparePayload(node2KeyManager, 0, 0, block));
+        node1Config.pbftStorage.storePrepare(0, 0, blockHash, node3KeyManager.getMyPublicKey(), aPreparePayload(node3KeyManager, 0, 0, block));
         node1PbftTerm.onReceiveViewChange(aPayload(node0KeyManager, { term: 0, newView: 1 }));
         node1PbftTerm.onReceiveViewChange(aPayload(node2KeyManager, { term: 0, newView: 1 }));
         node1PbftTerm.onReceiveViewChange(aPayload(node3KeyManager, { term: 0, newView: 1 }));
