@@ -422,12 +422,12 @@ class PBFT {
 
     extractBlock(viewChanges: { pk: string, data: DigestTypes.VC }[]): Block {
         const preparedProofs = viewChanges.map(vc => verify(vc.pk, vc.data).preparedProof);
-        const filtedPreparedProofs = preparedProofs.filter(preparedProof => preparedProof !== undefined);
-        if (filtedPreparedProofs.length > 0) {
-            const sortedPrepreparedProofs = filtedPreparedProofs.map(pp => {
+        const filteredPreparedProofs = preparedProofs.filter(preparedProof => preparedProof !== undefined);
+        if (filteredPreparedProofs.length > 0) {
+            const sortedPrepreparedProofs = filteredPreparedProofs.map(pp => {
                 return { payload: verify(pp.preprepare.pk, pp.preprepare.data.payload), CB: pp.preprepare.data.CB };
-            }
-            ).sort((a, b) => a.payload.view - b.payload.view);
+            })
+                .sort((a, b) => a.payload.view - b.payload.view);
             const latestPrereparedProof = sortedPrepreparedProofs[0];
             return latestPrereparedProof.CB;
         } else {
