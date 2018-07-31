@@ -8,6 +8,7 @@ import { PBFTStorage, PreparedProof } from "./storage/PBFTStorage";
 import { ViewState } from "./ViewState";
 import { BlockUtils } from "./blockUtils/BlockUtils";
 import { validatePrepared } from "./proofsValidator/ProofsValidator";
+import { extractBlock } from "./blockExtractor/BlockExtractor";
 
 export type onNewBlockCB = (block: Block) => void;
 
@@ -298,9 +299,12 @@ export class PBFTTerm {
     private async onElected(view: number, VCProof: ViewChangePayload[]) {
         this.newViewLocally = view;
         this.initView(view);
-        const block: Block = await this.blockUtils.requestNewBlock(this.term);
-        if (this.disposed) {
-            return;
+        let block: Block = extractBlock(VCProof);
+        if (!block) {
+            block = await this.blockUtils.requestNewBlock(this.term);
+            if (this.disposed) {
+                return;
+            }
         }
 
         const blockHash = this.blockUtils.calculateBlockHash(block);

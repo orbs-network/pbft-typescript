@@ -67,7 +67,8 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [x] set the committee members pks in the PBFTTerm constructor
 - [x] clear the pbftStorage
 - [ ] suggest block in new-view (inside PP), with proofs from other nodes.
-  - [ ] choose the "best" block (Out of view-change proofs) to offer on new-view
+  - [x] choose the "best" block (Out of view-change proofs) to offer on new-view
+  - [ ] on new-view verify that the leader offered the "best" block
   - [x] PrePrepare Compare given blockHash with the hash of the given block
   - [x] Storage - store payloads
   - [x] GetLatestPreparedProof from storage

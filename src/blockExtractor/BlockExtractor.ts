@@ -6,7 +6,7 @@ export function extractBlock(VCProof: ViewChangePayload[]): Block {
         .filter(vc => vc.data.preparedProof !== undefined)
         .filter(vc => vc.data.preparedProof.prepreparePayload !== undefined)
         .map(vc => vc.data.preparedProof.prepreparePayload)
-        .sort((a, b) => a.data.view - b.data.view);
+        .sort((a, b) => b.data.view - a.data.view);
 
     if (filteredProofs.length > 0) {
         return filteredProofs[0].block;

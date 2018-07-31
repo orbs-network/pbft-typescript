@@ -49,11 +49,11 @@ describe("Block Extractor", () => {
         const dummyKM: KeyManager = new KeyManagerMock("Dummy PK");
 
         // proof with block on view 7
-        const prepreparePayload1: PrePreparePayload = aPrePreparePayload(dummyKM, {term: 1, view: 7}, block1);
+        const prepreparePayload1: PrePreparePayload = aPrePreparePayload(dummyKM, {term: 1, view: 7}, block2);
         const preparedProofWithBlock1: PreparedProof = { prepreparePayload: prepreparePayload1, preparePayloads: undefined };
 
         // proof with block on view 5
-        const prepreparePayload2: PrePreparePayload = aPrePreparePayload(dummyKM, {term: 1, view: 5}, block2);
+        const prepreparePayload2: PrePreparePayload = aPrePreparePayload(dummyKM, {term: 1, view: 5}, block1);
         const preparedProofWithBlock2: PreparedProof = { prepreparePayload: prepreparePayload2, preparePayloads: undefined };
 
         // empty proof

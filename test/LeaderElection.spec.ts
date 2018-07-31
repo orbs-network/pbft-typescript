@@ -8,7 +8,7 @@ import { aPayload, aPrePreparePayload } from "./builders/PayloadBuilder";
 import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
 import { nextTick } from "./timeUtils";
 import { PreparedProof } from "../src/storage/PBFTStorage";
-import { ViewChangePayload, NewViewPayload, PrePreparePayload } from "../src/networkCommunication/Payload";
+import { ViewChangePayload, NewViewPayload, PrePreparePayload, PreparePayload } from "../src/networkCommunication/Payload";
 
 chai.use(sinonChai);
 
@@ -22,7 +22,7 @@ describe("Leader Election", () => {
         const unicastSpy = sinon.spy(gossip, "unicast");
 
         testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockStorage.getBlockChainHeight();
+        await nextTick();
         await blockUtils.provideNextBlock();
         triggerElection();
         await blockUtils.resolveAllValidations(true);
@@ -42,7 +42,7 @@ describe("Leader Election", () => {
         const node3 = testNetwork.nodes[3];
 
         testNetwork.startConsensusOnAllNodes(); // view 0
-        await nextTick(); // await for blockStorage.getBlockChainHeight();
+        await nextTick();
         await blockUtils.provideNextBlock();
 
         expect(node0.isLeader()).to.be.true;
@@ -94,7 +94,7 @@ describe("Leader Election", () => {
         const gossip = testNetwork.getNodeGossip(node1.pk);
         const multicastSpy = sinon.spy(gossip, "multicast");
         testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockStorage.getBlockChainHeight();
+        await nextTick();
         await blockUtils.provideNextBlock();
         await nextTick();
 
@@ -116,6 +116,64 @@ describe("Leader Election", () => {
         testNetwork.shutDown();
     });
 
+    it("should offer the latest prepared VC when elected", async () => {
+        const block1 = aBlock(theGenesisBlock);
+        const { testNetwork, blockUtils } = aSimpleTestNetwork(4, [block1]);
+
+        const node0 = testNetwork.nodes[0];
+        const node1 = testNetwork.nodes[1];
+        const node2 = testNetwork.nodes[2];
+        const node3 = testNetwork.nodes[3];
+
+        const node1Gossip = testNetwork.getNodeGossip(node1.pk);
+        const multicastSpy = sinon.spy(node1Gossip, "multicast");
+        testNetwork.startConsensusOnAllNodes();
+        await nextTick();
+        await blockUtils.provideNextBlock();
+        await nextTick();
+
+        // VC with prepared proof on view 3
+        const blockOnView3 = aBlock(block1, "Block on View 3");
+        const blockHashOnView3 = calculateBlockHash(blockOnView3);
+        const preparedProofOnView3: PreparedProof = {
+            prepreparePayload: aPrePreparePayload(node3.config.keyManager, { term: 1, view: 3, blockHash: blockHashOnView3 }, blockOnView3),
+            preparePayloads: [
+                aPayload(node1.config.keyManager, { term: 1, view: 3, blockHash: blockHashOnView3 }),
+                aPayload(node2.config.keyManager, { term: 1, view: 3, blockHash: blockHashOnView3 }),
+            ]
+        };
+        const node0VCPayload: ViewChangePayload = aPayload(node0.config.keyManager, { term: 1, newView: 5, preparedProof: preparedProofOnView3 });
+
+        // VC with prepared proof on view 4
+        const blockOnView4 = aBlock(block1, "Block on View 4");
+        const blockHashOnView4 = calculateBlockHash(blockOnView4);
+        const preparedProofOnView4: PreparedProof = {
+            prepreparePayload: aPrePreparePayload(node0.config.keyManager, { term: 1, view: 4, blockHash: blockHashOnView4 }, blockOnView4),
+            preparePayloads: [
+                aPayload(node1.config.keyManager, { term: 1, view: 4, blockHash: blockHashOnView4 }),
+                aPayload(node2.config.keyManager, { term: 1, view: 4, blockHash: blockHashOnView4 }),
+            ]
+        };
+        const node2VCPayload: ViewChangePayload = aPayload(node2.config.keyManager, { term: 1, newView: 5, preparedProof: preparedProofOnView4 });
+
+        // VC with no prepared proof
+        const node3VCPayload: ViewChangePayload = aPayload(node3.config.keyManager, { term: 1, newView: 5, preparedProof: undefined });
+
+        // send the view-change
+        node1Gossip.onRemoteMessage("view-change", node0VCPayload);
+        node1Gossip.onRemoteMessage("view-change", node2VCPayload);
+        node1Gossip.onRemoteMessage("view-change", node3VCPayload);
+        await nextTick();
+        await blockUtils.provideNextBlock();
+        await nextTick();
+
+        const PPPayload: PrePreparePayload = aPrePreparePayload(node1.config.keyManager, { term: 1, view: 5, blockHash: blockHashOnView4 }, blockOnView4);
+        const VCProof: ViewChangePayload[] = [node0VCPayload, node2VCPayload, node3VCPayload];
+        const payload: NewViewPayload = aPayload(node1.config.keyManager, { term: 1, view: 5, PP: PPPayload, VCProof });
+        expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", payload);
+        testNetwork.shutDown();
+    });
+
     it("should accept a block constructed by the new leader", async () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(block1);
@@ -124,7 +182,7 @@ describe("Leader Election", () => {
 
         // block1
         testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockStorage.getBlockChainHeight();
+        await nextTick();
         await blockUtils.provideNextBlock();
         await nextTick();
         await blockUtils.resolveAllValidations(true);
@@ -160,7 +218,7 @@ describe("Leader Election", () => {
         const node3 = testNetwork.nodes[3];
 
         testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockStorage.getBlockChainHeight();
+        await nextTick();
         await blockUtils.provideNextBlock();
         await nextTick(); // await for blockStorage.getLastBlockHash
         await blockUtils.resolveAllValidations(true);
@@ -214,7 +272,7 @@ describe("Leader Election", () => {
         const broadcastSpy = sinon.spy(gossip, "broadcast");
 
         testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockStorage.getBlockChainHeight();
+        await nextTick();
         await blockUtils.provideNextBlock();
         gossip.onRemoteMessage("view-change", aPayload(node1.config.keyManager, { newView: 1 }));
         gossip.onRemoteMessage("view-change", aPayload(node1.config.keyManager, { newView: 1 }));
@@ -233,7 +291,7 @@ describe("Leader Election", () => {
         const broadcastSpy = sinon.spy(gossip, "broadcast");
 
         testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockStorage.getBlockChainHeight();
+        await nextTick();
         await blockUtils.provideNextBlock();
         gossip.onRemoteMessage("view-change", aPayload(node1.config.keyManager, { newView: 1 }));
         gossip.onRemoteMessage("view-change", aPayload(node1.config.keyManager, { newView: 1 }));
