@@ -6,9 +6,12 @@ import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aPayload } from "./builders/PayloadBuilder";
-import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
+import { aSimpleTestNetwork, aTestNetwork } from "./builders/TestNetworkBuilder";
 import { blockMatcher } from "./matchers/blockMatcher";
 import { nextTick } from "./timeUtils";
+import { BlockUtils } from "../src";
+import { BlockUtilsMock } from "./blockUtils/BlockUtilsMock";
+import { aNode } from "./builders/NodeBuilder";
 
 chai.use(sinonChai);
 chai.use(blockMatcher);
@@ -247,6 +250,54 @@ describe("PBFT", () => {
         await blockUtils.resolveAllValidations(true);
         await nextTick();
         expect(testNetwork.nodes).to.agreeOnBlock(block3);
+
+        testNetwork.shutDown();
+    });
+
+    it("should reach consensus, on ALL nodes after one of the node was stuck (Saving future messages)", async () => {
+        const block1 = aBlock(theGenesisBlock, "block 1");
+        const block2 = aBlock(block1, "block 2");
+        const blockUtils = new BlockUtilsMock([block1, block2]);
+
+        const hangingBlockUtils: BlockUtilsMock = new BlockUtilsMock([block1, block2]);
+        const hangingNode = aNode()
+            .gettingBlocksVia(hangingBlockUtils);
+
+        const testNetwork = aTestNetwork()
+            .gettingBlocksVia(blockUtils)
+            .with(3).nodes
+            .withCustomNode(hangingNode)
+            .build();
+
+        // suggest block 1
+        testNetwork.startConsensusOnAllNodes();
+        await nextTick();
+        await blockUtils.provideNextBlock();
+        await nextTick();
+        await blockUtils.resolveAllValidations(true);
+
+        // suggest block 2
+        await nextTick();
+        await blockUtils.provideNextBlock();
+        await nextTick();
+        await blockUtils.resolveAllValidations(true);
+        await nextTick();
+
+        expect(await testNetwork.nodes[0].getLatestCommittedBlock()).to.equal(block2);
+        expect(await testNetwork.nodes[1].getLatestCommittedBlock()).to.equal(block2);
+        expect(await testNetwork.nodes[2].getLatestCommittedBlock()).to.equal(block2);
+        expect(await testNetwork.nodes[3].getLatestCommittedBlock()).to.equal(theGenesisBlock);
+
+        // release the hanging node for block 1
+        await hangingBlockUtils.resolveAllValidations(true);
+        // release the hanging node for block 2
+        await hangingBlockUtils.resolveAllValidations(true);
+
+        // expect the hangking node to catch up (Saving future messages)
+        expect(await testNetwork.nodes[0].getLatestCommittedBlock()).to.equal(block2);
+        expect(await testNetwork.nodes[1].getLatestCommittedBlock()).to.equal(block2);
+        expect(await testNetwork.nodes[2].getLatestCommittedBlock()).to.equal(block2);
+        expect(await testNetwork.nodes[3].getLatestCommittedBlock()).to.equal(block2);
 
         testNetwork.shutDown();
     });
