@@ -6,7 +6,7 @@ import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { SilentLogger } from "../logger/SilentLogger";
 import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
-import { aPrePreparePayload, aPayload } from "../builders/PayloadBuilder";
+import { aPayload, aPrePreparePayload } from "../builders/PayloadBuilder";
 import { PrePreparePayload, PreparePayload } from "../../src/networkCommunication/Payload";
 import { PreparedProof } from "../../src/storage/PBFTStorage";
 import { KeyManager } from "../../src/keyManager/KeyManager";
@@ -24,7 +24,7 @@ describe("PBFT In Memory Storage", () => {
         const block = aBlock(theGenesisBlock);
         const blockHash = calculateBlockHash(block);
         const keyManager: KeyManager = new KeyManagerMock("PK");
-        const PPPayload = aPrePreparePayload(keyManager, {}, block);
+        const PPPayload = aPrePreparePayload(keyManager, term, view, block);
         const PPayload = aPayload(keyManager, {});
         const CPayload = aPayload(keyManager, {});
         const VCPayload = aPayload(keyManager, {});
@@ -55,7 +55,7 @@ describe("PBFT In Memory Storage", () => {
         const view = Math.floor(Math.random() * 1000);
         const block = aBlock(theGenesisBlock);
         const keyManager: KeyManager = new KeyManagerMock("PK");
-        const payload = aPrePreparePayload(keyManager, {}, block);
+        const payload = aPrePreparePayload(keyManager, 1, 1, block);
         const firstTime = storage.storePrePrepare(term, view, block, payload);
         expect(firstTime).to.be.true;
         const secondstime = storage.storePrePrepare(term, view, block, payload);
@@ -194,7 +194,7 @@ describe("PBFT In Memory Storage", () => {
             const block = aBlock(theGenesisBlock);
             const blockHash = calculateBlockHash(block);
 
-            const prePreparePayload: PrePreparePayload = aPrePreparePayload(leaderKeyManager, { view, term, blockHash }, block);
+            const prePreparePayload: PrePreparePayload = aPrePreparePayload(leaderKeyManager, term , view, block);
             const preparePayload1: PreparePayload = aPayload(sender1KeyManager, { view, term, blockHash });
             const preparePayload2: PreparePayload = aPayload(sender2KeyManager, { view, term, blockHash });
 
@@ -214,15 +214,15 @@ describe("PBFT In Memory Storage", () => {
 
             it("should return the latest (heighest view) prepare proof", () => {
                 const storage = new InMemoryPBFTStorage(logger);
-                const prePreparePayload10: PrePreparePayload = aPrePreparePayload(leaderKeyManager, { view: 10, term: 1, blockHash }, block);
+                const prePreparePayload10: PrePreparePayload = aPrePreparePayload(leaderKeyManager, 10, 1, block);
                 const preparePayload10_1: PreparePayload = aPayload(sender1KeyManager, { view: 10, term: 1, blockHash });
                 const preparePayload10_2: PreparePayload = aPayload(sender2KeyManager, { view: 10, term: 1, blockHash });
 
-                const prePreparePayload20: PrePreparePayload = aPrePreparePayload(leaderKeyManager, { view: 20, term: 1, blockHash }, block);
+                const prePreparePayload20: PrePreparePayload = aPrePreparePayload(leaderKeyManager, 20, 1, block);
                 const preparePayload20_1: PreparePayload = aPayload(sender1KeyManager, { view: 20, term: 1, blockHash });
                 const preparePayload20_2: PreparePayload = aPayload(sender2KeyManager, { view: 20, term: 1, blockHash });
 
-                const prePreparePayload30: PrePreparePayload = aPrePreparePayload(leaderKeyManager, { view: 30, term: 1, blockHash }, block);
+                const prePreparePayload30: PrePreparePayload = aPrePreparePayload(leaderKeyManager, 30, 1, block);
                 const preparePayload30_1: PreparePayload = aPayload(sender1KeyManager, { view: 30, term: 1, blockHash });
                 const preparePayload30_2: PreparePayload = aPayload(sender2KeyManager, { view: 30, term: 1, blockHash });
 

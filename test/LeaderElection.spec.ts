@@ -108,8 +108,7 @@ describe("Leader Election", () => {
         await blockUtils.provideNextBlock();
         await nextTick();
 
-        const block2Hash = calculateBlockHash(block2);
-        const PPPayload: PrePreparePayload = aPrePreparePayload(node1.config.keyManager, { term: 1, view: 1, blockHash: block2Hash }, block2);
+        const PPPayload: PrePreparePayload = aPrePreparePayload(node1.config.keyManager, 1, 1, block2);
         const VCProof: ViewChangePayload[] = [node0VCPayload, node2VCPayload, node3VCPayload];
         const payload: NewViewPayload = aPayload(node1.config.keyManager, { term: 1, view: 1, PP: PPPayload, VCProof });
         expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", payload);
@@ -136,7 +135,7 @@ describe("Leader Election", () => {
         const blockOnView3 = aBlock(block1, "Block on View 3");
         const blockHashOnView3 = calculateBlockHash(blockOnView3);
         const preparedProofOnView3: PreparedProof = {
-            prepreparePayload: aPrePreparePayload(node3.config.keyManager, { term: 1, view: 3, blockHash: blockHashOnView3 }, blockOnView3),
+            prepreparePayload: aPrePreparePayload(node3.config.keyManager, 1, 3, blockOnView3),
             preparePayloads: [
                 aPayload(node1.config.keyManager, { term: 1, view: 3, blockHash: blockHashOnView3 }),
                 aPayload(node2.config.keyManager, { term: 1, view: 3, blockHash: blockHashOnView3 }),
@@ -148,7 +147,7 @@ describe("Leader Election", () => {
         const blockOnView4 = aBlock(block1, "Block on View 4");
         const blockHashOnView4 = calculateBlockHash(blockOnView4);
         const preparedProofOnView4: PreparedProof = {
-            prepreparePayload: aPrePreparePayload(node0.config.keyManager, { term: 1, view: 4, blockHash: blockHashOnView4 }, blockOnView4),
+            prepreparePayload: aPrePreparePayload(node0.config.keyManager, 1, 4, blockOnView4),
             preparePayloads: [
                 aPayload(node1.config.keyManager, { term: 1, view: 4, blockHash: blockHashOnView4 }),
                 aPayload(node2.config.keyManager, { term: 1, view: 4, blockHash: blockHashOnView4 }),
@@ -167,7 +166,7 @@ describe("Leader Election", () => {
         await blockUtils.provideNextBlock();
         await nextTick();
 
-        const PPPayload: PrePreparePayload = aPrePreparePayload(node1.config.keyManager, { term: 1, view: 5, blockHash: blockHashOnView4 }, blockOnView4);
+        const PPPayload: PrePreparePayload = aPrePreparePayload(node1.config.keyManager, 1, 5, blockOnView4);
         const VCProof: ViewChangePayload[] = [node0VCPayload, node2VCPayload, node3VCPayload];
         const payload: NewViewPayload = aPayload(node1.config.keyManager, { term: 1, view: 5, PP: PPPayload, VCProof });
         expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", payload);
@@ -253,8 +252,7 @@ describe("Leader Election", () => {
         const node2VCPayload: ViewChangePayload = aPayload(node2.config.keyManager, { term: 2, newView: 1, preparedProof: node2PreparedProof });
         expect(spy2).to.have.been.calledWith(node1.pk, "view-change", node2VCPayload);
 
-        const block3Hash = calculateBlockHash(block3);
-        const PPPayload: PrePreparePayload = aPrePreparePayload(node1.config.keyManager, { term: 2, view: 1, blockHash: block3Hash }, block3);
+        const PPPayload: PrePreparePayload = aPrePreparePayload(node1.config.keyManager, 2, 1, block3);
         const VCProof: ViewChangePayload[] = node1.config.pbftStorage.getViewChangeProof(2, 1, 1);
         const node1NVExpectedPayload: NewViewPayload = aPayload(node1.config.keyManager, { term: 2, view: 1, PP: PPPayload, VCProof });
         expect(spy1).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", node1NVExpectedPayload);

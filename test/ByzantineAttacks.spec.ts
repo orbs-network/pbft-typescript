@@ -147,7 +147,7 @@ describe("Byzantine Attacks", () => {
         // node0, if faking other messages
         const block1 = aBlock(theGenesisBlock);
         const blockHash1 = calculateBlockHash(block1);
-        const PPpayload1: PrePreparePayload = aPrePreparePayload(node1.config.keyManager, { term: 1, view: 0, blockHash: blockHash1 }, block1);
+        const PPpayload1: PrePreparePayload = aPrePreparePayload(node1.config.keyManager, 1, 0, block1);
         const Ppayload1: PreparePayload = aPayload(node1.config.keyManager, { term: 1, view: 0, blockHash: blockHash1 });
         const Cpayload1: CommitPayload = aPayload(node1.config.keyManager, { term: 1, view: 0, blockHash: blockHash1 });
         gossip1.onRemoteMessage("preprepare", PPpayload1); // node1 causing preprepare on node1
@@ -158,7 +158,7 @@ describe("Byzantine Attacks", () => {
 
         const block2 = aBlock(theGenesisBlock);
         const blockHash2 = calculateBlockHash(block2);
-        const PPpayload2: PrePreparePayload = aPrePreparePayload(node2.config.keyManager, { term: 1, view: 0, blockHash: blockHash2 }, block2);
+        const PPpayload2: PrePreparePayload = aPrePreparePayload(node2.config.keyManager, 1, 0, block2);
         const Ppayload2: PreparePayload = aPayload(node2.config.keyManager, { term: 1, view: 0, blockHash: blockHash2 });
         const Cpayload2: CommitPayload = aPayload(node2.config.keyManager, { term: 1, view: 0, blockHash: blockHash2 });
         gossip2.onRemoteMessage("preprepare", PPpayload2); // node1 causing preprepare on node2

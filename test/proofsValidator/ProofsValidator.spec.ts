@@ -5,9 +5,10 @@ import { KeyManager, Block, BlockUtils } from "../../src";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 import { expect } from "chai";
 import { PreparedProof } from "../../src/storage/PBFTStorage";
-import { aPrePreparePayload, aPayload } from "../builders/PayloadBuilder";
+import { aPayload, aPrePreparePayload } from "../builders/PayloadBuilder";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { calculateBlockHash, BlockUtilsMock } from "../blockUtils/BlockUtilsMock";
+import { PrePreparePayload } from "../../src/networkCommunication/Payload";
 chai.use(sinonChai);
 
 describe("Proofs Validator", () => {
@@ -24,7 +25,7 @@ describe("Proofs Validator", () => {
     const view = 0;
     const block: Block = aBlock(theGenesisBlock);
     const blockHash = calculateBlockHash(block);
-    const prepreparePayload = aPrePreparePayload(leaderKeyManager, { term, view, blockHash }, block);
+    const prepreparePayload = aPrePreparePayload(leaderKeyManager, term, view, block);
     const preparePayload1 = aPayload(node1KeyManager, { term, view, blockHash });
     const preparePayload2 = aPayload(node2KeyManager, { term, view, blockHash });
     const calcLeaderPk = (view: number) => membersPKs[view];
@@ -79,7 +80,6 @@ describe("Proofs Validator", () => {
     });
 
     it("should reject a proof that did not have enough prepares", async () => {
-        const prepreparePayload = aPrePreparePayload(leaderKeyManager, { term, view, blockHash }, undefined);
         const prepareProof: PreparedProof = {
             prepreparePayload: prepreparePayload,
             preparePayloads: [preparePayload1]
@@ -98,7 +98,7 @@ describe("Proofs Validator", () => {
     });
 
     it("should reject a proof with a prepare pk is not part of the membersPKs", async () => {
-        const prepreparePayload = aPrePreparePayload(leaderKeyManager, { term: 0, view: 0, blockHash }, block);
+        const prepreparePayload = aPrePreparePayload(leaderKeyManager, 0, 0, block);
         const preparePayload1 = aPayload(new KeyManagerMock("Not in members PK"), { term: 0, view: 0, blockHash });
         const preparePayload2 = aPayload(node2KeyManager, { term: 0, view: 0, blockHash });
 
@@ -111,7 +111,7 @@ describe("Proofs Validator", () => {
     });
 
     it("should reject a proof with a prepare from the leader", async () => {
-        const prepreparePayload = aPrePreparePayload(leaderKeyManager, { term: 0, view: 0, blockHash }, block);
+        const prepreparePayload = aPrePreparePayload(leaderKeyManager, 0, 0, block);
         const preparePayload1 = aPayload(leaderKeyManager, { term: 0, view: 0, blockHash });
         const preparePayload2 = aPayload(node2KeyManager, { term: 0, view: 0, blockHash });
 
@@ -125,7 +125,7 @@ describe("Proofs Validator", () => {
 
     it("should reject a proof with a mismatching view to leader", async () => {
         // Node 2 is the leader here, but it's sending view 0, which is indicating Node 1 as the leader
-        const prepreparePayload = aPrePreparePayload(node2KeyManager, { term: 0, view: 0, blockHash }, block);
+        const prepreparePayload = aPrePreparePayload(leaderKeyManager, 0, 0, block);
         const preparePayload1 = aPayload(node1KeyManager, { term: 0, view: 0, blockHash });
         const preparePayload2 = aPayload(node3KeyManager, { term: 0, view: 0, blockHash });
         const calcLeaderPk = (view: number) => ["Node 1", "Node 2", "Node 3", "Node 4"][view];
@@ -141,18 +141,25 @@ describe("Proofs Validator", () => {
     it("should reject a proof that has a prepare that did not match the preprepare view or term", async () => {
         // Good proof //
         const goodPrepareProof: PreparedProof = {
-            prepreparePayload: aPrePreparePayload(leaderKeyManager, { term: 5, view: 0, blockHash }, block),
+            prepreparePayload: aPrePreparePayload(leaderKeyManager, 5, 0, block),
             preparePayloads: [
                 aPayload(node1KeyManager, { term: 5, view: 0, blockHash }),
                 aPayload(node2KeyManager, { term: 5, view: 0, blockHash }),
             ]
         };
-        const actualGood = validatePrepared(goodPrepareProof, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        const goodPrepareProof2: PreparedProof = {
+            prepreparePayload: aPrePreparePayload(leaderKeyManager, 5, 0, block),
+            preparePayloads: [
+                aPayload(node1KeyManager, { term: 5, view: 0, blockHash }),
+                aPayload(node2KeyManager, { term: 5, view: 0, blockHash }),
+            ]
+        };
+        const actualGood = validatePrepared(goodPrepareProof2, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
         expect(actualGood).to.be.true;
 
         // Mismatching term //
         const badTermPrepareProof: PreparedProof = {
-            prepreparePayload: aPrePreparePayload(leaderKeyManager, { term: 5, view: 0, blockHash }, block),
+            prepreparePayload: aPrePreparePayload(leaderKeyManager, 5, 0, block),
             preparePayloads: [
                 aPayload(node1KeyManager, { term: 5, view: 0, blockHash }),
                 aPayload(node2KeyManager, { term: 666, view: 0, blockHash }),
@@ -163,7 +170,7 @@ describe("Proofs Validator", () => {
 
         // Mismatching view //
         const badViewPrepareProof: PreparedProof = {
-            prepreparePayload: aPrePreparePayload(leaderKeyManager, { term: 5, view: 0, blockHash }, block),
+            prepreparePayload: aPrePreparePayload(leaderKeyManager, 5, 0, block),
             preparePayloads: [
                 aPayload(node1KeyManager, { term: 5, view: 0, blockHash }),
                 aPayload(node2KeyManager, { term: 5, view: 666, blockHash }),
@@ -174,7 +181,7 @@ describe("Proofs Validator", () => {
 
         // Mismatching blockHash //
         const badBlockHashPrepareProof: PreparedProof = {
-            prepreparePayload: aPrePreparePayload(leaderKeyManager, { term: 5, view: 9, blockHash }, block),
+            prepreparePayload: aPrePreparePayload(leaderKeyManager, 5, 9, block),
             preparePayloads: [
                 aPayload(node1KeyManager, { term: 5, view: 9, blockHash }),
                 aPayload(node2KeyManager, { term: 5, view: 9, blockHash: "XXXX" }),
@@ -185,9 +192,11 @@ describe("Proofs Validator", () => {
     });
 
     it("should reject a proof that given block (in the preprepare) doesn't match the blockHash in the payloads", async () => {
+        const prepreparePayload: PrePreparePayload = aPrePreparePayload(leaderKeyManager, 5, 9, block);
         const mismatchingBlockHash = calculateBlockHash(theGenesisBlock);
+        prepreparePayload.data.blockHash = mismatchingBlockHash;
         const prepareProof: PreparedProof = {
-            prepreparePayload: aPrePreparePayload(leaderKeyManager, { term: 5, view: 9, blockHash: mismatchingBlockHash }, block),
+            prepreparePayload,
             preparePayloads: [
                 aPayload(node1KeyManager, { term: 5, view: 9, blockHash: mismatchingBlockHash }),
                 aPayload(node2KeyManager, { term: 5, view: 9, blockHash: mismatchingBlockHash }),
@@ -199,7 +208,7 @@ describe("Proofs Validator", () => {
 
     it("should reject a proof that with duplicate prepare sender PKs", async () => {
         const prepareProof: PreparedProof = {
-            prepreparePayload: aPrePreparePayload(leaderKeyManager, { term: 5, view: 9, blockHash }, block),
+            prepreparePayload: aPrePreparePayload(leaderKeyManager, 5, 9, block),
             preparePayloads: [
                 aPayload(node1KeyManager, { term: 5, view: 9, blockHash }),
                 aPayload(node1KeyManager, { term: 5, view: 9, blockHash }),

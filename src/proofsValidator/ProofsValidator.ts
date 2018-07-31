@@ -58,7 +58,7 @@ export function validatePrepared(
 
     const isPrepareMisMatch = preparePayloads
         .map(p => p.data)
-        .findIndex(p => p.view !== view || p.term !== term || p.blockHash !== blockHash) > -1;
+        .findIndex(p => p.view !== view || p.term !== term || !p.blockHash.equals(blockHash)) > -1;
 
     if (isPrepareMisMatch) {
         return false;
