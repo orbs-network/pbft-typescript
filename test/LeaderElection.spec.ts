@@ -2,13 +2,13 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
-import { calculateBlockHash } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aPayload, aPrePreparePayload, aPreparePayload } from "./builders/PayloadBuilder";
 import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
 import { nextTick } from "./timeUtils";
 import { PreparedProof } from "../src/storage/PBFTStorage";
 import { ViewChangePayload, NewViewPayload, PrePreparePayload, PreparePayload } from "../src/networkCommunication/Payload";
+import { aPreparedProof } from "./builders/ProofBuilder";
 
 chai.use(sinonChai);
 
@@ -133,25 +133,12 @@ describe("Leader Election", () => {
 
         // VC with prepared proof on view 3
         const blockOnView3 = aBlock(block1, "Block on View 3");
-        const blockHashOnView3 = calculateBlockHash(blockOnView3);
-        const preparedProofOnView3: PreparedProof = {
-            prepreparePayload: aPrePreparePayload(node3.config.keyManager, 1, 3, blockOnView3),
-            preparePayloads: [
-                aPreparePayload(node1.config.keyManager, 1, 3, blockOnView3),
-                aPreparePayload(node2.config.keyManager, 1, 3, blockOnView3),
-            ]
-        };
+        const preparedProofOnView3: PreparedProof = aPreparedProof(node3, [node1, node2], 1, 3, blockOnView3);
         const node0VCPayload: ViewChangePayload = aPayload(node0.config.keyManager, { term: 1, newView: 5, preparedProof: preparedProofOnView3 });
 
         // VC with prepared proof on view 4
         const blockOnView4 = aBlock(block1, "Block on View 4");
-        const preparedProofOnView4: PreparedProof = {
-            prepreparePayload: aPrePreparePayload(node0.config.keyManager, 1, 4, blockOnView4),
-            preparePayloads: [
-                aPreparePayload(node1.config.keyManager, 1, 4, blockOnView4),
-                aPreparePayload(node2.config.keyManager, 1, 4, blockOnView4),
-            ]
-        };
+        const preparedProofOnView4: PreparedProof = aPreparedProof(node0, [node1, node2], 1, 4, blockOnView4);
         const node2VCPayload: ViewChangePayload = aPayload(node2.config.keyManager, { term: 1, newView: 5, preparedProof: preparedProofOnView4 });
 
         // VC with no prepared proof

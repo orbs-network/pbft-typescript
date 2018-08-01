@@ -9,6 +9,7 @@ import { aPayload, aPrePreparePayload, aPreparePayload } from "../builders/Paylo
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { calculateBlockHash, BlockUtilsMock } from "../blockUtils/BlockUtilsMock";
 import { PrePreparePayload, PreparePayload } from "../../src/networkCommunication/Payload";
+import { anEmptyPreparedProof } from "../builders/ProofBuilder";
 chai.use(sinonChai);
 
 describe("Proofs Validator", () => {
@@ -71,11 +72,7 @@ describe("Proofs Validator", () => {
     });
 
     it("should approve a proof that had no preprepare no no prepare", async () => {
-        const prepareProof: PreparedProof = {
-            prepreparePayload: undefined,
-            preparePayloads: undefined
-        };
-        const actual = validatePrepared(prepareProof, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        const actual = validatePrepared(anEmptyPreparedProof(), f, keyManager, blockUtils, membersPKs, calcLeaderPk);
         expect(actual).to.be.true;
     });
 

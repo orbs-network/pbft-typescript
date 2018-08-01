@@ -429,6 +429,16 @@ export class PBFTTerm {
             return;
         }
 
+        const expectedBlock: Block = extractBlock(VCProof);
+        if (expectedBlock !== undefined) {
+            const expectedBlockHash = this.blockUtils.calculateBlockHash(expectedBlock);
+            const ppBlockHash = this.blockUtils.calculateBlockHash(PP.block);
+            if (expectedBlockHash.equals(ppBlockHash) === false) {
+                this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", the given block (PP.block) doesn't match the best block from the VCProof` });
+                return;
+            }
+        }
+
         if (await this.validatePrePreapare(PP)) {
             this.newViewLocally = view;
             this.initView(view);

@@ -8,16 +8,16 @@ import { aPayload, aPrePreparePayload } from "../builders/PayloadBuilder";
 import { KeyManager } from "../../src";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 import { PreparedProof } from "../../src/storage/PBFTStorage";
+import { anEmptyPreparedProof } from "../builders/ProofBuilder";
 chai.use(sinonChai);
 
 describe("Block Extractor", () => {
 
     it("should return undefined when all VC payloads don't have a preparedProof", async () => {
         const dummyKM: KeyManager = new KeyManagerMock("Dummy PK");
-        const emptyPreparedProof: PreparedProof = { prepreparePayload: undefined, preparePayloads: undefined };
-        const VC1: ViewChangePayload = aPayload(dummyKM, { term: 1, newView: 5, preparedProof: emptyPreparedProof });
-        const VC2: ViewChangePayload = aPayload(dummyKM, { term: 1, newView: 5, preparedProof: emptyPreparedProof });
-        const VC3: ViewChangePayload = aPayload(dummyKM, { term: 1, newView: 5, preparedProof: emptyPreparedProof });
+        const VC1: ViewChangePayload = aPayload(dummyKM, { term: 1, newView: 5, preparedProof: anEmptyPreparedProof() });
+        const VC2: ViewChangePayload = aPayload(dummyKM, { term: 1, newView: 5, preparedProof: anEmptyPreparedProof() });
+        const VC3: ViewChangePayload = aPayload(dummyKM, { term: 1, newView: 5, preparedProof: anEmptyPreparedProof() });
         const VCProof: ViewChangePayload[] = [VC1, VC2, VC3];
         const actual = extractBlock(VCProof);
         expect(actual).to.be.undefined;
@@ -32,11 +32,9 @@ describe("Block Extractor", () => {
         const preparedProofWithBlock: PreparedProof = { prepreparePayload, preparePayloads: undefined };
 
         // empty proof
-        const emptyPreparedProof: PreparedProof = { prepreparePayload: undefined, preparePayloads: undefined };
-
-        const VC1: ViewChangePayload = aPayload(dummyKM, { term: 1, newView: 5, preparedProof: emptyPreparedProof });
+        const VC1: ViewChangePayload = aPayload(dummyKM, { term: 1, newView: 5, preparedProof: anEmptyPreparedProof() });
         const VC2: ViewChangePayload = aPayload(dummyKM, { term: 1, newView: 5, preparedProof: preparedProofWithBlock });
-        const VC3: ViewChangePayload = aPayload(dummyKM, { term: 1, newView: 5, preparedProof: emptyPreparedProof });
+        const VC3: ViewChangePayload = aPayload(dummyKM, { term: 1, newView: 5, preparedProof: anEmptyPreparedProof() });
         const VCProof: ViewChangePayload[] = [VC1, VC2, VC3];
         const actual = extractBlock(VCProof);
 
@@ -57,9 +55,7 @@ describe("Block Extractor", () => {
         const preparedProofWithBlock2: PreparedProof = { prepreparePayload: prepreparePayload2, preparePayloads: undefined };
 
         // empty proof
-        const emptyPreparedProof: PreparedProof = { prepreparePayload: undefined, preparePayloads: undefined };
-
-        const VC1: ViewChangePayload = aPayload(dummyKM, { term: 1, newView: 2, preparedProof: emptyPreparedProof });
+        const VC1: ViewChangePayload = aPayload(dummyKM, { term: 1, newView: 2, preparedProof: anEmptyPreparedProof() });
         const VC2: ViewChangePayload = aPayload(dummyKM, { term: 1, newView: 2, preparedProof: preparedProofWithBlock1 });
         const VC3: ViewChangePayload = aPayload(dummyKM, { term: 1, newView: 2, preparedProof: preparedProofWithBlock2 });
         const VCProof: ViewChangePayload[] = [VC1, VC2, VC3];
