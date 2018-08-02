@@ -85,7 +85,7 @@ class TestNetworkBuilder {
         const logger: Logger = new this.loggerCtor(pk);
         const electionTriggerFactory: ElectionTriggerFactory = this.electionTriggerFactory ? this.electionTriggerFactory : () => new ElectionTriggerMock();
         const blockUtils: BlockUtils = this.blockUtils ? this.blockUtils : new BlockUtilsMock();
-        const gossip = new Gossip(discovery, logger);
+        const gossip = new Gossip(discovery);
         discovery.registerGossip(pk, gossip);
         const networkCommunication: InMemoryNetworkCommunicaiton = new InMemoryNetworkCommunicaiton(discovery, gossip);
         return builder

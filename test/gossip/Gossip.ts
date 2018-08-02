@@ -14,7 +14,7 @@ export class Gossip {
     private outGoingWhiteListPKs: string[];
     private inComingWhiteListPKs: string[];
 
-    constructor(private discovery: GossipDiscovery, private logger: Logger = new SilentLogger()) {
+    constructor(private discovery: GossipDiscovery) {
     }
 
     onRemoteMessage(message: string, payload: Payload): void {
@@ -24,7 +24,6 @@ export class Gossip {
                     return;
                 }
             }
-            this.logger.log({ Subject: "GossipReceive", senderPk: payload.pk, payload });
             subscription.cb(message, payload);
         });
     }
@@ -72,7 +71,6 @@ export class Gossip {
         }
         const targetGossip = this.discovery.getGossipByPk(pk);
         if (targetGossip) {
-            this.logger.log({ Subject: "GossipSend", message, targetId: pk, payload });
             targetGossip.onRemoteMessage(message, payload);
         }
     }

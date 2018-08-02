@@ -34,8 +34,16 @@ type StoreViewChange = {
 type StorageLogData = { Subject: "Storage" } & (StorePrePrepare | StorePrepare | StoreCommit | StoreViewChange);
 
 /// GOSSIP ///
-type GossipSendLogData = { Subject: "GossipSend", message: string, targetId: string, payload: any };
-type GossipReceiveLogData = { Subject: "GossipReceive", senderPk: string, payload: any };
+type GossipSendLogData = {
+    Subject: "GossipSend",
+    message: string,
+    targetPks: string[],
+    senderPk: string,
+    term: number,
+    view: number,
+    blockHash?: string
+};
+
 
 // FLOW
 type FlowElected = {
@@ -67,7 +75,7 @@ type WarningLogData = { Subject: "Warning", message: string, metaData?: any };
 // WARNING
 type InfoLogData = { Subject: "Info", message: string, metaData?: any };
 
-export type LogTypes = StorageLogData | GossipSendLogData | GossipReceiveLogData | FlowLogData | WarningLogData | InfoLogData;
+export type LogTypes = StorageLogData | GossipSendLogData | FlowLogData | WarningLogData | InfoLogData;
 
 export interface Logger {
     log(data: LogTypes): void;
