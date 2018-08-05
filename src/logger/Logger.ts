@@ -5,7 +5,8 @@ type StorePrePrepare = {
     StorageType: "PrePrepare",
     term: number,
     view: number,
-    blockHash: string
+    blockHash: string,
+    senderPk: string
 };
 
 type StorePrepare = {

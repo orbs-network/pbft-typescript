@@ -29,8 +29,9 @@ export class InMemoryPBFTStorage implements PBFTStorage {
             return false;
         }
         termsMap.set(view, payload);
+        const { pk: senderPk } = payload;
         const { blockHash } = payload.data;
-        this.logger.log({ subject: "Storage", StorageType: "PrePrepare", term, view, blockHash: blockHash.toString("hex") });
+        this.logger.log({ subject: "Storage", StorageType: "PrePrepare", term, view, senderPk, blockHash: blockHash.toString("hex") });
         return true;
     }
 
@@ -75,7 +76,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         }
         sendersMap.set(senderPk, payload);
 
-        this.logger.log({ subject: "Storage", StorageType: "Prepare", term, view, blockHash: key, senderPk });
+        this.logger.log({ subject: "Storage", StorageType: "Prepare", term, view, senderPk, blockHash: key });
         return true;
     }
 
@@ -163,7 +164,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         }
         sendersMap.set(senderPk, payload);
 
-        this.logger.log({ subject: "Storage", StorageType: "Commit", term, view, blockHash: key, senderPk });
+        this.logger.log({ subject: "Storage", StorageType: "Commit", term, view, senderPk, blockHash: key });
         return true;
     }
 
@@ -216,7 +217,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         }
         sendersMap.set(senderPk, payload);
 
-        this.logger.log({ subject: "Storage", StorageType: "ViewChange", term, view, senderPk });
+        this.logger.log({ subject: "Storage", StorageType: "ViewChange", senderPk, term, view });
         return true;
     }
 

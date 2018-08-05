@@ -130,7 +130,7 @@ export const aSimpleTestNetwork = (countOfNodes: number = 4, blocksPool?: Block[
     const testNetwork = aTestNetwork()
         .electingLeaderUsing(electionTriggerFactory)
         .gettingBlocksVia(blockUtils)
-        .thatLogsToCustomeLogger(SocketsLogger)
+        // .thatLogsToCustomeLogger(SocketsLogger)
         .with(countOfNodes).nodes
         .build();
 
