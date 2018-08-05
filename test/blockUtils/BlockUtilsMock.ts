@@ -8,10 +8,10 @@ import { nextTick } from "../timeUtils";
 export const calculateBlockHash = (block: Block): Buffer => createHash("sha256").update(stringify(block.header)).update(stringify(block.body)).digest(); // .digest("base64");
 
 export class BlockUtilsMock implements BlockUtils {
-    private blocksPool = theGenesisBlock;
     private blocksPromiseList: Promise<Block>[] = [];
     private blocksResolveList: Function[] = [];
     private upCommingBlocks: Block[] = [];
+    private latestBlock: Block = theGenesisBlock;
 
     private validationsPromiseList: Promise<boolean>[] = [];
     private validationsResolveList: Function[] = [];
@@ -43,12 +43,20 @@ export class BlockUtilsMock implements BlockUtils {
         return promise;
     }
 
+    public getLatestBlock(): Block {
+        return this.latestBlock;
+    }
+
     private getNextBlock(): Block {
+        let result: Block;
         if (this.upCommingBlocks.length > 0) {
-            return this.upCommingBlocks.shift();
+            result = this.upCommingBlocks.shift();
         } else {
-            return aBlock(this.blocksPool);
+            result = aBlock(this.latestBlock);
         }
+
+        this.latestBlock = result;
+        return result;
     }
 
     public async resolveAllValidations(isValid: boolean): Promise<any> {

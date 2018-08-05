@@ -33,7 +33,7 @@ describe("PBFT", () => {
         const spy3 = sinon.spy(gossip3, "multicast");
 
         testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockStorage.getBlockChainHeight();
+        await nextTick();
         await blockUtils.provideNextBlock();
         await blockUtils.resolveAllValidations(true);
         await nextTick(); // await for notifyCommitted
@@ -51,13 +51,29 @@ describe("PBFT", () => {
         const { testNetwork, blockUtils, blocksPool } = aSimpleTestNetwork();
 
         testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockStorage.getBlockChainHeight();
+        await nextTick();
         await blockUtils.provideNextBlock();
         await nextTick();
         await blockUtils.resolveAllValidations(true);
         await nextTick();
 
         expect(testNetwork.nodes).to.agreeOnBlock(blocksPool[0]);
+        testNetwork.shutDown();
+    });
+
+    it("should reach consesnsus after 10 blocks", async () => {
+        const { testNetwork, blockUtils, blocksPool } = aSimpleTestNetwork();
+
+        testNetwork.startConsensusOnAllNodes();
+        for (const i of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]) {
+            await nextTick();
+            await blockUtils.provideNextBlock();
+            await nextTick();
+            await blockUtils.resolveAllValidations(true);
+            await nextTick();
+        }
+
+        expect(testNetwork.nodes).to.agreeOnBlock(blockUtils.getLatestBlock());
         testNetwork.shutDown();
     });
 
@@ -85,7 +101,7 @@ describe("PBFT", () => {
         // suggest block 1 to nodes 1 and 2
         leaderGossip.setOutGoingWhiteListPKs([testNetwork.nodes[1].pk, testNetwork.nodes[2].pk]);
         testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockStorage.getBlockChainHeight();
+        await nextTick();
         await blockUtils.provideNextBlock();
         await nextTick(); // await for blockStorage.getLastBlockHash
         await blockUtils.resolveAllValidations(true);
@@ -93,7 +109,7 @@ describe("PBFT", () => {
         // suggest block 2 to node 3.
         leaderGossip.setOutGoingWhiteListPKs([testNetwork.nodes[3].pk]);
         testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockStorage.getBlockChainHeight();
+        await nextTick();
         await blockUtils.provideNextBlock();
         await nextTick(); // await for blockStorage.getLastBlockHash
         await blockUtils.resolveAllValidations(true);
@@ -113,7 +129,7 @@ describe("PBFT", () => {
         gossip.setIncomingWhiteListPKs([]); // prevent any income gossip messages
 
         testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockStorage.getBlockChainHeight();
+        await nextTick();
         await blockUtils.provideNextBlock();
         await nextTick();
         await blockUtils.resolveAllValidations(true);
@@ -130,7 +146,7 @@ describe("PBFT", () => {
         const byzantineNode = testNetwork.nodes[3];
 
         testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockStorage.getBlockChainHeight();
+        await nextTick();
         const gossip = testNetwork.getNodeGossip(byzantineNode.pk);
         gossip.broadcast("preprepare", aPrePreparePayload(byzantineNode.config.keyManager, 1, 0, fakeBlock));
         gossip.broadcast("preprepare", aPrePreparePayload(byzantineNode.config.keyManager, 1, 0, fakeBlock));
@@ -158,7 +174,7 @@ describe("PBFT", () => {
         gossip2.setIncomingWhiteListPKs([]);
 
         testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockStorage.getBlockChainHeight();
+        await nextTick();
         await blockUtils.provideNextBlock();
         await nextTick();
         await blockUtils.resolveAllValidations(true);
@@ -173,7 +189,7 @@ describe("PBFT", () => {
 
         // block 1
         testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockStorage.getBlockChainHeight();
+        await nextTick();
         await blockUtils.provideNextBlock();
         await nextTick();
         await blockUtils.resolveAllValidations(true);
@@ -194,7 +210,7 @@ describe("PBFT", () => {
 
         // block 2 (After network shutdown)
         testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockStorage.getBlockChainHeight();
+        await nextTick();
         await blockUtils.provideNextBlock();
         await nextTick();
         await blockUtils.resolveAllValidations(true);
@@ -219,7 +235,7 @@ describe("PBFT", () => {
 
         // block 1
         testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockStorage.getBlockChainHeight();
+        await nextTick();
 
         // (only) node0 is the leader
         expect(node0.isLeader()).to.be.true;

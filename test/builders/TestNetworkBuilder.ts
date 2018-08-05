@@ -102,11 +102,11 @@ class TestNetworkBuilder {
         const nodes: Node[] = [];
 
         for (let i = 0; i < this.countOfNodes; i++) {
-            const node = this.buildNode(aNode(), `Node ${i} pk`, discovery);
+            const node = this.buildNode(aNode(), `Node ${i}`, discovery);
             nodes.push(node);
         }
 
-        const customNodes = this.customNodes.map((nodeBuilder, idx) => this.buildNode(nodeBuilder, `Custom-Node ${idx} pk`, discovery));
+        const customNodes = this.customNodes.map((nodeBuilder, idx) => this.buildNode(nodeBuilder, `Custom-Node ${idx}`, discovery));
         nodes.push(...customNodes);
         this.testNetwork.registerNodes(nodes);
     }
@@ -130,7 +130,7 @@ export const aSimpleTestNetwork = (countOfNodes: number = 4, blocksPool?: Block[
     const testNetwork = aTestNetwork()
         .electingLeaderUsing(electionTriggerFactory)
         .gettingBlocksVia(blockUtils)
-        // .thatLogsToCustomeLogger(SocketsLogger)
+        .thatLogsToCustomeLogger(SocketsLogger)
         .with(countOfNodes).nodes
         .build();
 

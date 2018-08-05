@@ -1,7 +1,8 @@
 import { Block } from "../../src/Block";
 import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 
-const genBody = () => (Math.floor(Math.random() * 100_000_000)).toString();
+let globalCounter: number = 0;
+const genBody = () => `Block ${(globalCounter++).toString()}`;
 
 export function aBlock(previousBlock: Block, body: any = genBody()): Block {
     return {

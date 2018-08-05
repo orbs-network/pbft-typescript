@@ -141,7 +141,7 @@ export class PBFTTerm {
             targetPks: this.otherMembersPKs,
             term: payload.data.term,
             view: payload.data.view,
-            blockHash: payload.data.blockHash.toString()
+            blockHash: payload.data.blockHash.toString("Hex")
         });
     }
 
@@ -154,7 +154,7 @@ export class PBFTTerm {
             targetPks: this.otherMembersPKs,
             term: payload.data.term,
             view: payload.data.view,
-            blockHash: payload.data.blockHash.toString()
+            blockHash: payload.data.blockHash.toString("Hex")
         });
     }
 
@@ -167,7 +167,7 @@ export class PBFTTerm {
             targetPks: this.otherMembersPKs,
             term: payload.data.term,
             view: payload.data.view,
-            blockHash: payload.data.blockHash.toString()
+            blockHash: payload.data.blockHash.toString("Hex")
         });
     }
 
