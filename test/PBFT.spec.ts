@@ -61,7 +61,7 @@ describe("PBFT", () => {
         testNetwork.shutDown();
     });
 
-    it.only("should reach consesnsus after 10 blocks", async () => {
+    it("should reach consesnsus after 10 blocks", async () => {
         const { testNetwork, blockUtils, blocksPool } = aSimpleTestNetwork();
 
         testNetwork.startConsensusOnAllNodes();

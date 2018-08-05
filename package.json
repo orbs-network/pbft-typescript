@@ -1,6 +1,6 @@
 {
   "name": "pbft-typescript",
-  "version": "0.0.40",
+  "version": "0.0.48",
   "description": "",
   "repository": {
     "type": "git",
@@ -33,7 +33,7 @@
     "sinon-chai": "^3.0.0",
     "ts-node": "^6.0.3",
     "tslint": "^5.10.0",
-    "typescript": "^3.0.1"
+    "typescript": "^2.9.1"
   },
   "devDependencies": {
     "@types/json-stable-stringify": "^1.0.32",

@@ -58,9 +58,16 @@ export class PBFTTerm {
 
     public async startTerm(): Promise<void> {
         this.initView(0);
+        let metaData = {
+            method: "startTerm",
+            height: this.term,
+            prevBlockHash: new Buffer("")
+        };
+        this.logger.log({ subject: "Info", message: `on startTerm`, metaData: metaData });
         if (this.isLeader()) {
+            this.logger.log({ subject: "Info", message: `Leader startTerm`, metaData: metaData });
             const block: Block = await this.blockUtils.requestNewBlock(this.term);
-            const metaData = {
+            metaData = {
                 method: "requestNewBlock",
                 height: this.term,
                 prevBlockHash: block.header.prevBlockHash
