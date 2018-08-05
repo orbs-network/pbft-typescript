@@ -72,7 +72,7 @@ export class BlockUtilsMock implements BlockUtils {
     }
 
     public validateBlock(block: Block): Promise<boolean> {
-        const promise = new Promise<boolean>((resolve, reject) => {
+        const promise = new Promise<boolean>(resolve => {
             this.validationsResolveList.push(resolve);
         });
         this.validationsPromiseList.push(promise);

@@ -8,7 +8,7 @@ import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aPayload, aPrePreparePayload } from "./builders/PayloadBuilder";
 import { aSimpleTestNetwork, aTestNetwork } from "./builders/TestNetworkBuilder";
 import { blockMatcher } from "./matchers/blockMatcher";
-import { nextTick } from "./timeUtils";
+import { nextTick, wait } from "./timeUtils";
 import { BlockUtils } from "../src";
 import { BlockUtilsMock } from "./blockUtils/BlockUtilsMock";
 import { aNode } from "./builders/NodeBuilder";
@@ -61,13 +61,15 @@ describe("PBFT", () => {
         testNetwork.shutDown();
     });
 
-    it("should reach consesnsus after 10 blocks", async () => {
+    it.only("should reach consesnsus after 10 blocks", async () => {
         const { testNetwork, blockUtils, blocksPool } = aSimpleTestNetwork();
 
         testNetwork.startConsensusOnAllNodes();
-        for (const i of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]) {
+        for (const i of [0, 1, 2, 3, 4]) {
             await nextTick();
+            await wait(100);
             await blockUtils.provideNextBlock();
+            await wait(100);
             await nextTick();
             await blockUtils.resolveAllValidations(true);
             await nextTick();

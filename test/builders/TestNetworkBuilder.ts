@@ -13,7 +13,7 @@ import { TestNetwork } from "../network/TestNetwork";
 import { InMemoryNetworkCommunicaiton } from "../networkCommunication/InMemoryNetworkCommunicaiton";
 import { aBlock, theGenesisBlock } from "./BlockBuilder";
 import { aNode, NodeBuilder } from "./NodeBuilder";
-import { SocketsLogger } from "../logger/sockets/SocketsLogger";
+import { SocketsLogger } from "../../src/logger/SocketsLogger";
 export interface LoggerConstructor {
     new (id: string): Logger;
 }

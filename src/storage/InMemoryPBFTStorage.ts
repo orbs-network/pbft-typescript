@@ -237,5 +237,6 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         this.prepareStorage.delete(term);
         this.commitStorage.delete(term);
         this.viewChangeStorage.delete(term);
+        this.logger.log({ subject: "Storage", StorageType: "ClearTerm", term });
     }
 }

@@ -32,7 +32,12 @@ type StoreViewChange = {
     senderPk: string
 };
 
-type StorageLogData = { subject: "Storage" } & (StorePrePrepare | StorePrepare | StoreCommit | StoreViewChange);
+type ClearTerm = {
+    StorageType: "ClearTerm",
+    term: number
+};
+
+type StorageLogData = { subject: "Storage" } & (StorePrePrepare | StorePrepare | StoreCommit | StoreViewChange | ClearTerm);
 
 /// GOSSIP ///
 type GossipSendLogData = {
