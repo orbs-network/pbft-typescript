@@ -423,13 +423,12 @@ describe("PBFTTerm", () => {
     it("should send the prepared proof in the view-change", async () => {
         const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
         const block: Block = aBlock(theGenesisBlock);
-        const blockHash = calculateBlockHash(block);
         const spy = sinon.spy(node1Config.networkCommunication, "sendToMembers");
 
         // get node1 to be prepared on the block
-        node1Config.pbftStorage.storePrePrepare(0, 0, block, aPrePreparePayload(node0KeyManager, 0, 0, block));
-        node1Config.pbftStorage.storePrepare(0, 0, blockHash, node2KeyManager.getMyPublicKey(), aPreparePayload(node2KeyManager, 0, 0, block));
-        node1Config.pbftStorage.storePrepare(0, 0, blockHash, node3KeyManager.getMyPublicKey(), aPreparePayload(node3KeyManager, 0, 0, block));
+        node1Config.pbftStorage.storePrePrepare(0, 0, aPrePreparePayload(node0KeyManager, 0, 0, block));
+        node1Config.pbftStorage.storePrepare(0, 0, aPreparePayload(node2KeyManager, 0, 0, block));
+        node1Config.pbftStorage.storePrepare(0, 0, aPreparePayload(node3KeyManager, 0, 0, block));
         node1PbftTerm.onReceiveViewChange(aPayload(node0KeyManager, { term: 0, newView: 1 }));
         node1PbftTerm.onReceiveViewChange(aPayload(node2KeyManager, { term: 0, newView: 1 }));
         node1PbftTerm.onReceiveViewChange(aPayload(node3KeyManager, { term: 0, newView: 1 }));
@@ -514,7 +513,7 @@ describe("PBFTTerm", () => {
             await nextTick();
             await node1BlockUtils.resolveAllValidations(true);
 
-            expect(storePrePrepareSpy.args[0][2].body).to.equal(blockOnView4.body);
+            expect(storePrePrepareSpy.args[0][2].block.body).to.equal(blockOnView4.body);
         });
 
         it("onNewView should reject a new-view if the offered (On PP) block is not the heighest block on the VCProof", async () => {

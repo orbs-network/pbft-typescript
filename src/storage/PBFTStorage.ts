@@ -12,20 +12,20 @@ export interface PreparedProof {
 // For example: If a storePrepare is called twice with the same values, it will be stored once.
 //
 export interface PBFTStorage {
-    storePrePrepare(term: number, view: number, block: Block, payload: PrePreparePayload): boolean;
+    storePrePrepare(term: number, view: number, payload: PrePreparePayload): boolean;
     getPrePrepareBlock(term: number, view: number): Block;
     getPrePreparePayload(term: number, view: number): PrePreparePayload;
 
-    storePrepare(term: number, view: number, blockHash: Buffer, senderId: string, payload: PreparePayload): boolean;
+    storePrepare(term: number, view: number, payload: PreparePayload): boolean;
     getPrepareSendersPks(term: number, view: number, blockHash: Buffer): string[];
     getPreparePayloads(term: number, view: number, blockHash: Buffer): PreparePayload[];
     getLatestPreparedProof(term: number, f: number): PreparedProof;
 
-    storeCommit(term: number, view: number, blockHash: Buffer, senderId: string, payload: CommitPayload): boolean;
+    storeCommit(term: number, view: number, payload: CommitPayload): boolean;
     getCommitSendersPks(term: number, view: number, blockHash: Buffer): string[];
     getCommitPayloads(term: number, view: number, blockHash: Buffer): CommitPayload[];
 
-    storeViewChange(term: number, view: number, senderId: string, payload: ViewChangePayload): boolean;
+    storeViewChange(term: number, view: number, payload: ViewChangePayload): boolean;
     getViewChangeProof(term: number, view: number, f: number): ViewChangePayload[];
 
     clearTermLogs(term: number): void;

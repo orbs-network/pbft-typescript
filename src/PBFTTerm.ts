@@ -65,13 +65,13 @@ export class PBFTTerm {
                 height: this.term,
                 prevBlockHash: block.header.prevBlockHash
             };
-            this.logger.log({ Subject: "Info", message: `generated new block`, metaData });
+            this.logger.log({ subject: "Info", message: `generated new block`, metaData });
             if (this.disposed) {
                 return;
             }
 
             const payload: PrePreparePayload = this.buildPrePreparePayload(this.term, this.view, block);
-            this.pbftStorage.storePrePrepare(this.term, this.view, block, payload);
+            this.pbftStorage.storePrePrepare(this.term, this.view, payload);
             this.sendPrePrepare(payload);
         }
     }
@@ -117,14 +117,14 @@ export class PBFTTerm {
     private onLeaderChange(): void {
         this.initView(this.view + 1);
         const preparedProof: PreparedProof = this.pbftStorage.getLatestPreparedProof(this.term, this.getF());
-        this.logger.log({ Subject: "Flow", FlowType: "LeaderChange", leaderPk: this.leaderPk, term: this.term, newView: this.view });
+        this.logger.log({ subject: "Flow", FlowType: "LeaderChange", leaderPk: this.leaderPk, term: this.term, newView: this.view });
         const data = { term: this.term, newView: this.view, preparedProof };
         const payload: ViewChangePayload = {
             pk: this.myPk,
             signature: this.keyManager.sign(data),
             data
         };
-        this.pbftStorage.storeViewChange(this.term, this.view, this.myPk, payload);
+        this.pbftStorage.storeViewChange(this.term, this.view, payload);
         if (this.isLeader()) {
             this.checkElected(this.term, this.view);
         } else {
@@ -135,10 +135,10 @@ export class PBFTTerm {
     private sendPrePrepare(payload: PrePreparePayload): void {
         this.networkCommunication.sendToMembers(this.otherMembersPKs, "preprepare", payload);
         this.logger.log({
-            Subject: "GossipSend",
+            subject: "GossipSend",
             message: "preprepare",
-            targetPks: this.otherMembersPKs,
             senderPk: this.myPk,
+            targetPks: this.otherMembersPKs,
             term: payload.data.term,
             view: payload.data.view,
             blockHash: payload.data.blockHash.toString()
@@ -148,10 +148,10 @@ export class PBFTTerm {
     private sendPrepare(payload: PreparePayload): void {
         this.networkCommunication.sendToMembers(this.otherMembersPKs, "prepare", payload);
         this.logger.log({
-            Subject: "GossipSend",
+            subject: "GossipSend",
             message: "prepare",
-            targetPks: this.otherMembersPKs,
             senderPk: this.myPk,
+            targetPks: this.otherMembersPKs,
             term: payload.data.term,
             view: payload.data.view,
             blockHash: payload.data.blockHash.toString()
@@ -161,10 +161,10 @@ export class PBFTTerm {
     private sendCommit(payload: CommitPayload): void {
         this.networkCommunication.sendToMembers(this.otherMembersPKs, "commit", payload);
         this.logger.log({
-            Subject: "GossipSend",
+            subject: "GossipSend",
             message: "commit",
-            targetPks: this.otherMembersPKs,
             senderPk: this.myPk,
+            targetPks: this.otherMembersPKs,
             term: payload.data.term,
             view: payload.data.view,
             blockHash: payload.data.blockHash.toString()
@@ -174,10 +174,10 @@ export class PBFTTerm {
     private sendViewChange(payload: ViewChangePayload): void {
         this.networkCommunication.sendToMembers([this.leaderPk], "view-change", payload);
         this.logger.log({
-            Subject: "GossipSend",
+            subject: "GossipSend",
             message: "view-change",
-            targetPks: [this.leaderPk],
             senderPk: this.myPk,
+            targetPks: [this.leaderPk],
             term: payload.data.term,
             view: payload.data.newView
         });
@@ -186,10 +186,10 @@ export class PBFTTerm {
     private sendNewView(payload: NewViewPayload): void {
         this.networkCommunication.sendToMembers(this.otherMembersPKs, "new-view", payload);
         this.logger.log({
-            Subject: "GossipSend",
+            subject: "GossipSend",
             message: "new-view",
-            targetPks: this.otherMembersPKs,
             senderPk: this.myPk,
+            targetPks: this.otherMembersPKs,
             term: payload.data.term,
             view: payload.data.view
         });
@@ -229,13 +229,13 @@ export class PBFTTerm {
         const { view, term, blockHash } = payload.data;
         const { block } = payload;
         if (this.view !== view) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], processPrePrepare, view doesn't match` });
+            this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], processPrePrepare, view doesn't match` });
             return;
         }
 
         const preparePayoad: PreparePayload = this.buildPreparePayload(term, view, blockHash);
-        this.pbftStorage.storePrepare(term, view, blockHash, this.myPk, preparePayoad);
-        this.pbftStorage.storePrePrepare(term, view, block, payload);
+        this.pbftStorage.storePrepare(term, view, preparePayoad);
+        this.pbftStorage.storePrePrepare(term, view, payload);
         this.sendPrepare(preparePayoad);
         this.checkPrepared(term, view, blockHash);
     }
@@ -245,19 +245,19 @@ export class PBFTTerm {
         const { view, term, blockHash } = data;
 
         if (this.checkPrePrepare(term, view)) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderPk}", already prepared` });
+            this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderPk}", already prepared` });
             return false;
         }
 
         const wanaBeLeaderId = this.calcLeaderPk(view);
         if (wanaBeLeaderId !== senderPk) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderPk}", block rejected because it was not sent by the current leader (${view})` });
+            this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderPk}", block rejected because it was not sent by the current leader (${view})` });
             return false;
         }
 
         const givenBlockHash = this.blockUtils.calculateBlockHash(block);
         if (givenBlockHash.equals(blockHash) === false) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderPk}", block rejected because it doesn't match the given blockHash (${view})` });
+            this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderPk}", block rejected because it doesn't match the given blockHash (${view})` });
             return false;
         }
 
@@ -267,7 +267,7 @@ export class PBFTTerm {
         }
 
         if (!isValidBlock) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderPk}", block is invalid` });
+            this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderPk}", block is invalid` });
             return false;
         }
 
@@ -289,16 +289,16 @@ export class PBFTTerm {
             senderPk
         };
         if (this.view > view) {
-            this.logger.log({ Subject: "Warning", message: `unrelated view`, metaData });
+            this.logger.log({ subject: "Warning", message: `unrelated view`, metaData });
             return;
         }
 
         if (this.leaderPk === senderPk) {
-            this.logger.log({ Subject: "Warning", message: `prepare received from leader is forbidden`, metaData });
+            this.logger.log({ subject: "Warning", message: `prepare received from leader is forbidden`, metaData });
             return;
         }
 
-        this.pbftStorage.storePrepare(term, view, blockHash, senderPk, payload);
+        this.pbftStorage.storePrepare(term, view, payload);
 
         if (this.view === view) {
             this.checkPrepared(term, view, blockHash);
@@ -307,9 +307,9 @@ export class PBFTTerm {
 
     public onReceiveViewChange(payload: ViewChangePayload): void {
         if (this.isViewChangePayloadValid(this.myPk, this.view, payload)) {
-            const { data, pk: senderPk } = payload;
+            const { data } = payload;
             const { newView, term } = data;
-            this.pbftStorage.storeViewChange(term, newView, senderPk, payload);
+            this.pbftStorage.storeViewChange(term, newView, payload);
             this.checkElected(term, newView);
         }
     }
@@ -318,18 +318,18 @@ export class PBFTTerm {
         const { pk: senderPk, data } = payload;
         const { newView, term, preparedProof } = data;
         if (view > newView) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because of unrelated view` });
+            this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because of unrelated view` });
             return false;
         }
 
         if (preparedProof && validatePrepared(preparedProof, this.getF(), this.keyManager, this.blockUtils, this.termMembersPKs, view => this.calcLeaderPk(view)) === false) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the preparedProof is invalid` });
+            this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the preparedProof is invalid` });
             return false;
         }
 
         const leaderToBePk = this.calcLeaderPk(newView);
         if (leaderToBePk !== targetLeaderPk) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], newView:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the newView doesn't match the target leader` });
+            this.logger.log({ subject: "Warning", message: `term:[${term}], newView:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the newView doesn't match the target leader` });
             return false;
         }
 
@@ -364,14 +364,14 @@ export class PBFTTerm {
             data: dataPP,
             block
         };
-        this.logger.log({ Subject: "Flow", FlowType: "Elected", term: this.term, view, blockHash });
+        this.logger.log({ subject: "Flow", FlowType: "Elected", term: this.term, view, blockHash: blockHash.toString("Hex") });
         const dataNV = { term: this.term, view, PP, VCProof };
         const newViewPayload: NewViewPayload = {
             pk: this.myPk,
             signature: this.keyManager.sign(dataNV),
             data: dataNV
         };
-        this.pbftStorage.storePrePrepare(this.term, this.view, block, PP);
+        this.pbftStorage.storePrePrepare(this.term, this.view, PP);
         this.sendNewView(newViewPayload);
     }
 
@@ -385,7 +385,7 @@ export class PBFTTerm {
                     blockHash,
                     countPrepared
                 };
-                this.logger.log({ Subject: "Info", message: `counting`, metaData });
+                this.logger.log({ subject: "Info", message: `counting`, metaData });
                 if (countPrepared >= this.getF() * 2) {
                     this.onPrepared(term, view, blockHash);
                 }
@@ -401,15 +401,15 @@ export class PBFTTerm {
             signature: this.keyManager.sign(data),
             data
         };
-        this.pbftStorage.storeCommit(term, view, blockHash, this.myPk, payload);
+        this.pbftStorage.storeCommit(term, view, payload);
         this.sendCommit(payload);
         this.checkCommit(term, view, blockHash);
     }
 
     public onReceiveCommit(payload: CommitPayload): void {
-        const { pk: senderPk, data } = payload;
+        const { data } = payload;
         const { term, view, blockHash } = data;
-        this.pbftStorage.storeCommit(term, view, blockHash, senderPk, payload);
+        this.pbftStorage.storeCommit(term, view, payload);
 
         this.checkCommit(term, view, blockHash);
     }
@@ -459,22 +459,22 @@ export class PBFTTerm {
         const { PP, view, term, VCProof } = data;
         const wanaBeLeaderId = this.calcLeaderPk(view);
         if (wanaBeLeaderId !== senderPk) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", rejected because it match the new id (${view})` });
+            this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", rejected because it match the new id (${view})` });
             return;
         }
 
         if (this.validateViewChangeProof(term, view, VCProof) === false) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", VCProof is invalid` });
+            this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", VCProof is invalid` });
             return;
         }
 
         if (this.view > view) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", view is from the past` });
+            this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", view is from the past` });
             return;
         }
 
         if (view !== PP.data.view) {
-            this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", view doesn't match PP.view` });
+            this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", view doesn't match PP.view` });
             return;
         }
 
@@ -483,7 +483,7 @@ export class PBFTTerm {
             const expectedBlockHash = this.blockUtils.calculateBlockHash(expectedBlock);
             const ppBlockHash = this.blockUtils.calculateBlockHash(PP.block);
             if (expectedBlockHash.equals(ppBlockHash) === false) {
-                this.logger.log({ Subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", the given block (PP.block) doesn't match the best block from the VCProof` });
+                this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", the given block (PP.block) doesn't match the best block from the VCProof` });
                 return;
             }
         }
@@ -518,7 +518,7 @@ export class PBFTTerm {
                 blockHash,
                 eq: prePreparedBlockHash.equals(blockHash)
             };
-            this.logger.log({ Subject: "Info", message: `isPrePrepared`, metaData });
+            this.logger.log({ subject: "Info", message: `isPrePrepared`, metaData });
             return prePreparedBlockHash.equals(blockHash);
         }
         return false;
@@ -526,7 +526,7 @@ export class PBFTTerm {
 
     private commitBlock(block: Block): void {
         this.committedLocally = true;
-        this.logger.log({ Subject: "Flow", FlowType: "Commit", term: this.term, view: this.view, block });
+        this.logger.log({ subject: "Flow", FlowType: "Commit", term: this.term, view: this.view, block });
         this.stopViewState();
         this.onCommittedBlock(block);
     }

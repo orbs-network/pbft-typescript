@@ -5,14 +5,14 @@ type StorePrePrepare = {
     StorageType: "PrePrepare",
     term: number,
     view: number,
-    block: Block
+    blockHash: string
 };
 
 type StorePrepare = {
     StorageType: "Prepare",
     term: number,
     view: number,
-    blockHash: Buffer,
+    blockHash: string,
     senderPk: string
 };
 
@@ -20,7 +20,7 @@ type StoreCommit = {
     StorageType: "Commit",
     term: number,
     view: number,
-    blockHash: Buffer,
+    blockHash: string,
     senderPk: string
 };
 
@@ -31,11 +31,11 @@ type StoreViewChange = {
     senderPk: string
 };
 
-type StorageLogData = { Subject: "Storage" } & (StorePrePrepare | StorePrepare | StoreCommit | StoreViewChange);
+type StorageLogData = { subject: "Storage" } & (StorePrePrepare | StorePrepare | StoreCommit | StoreViewChange);
 
 /// GOSSIP ///
 type GossipSendLogData = {
-    Subject: "GossipSend",
+    subject: "GossipSend",
     message: string,
     targetPks: string[],
     senderPk: string,
@@ -50,7 +50,7 @@ type FlowElected = {
     FlowType: "Elected",
     term: number,
     view: number,
-    blockHash: Buffer
+    blockHash: string
 };
 
 type FlowCommit = {
@@ -67,13 +67,13 @@ type FlowLeaderChange = {
     leaderPk: string
 };
 
-type FlowLogData = { Subject: "Flow" } & (FlowElected | FlowCommit | FlowLeaderChange);
+type FlowLogData = { subject: "Flow" } & (FlowElected | FlowCommit | FlowLeaderChange);
 
 // WARNING
-type WarningLogData = { Subject: "Warning", message: string, metaData?: any };
+type WarningLogData = { subject: "Warning", message: string, metaData?: any };
 
 // WARNING
-type InfoLogData = { Subject: "Info", message: string, metaData?: any };
+type InfoLogData = { subject: "Info", message: string, metaData?: any };
 
 export type LogTypes = StorageLogData | GossipSendLogData | FlowLogData | WarningLogData | InfoLogData;
 

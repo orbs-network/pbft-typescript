@@ -3,15 +3,10 @@ import { Logger } from "../logger/Logger";
 import { CommitPayload, PreparePayload, PrePreparePayload, ViewChangePayload } from "../networkCommunication/Payload";
 import { PBFTStorage, PreparedProof } from "./PBFTStorage";
 
-interface PrePrepareStore {
-    block: Block;
-    payload: PrePreparePayload;
-}
-
 type TermViewMap<V> = Map<number, Map<number, V>>;
 
 export class InMemoryPBFTStorage implements PBFTStorage {
-    private prePrepareStorage: TermViewMap<PrePrepareStore>;
+    private prePrepareStorage: TermViewMap<PrePreparePayload>;
     private prepareStorage: TermViewMap<Map<string, Map<string, PreparePayload>>>;
     private commitStorage: TermViewMap<Map<string, Map<string, CommitPayload>>>;
     private viewChangeStorage: TermViewMap<Map<string, ViewChangePayload>>;
@@ -23,7 +18,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         this.viewChangeStorage = new Map();
     }
 
-    storePrePrepare(term: number, view: number, block: Block, payload: PrePreparePayload): boolean {
+    storePrePrepare(term: number, view: number, payload: PrePreparePayload): boolean {
         let termsMap = this.prePrepareStorage.get(term);
         if (!termsMap) {
             termsMap = new Map();
@@ -33,33 +28,27 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         if (termsMap.get(view) !== undefined) {
             return false;
         }
-        termsMap.set(view, { block, payload });
-        this.logger.log({ Subject: "Storage", StorageType: "PrePrepare", term, view, block });
+        termsMap.set(view, payload);
+        const { blockHash } = payload.data;
+        this.logger.log({ subject: "Storage", StorageType: "PrePrepare", term, view, blockHash: blockHash.toString("hex") });
         return true;
     }
 
-    private getPrePrepare(term: number, view: number): PrePrepareStore {
+    getPrePrepareBlock(term: number, view: number): Block {
+        const prePreparePayload: PrePreparePayload = this.getPrePreparePayload(term, view);
+        if (prePreparePayload) {
+            return prePreparePayload.block;
+        }
+    }
+
+    getPrePreparePayload(term: number, view: number): PrePreparePayload {
         const viewsMap = this.prePrepareStorage.get(term);
         if (viewsMap) {
             return viewsMap.get(view);
         }
     }
 
-    getPrePrepareBlock(term: number, view: number): Block {
-        const prePrepareStore: PrePrepareStore = this.getPrePrepare(term, view);
-        if (prePrepareStore) {
-            return prePrepareStore.block;
-        }
-    }
-
-    getPrePreparePayload(term: number, view: number): PrePreparePayload {
-        const prePrepareStore: PrePrepareStore = this.getPrePrepare(term, view);
-        if (prePrepareStore) {
-            return prePrepareStore.payload;
-        }
-    }
-
-    storePrepare(term: number, view: number, blockHash: Buffer, senderPk: string, payload: PreparePayload): boolean {
+    storePrepare(term: number, view: number, payload: PreparePayload): boolean {
         let viewsMap = this.prepareStorage.get(term);
         if (!viewsMap) {
             viewsMap = new Map();
@@ -72,6 +61,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
             viewsMap.set(view, blockHashesMap);
         }
 
+        const { blockHash } = payload.data;
         const key = blockHash.toString("hex");
         let sendersMap = blockHashesMap.get(key);
         if (!sendersMap) {
@@ -79,12 +69,13 @@ export class InMemoryPBFTStorage implements PBFTStorage {
             blockHashesMap.set(key, sendersMap);
         }
 
+        const { pk: senderPk } = payload;
         if (sendersMap.get(senderPk) !== undefined) {
             return false;
         }
         sendersMap.set(senderPk, payload);
 
-        this.logger.log({ Subject: "Storage", StorageType: "Prepare", term, view, blockHash, senderPk });
+        this.logger.log({ subject: "Storage", StorageType: "Prepare", term, view, blockHash: key, senderPk });
         return true;
     }
 
@@ -145,7 +136,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         }
     }
 
-    storeCommit(term: number, view: number, blockHash: Buffer, senderPk: string, payload: CommitPayload): boolean {
+    storeCommit(term: number, view: number, payload: CommitPayload): boolean {
         let viewsMap = this.commitStorage.get(term);
         if (!viewsMap) {
             viewsMap = new Map();
@@ -158,6 +149,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
             viewsMap.set(view, blockHashesMap);
         }
 
+        const { blockHash } = payload.data;
         const key = blockHash.toString("hex");
         let sendersMap = blockHashesMap.get(key);
         if (!sendersMap) {
@@ -165,12 +157,13 @@ export class InMemoryPBFTStorage implements PBFTStorage {
             blockHashesMap.set(key, sendersMap);
         }
 
+        const { pk: senderPk } = payload;
         if (sendersMap.get(senderPk) !== undefined) {
             return false;
         }
         sendersMap.set(senderPk, payload);
 
-        this.logger.log({ Subject: "Storage", StorageType: "Commit", term, view, blockHash, senderPk });
+        this.logger.log({ subject: "Storage", StorageType: "Commit", term, view, blockHash: key, senderPk });
         return true;
     }
 
@@ -204,7 +197,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         return [];
     }
 
-    storeViewChange(term: number, view: number, senderPk: string, payload: ViewChangePayload): boolean {
+    storeViewChange(term: number, view: number, payload: ViewChangePayload): boolean {
         let viewsMap = this.viewChangeStorage.get(term);
         if (!viewsMap) {
             viewsMap = new Map();
@@ -217,12 +210,13 @@ export class InMemoryPBFTStorage implements PBFTStorage {
             viewsMap.set(view, sendersMap);
         }
 
+        const { pk: senderPk } = payload;
         if (sendersMap.get(senderPk) !== undefined) {
             return false;
         }
         sendersMap.set(senderPk, payload);
 
-        this.logger.log({ Subject: "Storage", StorageType: "ViewChange", term, view, senderPk });
+        this.logger.log({ subject: "Storage", StorageType: "ViewChange", term, view, senderPk });
         return true;
     }
 
