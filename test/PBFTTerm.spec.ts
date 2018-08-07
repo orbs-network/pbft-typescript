@@ -12,7 +12,7 @@ import { PBFTTerm, TermConfig } from "../src/PBFTTerm";
 import { PreparedProof } from "../src/storage/PBFTStorage";
 import { BlockUtilsMock, calculateBlockHash } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aPayload, aPrePreparePayload, aPreparePayload } from "./builders/PayloadBuilder";
+import { aPayload, aPrePreparePayload, aPreparePayload, aCommitPayload } from "./builders/PayloadBuilder";
 import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
 import { blockMatcher } from "./matchers/blockMatcher";
 import { TestNetwork } from "./network/TestNetwork";
@@ -113,6 +113,100 @@ describe("PBFTTerm", () => {
         node1PbftTerm.onReceivePrepare(aPreparePayload(node2KeyManager, 1, 0, block));
         node1PbftTerm.onReceivePrepare(aPreparePayload(node3KeyManager, 1, 0, block));
         expect(spy).to.have.been.calledOnce;
+    });
+
+    describe("signature verifications", () => {
+        let node1PbftTerm: PBFTTerm;
+        const block: Block = aBlock(theGenesisBlock);
+        beforeEach(() => {
+            node1PbftTerm = createPBFTTerm(node1Config);
+            expect(node1PbftTerm.getView()).to.equal(0);
+            triggerElection();
+            expect(node1PbftTerm.getView()).to.equal(1);
+        });
+
+        it("onReceivePrePrepare should not accept payloads that don't pass signature verification", async () => {
+            const spy = sinon.spy(node1Config.blockUtils, "validateBlock");
+            const PPPayload = aPrePreparePayload(node0KeyManager, 1, 0, block);
+
+            // Payload is valid => valid
+            node1PbftTerm.onReceivePrePrepare(PPPayload);
+            await nextTick();
+            expect(spy).to.have.been.called;
+
+            // Destorying the signature => invalid, should be ignored
+            PPPayload.signature = node0KeyManager.sign("FAKE_DATA");
+            spy.resetHistory();
+            node1PbftTerm.onReceivePrePrepare(PPPayload);
+            await nextTick();
+
+            expect(spy).to.not.have.been.called;
+        });
+
+        it("onReceivePrepare should not accept payloads that don't pass signature verification", async () => {
+            const spy = sinon.spy(node1Config.pbftStorage, "storePrepare");
+            const PPayload = aPreparePayload(node0KeyManager, 1, 1, block);
+
+            // Payload is valid => valid
+            node1PbftTerm.onReceivePrepare(PPayload);
+            expect(spy).to.have.been.called;
+
+            // Destorying the signature => invalid, should be ignored
+            PPayload.signature = node0KeyManager.sign("FAKE_DATA");
+            spy.resetHistory();
+            node1PbftTerm.onReceivePrepare(PPayload);
+            expect(spy).to.not.have.been.called;
+        });
+
+        it("onReceiveCommit should not accept payloads that don't pass signature verification", async () => {
+            const spy = sinon.spy(node1Config.pbftStorage, "storeCommit");
+            const CPayload = aCommitPayload(node0KeyManager, 1, 1, block);
+
+            // Payload is valid => valid
+            node1PbftTerm.onReceiveCommit(CPayload);
+            expect(spy).to.have.been.called;
+
+            // Destorying the signature => invalid, should be ignored
+            CPayload.signature = node0KeyManager.sign("FAKE_DATA");
+            spy.resetHistory();
+            node1PbftTerm.onReceiveCommit(CPayload);
+            expect(spy).to.not.have.been.called;
+        });
+
+        it("onReceiveNewView hould not accept payloads that don't pass signature verification", async () => {
+            const node0PbftTerm: PBFTTerm = createPBFTTerm(node0Config);
+
+            const block: Block = aBlock(theGenesisBlock);
+            const viewChange0: ViewChangePayload = aPayload(node0Config.keyManager, { term: 1, newView: 1, preparedProof: anEmptyPreparedProof() });
+            const viewChange1: ViewChangePayload = aPayload(node1Config.keyManager, { term: 1, newView: 1, preparedProof: anEmptyPreparedProof() });
+            const viewChange2: ViewChangePayload = aPayload(node2Config.keyManager, { term: 1, newView: 1, preparedProof: anEmptyPreparedProof() });
+            const VCProof: ViewChangePayload[] = [viewChange0, viewChange1, viewChange2];
+
+            const NVPayload = aPayload(node1KeyManager, { term: 1, view: 1, PP: aPrePreparePayload(node1KeyManager, 1, 1, block), VCProof });
+
+            // destorying the signature => invalid, should be ignored
+            NVPayload.signature = node1KeyManager.sign("FAKE_DATA");
+            node0PbftTerm.onReceiveNewView(NVPayload);
+            await nextTick();
+            await node0BlockUtils.resolveAllValidations(true);
+            expect(node0PbftTerm.getView()).to.equal(0);
+        });
+
+        it("onViewChange should not accept payloads that don't pass signature verification", async () => {
+            const spy = sinon.spy(node1Config.pbftStorage, "storeViewChange");
+            const VCPayload = aPayload(node0KeyManager, { term: 1, newView: 1 });
+
+            // Payload is valid => valid
+            node1PbftTerm.onReceiveViewChange(VCPayload);
+            expect(spy).to.have.been.called;
+
+            spy.resetHistory();
+            // destorying the signature => invalid, should be ignored
+            VCPayload.signature = node0KeyManager.sign("FAKE_DATA");
+            node1PbftTerm.onReceiveViewChange(VCPayload);
+            expect(spy).to.not.have.been.called;
+        });
+
     });
 
     it("onReceivePrepare should not accept views from the past", async () => {

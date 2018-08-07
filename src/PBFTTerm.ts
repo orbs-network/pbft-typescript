@@ -3,7 +3,7 @@ import { ElectionTriggerFactory } from "./electionTrigger/ElectionTrigger";
 import { KeyManager } from "./keyManager/KeyManager";
 import { Logger } from "./logger/Logger";
 import { NetworkCommunication } from "./networkCommunication/NetworkCommunication";
-import { CommitPayload, NewViewPayload, PreparePayload, PrePreparePayload, ViewChangePayload } from "./networkCommunication/Payload";
+import { CommitPayload, NewViewPayload, PreparePayload, PrePreparePayload, ViewChangePayload, Payload } from "./networkCommunication/Payload";
 import { PBFTStorage, PreparedProof } from "./storage/PBFTStorage";
 import { ViewState } from "./ViewState";
 import { BlockUtils } from "./blockUtils/BlockUtils";
@@ -249,6 +249,11 @@ export class PBFTTerm {
             return false;
         }
 
+        if (!this.verifyPayload(payload)) {
+            this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], validatePrePreapare from "${senderPk}", ignored because the signature verification failed` });
+            return;
+        }
+
         const wanaBeLeaderId = this.calcLeaderPk(view);
         if (wanaBeLeaderId !== senderPk) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderPk}", block rejected because it was not sent by the current leader (${view})` });
@@ -288,6 +293,12 @@ export class PBFTTerm {
             blockHash,
             senderPk
         };
+
+        if (!this.verifyPayload(payload)) {
+            this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrepare from "${senderPk}", ignored because the signature verification failed` });
+            return;
+        }
+
         if (this.view > view) {
             this.logger.log({ subject: "Warning", message: `unrelated view`, metaData });
             return;
@@ -314,9 +325,18 @@ export class PBFTTerm {
         }
     }
 
+    private verifyPayload(payload: Payload): boolean {
+        return this.keyManager.verify(payload.data, payload.signature, payload.pk);
+    }
+
     private isViewChangePayloadValid(targetLeaderPk: string, view: number, payload: ViewChangePayload): boolean {
         const { pk: senderPk, data } = payload;
         const { newView, term, preparedProof } = data;
+        if (!this.verifyPayload(payload)) {
+            this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the signature verification failed` });
+            return false;
+        }
+
         if (view > newView) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because of unrelated view` });
             return false;
@@ -403,18 +423,23 @@ export class PBFTTerm {
         };
         this.pbftStorage.storeCommit(term, view, payload);
         this.sendCommit(payload);
-        this.checkCommit(term, view, blockHash);
+        this.checkCommitted(term, view, blockHash);
     }
 
     public onReceiveCommit(payload: CommitPayload): void {
-        const { data } = payload;
+        const { data, pk: senderPk } = payload;
         const { term, view, blockHash } = data;
-        this.pbftStorage.storeCommit(term, view, payload);
 
-        this.checkCommit(term, view, blockHash);
+        if (!this.verifyPayload(payload)) {
+            this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveCommit from "${senderPk}", ignored because the signature verification failed` });
+            return;
+        }
+
+        this.pbftStorage.storeCommit(term, view, payload);
+        this.checkCommitted(term, view, blockHash);
     }
 
-    private checkCommit(term: number, view: number, blockHash: Buffer): void {
+    private checkCommitted(term: number, view: number, blockHash: Buffer): void {
         if (!this.committedLocally) {
             if (this.isPrePrepared(term, view, blockHash)) {
                 const commits = this.pbftStorage.getCommitSendersPks(term, view, blockHash).length;
@@ -457,6 +482,12 @@ export class PBFTTerm {
     public async onReceiveNewView(payload: NewViewPayload): Promise<void> {
         const { pk: senderPk, data } = payload;
         const { PP, view, term, VCProof } = data;
+
+        if (!this.verifyPayload(payload)) {
+            this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", ignored because the signature verification failed` });
+            return;
+        }
+
         const wanaBeLeaderId = this.calcLeaderPk(view);
         if (wanaBeLeaderId !== senderPk) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", rejected because it match the new id (${view})` });
