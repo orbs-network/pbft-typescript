@@ -63,7 +63,7 @@ type FlowCommit = {
     FlowType: "Commit",
     term: number,
     view: number,
-    block: Block
+    blockHash: string
 };
 
 type FlowLeaderChange = {
