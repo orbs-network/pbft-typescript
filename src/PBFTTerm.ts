@@ -420,7 +420,7 @@ export class PBFTTerm {
                 const commits = this.pbftStorage.getCommitSendersPks(term, view, blockHash).length;
                 if (commits >= this.getF() * 2 + 1) {
                     const block = this.pbftStorage.getPrePrepareBlock(term, view);
-                    this.commitBlock(block);
+                    this.commitBlock(block, blockHash);
                 }
             }
         }
@@ -524,9 +524,9 @@ export class PBFTTerm {
         return false;
     }
 
-    private commitBlock(block: Block): void {
+    private commitBlock(block: Block, blockHash: Buffer): void {
         this.committedLocally = true;
-        this.logger.log({ subject: "Flow", FlowType: "Commit", term: this.term, view: this.view, block });
+        this.logger.log({ subject: "Flow", FlowType: "Commit", term: this.term, view: this.view, blockHash: blockHash.toString("Hex") });
         this.stopViewState();
         this.onCommittedBlock(block);
     }
