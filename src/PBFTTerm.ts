@@ -1,14 +1,13 @@
 import { Block } from "./Block";
-import { ElectionTriggerFactory } from "./electionTrigger/ElectionTrigger";
+import { extractBlock } from "./blockExtractor/BlockExtractor";
+import { BlockUtils } from "./blockUtils/BlockUtils";
+import { ElectionTrigger, ElectionTriggerFactory } from "./electionTrigger/ElectionTrigger";
 import { KeyManager } from "./keyManager/KeyManager";
 import { Logger } from "./logger/Logger";
 import { NetworkCommunication } from "./networkCommunication/NetworkCommunication";
-import { CommitPayload, NewViewPayload, PreparePayload, PrePreparePayload, ViewChangePayload, Payload } from "./networkCommunication/Payload";
-import { PBFTStorage, PreparedProof } from "./storage/PBFTStorage";
-import { ViewState } from "./ViewState";
-import { BlockUtils } from "./blockUtils/BlockUtils";
+import { CommitPayload, NewViewPayload, Payload, PreparePayload, PrePreparePayload, ViewChangePayload } from "./networkCommunication/Payload";
 import { validatePrepared } from "./proofsValidator/ProofsValidator";
-import { extractBlock } from "./blockExtractor/BlockExtractor";
+import { PBFTStorage, PreparedProof } from "./storage/PBFTStorage";
 
 export type onNewBlockCB = (block: Block) => void;
 
@@ -35,7 +34,7 @@ export class PBFTTerm {
     private leaderPk: string;
     private view: number;
     private newViewLocally: number = -1;
-    private viewState: ViewState;
+    private electionTrigger: ElectionTrigger;
     private disposed: boolean = false;
     private preparedLocally: boolean = false;
     private committedLocally: boolean = false;
@@ -56,7 +55,7 @@ export class PBFTTerm {
         this.startTerm();
     }
 
-    public async startTerm(): Promise<void> {
+    private async startTerm(): Promise<void> {
         this.initView(0);
         if (this.isLeader()) {
             const block: Block = await this.blockUtils.requestNewBlock(this.term);
@@ -80,33 +79,38 @@ export class PBFTTerm {
         return this.view;
     }
 
-    private initView(view: number) {
+    private setView(view: number) {
+        if (this.view !== view) {
+            this.initView(view);
+        }
+    }
+
+    private initView(view: number): void {
         this.preparedLocally = false;
         this.view = view;
         this.leaderPk = this.calcLeaderPk(this.view);
-        this.startViewState(this.view);
+        this.startElectionTrigger(view);
     }
 
-    private stopViewState(): void {
-        if (this.viewState) {
-            this.viewState.dispose();
-            this.viewState = undefined;
+    private stopElectionTrigger(): void {
+        if (this.electionTrigger) {
+            this.electionTrigger.stop();
+            this.electionTrigger = undefined;
         }
     }
 
-    private startViewState(view: number) {
-        if (this.viewState && this.viewState.view !== view) {
-            this.stopViewState();
-        }
-        if (!this.viewState) {
-            this.viewState = new ViewState(this.electionTriggerFactory, view, () => this.onLeaderChange());
+    private startElectionTrigger(view: number) {
+        this.stopElectionTrigger();
+        if (!this.electionTrigger) {
+            this.electionTrigger = this.electionTriggerFactory(view);
+            this.electionTrigger.start(() => this.onLeaderChange());
         }
     }
 
     public dispose(): void {
         this.pbftStorage.clearTermLogs(this.term);
         this.disposed = true;
-        this.stopViewState();
+        this.stopElectionTrigger();
     }
 
     private calcLeaderPk(view: number): string {
@@ -115,7 +119,7 @@ export class PBFTTerm {
     }
 
     private onLeaderChange(): void {
-        this.initView(this.view + 1);
+        this.setView(this.view + 1);
         const preparedProof: PreparedProof = this.pbftStorage.getLatestPreparedProof(this.term, this.getF());
         this.logger.log({ subject: "Flow", FlowType: "LeaderChange", leaderPk: this.leaderPk, term: this.term, newView: this.view });
         const data = { term: this.term, newView: this.view, preparedProof };
@@ -367,7 +371,7 @@ export class PBFTTerm {
 
     private async onElected(view: number, VCProof: ViewChangePayload[]) {
         this.newViewLocally = view;
-        this.initView(view);
+        this.setView(view);
         let block: Block = extractBlock(VCProof);
         if (!block) {
             block = await this.blockUtils.requestNewBlock(this.term);
@@ -521,7 +525,7 @@ export class PBFTTerm {
 
         if (await this.validatePrePreapare(PP)) {
             this.newViewLocally = view;
-            this.initView(view);
+            this.setView(view);
             this.processPrePrepare(PP);
         }
     }
@@ -558,7 +562,7 @@ export class PBFTTerm {
     private commitBlock(block: Block, blockHash: Buffer): void {
         this.committedLocally = true;
         this.logger.log({ subject: "Flow", FlowType: "Commit", term: this.term, view: this.view, blockHash: blockHash.toString("Hex") });
-        this.stopViewState();
+        this.stopElectionTrigger();
         this.onCommittedBlock(block);
     }
 }

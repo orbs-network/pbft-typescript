@@ -94,6 +94,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
     - [x] all VC views match the given view
 
 - [x] (Gil) - validate all signed messages
+- [x] Remove ViewState
 - [ ] (Gad) - Check state still holds after async await functions (ex: when returning from requestNewBlock - view has changed)
 - [ ] (Gad) - Think about view-change counting, when to count myself.
 - [ ] (Ido) documentation

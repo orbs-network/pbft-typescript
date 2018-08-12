@@ -1,26 +1,19 @@
 import { ElectionTrigger } from "../../src/electionTrigger/ElectionTrigger";
 
 export class ElectionTriggerMock implements ElectionTrigger {
-    private listeners: Array<() => void> = [];
+    private cb: () => void;
 
-    public register(cb: () => void): number {
-        this.listeners.push(cb);
-        return this.listeners.length - 1;
+    public start(cb: () => void): void {
+        this.cb = cb;
     }
 
-    public unregister(token: number): void {
-        this.listeners[token] = undefined;
+    public stop(): void {
+        this.cb = undefined;
     }
 
     public trigger(): void {
-        for (const listener of this.listeners) {
-            if (listener) {
-                listener();
-            }
+        if (this.cb) {
+            this.cb();
         }
-    }
-
-    public dispose(): void {
-        this.listeners = [];
     }
 }
