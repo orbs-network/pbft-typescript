@@ -97,6 +97,7 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 - [x] Remove ViewState
 - [ ] (Gad) - Check state still holds after async await functions (ex: when returning from requestNewBlock - view has changed)
 - [ ] (Gad) - Think about view-change counting, when to count myself.
+- [ ] (Gad) - code review
 - [ ] (Ido) documentation
 
 ## will be done in Go
