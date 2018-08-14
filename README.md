@@ -4,6 +4,119 @@
 
 This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine Fault Tolerance).
 
+## Algorithm
+TODO: Flow
+* Terminology: term; view; node; leader;
+* Initial setup: leader; storage; term; view
+* PBFT phases
+* Passing data between nodes: messages; filters; Gossip
+* Leader change: request view change; election; new view
+
+Leader stores Prepare in Log
+Leader boradcasts preprepare to all nodes
+Node x receives onPreprepare; logs preprepare and its own Prepare
+Node x broadcasts prepare
+Node receives prepare, once it receives 2f+1 of those, it stores a commit and sends it out
+Node receives 2f+1 commits - it commits to its blockchain and deletes from Log.
+
+Node is created with PBFT with Config
+Node calls PBFT.start() after init (it should know all other nodes first, as optimization)
+External invocation of start() happens just once in the beginning.
+start() gets block height
+
+What can advance the flow: gossip events and election trigger.
+
+Exponential timeouts
+
+
+## API
+
+
+
+
+
+## Developer notes
+
+### Classes
+
+#### PBFT
+There is a single instance of `PBFT` class. It handles multiple *term*s.
+
+* `start()` disposes of the previous `PBFTTerm` and creates a new one.
+The Node calls it once initially when it starts. Subsequent calls to `start()` are made inside the callback `onCommittedBlock()`.
+
+createPBFTTerm(): holds CB when block can be committed. The CB notifies listeners and advancesd PBFTTerm.
+
+
+#### PBFTTerm
+Each *term* has a separate instance of `PBFTTerm`.
+
+* `startTerm()`: calls setView(), if node is not leader, it waits.
+* `isLeader()`
+* `dispose()`
+* `onLeaderChange()` - callback
+* setView() -
+
+
+
+#### PBFTMessagesHandler
+* `onReceivePrePrepare()`
+* `onReceivePrepare()`
+* `onReceiveViewChange()`
+* `onReceiveCommit()`
+* `onReceiveNewView()`: receive from new alleged leader along with required proofs.
+
+
+#### NetworkMessagesFilter
+Single instance per PBFT - holds messages from different block heights
+* `NetworkCommunication` implementation of Gossip layer - discovery of member nodes; subscribe/unsubscribe to messages; send messages
+
+
+* onCommittedCB
+
+
+#### ViewState
+REMOVING THIS - It only wraps ElectionTrigger so no need for it.
+Holds the Election Trigger which is an exponential timer, that triggers if until the timeout, the current leader could not reach consensus in its suggested block.
+* `newLeaderCallback()`
+
+
+
+#### Config
+
+#### BlockUtils
+  * `requestNewBlock()`
+  * `validateBlock()`
+  * `calculateBlockHash()`
+
+#### ElectionTrigger
+This is a timer which triggers when the current leader failed to reach consensus on the current block after some configurable time.
+* view - the view of this trigger
+* `register()`
+
+#### PBFTStorage
+Implemented by InMemoryPBFTStorage
+##### Methods
+* `storePreprepare()`:
+* `storePrepare()`:
+* `storeCommit()`:
+* `storeViewChange()`:
+There are matching getter functions
+
+`TermsMap` is a mapping (term -> (view -> payload))
+
+
+## Running
+### Tests
+On the project directory run: `npm run tdd`
+
+
+## See also
+[Orbs website](https://orbs.com/)
+
+
+
+
 ## To do
 
 - [x] Remove node types from the tests
