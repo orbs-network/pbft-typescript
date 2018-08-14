@@ -184,43 +184,6 @@ describe("PBFT", () => {
         testNetwork.shutDown();
     });
 
-    it("should not process gossip messages after dispose", async () => {
-        const { testNetwork, blockUtils, blocksPool } = aSimpleTestNetwork();
-
-        // block 1
-        testNetwork.startConsensusOnAllNodes();
-        await nextTick();
-        await blockUtils.provideNextBlock();
-        await nextTick();
-        await blockUtils.resolveAllValidations(true);
-        await nextTick(); // await for notifyCommitted
-
-        expect(testNetwork.nodes).to.agreeOnBlock(blocksPool[0]);
-        testNetwork.shutDown();
-
-        const node1 = testNetwork.nodes[1];
-        const node2 = testNetwork.nodes[2];
-        const node3 = testNetwork.nodes[3];
-        const gossip1 = testNetwork.getNodeGossip(node1.pk);
-        const gossip2 = testNetwork.getNodeGossip(node2.pk);
-        const gossip3 = testNetwork.getNodeGossip(node3.pk);
-        const spy1 = sinon.spy(gossip1, "multicast");
-        const spy2 = sinon.spy(gossip2, "multicast");
-        const spy3 = sinon.spy(gossip3, "multicast");
-
-        // block 2 (After network shutdown)
-        testNetwork.startConsensusOnAllNodes();
-        await nextTick();
-        await blockUtils.provideNextBlock();
-        await nextTick();
-        await blockUtils.resolveAllValidations(true);
-        await nextTick(); // await for notifyCommitted
-
-        expect(spy1).to.not.have.been.called;
-        expect(spy2).to.not.have.been.called;
-        expect(spy3).to.not.have.been.called;
-    });
-
     it("should change the leader on timeout (no commits for too long)", async () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(block1);

@@ -208,6 +208,8 @@ On the project directory run: `npm run tdd`
 
 - [x] (Gil) - validate all signed messages
 - [x] Remove ViewState
+- [ ] remove unsubscribeFromMessages
+- [ ] 
 - [ ] (Gad) - Check state still holds after async await functions (ex: when returning from requestNewBlock - view has changed)
 - [ ] (Gad) - Think about view-change counting, when to count myself.
 - [ ] (Gad) - code review

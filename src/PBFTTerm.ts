@@ -144,7 +144,7 @@ export class PBFTTerm {
     }
 
     private sendPrePrepare(payload: PrePreparePayload): void {
-        this.networkCommunication.sendToMembers(this.otherMembersPKs, "preprepare", payload);
+        this.networkCommunication.sendPrePrepare(this.otherMembersPKs, payload);
         this.logger.log({
             subject: "GossipSend",
             message: "preprepare",
@@ -157,7 +157,7 @@ export class PBFTTerm {
     }
 
     private sendPrepare(payload: PreparePayload): void {
-        this.networkCommunication.sendToMembers(this.otherMembersPKs, "prepare", payload);
+        this.networkCommunication.sendPrepare(this.otherMembersPKs, payload);
         this.logger.log({
             subject: "GossipSend",
             message: "prepare",
@@ -170,7 +170,7 @@ export class PBFTTerm {
     }
 
     private sendCommit(payload: CommitPayload): void {
-        this.networkCommunication.sendToMembers(this.otherMembersPKs, "commit", payload);
+        this.networkCommunication.sendCommit(this.otherMembersPKs, payload);
         this.logger.log({
             subject: "GossipSend",
             message: "commit",
@@ -183,7 +183,7 @@ export class PBFTTerm {
     }
 
     private sendViewChange(payload: ViewChangePayload): void {
-        this.networkCommunication.sendToMembers([this.leaderPk], "view-change", payload);
+        this.networkCommunication.sendViewChange(this.leaderPk, payload);
         this.logger.log({
             subject: "GossipSend",
             message: "view-change",
@@ -195,7 +195,7 @@ export class PBFTTerm {
     }
 
     private sendNewView(payload: NewViewPayload): void {
-        this.networkCommunication.sendToMembers(this.otherMembersPKs, "new-view", payload);
+        this.networkCommunication.sendNewView(this.otherMembersPKs, payload);
         this.logger.log({
             subject: "GossipSend",
             message: "new-view",

@@ -517,7 +517,7 @@ describe("PBFTTerm", () => {
     it("should send the prepared proof in the view-change", async () => {
         const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
         const block: Block = aBlock(theGenesisBlock);
-        const spy = sinon.spy(node1Config.networkCommunication, "sendToMembers");
+        const spy = sinon.spy(node1Config.networkCommunication, "sendViewChange");
 
         // get node1 to be prepared on the block
         node1Config.pbftStorage.storePrePrepare(0, 0, aPrePreparePayload(node0KeyManager, 0, 0, block));
@@ -531,7 +531,7 @@ describe("PBFTTerm", () => {
 
         const latestPreparedProof = node1Config.pbftStorage.getLatestPreparedProof(0, 1);
 
-        expect(spy.args[0][2].data.preparedProof).to.deep.equal(latestPreparedProof);
+        expect(spy.args[0][1].data.preparedProof).to.deep.equal(latestPreparedProof);
     });
 
     it("should ignore view-change with an invalid prepared proof", async () => {

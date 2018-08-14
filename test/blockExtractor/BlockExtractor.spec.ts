@@ -23,7 +23,7 @@ describe("Block Extractor", () => {
         expect(actual).to.be.undefined;
     });
 
-    it("should return the block from a VC that holds a blocks", async () => {
+    it("should return the block from a VC that holds a block", async () => {
         const block = aBlock(theGenesisBlock);
         const dummyKM: KeyManager = new KeyManagerMock("Dummy PK");
 
@@ -47,11 +47,11 @@ describe("Block Extractor", () => {
         const dummyKM: KeyManager = new KeyManagerMock("Dummy PK");
 
         // proof with block on view 7
-        const prepreparePayload1: PrePreparePayload = aPrePreparePayload(dummyKM, 1, 7, block2);
+        const prepreparePayload1: PrePreparePayload = aPrePreparePayload(dummyKM, 1, 7, block1);
         const preparedProofWithBlock1: PreparedProof = { prepreparePayload: prepreparePayload1, preparePayloads: undefined };
 
         // proof with block on view 5
-        const prepreparePayload2: PrePreparePayload = aPrePreparePayload(dummyKM, 1, 5, block1);
+        const prepreparePayload2: PrePreparePayload = aPrePreparePayload(dummyKM, 1, 5, block2);
         const preparedProofWithBlock2: PreparedProof = { prepreparePayload: prepreparePayload2, preparePayloads: undefined };
 
         // empty proof
@@ -61,6 +61,6 @@ describe("Block Extractor", () => {
         const VCProof: ViewChangePayload[] = [VC1, VC2, VC3];
         const actual = extractBlock(VCProof);
 
-        expect(actual).to.equal(block2);
+        expect(actual).to.equal(block1);
     });
 });

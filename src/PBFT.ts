@@ -67,6 +67,5 @@ export class PBFT {
     public dispose(): any {
         this.onCommittedListeners.length = 0;
         this.disposePBFTTerm();
-        this.networkMessagesFilter.dispose();
     }
 }

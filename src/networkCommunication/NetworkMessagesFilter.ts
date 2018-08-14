@@ -1,5 +1,5 @@
 import { PBFTMessagesHandler } from "./PBFTMessagesHandler";
-import { Payload, PrePreparePayload } from "./Payload";
+import { Payload, PrePreparePayload, PreparePayload, CommitPayload, ViewChangePayload, NewViewPayload } from "./Payload";
 import { NetworkCommunication } from "./NetworkCommunication";
 
 interface GossipMessageContent {
@@ -9,7 +9,6 @@ interface GossipMessageContent {
 }
 
 export class NetworkMessagesFilter {
-    private networkMessagesSubscriptionToken: number;
     private term: number;
     private messagesHandler: PBFTMessagesHandler;
     private messagesCache: GossipMessageContent[] = [];
@@ -76,14 +75,11 @@ export class NetworkMessagesFilter {
     }
 
     private subscribeToGossip(): void {
-        this.networkMessagesSubscriptionToken = this.networkCommunication.subscribeToMessages((message: string, payload: Payload) => this.onGossipMessage(message, payload));
-    }
-
-    private unsubscribeFromGossip(): void {
-        if (this.networkMessagesSubscriptionToken) {
-            this.networkCommunication.unsubscribeFromMessages(this.networkMessagesSubscriptionToken);
-            this.networkMessagesSubscriptionToken = undefined;
-        }
+        this.networkCommunication.registerToPrePrepare((payload: PrePreparePayload) => this.onGossipMessage("preprepare", payload));
+        this.networkCommunication.registerToPrepare((payload: PreparePayload) => this.onGossipMessage("prepare", payload));
+        this.networkCommunication.registerToCommit((payload: CommitPayload) => this.onGossipMessage("commit", payload));
+        this.networkCommunication.registerToViewChange((payload: ViewChangePayload) => this.onGossipMessage("view-change", payload));
+        this.networkCommunication.registerToNewView((payload: NewViewPayload) => this.onGossipMessage("new-view", payload));
     }
 
     private consumeCacheMessages(): void {
@@ -101,8 +97,5 @@ export class NetworkMessagesFilter {
         this.term = term;
         this.messagesHandler = messagesHandler;
         this.consumeCacheMessages();
-    }
-    public dispose(): any {
-        this.unsubscribeFromGossip();
     }
 }
