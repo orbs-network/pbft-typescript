@@ -6,10 +6,10 @@ import { PBFTStorage } from "./storage/PBFTStorage";
 import { BlockUtils } from "./blockUtils/BlockUtils";
 
 export interface Config {
-    electionTriggerFactory: ElectionTriggerFactory;
     networkCommunication: NetworkCommunication;
     blockUtils: BlockUtils;
-    pbftStorage?: PBFTStorage;
     keyManager: KeyManager;
     logger: Logger;
+    electionTriggerFactory: ElectionTriggerFactory;
+    pbftStorage?: PBFTStorage;
 }
