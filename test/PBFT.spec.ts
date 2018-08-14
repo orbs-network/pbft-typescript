@@ -61,15 +61,13 @@ describe("PBFT", () => {
         testNetwork.shutDown();
     });
 
-    it("should reach consesnsus after 10 blocks", async () => {
-        const { testNetwork, blockUtils, blocksPool } = aSimpleTestNetwork();
+    it("should reach consesnsus after 5 blocks", async () => {
+        const { testNetwork, blockUtils } = aSimpleTestNetwork(4);
 
         testNetwork.startConsensusOnAllNodes();
-        for (const i of [0, 1, 2, 3, 4]) {
+        for (const i of [0, 1, 2, 3, 4, 5, 6, 7]) {
             await nextTick();
-            await wait(100);
             await blockUtils.provideNextBlock();
-            await wait(100);
             await nextTick();
             await blockUtils.resolveAllValidations(true);
             await nextTick();

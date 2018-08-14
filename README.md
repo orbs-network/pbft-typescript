@@ -205,17 +205,21 @@ On the project directory run: `npm run tdd`
     - [x] all proofs senders a unique
     - [x] all VC terms match the given term
     - [x] all VC views match the given view
-- [ ] validate all signed messages
-- [ ] Check state still holds after async await functions (ex: when returning from requestNewBlock - view has changed)
-- [ ] Think about view-change counting, when to count myself.
+
+- [x] (Gil) - validate all signed messages
+- [x] Remove ViewState
+- [ ] (Gad) - Check state still holds after async await functions (ex: when returning from requestNewBlock - view has changed)
+- [ ] (Gad) - Think about view-change counting, when to count myself.
+- [ ] (Gad) - code review
+- [ ] (Ido) documentation
+
+## will be done in Go
+
+- [ ] allow to config the sockets logger's target server ip
 - [ ] add isACommitteeMember to PBFTTerm
 - [ ] Change logging methodology - warning - added metadata
 - [ ] Have a better (Readable) tests solution to await nextTick
-- [ ] documentation
 - [ ] monitoring/debug
 - [ ] Optimizations: IData - Signature only on hash(header).
-
-## V1 stuff
-
-- [ ] PBFT-BC onCommitted - adds header.pbftData.pbftProof
 - [ ] implement `verifyBlock`
+- [ ] PBFT-BC onCommitted - adds header.pbftData.pbftProof
