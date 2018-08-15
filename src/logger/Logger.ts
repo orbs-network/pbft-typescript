@@ -76,10 +76,10 @@ type FlowLeaderChange = {
 type FlowLogData = { subject: "Flow" } & (FlowElected | FlowCommit | FlowLeaderChange);
 
 // WARNING
-type WarningLogData = { subject: "Warning", message: string, metaData?: any };
+type WarningLogData = { subject: "Warning", message: string, metaData?: object };
 
 // WARNING
-type InfoLogData = { subject: "Info", message: string, metaData?: any };
+type InfoLogData = { subject: "Info", message: string, metaData?: object };
 
 export type LogTypes = StorageLogData | GossipSendLogData | FlowLogData | WarningLogData | InfoLogData;
 

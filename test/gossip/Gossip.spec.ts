@@ -10,11 +10,13 @@ import { Payload } from "../../src/networkCommunication/Payload";
 
 chai.use(sinonChai);
 
-function aPayload(keyManager: KeyManager, data: any): Payload {
+function aPayload(keyManager: KeyManager, data: string): Payload {
     return {
         pk: keyManager.getMyPublicKey(),
         signature: keyManager.sign(data),
-        data
+        data: {
+            messageType: data
+        }
     };
 }
 

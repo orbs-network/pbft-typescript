@@ -125,7 +125,7 @@ describe("PBFT", () => {
 
         const byzantineNode = testNetwork.nodes[4];
         const gossip = testNetwork.getNodeGossip(byzantineNode.pk);
-        gossip.setIncomingWhiteListPKs([]); // prevent any income gossip messages
+        gossip.setIncomingWhiteListPKs([]); // prevent incomming gossip messages
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick();

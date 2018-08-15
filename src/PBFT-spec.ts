@@ -1,8 +1,8 @@
 function primary(view: number): string { return ""; }
 function constructBlock(): Block { return { previousBlockHash: "", height: 0 }; }
 function HASH(block): string { return ""; }
-function getCommitCount(term: number, view: number): any { return 0; }
-function getViewChangeCount(term: number, view: number): any { return 0; }
+function getCommitCount(term: number, view: number): number { return 0; }
+function getViewChangeCount(term: number, view: number): number { return 0; }
 function Multicast(senderPublicKey: string, message: string, payload): void { }
 function Unicast(senderPublicKey: string, targetPublicKey: string, message, payload): void { }
 function valid(block: Block): boolean { return true; }

@@ -22,7 +22,7 @@ export class BlockUtilsMock implements BlockUtils {
         }
     }
 
-    public async provideNextBlock(): Promise<any> {
+    public async provideNextBlock(): Promise<void> {
         if (this.blocksResolveList.length === 0) {
             return Promise.resolve();
         }
@@ -31,7 +31,6 @@ export class BlockUtilsMock implements BlockUtils {
         const promise = this.blocksPromiseList.pop();
         resolve(this.getNextBlock());
         await promise;
-        return nextTick;
     }
 
     public requestNewBlock(): Promise<Block> {
@@ -59,16 +58,16 @@ export class BlockUtilsMock implements BlockUtils {
         return result;
     }
 
-    public async resolveAllValidations(isValid: boolean): Promise<any> {
+    public async resolveAllValidations(isValid: boolean): Promise<void> {
         this.validationsResolveList.forEach(f => f(isValid));
         this.validationsResolveList = [];
         await this.afterAllValidations();
     }
 
-    private afterAllValidations(): Promise<any> {
-        const result = Promise.all(this.validationsPromiseList);
+    private async afterAllValidations(): Promise<void> {
+        const promiseList = this.validationsPromiseList;
         this.validationsPromiseList = [];
-        return result;
+        await Promise.all(promiseList);
     }
 
     public validateBlock(block: Block): Promise<boolean> {

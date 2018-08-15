@@ -64,7 +64,7 @@ export class PBFT {
         this.createPBFTTerm(height);
     }
 
-    public dispose(): any {
+    public dispose(): void {
         this.onCommittedListeners.length = 0;
         this.disposePBFTTerm();
     }
