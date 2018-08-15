@@ -4,14 +4,13 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
+import { BlockUtilsMock } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aPayload, aPrePreparePayload } from "./builders/PayloadBuilder";
+import { aNode } from "./builders/NodeBuilder";
+import { aPrePreparePayload } from "./builders/PayloadBuilder";
 import { aSimpleTestNetwork, aTestNetwork } from "./builders/TestNetworkBuilder";
 import { blockMatcher } from "./matchers/blockMatcher";
-import { nextTick, wait } from "./timeUtils";
-import { BlockUtils } from "../src";
-import { BlockUtilsMock } from "./blockUtils/BlockUtilsMock";
-import { aNode } from "./builders/NodeBuilder";
+import { nextTick } from "./timeUtils";
 
 chai.use(sinonChai);
 chai.use(blockMatcher);

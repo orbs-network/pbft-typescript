@@ -2,13 +2,13 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
+import { NewViewPayload, PrePreparePayload, ViewChangePayload } from "../src/networkCommunication/Payload";
+import { PreparedProof } from "../src/storage/PBFTStorage";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aPayload, aPrePreparePayload, aPreparePayload } from "./builders/PayloadBuilder";
+import { aNewViewPayload, aPrePreparePayload, aViewChangePayload } from "./builders/PayloadBuilder";
+import { aPreparedProof } from "./builders/ProofBuilder";
 import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
 import { nextTick } from "./timeUtils";
-import { PreparedProof } from "../src/storage/PBFTStorage";
-import { ViewChangePayload, NewViewPayload, PrePreparePayload, PreparePayload } from "../src/networkCommunication/Payload";
-import { aPreparedProof } from "./builders/ProofBuilder";
 
 chai.use(sinonChai);
 
@@ -28,7 +28,7 @@ describe("Leader Election", () => {
         await blockUtils.resolveAllValidations(true);
 
         const node0PreparedProof: PreparedProof = testedNode.config.pbftStorage.getLatestPreparedProof(1, 1);
-        expect(unicastSpy).to.have.been.calledWith(nextLeader.pk, "view-change", aPayload(testedNode.config.keyManager, { term: 1, newView: 1, preparedProof: node0PreparedProof }));
+        expect(unicastSpy).to.have.been.calledWith(nextLeader.pk, "view-change", aViewChangePayload(testedNode.config.keyManager, 1, 1, node0PreparedProof));
 
         testNetwork.shutDown();
     });
@@ -98,9 +98,9 @@ describe("Leader Election", () => {
         await blockUtils.provideNextBlock();
         await nextTick();
 
-        const node0VCPayload: ViewChangePayload = aPayload(node0.config.keyManager, { term: 1, newView: 1 });
-        const node2VCPayload: ViewChangePayload = aPayload(node2.config.keyManager, { term: 1, newView: 1 });
-        const node3VCPayload: ViewChangePayload = aPayload(node3.config.keyManager, { term: 1, newView: 1 });
+        const node0VCPayload: ViewChangePayload = aViewChangePayload(node0.config.keyManager, 1, 1);
+        const node2VCPayload: ViewChangePayload = aViewChangePayload(node2.config.keyManager, 1, 1);
+        const node3VCPayload: ViewChangePayload = aViewChangePayload(node3.config.keyManager, 1, 1);
         gossip.onRemoteMessage("view-change", node0VCPayload);
         gossip.onRemoteMessage("view-change", node2VCPayload);
         gossip.onRemoteMessage("view-change", node3VCPayload);
@@ -110,7 +110,7 @@ describe("Leader Election", () => {
 
         const PPPayload: PrePreparePayload = aPrePreparePayload(node1.config.keyManager, 1, 1, block2);
         const VCProof: ViewChangePayload[] = [node0VCPayload, node2VCPayload, node3VCPayload];
-        const payload: NewViewPayload = aPayload(node1.config.keyManager, { term: 1, view: 1, PP: PPPayload, VCProof });
+        const payload: NewViewPayload = aNewViewPayload(node1.config.keyManager, 1, 1, PPPayload, VCProof);
         expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", payload);
         testNetwork.shutDown();
     });
@@ -134,15 +134,15 @@ describe("Leader Election", () => {
         // VC with prepared proof on view 3
         const blockOnView3 = aBlock(block1, "Block on View 3");
         const preparedProofOnView3: PreparedProof = aPreparedProof(node3, [node1, node2], 1, 3, blockOnView3);
-        const node0VCPayload: ViewChangePayload = aPayload(node0.config.keyManager, { term: 1, newView: 5, preparedProof: preparedProofOnView3 });
+        const node0VCPayload: ViewChangePayload = aViewChangePayload(node0.config.keyManager, 1, 5, preparedProofOnView3);
 
         // VC with prepared proof on view 4
         const blockOnView4 = aBlock(block1, "Block on View 4");
         const preparedProofOnView4: PreparedProof = aPreparedProof(node0, [node1, node2], 1, 4, blockOnView4);
-        const node2VCPayload: ViewChangePayload = aPayload(node2.config.keyManager, { term: 1, newView: 5, preparedProof: preparedProofOnView4 });
+        const node2VCPayload: ViewChangePayload = aViewChangePayload(node2.config.keyManager, 1, 5, preparedProofOnView4);
 
         // VC with no prepared proof
-        const node3VCPayload: ViewChangePayload = aPayload(node3.config.keyManager, { term: 1, newView: 5, preparedProof: undefined });
+        const node3VCPayload: ViewChangePayload = aViewChangePayload(node3.config.keyManager, 1, 5);
 
         // send the view-change
         node1Gossip.onRemoteMessage("view-change", node0VCPayload);
@@ -154,7 +154,7 @@ describe("Leader Election", () => {
 
         const PPPayload: PrePreparePayload = aPrePreparePayload(node1.config.keyManager, 1, 5, blockOnView4);
         const VCProof: ViewChangePayload[] = [node0VCPayload, node2VCPayload, node3VCPayload];
-        const payload: NewViewPayload = aPayload(node1.config.keyManager, { term: 1, view: 5, PP: PPPayload, VCProof });
+        const payload: NewViewPayload = aNewViewPayload(node1.config.keyManager, 1, 5, PPPayload, VCProof);
         expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", payload);
         testNetwork.shutDown();
     });
@@ -231,16 +231,16 @@ describe("Leader Election", () => {
         await nextTick(); // await for blockStorage.getLastBlockHash
 
         const node0PreparedProof: PreparedProof = node0.config.pbftStorage.getLatestPreparedProof(2, 1);
-        const node0VCPayload: ViewChangePayload = aPayload(node0.config.keyManager, { term: 2, newView: 1, preparedProof: node0PreparedProof });
+        const node0VCPayload: ViewChangePayload = aViewChangePayload(node0.config.keyManager, 2, 1, node0PreparedProof);
         expect(spy0).to.have.been.calledWith(node1.pk, "view-change", node0VCPayload);
 
         const node2PreparedProof: PreparedProof = node2.config.pbftStorage.getLatestPreparedProof(2, 1);
-        const node2VCPayload: ViewChangePayload = aPayload(node2.config.keyManager, { term: 2, newView: 1, preparedProof: node2PreparedProof });
+        const node2VCPayload: ViewChangePayload = aViewChangePayload(node2.config.keyManager, 2, 1, node2PreparedProof);
         expect(spy2).to.have.been.calledWith(node1.pk, "view-change", node2VCPayload);
 
         const PPPayload: PrePreparePayload = aPrePreparePayload(node1.config.keyManager, 2, 1, block3);
         const VCProof: ViewChangePayload[] = node1.config.pbftStorage.getViewChangeProof(2, 1, 1);
-        const node1NVExpectedPayload: NewViewPayload = aPayload(node1.config.keyManager, { term: 2, view: 1, PP: PPPayload, VCProof });
+        const node1NVExpectedPayload: NewViewPayload = aNewViewPayload(node1.config.keyManager, 2, 1, PPPayload, VCProof);
         expect(spy1).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], "new-view", node1NVExpectedPayload);
 
         testNetwork.shutDown();
@@ -258,8 +258,8 @@ describe("Leader Election", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
         await blockUtils.provideNextBlock();
-        gossip.onRemoteMessage("view-change", aPayload(node1.config.keyManager, { newView: 1 }));
-        gossip.onRemoteMessage("view-change", aPayload(node1.config.keyManager, { newView: 1 }));
+        gossip.onRemoteMessage("view-change", aViewChangePayload(node1.config.keyManager, 1, 1));
+        gossip.onRemoteMessage("view-change", aViewChangePayload(node1.config.keyManager, 1, 1));
         await blockUtils.resolveAllValidations(true);
 
         expect(broadcastSpy).to.not.have.been.called;
@@ -277,9 +277,9 @@ describe("Leader Election", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
         await blockUtils.provideNextBlock();
-        gossip.onRemoteMessage("view-change", aPayload(node1.config.keyManager, { newView: 1 }));
-        gossip.onRemoteMessage("view-change", aPayload(node1.config.keyManager, { newView: 1 }));
-        gossip.onRemoteMessage("view-change", aPayload(node1.config.keyManager, { newView: 1 }));
+        gossip.onRemoteMessage("view-change", aViewChangePayload(node1.config.keyManager, 1, 1));
+        gossip.onRemoteMessage("view-change", aViewChangePayload(node1.config.keyManager, 1, 1));
+        gossip.onRemoteMessage("view-change", aViewChangePayload(node1.config.keyManager, 1, 1));
         await blockUtils.resolveAllValidations(true);
 
         expect(broadcastSpy).to.not.have.been.called;

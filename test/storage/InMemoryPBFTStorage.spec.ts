@@ -1,16 +1,16 @@
 import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
-import { Logger } from "../../src/logger/Logger";
-import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
-import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
-import { SilentLogger } from "../logger/SilentLogger";
-import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
-import { aPayload, aPrePreparePayload, aPreparePayload, aCommitPayload } from "../builders/PayloadBuilder";
-import { PrePreparePayload, PreparePayload } from "../../src/networkCommunication/Payload";
-import { PreparedProof } from "../../src/storage/PBFTStorage";
 import { KeyManager } from "../../src/keyManager/KeyManager";
+import { Logger } from "../../src/logger/Logger";
+import { PreparePayload, PrePreparePayload } from "../../src/networkCommunication/Payload";
+import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
+import { PreparedProof } from "../../src/storage/PBFTStorage";
+import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
+import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
+import { aCommitPayload, aPreparePayload, aPrePreparePayload, aViewChangePayload } from "../builders/PayloadBuilder";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
+import { SilentLogger } from "../logger/SilentLogger";
 
 chai.use(sinonChai);
 
@@ -27,7 +27,7 @@ describe("PBFT In Memory Storage", () => {
         const PPPayload = aPrePreparePayload(keyManager, term, view, block);
         const PPayload = aPreparePayload(keyManager, term, view, block);
         const CPayload = aCommitPayload(keyManager, term, view, block);
-        const VCPayload = aPayload(keyManager, {});
+        const VCPayload = aViewChangePayload(keyManager, term, view);
 
         // storing
         storage.storePrePrepare(term, view, PPPayload);
@@ -104,11 +104,11 @@ describe("PBFT In Memory Storage", () => {
         const senderId2 = Math.floor(Math.random() * 1000).toString();
         const sender1KeyManager: KeyManager = new KeyManagerMock(senderId1);
         const sender2KeyManager: KeyManager = new KeyManagerMock(senderId2);
-        const firstTime = storage.storeViewChange(term, view, aPayload(sender1KeyManager, {}));
+        const firstTime = storage.storeViewChange(term, view, aViewChangePayload(sender1KeyManager, term, view));
         expect(firstTime).to.be.true;
-        const secondstime = storage.storeViewChange(term, view, aPayload(sender2KeyManager, {}));
+        const secondstime = storage.storeViewChange(term, view, aViewChangePayload(sender2KeyManager, term, view));
         expect(secondstime).to.be.true;
-        const thirdTime = storage.storeViewChange(term, view, aPayload(sender2KeyManager, {}));
+        const thirdTime = storage.storeViewChange(term, view, aViewChangePayload(sender2KeyManager, term, view));
         expect(thirdTime).to.be.false;
     });
 
@@ -174,10 +174,10 @@ describe("PBFT In Memory Storage", () => {
                 const sender1KeyManager: KeyManager = new KeyManagerMock(sender1Id);
                 const sender2KeyManager: KeyManager = new KeyManagerMock(sender2Id);
                 const sender3KeyManager: KeyManager = new KeyManagerMock(sender3Id);
-                storage.storeViewChange(term1, view1, aPayload(sender1KeyManager, {}));
-                storage.storeViewChange(term1, view1, aPayload(sender2KeyManager, {}));
-                storage.storeViewChange(term1, view1, aPayload(sender3KeyManager, {}));
-                storage.storeViewChange(term2, view1, aPayload(sender3KeyManager, {}));
+                storage.storeViewChange(term1, view1, aViewChangePayload(sender1KeyManager, term1, view1));
+                storage.storeViewChange(term1, view1, aViewChangePayload(sender2KeyManager, term1, view1));
+                storage.storeViewChange(term1, view1, aViewChangePayload(sender3KeyManager, term1, view1));
+                storage.storeViewChange(term2, view1, aViewChangePayload(sender3KeyManager, term2, view1));
                 const actual = storage.getViewChangeProof(term1, view1, 1);
                 const expected = 1 * 2 + 1;
                 expect(actual.length).to.deep.equal(expected);

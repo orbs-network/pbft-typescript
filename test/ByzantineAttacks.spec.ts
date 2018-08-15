@@ -2,9 +2,8 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
 import { CommitPayload, PreparePayload, PrePreparePayload } from "../src/networkCommunication/Payload";
-import { calculateBlockHash } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aPayload, aPrePreparePayload, aPreparePayload } from "./builders/PayloadBuilder";
+import { aCommitPayload, aPreparePayload, aPrePreparePayload } from "./builders/PayloadBuilder";
 import { aSimpleTestNetwork, aTestNetwork } from "./builders/TestNetworkBuilder";
 import { nextTick } from "./timeUtils";
 
@@ -146,10 +145,9 @@ describe("Byzantine Attacks", () => {
 
         // node0, if faking other messages
         const block1 = aBlock(theGenesisBlock);
-        const blockHash1 = calculateBlockHash(block1);
         const PPpayload1: PrePreparePayload = aPrePreparePayload(node1.config.keyManager, 1, 0, block1);
         const Ppayload1: PreparePayload = aPreparePayload(node1.config.keyManager, 1, 0, block1);
-        const Cpayload1: CommitPayload = aPayload(node1.config.keyManager, { term: 1, view: 0, blockHash: blockHash1 });
+        const Cpayload1: CommitPayload = aCommitPayload(node1.config.keyManager, 1, 0, block1);
         gossip1.onRemoteMessage("preprepare", PPpayload1); // node1 causing preprepare on node1
         gossip1.onRemoteMessage("prepare", Ppayload1); // node1 pretending to send prepare as node1000
         gossip1.onRemoteMessage("prepare", Ppayload1); // node1 pretending to send prepare as node2000
@@ -157,10 +155,9 @@ describe("Byzantine Attacks", () => {
         gossip1.onRemoteMessage("commit", Cpayload1); // node1 pretending to send commit as node2000
 
         const block2 = aBlock(theGenesisBlock);
-        const blockHash2 = calculateBlockHash(block2);
         const PPpayload2: PrePreparePayload = aPrePreparePayload(node2.config.keyManager, 1, 0, block2);
         const Ppayload2: PreparePayload = aPreparePayload(node2.config.keyManager, 1, 0, block2);
-        const Cpayload2: CommitPayload = aPayload(node2.config.keyManager, { term: 1, view: 0, blockHash: blockHash2 });
+        const Cpayload2: CommitPayload = aCommitPayload(node2.config.keyManager, 1, 0, block2);
         gossip2.onRemoteMessage("preprepare", PPpayload2); // node1 causing preprepare on node2
         gossip2.onRemoteMessage("prepare", Ppayload2); // node1 pretending to send prepare as node1000
         gossip2.onRemoteMessage("prepare", Ppayload2); // node1 pretending to send prepare as node2000

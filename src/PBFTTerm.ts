@@ -5,7 +5,7 @@ import { ElectionTrigger, ElectionTriggerFactory } from "./electionTrigger/Elect
 import { KeyManager } from "./keyManager/KeyManager";
 import { Logger } from "./logger/Logger";
 import { NetworkCommunication } from "./networkCommunication/NetworkCommunication";
-import { CommitPayload, NewViewPayload, Payload, PreparePayload, PrePreparePayload, ViewChangePayload } from "./networkCommunication/Payload";
+import { CommitPayload, NewViewPayload, Payload, PreparePayload, PrePreparePayload, ViewChangePayload, ViewChangePayloadData, PrePreparePayloadData, PreparePayloadData, NewViewPayloadData, CommitPayloadData } from "./networkCommunication/Payload";
 import { validatePrepared } from "./proofsValidator/ProofsValidator";
 import { PBFTStorage, PreparedProof } from "./storage/PBFTStorage";
 
@@ -129,7 +129,7 @@ export class PBFTTerm {
         this.setView(this.view + 1);
         const preparedProof: PreparedProof = this.pbftStorage.getLatestPreparedProof(this.term, this.getF());
         this.logger.log({ subject: "Flow", FlowType: "LeaderChange", leaderPk: this.leaderPk, term: this.term, newView: this.view });
-        const data = { term: this.term, newView: this.view, preparedProof };
+        const data: ViewChangePayloadData = { messageType: "view-change", term: this.term, newView: this.view, preparedProof };
         const payload: ViewChangePayload = {
             pk: this.myPk,
             signature: this.keyManager.sign(data),
@@ -208,7 +208,7 @@ export class PBFTTerm {
 
     private buildPrePreparePayload(term: number, view: number, block: Block): PrePreparePayload {
         const blockHash: Buffer = this.blockUtils.calculateBlockHash(block);
-        const data = { blockHash, view, term };
+        const data: PrePreparePayloadData = { messageType: "preprepare", blockHash, view, term };
         const payload: PrePreparePayload = {
             pk: this.myPk,
             signature: this.keyManager.sign(data),
@@ -220,7 +220,7 @@ export class PBFTTerm {
     }
 
     private buildPreparePayload(term: number, view: number, blockHash: Buffer): PreparePayload {
-        const data = { blockHash, view, term };
+        const data: PreparePayloadData = { messageType: "prepare", blockHash, view, term,  };
         const payload: PreparePayload = {
             pk: this.myPk,
             signature: this.keyManager.sign(data),
@@ -388,7 +388,7 @@ export class PBFTTerm {
         }
 
         const blockHash = this.blockUtils.calculateBlockHash(block);
-        const dataPP = { term: this.term, view, blockHash };
+        const dataPP: PrePreparePayloadData = { messageType: "preprepare", term: this.term, view, blockHash };
         const PP: PrePreparePayload = {
             pk: this.myPk,
             signature: this.keyManager.sign(dataPP),
@@ -396,7 +396,7 @@ export class PBFTTerm {
             block
         };
         this.logger.log({ subject: "Flow", FlowType: "Elected", term: this.term, view, blockHash: blockHash.toString("Hex") });
-        const dataNV = { term: this.term, view, PP, VCProof };
+        const dataNV: NewViewPayloadData = { messageType: "new-view", term: this.term, view, PP, VCProof };
         const newViewPayload: NewViewPayload = {
             pk: this.myPk,
             signature: this.keyManager.sign(dataNV),
@@ -426,7 +426,7 @@ export class PBFTTerm {
 
     private onPrepared(term: number, view: number, blockHash: Buffer): void {
         this.preparedLocally = true;
-        const data = { term, view, blockHash };
+        const data: CommitPayloadData = { messageType: "commit", term, view, blockHash };
         const payload: CommitPayload = {
             pk: this.myPk,
             signature: this.keyManager.sign(data),

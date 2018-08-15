@@ -2,16 +2,16 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
+import { KeyManager } from "../../src";
 import { Block } from "../../src/Block";
 import { NetworkMessagesFilter } from "../../src/networkCommunication/NetworkMessagesFilter";
 import { PBFTMessagesHandler } from "../../src/networkCommunication/PBFTMessagesHandler";
-import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
-import { aPayload, aPreparePayload, aPrePreparePayload } from "../builders/PayloadBuilder";
-import { aSimpleTestNetwork } from "../builders/TestNetworkBuilder";
-import { PBFTMessagesHandlerMock } from "./PBFTMessagesHandlerMock";
 import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
-import { KeyManager } from "../../src";
+import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
+import { aCommitPayload, aNewViewPayload, aPreparePayload, aPrePreparePayload, aViewChangePayload } from "../builders/PayloadBuilder";
+import { aSimpleTestNetwork } from "../builders/TestNetworkBuilder";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
+import { PBFTMessagesHandlerMock } from "./PBFTMessagesHandlerMock";
 
 chai.use(sinonChai);
 
@@ -35,12 +35,11 @@ describe("Network Messages Filter", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         const gossip = testNetwork.getNodeGossip(node1.pk);
-        const blockHash = calculateBlockHash(block);
         gossip.broadcast("preprepare", aPrePreparePayload(node1.config.keyManager, 3, 0, block));
         gossip.broadcast("prepare", aPreparePayload(node1.config.keyManager, 3, 0, block));
-        gossip.broadcast("commit", aPayload(node1.config.keyManager, { term: 3, view: 0, blockHash }));
-        gossip.broadcast("view-change", aPayload(node1.config.keyManager, { term: 3, newView: 0 }));
-        gossip.broadcast("new-view", aPayload(node1.config.keyManager, { term: 3, view: 0, PP: undefined }));
+        gossip.broadcast("commit", aCommitPayload(node1.config.keyManager, 3, 0, block));
+        gossip.broadcast("view-change", aViewChangePayload(node1.config.keyManager, 3, 0));
+        gossip.broadcast("new-view", aNewViewPayload(node1.config.keyManager, 3, 0, undefined, undefined));
 
         expect(PPSpy).to.have.been.calledOnce;
         expect(PSpy).to.have.been.calledOnce;
@@ -68,12 +67,11 @@ describe("Network Messages Filter", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         const gossip = testNetwork.getNodeGossip(node1.pk);
-        const blockHash = calculateBlockHash(block);
         gossip.broadcast("preprepare", aPreparePayload(node1.config.keyManager, 3, 0, block));
         gossip.broadcast("prepare", aPreparePayload(node1.config.keyManager, 3, 0, block));
-        gossip.broadcast("commit", aPayload(node1.config.keyManager, { term: 3, view: 0, blockHash }));
-        gossip.broadcast("view-change", aPayload(node1.config.keyManager, { term: 3, newView: 0 }));
-        gossip.broadcast("new-view", aPayload(node1.config.keyManager, { term: 3, view: 0, PP: undefined }));
+        gossip.broadcast("commit", aCommitPayload(node1.config.keyManager, 3, 0, block));
+        gossip.broadcast("view-change", aViewChangePayload(node1.config.keyManager, 3, 0));
+        gossip.broadcast("new-view", aNewViewPayload(node1.config.keyManager, 3, 0, undefined, undefined));
 
         expect(PPSpy).to.not.have.been.calledOnce;
         expect(PSpy).to.not.have.been.calledOnce;
@@ -103,9 +101,9 @@ describe("Network Messages Filter", () => {
         const blockHash = calculateBlockHash(block);
         gossip.broadcast("preprepare", aPrePreparePayload(node0.config.keyManager, 3, 0, block));
         gossip.broadcast("prepare", aPreparePayload(node0.config.keyManager, 3, 0, block));
-        gossip.broadcast("commit", aPayload(node0.config.keyManager, { term: 3, view: 0, blockHash }));
-        gossip.broadcast("view-change", aPayload(node0.config.keyManager, { term: 3, newView: 0 }));
-        gossip.broadcast("new-view", aPayload(node0.config.keyManager, { term: 3, view: 0, PP: undefined }));
+        gossip.broadcast("commit", aCommitPayload(node0.config.keyManager, 3, 0, block));
+        gossip.broadcast("view-change", aViewChangePayload(node0.config.keyManager, 3, 0));
+        gossip.broadcast("new-view", aNewViewPayload(node0.config.keyManager, 3, 0, undefined, undefined));
 
         expect(PPSpy).to.not.have.been.calledOnce;
         expect(PSpy).to.not.have.been.calledOnce;
@@ -137,9 +135,9 @@ describe("Network Messages Filter", () => {
         const keyManager: KeyManager = new KeyManagerMock("External Node Pk");
         gossip.broadcast("preprepare", aPrePreparePayload(keyManager, 3, 0, block));
         gossip.broadcast("prepare", aPreparePayload(keyManager, 3, 0, block));
-        gossip.broadcast("commit", aPayload(keyManager, { term: 3, view: 0, blockHash }));
-        gossip.broadcast("view-change", aPayload(keyManager, { term: 3, newView: 0 }));
-        gossip.broadcast("new-view", aPayload(keyManager, { term: 3, view: 0, PP: undefined }));
+        gossip.broadcast("commit", aCommitPayload(keyManager, 3, 0, block));
+        gossip.broadcast("view-change", aViewChangePayload(keyManager, 3, 0));
+        gossip.broadcast("new-view", aNewViewPayload(keyManager, 3, 0, undefined, undefined));
 
         expect(PPSpy).to.not.have.been.calledOnce;
         expect(PSpy).to.not.have.been.calledOnce;

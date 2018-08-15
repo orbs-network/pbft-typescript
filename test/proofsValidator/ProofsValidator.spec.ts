@@ -1,15 +1,15 @@
 import * as chai from "chai";
-import * as sinonChai from "sinon-chai";
-import { validatePrepared } from "../../src/proofsValidator/ProofsValidator";
-import { KeyManager, Block, BlockUtils } from "../../src";
-import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 import { expect } from "chai";
+import * as sinonChai from "sinon-chai";
+import { Block, BlockUtils, KeyManager } from "../../src";
+import { PreparePayload, PrePreparePayload } from "../../src/networkCommunication/Payload";
+import { validatePrepared } from "../../src/proofsValidator/ProofsValidator";
 import { PreparedProof } from "../../src/storage/PBFTStorage";
-import { aPayload, aPrePreparePayload, aPreparePayload } from "../builders/PayloadBuilder";
+import { BlockUtilsMock, calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
-import { calculateBlockHash, BlockUtilsMock } from "../blockUtils/BlockUtilsMock";
-import { PrePreparePayload, PreparePayload } from "../../src/networkCommunication/Payload";
+import { aPreparePayload, aPrePreparePayload } from "../builders/PayloadBuilder";
 import { anEmptyPreparedProof } from "../builders/ProofBuilder";
+import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 chai.use(sinonChai);
 
 describe("Proofs Validator", () => {

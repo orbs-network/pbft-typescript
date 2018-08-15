@@ -5,7 +5,7 @@ import { NetworkCommunication } from "./NetworkCommunication";
 interface GossipMessageContent {
     message: string;
     term: number;
-    payload: Payload;
+    payload: any;
 }
 
 export class NetworkMessagesFilter {
