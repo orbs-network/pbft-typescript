@@ -2,10 +2,9 @@ import { createHash } from "crypto";
 import * as stringify from "json-stable-stringify";
 import { Block } from "../../src/Block";
 import { BlockUtils } from "../../src/blockUtils/BlockUtils";
-import { theGenesisBlock, aBlock } from "../builders/BlockBuilder";
-import { nextTick } from "../timeUtils";
+import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 
-export const calculateBlockHash = (block: Block): Buffer => createHash("sha256").update(stringify(block.header)).update(stringify(block.body)).digest(); // .digest("base64");
+export const calculateBlockHash = (block: Block): Buffer => createHash("sha256").update(stringify(block.header)).digest(); // .digest("base64");
 
 export class BlockUtilsMock implements BlockUtils {
     private blocksPromiseList: Promise<Block>[] = [];

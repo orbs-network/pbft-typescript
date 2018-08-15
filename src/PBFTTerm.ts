@@ -59,8 +59,7 @@ export class PBFTTerm {
         this.initView(0);
         let metaData = {
             method: "startTerm",
-            height: this.term,
-            prevBlockHash: new Buffer("")
+            height: this.term
         };
         this.logger.log({ subject: "Info", message: `on startTerm`, metaData: metaData });
         if (this.isLeader()) {
@@ -68,8 +67,7 @@ export class PBFTTerm {
             const block: Block = await this.blockUtils.requestNewBlock(this.term);
             metaData = {
                 method: "requestNewBlock",
-                height: this.term,
-                prevBlockHash: block.header.prevBlockHash
+                height: this.term
             };
             this.logger.log({ subject: "Info", message: `generated new block`, metaData });
             if (this.disposed) {

@@ -15,7 +15,7 @@ export const blockMatcher = (chai: any, utils: any) => {
         const hasConsensus = results.every(r => r);
         this.assert(
             hasConsensus
-            , `expected #{this} to reach consensus on block body:${block.body}`
+            , `expected #{this} to reach consensus on block hash:${block.header.blockHash}`
             , "expected #{this} to not reach consensus"
         );
     });

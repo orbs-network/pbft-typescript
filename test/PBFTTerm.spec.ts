@@ -607,7 +607,7 @@ describe("PBFTTerm", () => {
             await nextTick();
             await node1BlockUtils.resolveAllValidations(true);
 
-            expect(storePrePrepareSpy.args[0][2].block.body).to.equal(blockOnView4.body);
+            expect(storePrePrepareSpy.args[0][2].block.header.blockHash).to.equal(blockOnView4.header.blockHash);
         });
 
         it("onNewView should reject a new-view if the offered (On PP) block is not the heighest block on the VCProof", async () => {

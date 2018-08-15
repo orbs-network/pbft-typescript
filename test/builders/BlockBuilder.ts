@@ -2,22 +2,20 @@ import { Block } from "../../src/Block";
 import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 
 let globalCounter: number = 0;
-const genBody = () => `Block ${(globalCounter++).toString()}`;
+const genContent = () => `Block ${(globalCounter++).toString()}`;
 
-export function aBlock(previousBlock: Block, body: any = genBody()): Block {
+export function aBlock(previousBlock: Block, content: any = genContent()): Block {
     return {
         header: {
             height: previousBlock.header.height + 1,
-            prevBlockHash: calculateBlockHash(previousBlock)
-        },
-        body
+            blockHash: Buffer.from(content)
+        }
     };
 }
 
 export const theGenesisBlock: Block = {
     header: {
         height: 0,
-        prevBlockHash: Buffer.from("0")
-    },
-    body: "The Genesis Block"
+        blockHash: Buffer.from("The Genesis Block")
+    }
 };

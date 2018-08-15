@@ -1,7 +1,6 @@
 export interface Block {
     header: {
         height: number;
-        prevBlockHash: Buffer;
+        blockHash: Buffer;
     };
-    body: any;
 }
