@@ -19,16 +19,16 @@ export class InMemoryPBFTStorage implements PBFTStorage {
     }
 
     storePrePrepare(term: number, view: number, payload: PrePreparePayload): boolean {
-        let termsMap = this.prePrepareStorage.get(term);
-        if (!termsMap) {
-            termsMap = new Map();
-            this.prePrepareStorage.set(term, termsMap);
+        let viewsMap = this.prePrepareStorage.get(term);
+        if (!viewsMap) {
+            viewsMap = new Map();
+            this.prePrepareStorage.set(term, viewsMap);
         }
 
-        if (termsMap.get(view) !== undefined) {
+        if (viewsMap.get(view) !== undefined) {
             return false;
         }
-        termsMap.set(view, payload);
+        viewsMap.set(view, payload);
         const { pk: senderPk } = payload;
         const { blockHash } = payload.data;
         this.logger.log({ subject: "Storage", StorageType: "PrePrepare", term, view, senderPk, blockHash: blockHash.toString("hex") });
