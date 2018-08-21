@@ -1,13 +1,13 @@
 import { Block } from "./Block";
-import { extractBlock } from "./blockExtractor/BlockExtractor";
+import { getLatestBlockFromViewChangeMessages } from "./blockExtractor/BlockExtractor";
 import { BlockUtils } from "./blockUtils/BlockUtils";
 import { ElectionTrigger, ElectionTriggerFactory } from "./electionTrigger/ElectionTrigger";
 import { KeyManager } from "./keyManager/KeyManager";
 import { Logger } from "./logger/Logger";
+import { BlockMessageContent, CommitMessage, LeanHelixMessage, MessageType, NewViewContent, NewViewMessage, PreparedProof, PrepareMessage, PrePrepareMessage, SignaturePair, ViewChangeMessage, ViewChangeMessageContent, ViewChangeVote } from "./networkCommunication/Messages";
 import { NetworkCommunication } from "./networkCommunication/NetworkCommunication";
-import { CommitPayload, NewViewPayload, Payload, PreparePayload, PrePreparePayload, ViewChangePayload, ViewChangePayloadData, PrePreparePayloadData, PreparePayloadData, NewViewPayloadData, CommitPayloadData } from "./networkCommunication/Payload";
-import { validatePrepared } from "./proofsValidator/ProofsValidator";
-import { PBFTStorage, PreparedProof } from "./storage/PBFTStorage";
+import { validatePreparedProof } from "./proofsValidator/ProofsValidator";
+import { PBFTStorage, Prepared } from "./storage/PBFTStorage";
 
 export type onNewBlockCB = (block: Block) => void;
 
@@ -74,9 +74,9 @@ export class PBFTTerm {
                 return;
             }
 
-            const payload: PrePreparePayload = this.buildPrePreparePayload(this.term, this.view, block);
-            this.pbftStorage.storePrePrepare(this.term, this.view, payload);
-            this.sendPrePrepare(payload);
+            const message: PrePrepareMessage = this.buildPrePrepareMessage(this.term, this.view, block);
+            this.pbftStorage.storePrePrepare(this.term, this.view, message);
+            this.sendPrePrepare(message);
         }
     }
 
@@ -125,140 +125,185 @@ export class PBFTTerm {
 
     private onLeaderChange(): void {
         this.setView(this.view + 1);
-        const preparedProof: PreparedProof = this.pbftStorage.getLatestPreparedProof(this.term, this.getF());
         this.logger.log({ subject: "Flow", FlowType: "LeaderChange", leaderPk: this.leaderPk, term: this.term, newView: this.view });
-        const data: ViewChangePayloadData = { messageType: "view-change", term: this.term, newView: this.view, preparedProof };
-        const payload: ViewChangePayload = {
-            pk: this.myPk,
-            signature: this.keyManager.sign(data),
-            data
-        };
-        this.pbftStorage.storeViewChange(this.term, this.view, payload);
+
+        const prepared: Prepared = this.pbftStorage.getLatestPrepared(this.term, this.getF());
+        const message: ViewChangeMessage = this.buildViewChangeMessage(this.term, this.view, prepared);
+        this.pbftStorage.storeViewChange(this.term, this.view, message);
         if (this.isLeader()) {
             this.checkElected(this.term, this.view);
         } else {
-            this.sendViewChange(payload);
+            this.sendViewChange(message);
         }
     }
 
-    private sendPrePrepare(payload: PrePreparePayload): void {
-        this.networkCommunication.sendPrePrepare(this.otherMembersPKs, payload);
+    private sendPrePrepare(message: PrePrepareMessage): void {
+        this.networkCommunication.sendPrePrepare(this.otherMembersPKs, message);
         this.logger.log({
             subject: "GossipSend",
             message: "preprepare",
             senderPk: this.myPk,
             targetPks: this.otherMembersPKs,
-            term: payload.data.term,
-            view: payload.data.view,
-            blockHash: payload.data.blockHash.toString("Hex")
+            term: message.content.term,
+            view: message.content.view,
+            blockHash: message.content.blockHash.toString("Hex")
         });
     }
 
-    private sendPrepare(payload: PreparePayload): void {
-        this.networkCommunication.sendPrepare(this.otherMembersPKs, payload);
+    private sendPrepare(message: PrepareMessage): void {
+        this.networkCommunication.sendPrepare(this.otherMembersPKs, message);
         this.logger.log({
             subject: "GossipSend",
             message: "prepare",
             senderPk: this.myPk,
             targetPks: this.otherMembersPKs,
-            term: payload.data.term,
-            view: payload.data.view,
-            blockHash: payload.data.blockHash.toString("Hex")
+            term: message.content.term,
+            view: message.content.view,
+            blockHash: message.content.blockHash.toString("Hex")
         });
     }
 
-    private sendCommit(payload: CommitPayload): void {
-        this.networkCommunication.sendCommit(this.otherMembersPKs, payload);
+    private sendCommit(message: CommitMessage): void {
+        this.networkCommunication.sendCommit(this.otherMembersPKs, message);
         this.logger.log({
             subject: "GossipSend",
             message: "commit",
             senderPk: this.myPk,
             targetPks: this.otherMembersPKs,
-            term: payload.data.term,
-            view: payload.data.view,
-            blockHash: payload.data.blockHash.toString("Hex")
+            term: message.content.term,
+            view: message.content.view,
+            blockHash: message.content.blockHash.toString("Hex")
         });
     }
 
-    private sendViewChange(payload: ViewChangePayload): void {
-        this.networkCommunication.sendViewChange(this.leaderPk, payload);
+    private sendViewChange(message: ViewChangeMessage): void {
+        this.networkCommunication.sendViewChange(this.leaderPk, message);
         this.logger.log({
             subject: "GossipSend",
             message: "view-change",
             senderPk: this.myPk,
             targetPks: [this.leaderPk],
-            term: payload.data.term,
-            view: payload.data.newView
+            term: message.content.term,
+            view: message.content.view
         });
     }
 
-    private sendNewView(payload: NewViewPayload): void {
-        this.networkCommunication.sendNewView(this.otherMembersPKs, payload);
+    private sendNewView(message: NewViewMessage): void {
+        this.networkCommunication.sendNewView(this.otherMembersPKs, message);
         this.logger.log({
             subject: "GossipSend",
             message: "new-view",
             senderPk: this.myPk,
             targetPks: this.otherMembersPKs,
-            term: payload.data.term,
-            view: payload.data.view
+            term: message.content.term,
+            view: message.content.view
         });
     }
 
-    private buildPrePreparePayload(term: number, view: number, block: Block): PrePreparePayload {
+    private buildPrePrepareMessage(term: number, view: number, block: Block): PrePrepareMessage {
         const blockHash: Buffer = this.blockUtils.calculateBlockHash(block);
-        const data: PrePreparePayloadData = { messageType: "preprepare", blockHash, view, term };
-        const payload: PrePreparePayload = {
-            pk: this.myPk,
-            signature: this.keyManager.sign(data),
-            data,
-            block,
+        const content: BlockMessageContent = { messageType: MessageType.PREPREPARE, term, view, blockHash };
+        const signaturePair: SignaturePair = {
+            signerPublicKey: this.myPk,
+            contentSignature: this.keyManager.sign(content)
         };
-
-        return payload;
+        return { signaturePair, content, block };
     }
 
-    private buildPreparePayload(term: number, view: number, blockHash: Buffer): PreparePayload {
-        const data: PreparePayloadData = { messageType: "prepare", blockHash, view, term,  };
-        const payload: PreparePayload = {
-            pk: this.myPk,
-            signature: this.keyManager.sign(data),
-            data
+    private buildPrepareMessage(term: number, view: number, blockHash: Buffer): PrepareMessage {
+        const content: BlockMessageContent = { messageType: MessageType.PREPARE, term, view, blockHash };
+        const signaturePair: SignaturePair = {
+            signerPublicKey: this.myPk,
+            contentSignature: this.keyManager.sign(content)
         };
-
-        return payload;
+        return { signaturePair, content };
     }
 
-    public async onReceivePrePrepare(payload: PrePreparePayload): Promise<void> {
-        if (await this.validatePrePreapare(payload)) {
-            this.processPrePrepare(payload);
+    private buildCommitMessage(term: number, view: number, blockHash: Buffer): PrepareMessage {
+        const content: BlockMessageContent = { messageType: MessageType.COMMIT, term, view, blockHash };
+        const signaturePair: SignaturePair = {
+            signerPublicKey: this.myPk,
+            contentSignature: this.keyManager.sign(content)
+        };
+        return { signaturePair, content };
+    }
+
+    private generatePreparedProof(prepared: Prepared): PreparedProof {
+        const { term, view, blockHash } = prepared.preprepareMessage.content;
+        return {
+            term,
+            view,
+            blockHash,
+            preprepareMessageSignature: prepared.preprepareMessage.signaturePair,
+            prepareMessagesSignatures: prepared.prepareMessages.map(p => p.signaturePair)
+        };
+    }
+
+    private buildViewChangeMessage(term: number, view: number, prepared: Prepared): ViewChangeMessage {
+        let preparedProof: PreparedProof;
+        let block: Block;
+        if (prepared) {
+            preparedProof = this.generatePreparedProof(prepared);
+            block = prepared.preprepareMessage.block;
+        }
+
+        const content: ViewChangeMessageContent = { messageType: MessageType.VIEW_CHANGE, term, view, preparedProof };
+        const signaturePair: SignaturePair = {
+            signerPublicKey: this.myPk,
+            contentSignature: this.keyManager.sign(content)
+        };
+        return {
+            content,
+            signaturePair,
+            block
+        };
+    }
+
+    private buildNewViewMessage(term: number, view: number, preprepareMessage: PrePrepareMessage, votes: ViewChangeVote[]): NewViewMessage {
+        const content: NewViewContent = { messageType: MessageType.NEW_VIEW, term, view, votes };
+        const signaturePair: SignaturePair = {
+            signerPublicKey: this.myPk,
+            contentSignature: this.keyManager.sign(content)
+        };
+        return {
+            content,
+            signaturePair,
+            preprepareMessage
+        };
+    }
+
+    public async onReceivePrePrepare(message: PrePrepareMessage): Promise<void> {
+        if (await this.validatePrePreapare(message)) {
+            this.processPrePrepare(message);
         }
     }
 
-    private processPrePrepare(payload: PrePreparePayload): void {
-        const { view, term, blockHash } = payload.data;
-        const { block } = payload;
+    private processPrePrepare(message: PrePrepareMessage): void {
+        const { view, term, blockHash } = message.content;
+        const { block } = message;
         if (this.view !== view) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], processPrePrepare, view doesn't match` });
             return;
         }
 
-        const preparePayoad: PreparePayload = this.buildPreparePayload(term, view, blockHash);
-        this.pbftStorage.storePrepare(term, view, preparePayoad);
-        this.pbftStorage.storePrePrepare(term, view, payload);
-        this.sendPrepare(preparePayoad);
+        const prepareMessage: PrepareMessage = this.buildPrepareMessage(term, view, blockHash);
+        this.pbftStorage.storePrepare(term, view, prepareMessage);
+        this.pbftStorage.storePrePrepare(term, view, message);
+        this.sendPrepare(prepareMessage);
         this.checkPrepared(term, view, blockHash);
     }
 
-    private async validatePrePreapare(payload: PrePreparePayload): Promise<boolean> {
-        const { data, block, pk: senderPk } = payload;
-        const { view, term, blockHash } = data;
+    private async validatePrePreapare(message: PrePrepareMessage): Promise<boolean> {
+        const { content, block, signaturePair } = message;
+        const { signerPublicKey: senderPk } = signaturePair;
+        const { view, term, blockHash } = content;
 
         if (this.checkPrePrepare(term, view)) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderPk}", already prepared` });
             return false;
         }
 
-        if (!this.verifyPayload(payload)) {
+        if (!this.verifyMessage(message)) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], validatePrePreapare from "${senderPk}", ignored because the signature verification failed` });
             return;
         }
@@ -292,9 +337,10 @@ export class PBFTTerm {
         return this.pbftStorage.getPrePrepareBlock(term, view) !== undefined;
     }
 
-    public onReceivePrepare(payload: PreparePayload): void {
-        const { pk: senderPk, data } = payload;
-        const { term, view, blockHash } = data;
+    public onReceivePrepare(message: PrepareMessage): void {
+        const { signaturePair, content } = message;
+        const { signerPublicKey: senderPk } = signaturePair;
+        const { term, view, blockHash } = content;
         const metaData = {
             method: "onReceivePrepare",
             term,
@@ -303,7 +349,7 @@ export class PBFTTerm {
             senderPk
         };
 
-        if (!this.verifyPayload(payload)) {
+        if (!this.verifyMessage(message)) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrepare from "${senderPk}", ignored because the signature verification failed` });
             return;
         }
@@ -318,30 +364,32 @@ export class PBFTTerm {
             return;
         }
 
-        this.pbftStorage.storePrepare(term, view, payload);
+        this.pbftStorage.storePrepare(term, view, message);
 
         if (this.view === view) {
             this.checkPrepared(term, view, blockHash);
         }
     }
 
-    public onReceiveViewChange(payload: ViewChangePayload): void {
-        if (this.isViewChangePayloadValid(this.myPk, this.view, payload)) {
-            const { data } = payload;
-            const { newView, term } = data;
-            this.pbftStorage.storeViewChange(term, newView, payload);
-            this.checkElected(term, newView);
+    public onReceiveViewChange(message: ViewChangeMessage): void {
+        if (this.isViewChangeMessageValid(this.myPk, this.view, message)) {
+            const { content } = message;
+            const { view, term } = content;
+            this.pbftStorage.storeViewChange(term, view, message);
+            this.checkElected(term, view);
         }
     }
 
-    private verifyPayload(payload: Payload): boolean {
-        return this.keyManager.verify(payload.data, payload.signature, payload.pk);
+    private verifyMessage(message: LeanHelixMessage): boolean {
+        return this.keyManager.verify(message.content, message.signaturePair.contentSignature, message.signaturePair.signerPublicKey);
     }
 
-    private isViewChangePayloadValid(targetLeaderPk: string, view: number, payload: ViewChangePayload): boolean {
-        const { pk: senderPk, data } = payload;
-        const { newView, term, preparedProof } = data;
-        if (!this.verifyPayload(payload)) {
+    private isViewChangeMessageValid(targetLeaderPk: string, view: number, message: ViewChangeMessage): boolean {
+        const { content, signaturePair, block } = message;
+        const { signerPublicKey: senderPk } = signaturePair;
+        const { view: newView, term, preparedProof } = content;
+
+        if (!this.verifyMessage(message)) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the signature verification failed` });
             return false;
         }
@@ -351,7 +399,7 @@ export class PBFTTerm {
             return false;
         }
 
-        if (preparedProof && validatePrepared(preparedProof, this.getF(), this.keyManager, this.blockUtils, this.termMembersPKs, view => this.calcLeaderPk(view)) === false) {
+        if (preparedProof && validatePreparedProof(preparedProof, block, this.getF(), this.keyManager, this.blockUtils, this.termMembersPKs, (view: number) => this.calcLeaderPk(view)) === false) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the preparedProof is invalid` });
             return false;
         }
@@ -367,17 +415,18 @@ export class PBFTTerm {
 
     private checkElected(term: number, view: number): void {
         if (this.newViewLocally < view) {
-            const viewChangeProof = this.pbftStorage.getViewChangeProof(term, view, this.getF());
-            if (viewChangeProof) {
-                this.onElected(view, viewChangeProof);
+            const viewChangeMessages = this.pbftStorage.getViewChangeMessages(term, view, this.getF());
+            if (viewChangeMessages) {
+                this.onElected(view, viewChangeMessages);
             }
         }
     }
 
-    private async onElected(view: number, VCProof: ViewChangePayload[]) {
+    private async onElected(view: number, viewChangeMessages: ViewChangeMessage[]) {
+        this.logger.log({ subject: "Flow", FlowType: "Elected", term: this.term, view });
         this.newViewLocally = view;
         this.setView(view);
-        let block: Block = extractBlock(VCProof);
+        let block: Block = getLatestBlockFromViewChangeMessages(viewChangeMessages);
         if (!block) {
             block = await this.blockUtils.requestNewBlock(this.term);
             if (this.disposed) {
@@ -385,23 +434,11 @@ export class PBFTTerm {
             }
         }
 
-        const blockHash = this.blockUtils.calculateBlockHash(block);
-        const dataPP: PrePreparePayloadData = { messageType: "preprepare", term: this.term, view, blockHash };
-        const PP: PrePreparePayload = {
-            pk: this.myPk,
-            signature: this.keyManager.sign(dataPP),
-            data: dataPP,
-            block
-        };
-        this.logger.log({ subject: "Flow", FlowType: "Elected", term: this.term, view, blockHash: blockHash.toString("Hex") });
-        const dataNV: NewViewPayloadData = { messageType: "new-view", term: this.term, view, PP, VCProof };
-        const newViewPayload: NewViewPayload = {
-            pk: this.myPk,
-            signature: this.keyManager.sign(dataNV),
-            data: dataNV
-        };
-        this.pbftStorage.storePrePrepare(this.term, this.view, PP);
-        this.sendNewView(newViewPayload);
+        const preprepareMessage: PrePrepareMessage = this.buildPrePrepareMessage(this.term, view, block);
+        const viewChangeVotes: ViewChangeVote[] = viewChangeMessages.map(vc => ({ content: vc.content, signaturePair: vc.signaturePair }));
+        const newViewMessage: NewViewMessage = this.buildNewViewMessage(this.term, view, preprepareMessage, viewChangeVotes);
+        this.pbftStorage.storePrePrepare(this.term, this.view, preprepareMessage);
+        this.sendNewView(newViewMessage);
     }
 
     private checkPrepared(term: number, view: number, blockHash: Buffer) {
@@ -424,27 +461,23 @@ export class PBFTTerm {
 
     private onPrepared(term: number, view: number, blockHash: Buffer): void {
         this.preparedLocally = true;
-        const data: CommitPayloadData = { messageType: "commit", term, view, blockHash };
-        const payload: CommitPayload = {
-            pk: this.myPk,
-            signature: this.keyManager.sign(data),
-            data
-        };
-        this.pbftStorage.storeCommit(term, view, payload);
-        this.sendCommit(payload);
+        const message: CommitMessage = this.buildCommitMessage(term, view, blockHash);
+        this.pbftStorage.storeCommit(term, view, message);
+        this.sendCommit(message);
         this.checkCommitted(term, view, blockHash);
     }
 
-    public onReceiveCommit(payload: CommitPayload): void {
-        const { data, pk: senderPk } = payload;
-        const { term, view, blockHash } = data;
+    public onReceiveCommit(message: CommitMessage): void {
+        const { content, signaturePair } = message;
+        const { signerPublicKey: senderPk } = signaturePair;
+        const { view, term, blockHash } = content;
 
-        if (!this.verifyPayload(payload)) {
+        if (!this.verifyMessage(message)) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveCommit from "${senderPk}", ignored because the signature verification failed` });
             return;
         }
 
-        this.pbftStorage.storeCommit(term, view, payload);
+        this.pbftStorage.storeCommit(term, view, message);
         this.checkCommitted(term, view, blockHash);
     }
 
@@ -460,39 +493,39 @@ export class PBFTTerm {
         }
     }
 
-    private validateViewChangeProof(targetTerm: number, targetView: number, VCProof: ViewChangePayload[]): boolean {
-        if (!VCProof || !Array.isArray(VCProof)) {
+    private validateViewChangeProof(targetTerm: number, targetView: number, votes: ViewChangeVote[]): boolean {
+        if (!votes || !Array.isArray(votes)) {
             return false;
         }
 
-        if (VCProof.length < this.getF() * 2 + 1) {
+        if (votes.length < this.getF() * 2 + 1) {
             return false;
         }
 
-        const allMatchTargetTerm = VCProof.every(viewChangePayload => viewChangePayload.data.term === targetTerm);
+        const allMatchTargetTerm = votes.every(viewChangeMessage => viewChangeMessage.content.term === targetTerm);
         if (!allMatchTargetTerm) {
             return false;
         }
 
-        const allMatchTargetView = VCProof.every(viewChangePayload => viewChangePayload.data.newView === targetView);
+        const allMatchTargetView = votes.every(viewChangeMessage => viewChangeMessage.content.view === targetView);
         if (!allMatchTargetView) {
             return false;
         }
 
-        const allPkAreUnique = VCProof.reduce((prev, current) => prev.set(current.pk, true), new Map()).size === VCProof.length;
+        const allPkAreUnique = votes.reduce((prev, current) => prev.set(current.signaturePair.signerPublicKey, true), new Map()).size === votes.length;
         if (!allPkAreUnique) {
             return false;
         }
 
-
-        return VCProof.every(viewChangePayload => this.isViewChangePayloadValid(this.calcLeaderPk(targetView), targetView, viewChangePayload));
+        return true;
     }
 
-    public async onReceiveNewView(payload: NewViewPayload): Promise<void> {
-        const { pk: senderPk, data } = payload;
-        const { PP, view, term, VCProof } = data;
+    public async onReceiveNewView(message: NewViewMessage): Promise<void> {
+        const { content, signaturePair, preprepareMessage } = message;
+        const { signerPublicKey: senderPk } = signaturePair;
+        const { view, term, votes } = content;
 
-        if (!this.verifyPayload(payload)) {
+        if (!this.verifyMessage(message)) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", ignored because the signature verification failed` });
             return;
         }
@@ -503,35 +536,37 @@ export class PBFTTerm {
             return;
         }
 
-        if (this.validateViewChangeProof(term, view, VCProof) === false) {
+        if (this.validateViewChangeProof(term, view, votes) === false) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", VCProof is invalid` });
             return;
         }
+
+        // const viewChangeMessageValid = votes.every(viewChangeMessage => this.isViewChangeMessageValid(this.calcLeaderPk(view), view, viewChangeMessage));
 
         if (this.view > view) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", view is from the past` });
             return;
         }
 
-        if (view !== PP.data.view) {
+        if (view !== preprepareMessage.content.view) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", view doesn't match PP.view` });
             return;
         }
 
-        const expectedBlock: Block = extractBlock(VCProof);
-        if (expectedBlock !== undefined) {
-            const expectedBlockHash = this.blockUtils.calculateBlockHash(expectedBlock);
-            const ppBlockHash = this.blockUtils.calculateBlockHash(PP.block);
-            if (expectedBlockHash.equals(ppBlockHash) === false) {
-                this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", the given block (PP.block) doesn't match the best block from the VCProof` });
-                return;
-            }
-        }
+        // const expectedBlock: Block = extractBlock(votes);
+        // if (expectedBlock !== undefined) {
+        //     const expectedBlockHash = this.blockUtils.calculateBlockHash(expectedBlock);
+        //     const ppBlockHash = this.blockUtils.calculateBlockHash(preprepareMessage.block);
+        //     if (expectedBlockHash.equals(ppBlockHash) === false) {
+        //         this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", the given block (PP.block) doesn't match the best block from the VCProof` });
+        //         return;
+        //     }
+        // }
 
-        if (await this.validatePrePreapare(PP)) {
+        if (await this.validatePrePreapare(preprepareMessage)) {
             this.newViewLocally = view;
             this.setView(view);
-            this.processPrePrepare(PP);
+            this.processPrePrepare(preprepareMessage);
         }
     }
 

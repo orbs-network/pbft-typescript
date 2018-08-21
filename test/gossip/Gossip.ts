@@ -1,9 +1,7 @@
-import { Logger } from "../../src/logger/Logger";
-import { SilentLogger } from "../logger/SilentLogger";
+import { LeanHelixMessage } from "../../src/networkCommunication/Messages";
 import { GossipDiscovery } from "./GossipDiscovery";
-import { Payload } from "../../src/networkCommunication/Payload";
 
-type GossipCallback = (messageType: string, payload: any) => void;
+type GossipCallback = (message: LeanHelixMessage) => void;
 type SubscriptionsValue = {
     cb: GossipCallback;
 };
@@ -17,14 +15,14 @@ export class Gossip {
     constructor(private discovery: GossipDiscovery) {
     }
 
-    onRemoteMessage(message: string, payload: Payload): void {
+    onRemoteMessage(message: LeanHelixMessage): void {
         this.subscriptions.forEach(subscription => {
             if (this.inComingWhiteListPKs !== undefined) {
-                if (this.inComingWhiteListPKs.indexOf(payload.pk) === -1) {
+                if (this.inComingWhiteListPKs.indexOf(message.signaturePair.signerPublicKey) === -1) {
                     return;
                 }
             }
-            subscription.cb(message, payload);
+            subscription.cb(message);
         });
     }
 
@@ -54,16 +52,16 @@ export class Gossip {
         this.subscriptions.delete(subscriptionToken);
     }
 
-    broadcast(message: string, payload: Payload): void {
+    broadcast(message: LeanHelixMessage): void {
         const targetsIds = this.discovery.getAllGossipsPks();
-        targetsIds.forEach(targetId => this.unicast(targetId, message, payload));
+        targetsIds.forEach(targetId => this.unicast(targetId, message));
     }
 
-    multicast(targetsIds: string[], message: string, payload: Payload): void {
-        targetsIds.forEach(targetId => this.unicast(targetId, message, payload));
+    multicast(targetsIds: string[], message: LeanHelixMessage): void {
+        targetsIds.forEach(targetId => this.unicast(targetId, message));
     }
 
-    unicast(pk: string, message: string, payload: Payload): void {
+    unicast(pk: string, message: LeanHelixMessage): void {
         if (this.outGoingWhiteListPKs !== undefined) {
             if (this.outGoingWhiteListPKs.indexOf(pk) === -1) {
                 return;
@@ -71,7 +69,7 @@ export class Gossip {
         }
         const targetGossip = this.discovery.getGossipByPk(pk);
         if (targetGossip) {
-            targetGossip.onRemoteMessage(message, payload);
+            targetGossip.onRemoteMessage(message);
         }
     }
 }

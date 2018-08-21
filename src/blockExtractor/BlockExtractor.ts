@@ -1,12 +1,12 @@
 import { Block } from "../Block";
-import { ViewChangePayload } from "../networkCommunication/Payload";
+import { ViewChangeMessage } from "../networkCommunication/Messages";
 
-export function extractBlock(VCProof: ViewChangePayload[]): Block {
-    const filteredProofs = VCProof
-        .filter(vc => vc.data.preparedProof !== undefined)
-        .filter(vc => vc.data.preparedProof.prepreparePayload !== undefined)
-        .map(vc => vc.data.preparedProof.prepreparePayload)
-        .sort((a, b) => b.data.view - a.data.view);
+export function getLatestBlockFromViewChangeMessages(messages: ViewChangeMessage[]): Block {
+    const filteredProofs = messages
+        .filter(msg => msg.block !== undefined)
+        .filter(msg => msg.content !== undefined)
+        .filter(msg => msg.content.preparedProof !== undefined)
+        .sort((a, b) => b.content.preparedProof.view - a.content.preparedProof.view);
 
     if (filteredProofs.length > 0) {
         return filteredProofs[0].block;

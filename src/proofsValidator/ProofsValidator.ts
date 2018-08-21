@@ -1,66 +1,61 @@
+import { Block } from "..";
 import { BlockUtils } from "../blockUtils/BlockUtils";
 import { KeyManager } from "../keyManager/KeyManager";
-import { PreparedProof } from "../storage/PBFTStorage";
+import { PreparedProof, BlockMessageContent, MessageType } from "../networkCommunication/Messages";
 
-export function validatePrepared(
+export function validatePreparedProof(
     preparedProof: PreparedProof,
+    block: Block,
     f: number,
     keyManager: KeyManager,
     blockUtils: BlockUtils,
     membersPKs: string[],
     calcLeaderPk: (view: number) => string): boolean {
 
-    const { preparePayloads, prepreparePayload } = preparedProof;
-    if (!preparePayloads && !prepreparePayload) {
+    if (!preparedProof) {
         return true;
     }
 
-    if (!preparePayloads || !prepreparePayload) {
-        return false;
-    }
-
-    if (preparePayloads.length < 2 * f) {
-        return false;
-    }
-
-    const { block, pk: leaderPk } = prepreparePayload;
     if (!block) {
         return false;
     }
 
-    if (keyManager.verify(prepreparePayload.data, prepreparePayload.signature, prepreparePayload.pk) === false) {
+    const { prepareMessagesSignatures, preprepareMessageSignature, view, term, blockHash } = preparedProof;
+    if (!prepareMessagesSignatures || !preprepareMessageSignature) {
         return false;
     }
 
-    const { view, term, blockHash } = prepreparePayload.data;
+    if (prepareMessagesSignatures.length < 2 * f) {
+        return false;
+    }
+
+    const { signerPublicKey: leaderPk, contentSignature } = preprepareMessageSignature;
+    const expectedPrePrepareMessageContent: BlockMessageContent = { messageType: MessageType.PREPREPARE, term, view, blockHash };
+    if (keyManager.verify(expectedPrePrepareMessageContent, contentSignature, leaderPk) === false) {
+        return false;
+    }
+
     if (calcLeaderPk(view) !== leaderPk) {
         return false;
     }
 
-    const allPreparesPkAreUnique = preparePayloads.reduce((prev, current) => prev.set(current.pk, true), new Map()).size === preparePayloads.length;
+    const allPreparesPkAreUnique = prepareMessagesSignatures.reduce((prev, current) => prev.set(current.signerPublicKey, true), new Map()).size === prepareMessagesSignatures.length;
     if (!allPreparesPkAreUnique) {
         return false;
     }
 
-    const allPreparesPKsAreMembers = preparePayloads.every(p => membersPKs.indexOf(p.pk) > -1);
+    const allPreparesPKsAreMembers = prepareMessagesSignatures.every(p => membersPKs.indexOf(p.signerPublicKey) > -1);
     if (allPreparesPKsAreMembers == false) {
         return false;
     }
 
-    const allPrepraresAreNotLeaders = preparePayloads.every(p => p.pk !== leaderPk);
+    const allPrepraresAreNotLeaders = prepareMessagesSignatures.every(p => p.signerPublicKey !== leaderPk);
     if (allPrepraresAreNotLeaders === false) {
         return false;
     }
 
-    if (preparePayloads.every(p => keyManager.verify(p.data, p.signature, p.pk)) === false) {
-        return false;
-    }
-
-    const isPrepareMisMatch = preparePayloads
-        .map(p => p.data)
-        .findIndex(p => p.view !== view || p.term !== term || !p.blockHash.equals(blockHash)) > -1;
-
-    if (isPrepareMisMatch) {
+    const expectedPrepareMessageContent: BlockMessageContent = { messageType: MessageType.PREPARE, term, view, blockHash };
+    if (prepareMessagesSignatures.every(p => keyManager.verify(expectedPrepareMessageContent, p.contentSignature, p.signerPublicKey)) === false) {
         return false;
     }
 

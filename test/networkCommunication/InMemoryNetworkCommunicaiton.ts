@@ -1,48 +1,48 @@
+import { CommitMessage, LeanHelixMessage, MessageType, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage } from "../../src/networkCommunication/Messages";
 import { NetworkCommunication } from "../../src/networkCommunication/NetworkCommunication";
 import { Gossip } from "../gossip/Gossip";
 import { GossipDiscovery } from "../gossip/GossipDiscovery";
-import { PrePreparePayload, PreparePayload, CommitPayload, ViewChangePayload, NewViewPayload } from "../../src/networkCommunication/Payload";
 
 export class InMemoryNetworkCommunicaiton implements NetworkCommunication {
-    private PPCallback: (payload: PrePreparePayload) => void;
-    private PCallback: (payload: PreparePayload) => void;
-    private CCallback: (payload: CommitPayload) => void;
-    private VCCallback: (payload: ViewChangePayload) => void;
-    private NVCallback: (payload: NewViewPayload) => void;
+    private PPCallback: (message: PrePrepareMessage) => void;
+    private PCallback: (message: PrepareMessage) => void;
+    private CCallback: (message: CommitMessage) => void;
+    private VCCallback: (message: ViewChangeMessage) => void;
+    private NVCallback: (message: NewViewMessage) => void;
 
     constructor(private discovery: GossipDiscovery, private gossip: Gossip) {
-        this.gossip.subscribe((messageType: string, payload: any) => this.onGossipMessage(messageType, payload));
+        this.gossip.subscribe((message: LeanHelixMessage) => this.onGossipMessage(message));
     }
 
-    private onGossipMessage(messageType: string, payload: any): void {
-        switch (messageType) {
-            case "preprepare": {
+    private onGossipMessage(message: LeanHelixMessage): void {
+        switch (message.content.messageType) {
+            case MessageType.PREPREPARE: {
                 if (this.PPCallback) {
-                    this.PPCallback(payload);
+                    this.PPCallback(message as PrePrepareMessage);
                 }
                 break;
             }
-            case "prepare": {
+            case MessageType.PREPARE: {
                 if (this.PCallback) {
-                    this.PCallback(payload);
+                    this.PCallback(message as PrepareMessage);
                 }
                 break;
             }
-            case "commit": {
+            case MessageType.COMMIT: {
                 if (this.CCallback) {
-                    this.CCallback(payload);
+                    this.CCallback(message as CommitMessage);
                 }
                 break;
             }
-            case "view-change": {
+            case MessageType.VIEW_CHANGE: {
                 if (this.VCCallback) {
-                    this.VCCallback(payload);
+                    this.VCCallback(message as ViewChangeMessage);
                 }
                 break;
             }
-            case "new-view": {
+            case MessageType.NEW_VIEW: {
                 if (this.NVCallback) {
-                    this.NVCallback(payload);
+                    this.NVCallback(message as NewViewMessage);
                 }
                 break;
             }
@@ -54,43 +54,43 @@ export class InMemoryNetworkCommunicaiton implements NetworkCommunication {
         return this.discovery.getAllGossipsPks();
     }
 
-    sendPrePrepare(pks: string[], payload: PrePreparePayload): void {
-        this.gossip.multicast(pks, "preprepare", payload);
+    sendPrePrepare(pks: string[], message: PrePrepareMessage): void {
+        this.gossip.multicast(pks, message);
     }
 
-    sendPrepare(pks: string[], payload: PreparePayload): void {
-        this.gossip.multicast(pks, "prepare", payload);
+    sendPrepare(pks: string[], message: PrepareMessage): void {
+        this.gossip.multicast(pks, message);
     }
 
-    sendCommit(pks: string[], payload: CommitPayload): void {
-        this.gossip.multicast(pks, "commit", payload);
+    sendCommit(pks: string[], message: CommitMessage): void {
+        this.gossip.multicast(pks, message);
     }
 
-    sendViewChange(pk: string, payload: ViewChangePayload): void {
-        this.gossip.multicast([pk], "view-change", payload);
+    sendViewChange(pk: string, message: ViewChangeMessage): void {
+        this.gossip.multicast([pk], message);
     }
 
-    sendNewView(pks: string[], payload: NewViewPayload): void {
-        this.gossip.multicast(pks, "new-view", payload);
+    sendNewView(pks: string[], message: NewViewMessage): void {
+        this.gossip.multicast(pks, message);
     }
 
-    registerToPrePrepare(cb: (payload: PrePreparePayload) => void): void {
+    registerToPrePrepare(cb: (message: PrePrepareMessage) => void): void {
         this.PPCallback = cb;
     }
 
-    registerToPrepare(cb: (payload: PreparePayload) => void): void {
+    registerToPrepare(cb: (message: PrepareMessage) => void): void {
         this.PCallback = cb;
     }
 
-    registerToCommit(cb: (payload: CommitPayload) => void): void {
+    registerToCommit(cb: (message: CommitMessage) => void): void {
         this.CCallback = cb;
     }
 
-    registerToViewChange(cb: (payload: ViewChangePayload) => void): void {
+    registerToViewChange(cb: (message: ViewChangeMessage) => void): void {
         this.VCCallback = cb;
     }
 
-    registerToNewView(cb: (payload: NewViewPayload) => void): void {
+    registerToNewView(cb: (message: NewViewMessage) => void): void {
         this.NVCallback = cb;
     }
 

@@ -1,20 +1,20 @@
-import { CommitPayload, NewViewPayload, PreparePayload, PrePreparePayload, ViewChangePayload } from "../../src/networkCommunication/Payload";
+import { CommitMessage, NewViewMessage, PrepareMessage, ViewChangeMessage, PrePrepareMessage } from "../../src/networkCommunication/Messages";
 import { PBFTMessagesHandler } from "../../src/networkCommunication/PBFTMessagesHandler";
 
 export class PBFTMessagesHandlerMock implements PBFTMessagesHandler {
-    public onReceivePrePrepare(payload: PrePreparePayload): any {
+    public onReceivePrePrepare(message: PrePrepareMessage): any {
 
     }
-    public onReceivePrepare(payload: PreparePayload): any {
+    public onReceivePrepare(message: PrepareMessage): any {
 
     }
-    public onReceiveViewChange(payload: ViewChangePayload): any {
+    public onReceiveViewChange(message: ViewChangeMessage): any {
 
     }
-    public onReceiveCommit(payload: CommitPayload): any {
+    public onReceiveCommit(message: CommitMessage): any {
 
     }
-    public onReceiveNewView(payload: NewViewPayload): any {
+    public onReceiveNewView(message: NewViewMessage): any {
 
     }
 }

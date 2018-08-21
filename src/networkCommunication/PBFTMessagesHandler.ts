@@ -1,9 +1,9 @@
-import { CommitPayload, NewViewPayload, PreparePayload, PrePreparePayload, ViewChangePayload } from "./Payload";
+import { CommitMessage, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage } from "./Messages";
 
 export interface PBFTMessagesHandler {
-    onReceivePrePrepare(payload: PrePreparePayload): any;
-    onReceivePrepare(payload: PreparePayload): any;
-    onReceiveViewChange(payload: ViewChangePayload): any;
-    onReceiveCommit(payload: CommitPayload): any;
-    onReceiveNewView(payload: NewViewPayload): any;
+    onReceivePrePrepare(message: PrePrepareMessage): any;
+    onReceivePrepare(message: PrepareMessage): any;
+    onReceiveViewChange(message: ViewChangeMessage): any;
+    onReceiveCommit(message: CommitMessage): any;
+    onReceiveNewView(message: NewViewMessage): any;
 }

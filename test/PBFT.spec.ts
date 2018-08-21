@@ -6,11 +6,12 @@ import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { BlockUtilsMock } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
+import { aPrePrepareMessage } from "./builders/MessagesBuilder";
 import { aNode } from "./builders/NodeBuilder";
-import { aPrePreparePayload } from "./builders/PayloadBuilder";
 import { aSimpleTestNetwork, aTestNetwork } from "./builders/TestNetworkBuilder";
 import { blockMatcher } from "./matchers/blockMatcher";
 import { nextTick } from "./timeUtils";
+import { MessageType } from "../src/networkCommunication/Messages";
 
 chai.use(sinonChai);
 chai.use(blockMatcher);
@@ -36,7 +37,9 @@ describe("PBFT", () => {
         await blockUtils.provideNextBlock();
         await blockUtils.resolveAllValidations(true);
         await nextTick(); // await for notifyCommitted
-        const preprepareCounter = (spy: sinon.SinonSpy) => spy.getCalls().filter(c => c.args[1] === "preprepare").length;
+        const preprepareCounter = (spy: sinon.SinonSpy) => {
+            return spy.getCalls().filter(c => c.args[1].content.messageType === MessageType.PREPREPARE).length;
+        };
 
         expect(preprepareCounter(spy0)).to.equal(1);
         expect(preprepareCounter(spy1)).to.equal(0);
@@ -147,10 +150,10 @@ describe("PBFT", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
         const gossip = testNetwork.getNodeGossip(byzantineNode.pk);
-        gossip.broadcast("preprepare", aPrePreparePayload(byzantineNode.config.keyManager, 1, 0, fakeBlock));
-        gossip.broadcast("preprepare", aPrePreparePayload(byzantineNode.config.keyManager, 1, 0, fakeBlock));
-        gossip.broadcast("preprepare", aPrePreparePayload(byzantineNode.config.keyManager, 1, 0, fakeBlock));
-        gossip.broadcast("preprepare", aPrePreparePayload(byzantineNode.config.keyManager, 1, 0, fakeBlock));
+        gossip.broadcast(aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock));
+        gossip.broadcast(aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock));
+        gossip.broadcast(aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock));
+        gossip.broadcast(aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock));
 
         await nextTick();
         await blockUtils.provideNextBlock();

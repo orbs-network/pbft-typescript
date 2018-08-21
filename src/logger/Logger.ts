@@ -55,8 +55,7 @@ type GossipSendLogData = {
 type FlowElected = {
     FlowType: "Elected",
     term: number,
-    view: number,
-    blockHash: string
+    view: number
 };
 
 type FlowCommit = {

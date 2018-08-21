@@ -1,28 +1,22 @@
-import { PBFTMessagesHandler } from "./PBFTMessagesHandler";
-import { Payload, PrePreparePayload, PreparePayload, CommitPayload, ViewChangePayload, NewViewPayload } from "./Payload";
+import { CommitMessage, LeanHelixMessage, MessageType, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage } from "./Messages";
 import { NetworkCommunication } from "./NetworkCommunication";
-
-interface GossipMessageContent {
-    message: string;
-    term: number;
-    payload: any;
-}
+import { PBFTMessagesHandler } from "./PBFTMessagesHandler";
 
 export class NetworkMessagesFilter {
     private term: number;
     private messagesHandler: PBFTMessagesHandler;
-    private messagesCache: GossipMessageContent[] = [];
+    private messagesCache: LeanHelixMessage[] = [];
 
     constructor(private readonly networkCommunication: NetworkCommunication, private myPk: string) {
         this.subscribeToGossip();
     }
 
-    private onGossipMessage(message: string, payload: Payload): void {
+    private onGossipMessage(message: LeanHelixMessage): void {
         if (this.messagesHandler === undefined) {
             return;
         }
 
-        const { pk: senderPk } = payload;
+        const { signerPublicKey: senderPk } = message.signaturePair;
         if (senderPk === this.myPk) {
             return;
         }
@@ -31,60 +25,54 @@ export class NetworkMessagesFilter {
             return;
         }
 
-        if (payload.data.term < this.term) {
+        if (message.content.term < this.term) {
             return;
         }
 
-        const messageContent: GossipMessageContent = {
-            message,
-            payload,
-            term: payload.data.term
-        };
-
-        if (payload.data.term > this.term) {
-            this.messagesCache.push(messageContent);
+        if (message.content.term > this.term) {
+            this.messagesCache.push(message);
             return;
         }
 
-        this.processGossipMessage(messageContent);
+        this.processGossipMessage(message);
     }
 
-    private processGossipMessage({message, payload}: GossipMessageContent): void {
-        switch (message) {
-            case "preprepare": {
-                this.messagesHandler.onReceivePrePrepare(payload as PrePreparePayload);
+    private processGossipMessage(message: LeanHelixMessage): void {
+        switch (message.content.messageType) {
+            case MessageType.PREPREPARE: {
+                this.messagesHandler.onReceivePrePrepare(message as PrePrepareMessage);
                 break;
             }
-            case "prepare": {
-                this.messagesHandler.onReceivePrepare(payload);
+            case MessageType.PREPARE: {
+                this.messagesHandler.onReceivePrepare(message as PrepareMessage);
                 break;
             }
-            case "commit": {
-                this.messagesHandler.onReceiveCommit(payload);
+            case MessageType.COMMIT: {
+                this.messagesHandler.onReceiveCommit(message as CommitMessage);
                 break;
             }
-            case "view-change": {
-                this.messagesHandler.onReceiveViewChange(payload);
+            case MessageType.VIEW_CHANGE: {
+                this.messagesHandler.onReceiveViewChange(message as ViewChangeMessage);
                 break;
             }
-            case "new-view": {
-                this.messagesHandler.onReceiveNewView(payload);
+            case MessageType.NEW_VIEW: {
+                this.messagesHandler.onReceiveNewView(message as NewViewMessage);
                 break;
             }
         }
     }
 
     private subscribeToGossip(): void {
-        this.networkCommunication.registerToPrePrepare((payload: PrePreparePayload) => this.onGossipMessage("preprepare", payload));
-        this.networkCommunication.registerToPrepare((payload: PreparePayload) => this.onGossipMessage("prepare", payload));
-        this.networkCommunication.registerToCommit((payload: CommitPayload) => this.onGossipMessage("commit", payload));
-        this.networkCommunication.registerToViewChange((payload: ViewChangePayload) => this.onGossipMessage("view-change", payload));
-        this.networkCommunication.registerToNewView((payload: NewViewPayload) => this.onGossipMessage("new-view", payload));
+        this.networkCommunication.registerToPrePrepare((message: PrePrepareMessage) => this.onGossipMessage(message));
+        this.networkCommunication.registerToPrepare((message: PrepareMessage) => this.onGossipMessage(message));
+        this.networkCommunication.registerToCommit((message: CommitMessage) => this.onGossipMessage(message));
+        this.networkCommunication.registerToViewChange((message: ViewChangeMessage) => this.onGossipMessage(message));
+        this.networkCommunication.registerToNewView((message: NewViewMessage) => this.onGossipMessage(message));
     }
 
     private consumeCacheMessages(): void {
         this.messagesCache = this.messagesCache.reduce((prev, current) => {
-            if (current.term === this.term) {
+            if (current.content.term === this.term) {
                 this.processGossipMessage(current);
             } else {
                 prev.push(current);

@@ -2,20 +2,24 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
+import { KeyManager } from "../../src/keyManager/KeyManager";
+import { LeanHelixMessage, MessageType } from "../../src/networkCommunication/Messages";
+import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 import { Gossip } from "./Gossip";
 import { GossipDiscovery } from "./GossipDiscovery";
-import { KeyManager } from "../../src/keyManager/KeyManager";
-import { KeyManagerMock } from "../keyManager/KeyManagerMock";
-import { Payload } from "../../src/networkCommunication/Payload";
 
 chai.use(sinonChai);
 
-function aPayload(keyManager: KeyManager, data: string): Payload {
+function aLeanHelixMessage(keyManager: KeyManager, content: string): LeanHelixMessage {
     return {
-        pk: keyManager.getMyPublicKey(),
-        signature: keyManager.sign(data),
-        data: {
-            messageType: data
+        signaturePair: {
+            contentSignature: keyManager.sign(content),
+            signerPublicKey: keyManager.getMyPublicKey()
+        },
+        content: {
+            messageType: MessageType.PREPARE,
+            term: Math.floor(Math.random() * 1_000_000),
+            view: Math.floor(Math.random() * 1_000_000),
         }
     };
 }
@@ -34,11 +38,10 @@ describe("Gossip", () => {
         discovery.registerGossip(listenerPk, listener);
         discovery.registerGossip(broadcasterPk, broadcaster);
         const spy = sinon.spy();
-        const message = Math.random().toString();
-        const payload = aPayload(keyManager, "Data");
+        const message = aLeanHelixMessage(keyManager, "Data");
 
         listener.subscribe(spy);
-        broadcaster.broadcast(message, payload);
+        broadcaster.broadcast(message);
 
         expect(spy).to.have.been.calledOnce;
     });
@@ -57,11 +60,10 @@ describe("Gossip", () => {
         discovery.registerGossip(broadcasterPk, broadcaster);
         const spy1 = sinon.spy();
         const spy2 = sinon.spy();
-        const message = Math.random().toString();
-        const payload = aPayload(keyManager, "Data");
+        const message = aLeanHelixMessage(keyManager, "Data");
         listener1.subscribe(spy1);
         listener2.subscribe(spy2);
-        broadcaster.broadcast(message, payload);
+        broadcaster.broadcast(message);
         expect(spy1).to.have.been.calledOnce;
         expect(spy2).to.have.been.calledOnce;
     });
@@ -84,13 +86,12 @@ describe("Gossip", () => {
         const spy1 = sinon.spy();
         const spy2 = sinon.spy();
         const spy3 = sinon.spy();
-        const message = Math.random().toString();
-        const payload = aPayload(keyManager, "Data");
+        const message = aLeanHelixMessage(keyManager, "Data");
         listener1.subscribe(spy1);
         listener2.subscribe(spy2);
         listener3.subscribe(spy3);
 
-        broadcaster.multicast([listener1Pk, listener2Pk], message, payload);
+        broadcaster.multicast([listener1Pk, listener2Pk], message);
         expect(spy1).to.have.been.calledOnce;
         expect(spy2).to.have.been.calledOnce;
         expect(spy3).to.not.have.been.calledOnce;
@@ -107,18 +108,17 @@ describe("Gossip", () => {
         discovery.registerGossip(broadcasterPk, broadcaster);
         const spy1 = sinon.spy();
         const spy2 = sinon.spy();
-        const message = Math.random().toString();
         const subscriptionToken = listener.subscribe(spy1);
         listener.subscribe(spy2);
         listener.unsubscribe(subscriptionToken);
 
-        const payload = aPayload(keyManager, "Data");
-        broadcaster.broadcast(message, payload);
+        const message = aLeanHelixMessage(keyManager, "Data");
+        broadcaster.broadcast(message);
         expect(spy1).to.not.have.been.called;
         expect(spy2).to.have.been.calledOnce;
     });
 
-    it("should be able to send a payload on the broadcast", () => {
+    it("should be able to send a message on the broadcast", () => {
         const discovery = new GossipDiscovery();
         const listenerPk = genPk();
         const broadcasterPk = genPk();
@@ -128,12 +128,11 @@ describe("Gossip", () => {
         discovery.registerGossip(listenerPk, listener);
         discovery.registerGossip(broadcasterPk, broadcaster);
         const spy = sinon.spy();
-        const payload = aPayload(keyManager, "Data");
-        const message = Math.random().toString();
+        const message = aLeanHelixMessage(keyManager, "Data");
         listener.subscribe(spy);
 
-        broadcaster.broadcast(message, payload);
-        expect(spy).to.have.been.calledWith(message, payload);
+        broadcaster.broadcast(message);
+        expect(spy).to.have.been.calledWith(message);
     });
 
     it("should be able to unicast a message to a single client", () => {
@@ -148,13 +147,12 @@ describe("Gossip", () => {
         discovery.registerGossip("broadcaster", broadcaster);
         const spy1 = sinon.spy();
         const spy2 = sinon.spy();
-        const payload = aPayload(keyManager, "Data");
-        const message = Math.random().toString();
+        const message = aLeanHelixMessage(keyManager, "Data");
         listener1.subscribe(spy1);
         listener2.subscribe(spy2);
 
-        broadcaster.unicast("listener1", message, payload);
-        expect(spy1).to.have.been.calledWith(message, payload);
+        broadcaster.unicast("listener1", message);
+        expect(spy1).to.have.been.calledWith(message);
         expect(spy2).to.not.have.been.called;
     });
 
@@ -176,7 +174,6 @@ describe("Gossip", () => {
         const gossip2keyManager: KeyManager = new KeyManagerMock(gossip2Pk);
         const gossip3keyManager: KeyManager = new KeyManagerMock(gossip3Pk);
         const gossip4keyManager: KeyManager = new KeyManagerMock(gossip4Pk);
-        let message: string;
 
         beforeEach(() => {
             discovery = new GossipDiscovery();
@@ -192,7 +189,6 @@ describe("Gossip", () => {
             spy2 = sinon.spy();
             spy3 = sinon.spy();
             spy4 = sinon.spy();
-            message = Math.random().toString();
             gossip1.subscribe(spy1);
             gossip2.subscribe(spy2);
             gossip3.subscribe(spy3);
@@ -204,7 +200,7 @@ describe("Gossip", () => {
             it("should ignore all messages if outGoing list is empty", () => {
                 gossip1.setOutGoingWhiteListPKs([]);
 
-                gossip1.broadcast(message, aPayload(gossip1keyManager, "Data"));
+                gossip1.broadcast(aLeanHelixMessage(gossip1keyManager, "Data"));
                 expect(spy2).to.not.have.been.called;
                 expect(spy3).to.not.have.been.called;
                 expect(spy4).to.not.have.been.called;
@@ -213,37 +209,40 @@ describe("Gossip", () => {
             it("should ignore unicast messages that don't apply to the outgoing white list", () => {
                 gossip1.setOutGoingWhiteListPKs(["gossip3"]);
 
-                gossip1.unicast("gossip2", message, aPayload(gossip2keyManager, "Data"));
-                gossip1.unicast("gossip3", message, aPayload(gossip3keyManager, "Data"));
-                gossip1.unicast("gossip4", message, aPayload(gossip4keyManager, "Data"));
+                const msgTo2 = aLeanHelixMessage(gossip1keyManager, "Data");
+                const msgTo3 = aLeanHelixMessage(gossip1keyManager, "Data");
+                const msgTo4 = aLeanHelixMessage(gossip1keyManager, "Data");
+                gossip1.unicast("gossip2", msgTo2);
+                gossip1.unicast("gossip3", msgTo3);
+                gossip1.unicast("gossip4", msgTo4);
                 expect(spy2).to.not.have.been.called;
-                expect(spy3).to.have.been.calledWith(message, aPayload(gossip3keyManager, "Data"));
+                expect(spy3).to.have.been.calledWith(msgTo3);
                 expect(spy4).to.not.have.been.called;
             });
 
             it("should keep sending messages after the outGoing list was cleared", () => {
                 gossip1.setOutGoingWhiteListPKs(["gossip3"]);
 
-                const payload = aPayload(gossip1keyManager, "Data");
-                gossip1.broadcast(message, payload);
+                const message = aLeanHelixMessage(gossip1keyManager, "Data");
+                gossip1.broadcast(message);
                 expect(spy2).to.not.have.been.called;
-                expect(spy3).to.have.been.calledWith(message, payload);
+                expect(spy3).to.have.been.calledWith(message);
                 expect(spy4).to.not.have.been.called;
 
                 gossip1.clearOutGoingWhiteListPKs();
-                gossip1.broadcast(message, payload);
-                expect(spy2).to.have.been.calledWith(message, payload);
-                expect(spy3).to.have.been.calledWith(message, payload);
-                expect(spy4).to.have.been.calledWith(message, payload);
+                gossip1.broadcast(message);
+                expect(spy2).to.have.been.calledWith(message);
+                expect(spy3).to.have.been.calledWith(message);
+                expect(spy4).to.have.been.calledWith(message);
             });
 
             it("should ignore broadcast messages that don't apply to the outgoing white list", () => {
                 gossip1.setOutGoingWhiteListPKs(["gossip3"]);
-                const payload = aPayload(gossip1keyManager, "Data");
+                const message = aLeanHelixMessage(gossip1keyManager, "Data");
 
-                gossip1.broadcast(message, payload);
+                gossip1.broadcast(message);
                 expect(spy2).to.not.have.been.called;
-                expect(spy3).to.have.been.calledWith(message, payload);
+                expect(spy3).to.have.been.calledWith(message);
                 expect(spy4).to.not.have.been.called;
             });
         });
@@ -254,8 +253,8 @@ describe("Gossip", () => {
                 gossip3.setIncomingWhiteListPKs([]);
                 gossip4.setIncomingWhiteListPKs([]);
 
-                const payload = aPayload(gossip1keyManager, "Data");
-                gossip1.broadcast(message, payload);
+                const message = aLeanHelixMessage(gossip1keyManager, "Data");
+                gossip1.broadcast(message);
                 expect(spy2).to.not.have.been.called;
                 expect(spy3).to.not.have.been.called;
                 expect(spy4).to.not.have.been.called;
@@ -264,13 +263,13 @@ describe("Gossip", () => {
             it("should ignore unicast messages that don't apply to the incoming white list", () => {
                 gossip4.setIncomingWhiteListPKs([gossip2Pk]);
 
-                const payload1 = aPayload(gossip1keyManager, "Data");
-                const payload2 = aPayload(gossip2keyManager, "Data");
-                const payload3 = aPayload(gossip3keyManager, "Data");
-                gossip1.unicast("gossip4", message, payload1);
-                gossip2.unicast("gossip4", message, payload2);
-                gossip3.unicast("gossip4", message, payload3);
-                expect(spy4).to.have.been.calledOnce.calledWith(message, payload2);
+                const message1 = aLeanHelixMessage(gossip1keyManager, "Data");
+                const message2 = aLeanHelixMessage(gossip2keyManager, "Data");
+                const message3 = aLeanHelixMessage(gossip3keyManager, "Data");
+                gossip1.unicast("gossip4", message1);
+                gossip2.unicast("gossip4", message2);
+                gossip3.unicast("gossip4", message3);
+                expect(spy4).to.have.been.calledOnce.calledWith(message2);
             });
 
             it("should keep sending messages after the incomming list was cleared", () => {
@@ -278,29 +277,29 @@ describe("Gossip", () => {
                 gossip3.setIncomingWhiteListPKs([gossip1Pk]);
                 gossip4.setIncomingWhiteListPKs([]);
 
-                const payload = aPayload(gossip1keyManager, "Data");
-                gossip1.broadcast(message, payload);
+                const message = aLeanHelixMessage(gossip1keyManager, "Data");
+                gossip1.broadcast(message);
                 expect(spy2).to.not.have.been.called;
-                expect(spy3).to.have.been.calledWith(message, payload);
+                expect(spy3).to.have.been.calledWith(message);
                 expect(spy4).to.not.have.been.called;
 
                 gossip2.clearIncommingWhiteListPKs();
                 gossip3.clearIncommingWhiteListPKs();
                 gossip4.clearIncommingWhiteListPKs();
-                gossip1.broadcast(message, payload);
-                expect(spy2).to.have.been.calledWith(message, payload);
-                expect(spy3).to.have.been.calledWith(message, payload);
-                expect(spy4).to.have.been.calledWith(message, payload);
+                gossip1.broadcast(message);
+                expect(spy2).to.have.been.calledWith(message);
+                expect(spy3).to.have.been.calledWith(message);
+                expect(spy4).to.have.been.calledWith(message);
             });
 
             it("should ignore broadcast messages that don't apply to the incoming white list", () => {
                 gossip4.setIncomingWhiteListPKs([gossip2Pk]);
 
-                const payload1 = aPayload(gossip1keyManager, "Data");
-                const payload2 = aPayload(gossip2keyManager, "Data");
-                gossip1.broadcast(message, payload1);
-                gossip2.broadcast(message, payload2);
-                expect(spy4).to.have.been.calledOnce.calledWith(message, payload2);
+                const message1 = aLeanHelixMessage(gossip1keyManager, "Data");
+                const message2 = aLeanHelixMessage(gossip2keyManager, "Data");
+                gossip1.broadcast(message1);
+                gossip2.broadcast(message2);
+                expect(spy4).to.have.been.calledOnce.calledWith(message2);
             });
         });
     });

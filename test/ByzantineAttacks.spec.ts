@@ -1,9 +1,9 @@
 import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
-import { CommitPayload, PreparePayload, PrePreparePayload } from "../src/networkCommunication/Payload";
+import { CommitMessage, PrepareMessage, PrePrepareMessage } from "../src/networkCommunication/Messages";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aCommitPayload, aPreparePayload, aPrePreparePayload } from "./builders/PayloadBuilder";
+import { aCommitMessage, aPrepareMessage, aPrePrepareMessage } from "./builders/MessagesBuilder";
 import { aSimpleTestNetwork, aTestNetwork } from "./builders/TestNetworkBuilder";
 import { nextTick } from "./timeUtils";
 
@@ -145,24 +145,24 @@ describe("Byzantine Attacks", () => {
 
         // node0, if faking other messages
         const block1 = aBlock(theGenesisBlock);
-        const PPpayload1: PrePreparePayload = aPrePreparePayload(node1.config.keyManager, 1, 0, block1);
-        const Ppayload1: PreparePayload = aPreparePayload(node1.config.keyManager, 1, 0, block1);
-        const Cpayload1: CommitPayload = aCommitPayload(node1.config.keyManager, 1, 0, block1);
-        gossip1.onRemoteMessage("preprepare", PPpayload1); // node1 causing preprepare on node1
-        gossip1.onRemoteMessage("prepare", Ppayload1); // node1 pretending to send prepare as node1000
-        gossip1.onRemoteMessage("prepare", Ppayload1); // node1 pretending to send prepare as node2000
-        gossip1.onRemoteMessage("commit", Cpayload1); // node1 pretending to send commit as node1000
-        gossip1.onRemoteMessage("commit", Cpayload1); // node1 pretending to send commit as node2000
+        const PPmessage1: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, 1, 0, block1);
+        const Pmessage1: PrepareMessage = aPrepareMessage(node1.config.keyManager, 1, 0, block1);
+        const Cmessage1: CommitMessage = aCommitMessage(node1.config.keyManager, 1, 0, block1);
+        gossip1.onRemoteMessage(PPmessage1); // node1 causing preprepare on node1
+        gossip1.onRemoteMessage(Pmessage1); // node1 pretending to send prepare as node1000
+        gossip1.onRemoteMessage(Pmessage1); // node1 pretending to send prepare as node2000
+        gossip1.onRemoteMessage(Cmessage1); // node1 pretending to send commit as node1000
+        gossip1.onRemoteMessage(Cmessage1); // node1 pretending to send commit as node2000
 
         const block2 = aBlock(theGenesisBlock);
-        const PPpayload2: PrePreparePayload = aPrePreparePayload(node2.config.keyManager, 1, 0, block2);
-        const Ppayload2: PreparePayload = aPreparePayload(node2.config.keyManager, 1, 0, block2);
-        const Cpayload2: CommitPayload = aCommitPayload(node2.config.keyManager, 1, 0, block2);
-        gossip2.onRemoteMessage("preprepare", PPpayload2); // node1 causing preprepare on node2
-        gossip2.onRemoteMessage("prepare", Ppayload2); // node1 pretending to send prepare as node1000
-        gossip2.onRemoteMessage("prepare", Ppayload2); // node1 pretending to send prepare as node2000
-        gossip2.onRemoteMessage("commit", Cpayload2); // node1 pretending to send commit as node1000
-        gossip2.onRemoteMessage("commit", Cpayload2); // node1 pretending to send commit as node2000
+        const PPmessage2: PrePrepareMessage = aPrePrepareMessage(node2.config.keyManager, 1, 0, block2);
+        const Pmessage2: PrepareMessage = aPrepareMessage(node2.config.keyManager, 1, 0, block2);
+        const Cmessge2: CommitMessage = aCommitMessage(node2.config.keyManager, 1, 0, block2);
+        gossip2.onRemoteMessage(PPmessage2); // node1 causing preprepare on node2
+        gossip2.onRemoteMessage(Pmessage2); // node1 pretending to send prepare as node1000
+        gossip2.onRemoteMessage(Pmessage2); // node1 pretending to send prepare as node2000
+        gossip2.onRemoteMessage(Cmessge2); // node1 pretending to send commit as node1000
+        gossip2.onRemoteMessage(Cmessge2); // node1 pretending to send commit as node2000
 
         await nextTick();
         expect(await node1.getLatestCommittedBlock()).to.not.equal(block1);

@@ -5,12 +5,15 @@ let globalCounter: number = 0;
 const genContent = () => `Block ${(globalCounter++).toString()}`;
 
 export function aBlock(previousBlock: Block, content: any = genContent()): Block {
-    return {
+    const result: Block = {
         header: {
             height: previousBlock.header.height + 1,
             blockHash: Buffer.from(content)
         }
     };
+    (result as any).body = content;
+
+    return result;
 }
 
 export const theGenesisBlock: Block = {

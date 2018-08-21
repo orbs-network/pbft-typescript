@@ -1,18 +1,18 @@
-import { PrePreparePayload, PreparePayload, CommitPayload, ViewChangePayload, NewViewPayload } from "./Payload";
+import { CommitMessage, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage } from "./Messages";
 
 export interface NetworkCommunication {
     getMembersPKs(seed: number): string[];
     isMember(pk: string): boolean;
 
-    sendPrePrepare(pks: string[], payload: PrePreparePayload): void;
-    sendPrepare(pks: string[], payload: PreparePayload): void;
-    sendCommit(pks: string[], payload: CommitPayload): void;
-    sendViewChange(pk: string, payload: ViewChangePayload): void;
-    sendNewView(pks: string[], payload: NewViewPayload): void;
+    sendPrePrepare(pks: string[], message: PrePrepareMessage): void;
+    sendPrepare(pks: string[], message: PrepareMessage): void;
+    sendCommit(pks: string[], message: CommitMessage): void;
+    sendViewChange(pk: string, message: ViewChangeMessage): void;
+    sendNewView(pks: string[], message: NewViewMessage): void;
 
-    registerToPrePrepare(cb: (payload: PrePreparePayload) => void): void;
-    registerToPrepare(cb: (payload: PreparePayload) => void): void;
-    registerToCommit(cb: (payload: CommitPayload) => void): void;
-    registerToViewChange(cb: (payload: ViewChangePayload) => void): void;
-    registerToNewView(cb: (payload: NewViewPayload) => void): void;
+    registerToPrePrepare(cb: (message: PrePrepareMessage) => void): void;
+    registerToPrepare(cb: (message: PrepareMessage) => void): void;
+    registerToCommit(cb: (message: CommitMessage) => void): void;
+    registerToViewChange(cb: (message: ViewChangeMessage) => void): void;
+    registerToNewView(cb: (message: NewViewMessage) => void): void;
 }
