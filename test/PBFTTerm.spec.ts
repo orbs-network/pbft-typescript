@@ -621,7 +621,7 @@ describe("PBFTTerm", () => {
             expect(storePrePrepareSpy.args[0][2].block.header.blockHash).to.equal(blockOnView4.header.blockHash);
         });
 
-        it.only("onNewView should reject a new-view if the offered (On PP) block is not the heighest block on the VCProof", async () => {
+        it("onNewView should reject a new-view if the offered (On PP) block is not the heighest block on the VCProof", async () => {
             const block: Block = aBlock(theGenesisBlock);
             const term = 1;
             const targetView = 5;

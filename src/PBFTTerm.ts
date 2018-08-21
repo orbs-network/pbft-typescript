@@ -520,6 +520,18 @@ export class PBFTTerm {
         return true;
     }
 
+    private latestBlockHash(votes: ViewChangeVote[]): Buffer {
+        const filteredVotes = votes
+            .filter(vote => vote.content.preparedProof !== undefined)
+            .sort((a, b) => b.content.preparedProof.view - a.content.preparedProof.view);
+
+        if (filteredVotes.length > 0) {
+            return filteredVotes[0].content.preparedProof.blockHash;
+        } else {
+            return undefined;
+        }
+    }
+
     public async onReceiveNewView(message: NewViewMessage): Promise<void> {
         const { content, signaturePair, preprepareMessage } = message;
         const { signerPublicKey: senderPk } = signaturePair;
@@ -553,15 +565,14 @@ export class PBFTTerm {
             return;
         }
 
-        // const expectedBlock: Block = extractBlock(votes);
-        // if (expectedBlock !== undefined) {
-        //     const expectedBlockHash = this.blockUtils.calculateBlockHash(expectedBlock);
-        //     const ppBlockHash = this.blockUtils.calculateBlockHash(preprepareMessage.block);
-        //     if (expectedBlockHash.equals(ppBlockHash) === false) {
-        //         this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", the given block (PP.block) doesn't match the best block from the VCProof` });
-        //         return;
-        //     }
-        // }
+        const expectedBlockHash: Buffer = this.latestBlockHash(votes);
+        if (expectedBlockHash !== undefined) {
+            const ppBlockHash = this.blockUtils.calculateBlockHash(preprepareMessage.block);
+            if (expectedBlockHash.equals(ppBlockHash) === false) {
+                this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", the given block (PP.block) doesn't match the best block from the VCProof` });
+                return;
+            }
+        }
 
         if (await this.validatePrePreapare(preprepareMessage)) {
             this.newViewLocally = view;
