@@ -37,7 +37,7 @@ describe("Proofs Validator", () => {
             preprepareMessageSignature: undefined,
             prepareMessagesSignatures: [prepareMessage1, prepareMessage2].map(p => p.signaturePair)
         };
-        const actual = validatePreparedProof(prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        const actual = validatePreparedProof(prepareProof.term, prepareProof.view + 1, prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
 
@@ -49,7 +49,7 @@ describe("Proofs Validator", () => {
             preprepareMessageSignature: preprepareMessage.signaturePair,
             prepareMessagesSignatures: undefined
         };
-        const actual = validatePreparedProof(prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        const actual = validatePreparedProof(prepareProof.term, prepareProof.view + 1, prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
 
@@ -57,7 +57,7 @@ describe("Proofs Validator", () => {
         const keyManager = new KeyManagerMock("DUMMY PK", ["Leader PK"]);
 
         const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1, prepareMessage2]);
-        const actual = validatePreparedProof(prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        const actual = validatePreparedProof(prepareProof.term, prepareProof.view + 1, prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
 
@@ -65,24 +65,42 @@ describe("Proofs Validator", () => {
         const keyManager = new KeyManagerMock("DUMMY PK", ["Node 2"]);
 
         const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1, prepareMessage2]);
-        const actual = validatePreparedProof(prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        const actual = validatePreparedProof(prepareProof.term, prepareProof.view + 1, prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
 
     it("should approve a proof that had no preprepare no no prepare", async () => {
-        const actual = validatePreparedProof(undefined, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        const actual = validatePreparedProof(0, 0, undefined, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
         expect(actual).to.be.true;
     });
 
     it("should reject a proof that did not have enough prepares", async () => {
         const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1]);
-        const actual = validatePreparedProof(prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        const actual = validatePreparedProof(prepareProof.term, prepareProof.view + 1, prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
 
     it("should reject a proof that does not hold a block in the preprepare", async () => {
         const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1]);
-        const actual = validatePreparedProof(prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        const actual = validatePreparedProof(prepareProof.term, prepareProof.view + 1, prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        expect(actual).to.be.false;
+    });
+
+    it("should reject a proof with mismatching targetTerm", async () => {
+        const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1, prepareMessage2]);
+        const actual = validatePreparedProof(prepareProof.term + 666, prepareProof.view + 1, prepareProof, preprepareMessage.block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        expect(actual).to.be.false;
+    });
+
+    it("should reject a proof with equal targetView", async () => {
+        const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1, prepareMessage2]);
+        const actual = validatePreparedProof(prepareProof.term, prepareProof.view, prepareProof, preprepareMessage.block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        expect(actual).to.be.false;
+    });
+
+    it("should reject a proof with smaller targetView", async () => {
+        const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1, prepareMessage2]);
+        const actual = validatePreparedProof(prepareProof.term, prepareProof.view - 1, prepareProof, preprepareMessage.block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
 
@@ -92,7 +110,7 @@ describe("Proofs Validator", () => {
         const prepareMessage2 = aPrepareMessage(node2KeyManager, 0, 0, block);
 
         const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1, prepareMessage2]);
-        const actual = validatePreparedProof(prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        const actual = validatePreparedProof(prepareProof.term, prepareProof.view + 1, prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
 
@@ -102,7 +120,7 @@ describe("Proofs Validator", () => {
         const prepareMessage2 = aPrepareMessage(node2KeyManager, 0, 0, block);
 
         const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1, prepareMessage2]);
-        const actual = validatePreparedProof(prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        const actual = validatePreparedProof(prepareProof.term, prepareProof.view + 1, prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
 
@@ -114,7 +132,7 @@ describe("Proofs Validator", () => {
         const calcLeaderPk = (view: number) => ["Node 1", "Node 2", "Node 3", "Node 4"][view];
 
         const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1, prepareMessage2]);
-        const actual = validatePreparedProof(prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        const actual = validatePreparedProof(prepareProof.term, prepareProof.view + 1, prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
 
@@ -126,7 +144,7 @@ describe("Proofs Validator", () => {
                 aPrepareMessage(node1KeyManager, 5, 0, block),
                 aPrepareMessage(node2KeyManager, 5, 0, block),
             ]);
-        const actualGood = validatePreparedProof(goodPrepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        const actualGood = validatePreparedProof(goodPrepareProof.term, goodPrepareProof.view + 1, goodPrepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
         expect(actualGood).to.be.true;
 
         // Mismatching term //
@@ -136,7 +154,7 @@ describe("Proofs Validator", () => {
                 aPrepareMessage(node1KeyManager, 5, 0, block),
                 aPrepareMessage(node2KeyManager, 666, 0, block),
             ]);
-        const actualBadTerm = validatePreparedProof(badTermPrepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        const actualBadTerm = validatePreparedProof(badTermPrepareProof.term, badTermPrepareProof.view + 1, badTermPrepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
         expect(actualBadTerm).to.be.false;
 
         // Mismatching view //
@@ -146,7 +164,7 @@ describe("Proofs Validator", () => {
                 aPrepareMessage(node1KeyManager, 5, 0, block),
                 aPrepareMessage(node2KeyManager, 5, 666, block),
             ]);
-        const actualBadView = validatePreparedProof(badViewPrepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        const actualBadView = validatePreparedProof(badViewPrepareProof.term, badViewPrepareProof.view + 1, badViewPrepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
         expect(actualBadView).to.be.false;
 
         // Mismatching blockHash //
@@ -158,7 +176,7 @@ describe("Proofs Validator", () => {
                 aPrepareMessage(node1KeyManager, 5, 9, block),
                 badPrepareMessage,
             ]);
-        const actualBadBlockHash = validatePreparedProof(badBlockHashPrepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        const actualBadBlockHash = validatePreparedProof(badBlockHashPrepareProof.term, badBlockHashPrepareProof.view + 1, badBlockHashPrepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
         expect(actualBadBlockHash).to.be.false;
     });
 
@@ -173,7 +191,7 @@ describe("Proofs Validator", () => {
         prepareMessage2.content.blockHash = mismatchingBlockHash;
 
         const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1, prepareMessage2]);
-        const actual = validatePreparedProof(prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        const actual = validatePreparedProof(prepareProof.term, prepareProof.view + 1, prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
 
@@ -184,13 +202,13 @@ describe("Proofs Validator", () => {
                 aPrepareMessage(node1KeyManager, 5, 9, block),
                 aPrepareMessage(node1KeyManager, 5, 9, block),
             ]);
-        const actual = validatePreparedProof(prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        const actual = validatePreparedProof(prepareProof.term, prepareProof.view + 1, prepareProof, block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
 
     it("should approve a proof that qualify", async () => {
         const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1, prepareMessage2]);
-        const actual = validatePreparedProof(prepareProof, preprepareMessage.block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
+        const actual = validatePreparedProof(prepareProof.term, prepareProof.view + 1, prepareProof, preprepareMessage.block, f, keyManager, blockUtils, membersPKs, calcLeaderPk);
         expect(actual).to.be.true;
     });
 });

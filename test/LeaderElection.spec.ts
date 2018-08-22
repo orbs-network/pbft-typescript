@@ -8,7 +8,7 @@ import { aNewViewMessage, aPrePrepareMessage, aViewChangeMessage, aPrepareMessag
 import { aPreparedProof, aPrepared } from "./builders/ProofBuilder";
 import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
 import { nextTick } from "./timeUtils";
-import { Prepared } from "../src/storage/PBFTStorage";
+import { PreparedMessages } from "../src/storage/PBFTStorage";
 
 chai.use(sinonChai);
 
@@ -27,7 +27,7 @@ describe("Leader Election", () => {
         triggerElection();
         await blockUtils.resolveAllValidations(true);
 
-        const node0Prepared: Prepared = testedNode.config.pbftStorage.getLatestPrepared(1, 1);
+        const node0Prepared: PreparedMessages = testedNode.config.pbftStorage.getLatestPrepared(1, 1);
         expect(unicastSpy).to.have.been.calledWith(nextLeader.pk, aViewChangeMessage(testedNode.config.keyManager, 1, 1, node0Prepared));
 
         testNetwork.shutDown();
@@ -134,12 +134,12 @@ describe("Leader Election", () => {
 
         // VC with prepared proof on view 3
         const blockOnView3 = aBlock(block1, "Block on View 3");
-        const preparedOnView3: Prepared = aPrepared(node3, [node1, node2], 1, 3, blockOnView3);
+        const preparedOnView3: PreparedMessages = aPrepared(node3, [node1, node2], 1, 3, blockOnView3);
         const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.config.keyManager, 1, 5, preparedOnView3);
 
         // VC with prepared proof on view 4
         const blockOnView4 = aBlock(block1, "Block on View 4");
-        const preparedOnView4: Prepared = aPrepared(node0, [node1, node2], 1, 4, blockOnView4);
+        const preparedOnView4: PreparedMessages = aPrepared(node0, [node1, node2], 1, 4, blockOnView4);
         const node2VCMessage: ViewChangeMessage = aViewChangeMessage(node2.config.keyManager, 1, 5, preparedOnView4);
 
         // VC with no prepared proof
@@ -231,11 +231,11 @@ describe("Leader Election", () => {
         await blockUtils.provideNextBlock();
         await nextTick(); // await for blockStorage.getLastBlockHash
 
-        const node0Prepared: Prepared = node0.config.pbftStorage.getLatestPrepared(2, 1);
+        const node0Prepared: PreparedMessages = node0.config.pbftStorage.getLatestPrepared(2, 1);
         const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.config.keyManager, 2, 1, node0Prepared);
         expect(spy0).to.have.been.calledWith(node1.pk, node0VCMessage);
 
-        const node2Prepared: Prepared = node2.config.pbftStorage.getLatestPrepared(2, 1);
+        const node2Prepared: PreparedMessages = node2.config.pbftStorage.getLatestPrepared(2, 1);
         const node2VCMessage: ViewChangeMessage = aViewChangeMessage(node2.config.keyManager, 2, 1, node2Prepared);
         expect(spy2).to.have.been.calledWith(node1.pk, node2VCMessage);
 

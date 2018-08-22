@@ -1,7 +1,7 @@
 import { Block } from "../Block";
 import { Logger } from "../logger/Logger";
 import { CommitMessage, PreparedProof, PrepareMessage, PrePrepareMessage, ViewChangeMessage } from "../networkCommunication/Messages";
-import { PBFTStorage, Prepared } from "./PBFTStorage";
+import { PBFTStorage, PreparedMessages } from "./PBFTStorage";
 
 type TermViewMap<V> = Map<number, Map<number, V>>;
 
@@ -121,7 +121,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         }
     }
 
-    getLatestPrepared(term: number, f: number): Prepared {
+    getLatestPrepared(term: number, f: number): PreparedMessages {
         const lastView = this.getLatestPrePrepareView(term);
         if (lastView !== undefined) {
             const preprepareMessage: PrePrepareMessage = this.getPrePrepareMessage(term, lastView);

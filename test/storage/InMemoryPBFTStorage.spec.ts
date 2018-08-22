@@ -11,7 +11,7 @@ import { aCommitMessage, aPrepareMessage, aPrePrepareMessage, aViewChangeMessage
 import { aPreparedProofByMessages, aPrepared } from "../builders/ProofBuilder";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 import { SilentLogger } from "../logger/SilentLogger";
-import { Prepared } from "../../src/storage/PBFTStorage";
+import { PreparedMessages } from "../../src/storage/PBFTStorage";
 
 chai.use(sinonChai);
 
@@ -206,11 +206,11 @@ describe("PBFT In Memory Storage", () => {
                 storage.storePrepare(term, view, prepareMessage1);
                 storage.storePrepare(term, view, prepareMessage2);
 
-                const expectedProof: Prepared = {
+                const expectedProof: PreparedMessages = {
                     preprepareMessage,
                     prepareMessages: [prepareMessage1, prepareMessage2]
                 };
-                const actual: Prepared = storage.getLatestPrepared(term, 1);
+                const actual: PreparedMessages = storage.getLatestPrepared(term, 1);
                 expect(actual).to.deep.equal(expectedProof);
             });
 
@@ -240,11 +240,11 @@ describe("PBFT In Memory Storage", () => {
                 storage.storePrepare(1, 20, prepareMessage20_1);
                 storage.storePrepare(1, 20, prepareMessage20_2);
 
-                const expected: Prepared = {
+                const expected: PreparedMessages = {
                     preprepareMessage: prePrepareMessage30,
                     prepareMessages: [prepareMessage30_1, prepareMessage30_2]
                 };
-                const actual: Prepared = storage.getLatestPrepared(1, 1);
+                const actual: PreparedMessages = storage.getLatestPrepared(1, 1);
                 expect(actual).to.deep.equal(expected);
             });
 
@@ -253,7 +253,7 @@ describe("PBFT In Memory Storage", () => {
                 storage.storePrepare(term, view, prepareMessage1);
                 storage.storePrepare(term, view, prepareMessage2);
 
-                const actual: Prepared = storage.getLatestPrepared(term, 1);
+                const actual: PreparedMessages = storage.getLatestPrepared(term, 1);
                 expect(actual).to.be.undefined;
             });
 
@@ -261,7 +261,7 @@ describe("PBFT In Memory Storage", () => {
                 const storage = new InMemoryPBFTStorage(logger);
                 storage.storePrePrepare(term, view, preprepareMessage);
 
-                const actual: Prepared = storage.getLatestPrepared(term, 1);
+                const actual: PreparedMessages = storage.getLatestPrepared(term, 1);
                 expect(actual).to.be.undefined;
             });
 
@@ -270,7 +270,7 @@ describe("PBFT In Memory Storage", () => {
                 storage.storePrePrepare(term, view, preprepareMessage);
                 storage.storePrepare(term, view, prepareMessage1);
 
-                const actual: Prepared = storage.getLatestPrepared(term, 3);
+                const actual: PreparedMessages = storage.getLatestPrepared(term, 3);
                 expect(actual).to.be.undefined;
             });
         });

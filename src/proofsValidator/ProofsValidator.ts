@@ -4,6 +4,8 @@ import { KeyManager } from "../keyManager/KeyManager";
 import { PreparedProof, BlockMessageContent, MessageType } from "../networkCommunication/Messages";
 
 export function validatePreparedProof(
+    targetTerm: number,
+    targetView: number,
     preparedProof: PreparedProof,
     block: Block,
     f: number,
@@ -22,6 +24,14 @@ export function validatePreparedProof(
 
     const { prepareMessagesSignatures, preprepareMessageSignature, view, term, blockHash } = preparedProof;
     if (!prepareMessagesSignatures || !preprepareMessageSignature) {
+        return false;
+    }
+
+    if (term !== targetTerm) {
+        return false;
+    }
+
+    if (view >= targetView) {
         return false;
     }
 

@@ -1,7 +1,7 @@
 import { Block, KeyManager } from "../../src";
 import { BlockMessageContent, CommitMessage, MessageType, NewViewContent, NewViewMessage, PreparedProof, PrepareMessage, PrePrepareMessage, SignaturePair, ViewChangeMessage, ViewChangeMessageContent, ViewChangeVote } from "../../src/networkCommunication/Messages";
 import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
-import { Prepared } from "../../src/storage/PBFTStorage";
+import { PreparedMessages } from "../../src/storage/PBFTStorage";
 
 export function aPrePrepareMessage(keyManager: KeyManager, term: number, view: number, block: Block): PrePrepareMessage {
     const blockHash: Buffer = calculateBlockHash(block);
@@ -43,7 +43,7 @@ export function aCommitMessage(keyManager: KeyManager, term: number, view: numbe
     };
 }
 
-function generatePreparedProof(prepared: Prepared): PreparedProof {
+function generatePreparedProof(prepared: PreparedMessages): PreparedProof {
     const { term, view, blockHash} = prepared.preprepareMessage.content;
     return {
         term,
@@ -54,7 +54,7 @@ function generatePreparedProof(prepared: Prepared): PreparedProof {
     };
 }
 
-export function aViewChangeMessage(keyManager: KeyManager, term: number, view: number, prepared?: Prepared): ViewChangeMessage {
+export function aViewChangeMessage(keyManager: KeyManager, term: number, view: number, prepared?: PreparedMessages): ViewChangeMessage {
     let preparedProof: PreparedProof;
     let block: Block;
     if (prepared) {

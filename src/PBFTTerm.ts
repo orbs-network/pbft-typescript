@@ -7,7 +7,7 @@ import { Logger } from "./logger/Logger";
 import { BlockMessageContent, CommitMessage, LeanHelixMessage, MessageType, NewViewContent, NewViewMessage, PreparedProof, PrepareMessage, PrePrepareMessage, SignaturePair, ViewChangeMessage, ViewChangeMessageContent, ViewChangeVote } from "./networkCommunication/Messages";
 import { NetworkCommunication } from "./networkCommunication/NetworkCommunication";
 import { validatePreparedProof } from "./proofsValidator/ProofsValidator";
-import { PBFTStorage, Prepared } from "./storage/PBFTStorage";
+import { PBFTStorage, PreparedMessages } from "./storage/PBFTStorage";
 
 export type onNewBlockCB = (block: Block) => void;
 
@@ -127,8 +127,7 @@ export class PBFTTerm {
         this.setView(this.view + 1);
         this.logger.log({ subject: "Flow", FlowType: "LeaderChange", leaderPk: this.leaderPk, term: this.term, newView: this.view });
 
-        const prepared: Prepared = this.pbftStorage.getLatestPrepared(this.term, this.getF());
-        const message: ViewChangeMessage = this.buildViewChangeMessage(this.term, this.view, prepared);
+        const message: ViewChangeMessage = this.buildViewChangeMessage(this.term, this.view);
         this.pbftStorage.storeViewChange(this.term, this.view, message);
         if (this.isLeader()) {
             this.checkElected(this.term, this.view);
@@ -228,7 +227,7 @@ export class PBFTTerm {
         return { signaturePair, content };
     }
 
-    private generatePreparedProof(prepared: Prepared): PreparedProof {
+    private generatePreparedProof(prepared: PreparedMessages): PreparedProof {
         const { term, view, blockHash } = prepared.preprepareMessage.content;
         return {
             term,
@@ -239,7 +238,8 @@ export class PBFTTerm {
         };
     }
 
-    private buildViewChangeMessage(term: number, view: number, prepared: Prepared): ViewChangeMessage {
+    private buildViewChangeMessage(term: number, view: number): ViewChangeMessage {
+        const prepared: PreparedMessages = this.pbftStorage.getLatestPrepared(term, this.getF());
         let preparedProof: PreparedProof;
         let block: Block;
         if (prepared) {
@@ -278,17 +278,16 @@ export class PBFTTerm {
         }
     }
 
-    private processPrePrepare(message: PrePrepareMessage): void {
-        const { view, term, blockHash } = message.content;
-        const { block } = message;
+    private processPrePrepare(preprepareMessage: PrePrepareMessage): void {
+        const { view, term, blockHash } = preprepareMessage.content;
         if (this.view !== view) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], processPrePrepare, view doesn't match` });
             return;
         }
 
         const prepareMessage: PrepareMessage = this.buildPrepareMessage(term, view, blockHash);
+        this.pbftStorage.storePrePrepare(term, view, preprepareMessage);
         this.pbftStorage.storePrepare(term, view, prepareMessage);
-        this.pbftStorage.storePrePrepare(term, view, message);
         this.sendPrepare(prepareMessage);
         this.checkPrepared(term, view, blockHash);
     }
@@ -298,7 +297,7 @@ export class PBFTTerm {
         const { signerPublicKey: senderPk } = signaturePair;
         const { view, term, blockHash } = content;
 
-        if (this.checkPrePrepare(term, view)) {
+        if (this.hasPrePrepare(term, view)) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceivePrePrepare from "${senderPk}", already prepared` });
             return false;
         }
@@ -333,7 +332,7 @@ export class PBFTTerm {
         return true;
     }
 
-    private checkPrePrepare(term: number, view: number): boolean {
+    private hasPrePrepare(term: number, view: number): boolean {
         return this.pbftStorage.getPrePrepareBlock(term, view) !== undefined;
     }
 
@@ -399,7 +398,7 @@ export class PBFTTerm {
             return false;
         }
 
-        if (preparedProof && validatePreparedProof(preparedProof, block, this.getF(), this.keyManager, this.blockUtils, this.termMembersPKs, (view: number) => this.calcLeaderPk(view)) === false) {
+        if (preparedProof && validatePreparedProof(this.term, newView, preparedProof, block, this.getF(), this.keyManager, this.blockUtils, this.termMembersPKs, (view: number) => this.calcLeaderPk(view)) === false) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the preparedProof is invalid` });
             return false;
         }
@@ -493,7 +492,7 @@ export class PBFTTerm {
         }
     }
 
-    private validateViewChangeProof(targetTerm: number, targetView: number, votes: ViewChangeVote[]): boolean {
+    private validateViewChangeVotes(targetTerm: number, targetView: number, votes: ViewChangeVote[]): boolean {
         if (!votes || !Array.isArray(votes)) {
             return false;
         }
@@ -548,12 +547,12 @@ export class PBFTTerm {
             return;
         }
 
-        if (this.validateViewChangeProof(term, view, votes) === false) {
-            this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", VCProof is invalid` });
+        if (this.validateViewChangeVotes(term, view, votes) === false) {
+            this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", votes is invalid` });
             return;
         }
 
-        // const viewChangeMessageValid = votes.every(viewChangeMessage => this.isViewChangeMessageValid(this.calcLeaderPk(view), view, viewChangeMessage));
+        // const viewChangeMessageValid = votes.every(viewChangeVote => this.isViewChangeMessageValid(this.calcLeaderPk(view), view, viewChangeVote));
 
         if (this.view > view) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", view is from the past` });

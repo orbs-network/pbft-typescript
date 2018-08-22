@@ -9,7 +9,7 @@ import { Block } from "../src/Block";
 import { Config } from "../src/Config";
 import { NewViewMessage, PrePrepareMessage, ViewChangeMessage, PreparedProof, ViewChangeVote } from "../src/networkCommunication/Messages";
 import { PBFTTerm, TermConfig } from "../src/PBFTTerm";
-import { Prepared } from "../src/storage/PBFTStorage";
+import { PreparedMessages } from "../src/storage/PBFTStorage";
 import { BlockUtilsMock, calculateBlockHash } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aCommitMessage, aNewViewMessage, aPrepareMessage, aPrePrepareMessage, aViewChangeMessage } from "./builders/MessagesBuilder";
@@ -529,7 +529,7 @@ describe("PBFTTerm", () => {
         triggerElection();
         nextTick();
 
-        const prepared: Prepared = node1Config.pbftStorage.getLatestPrepared(0, 1);
+        const prepared: PreparedMessages = node1Config.pbftStorage.getLatestPrepared(0, 1);
         const { term, view, blockHash } = prepared.preprepareMessage.content;
         const latestPreparedProof: PreparedProof = {
             term,
@@ -548,7 +548,7 @@ describe("PBFTTerm", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         const preprepareMessage: PrePrepareMessage = aPrePrepareMessage(node0Config.keyManager, 0, 1, block);
-        const prepared: Prepared = {
+        const prepared: PreparedMessages = {
             preprepareMessage,
             prepareMessages: undefined
         };
@@ -594,12 +594,12 @@ describe("PBFTTerm", () => {
 
             // VC with prepared proof on view 3
             const blockOnView3 = aBlock(block, "Block on View 3");
-            const preparedProofOnView3: Prepared = aPrepared(node3, [node1, node2], 1, 3, blockOnView3);
+            const preparedProofOnView3: PreparedMessages = aPrepared(node3, [node1, node2], 1, 3, blockOnView3);
             const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.config.keyManager, term, targetView, preparedProofOnView3);
 
             // VC with prepared proof on view 4
             const blockOnView4 = aBlock(block, "Block on View 4");
-            const preparedProofOnView4: Prepared = aPrepared(node0, [node1, node2], 1, 4, blockOnView4);
+            const preparedProofOnView4: PreparedMessages = aPrepared(node0, [node1, node2], 1, 4, blockOnView4);
             const node2VCMessage: ViewChangeMessage = aViewChangeMessage(node2.config.keyManager, term, targetView, preparedProofOnView4);
 
             // VC with no prepared proof
@@ -628,12 +628,12 @@ describe("PBFTTerm", () => {
 
             // VC with prepared proof on view 3
             const blockOnView3 = aBlock(block, "Block on View 3");
-            const preparedOnView3: Prepared = aPrepared(node0, [node1, node2], 1, 3, blockOnView3);
+            const preparedOnView3: PreparedMessages = aPrepared(node0, [node1, node2], 1, 3, blockOnView3);
             const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.config.keyManager, term, targetView, preparedOnView3);
 
             // VC with prepared proof on view 4
             const blockOnView4 = aBlock(block, "Block on View 4");
-            const preparedOnView4: Prepared = aPrepared(node0, [node1, node2], 1, 4, blockOnView4);
+            const preparedOnView4: PreparedMessages = aPrepared(node0, [node1, node2], 1, 4, blockOnView4);
             const node2VCMessage: ViewChangeMessage = aViewChangeMessage(node2.config.keyManager, term, targetView, preparedOnView4);
 
             // VC with no prepared proof

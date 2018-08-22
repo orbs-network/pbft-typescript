@@ -98,11 +98,12 @@ On the project directory run: `npm run tdd`
 
 ## To do
 
-* [ ] (Gil) messages should include message type (string)
-* [ ] (Gad) - Check state still holds after async await functions (ex: when returning from requestNewBlock - view has changed)
-* [ ] (Gad) - Think about view-change counting, when to count myself.
-* [ ] (Gad) - code review
-* [ ] (Ido) documentation
+* [x] (Gil) messages should include message type (string)
+* [ ] (Gil) re-enable isViewChangeMessageValid in onReceiveNewView
+* [ ] (Gil) verify preprepare.term in onReceiveNewView
+* [ ] (Gad) Check state still holds after async await functions (ex: when returning from requestNewBlock - view has changed)
+* [ ] (Gad) Think about view-change counting, when to count myself.
+* [ ] (Gad) code review
 
 ## Future
 
@@ -111,6 +112,6 @@ On the project directory run: `npm run tdd`
 * [ ] Change logging methodology - warning - added metadata
 * [ ] Have a better (Readable) tests solution to await nextTick
 * [ ] monitoring/debug
-* [ ] Optimizations: IData - Signature only on hash(header).
+* [x] Optimizations: IData - Signature only on hash(header).
 * [ ] implement `verifyBlock`
 * [ ] PBFT-BC onCommitted - adds header.pbftData.pbftProof

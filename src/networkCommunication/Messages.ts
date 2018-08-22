@@ -35,7 +35,7 @@ export interface CommitMessage extends LeanHelixMessage {
 export interface ViewChangeMessage extends LeanHelixMessage {
     content: ViewChangeMessageContent;
     signaturePair: SignaturePair;
-    block: Block;
+    block?: Block;
 }
 
 export interface NewViewMessage extends LeanHelixMessage {
@@ -60,7 +60,7 @@ export interface ViewChangeMessageContent {
     messageType: MessageType;
     term: number;
     view: number;
-    preparedProof: PreparedProof;
+    preparedProof?: PreparedProof;
 }
 
 export interface PreparedProof {

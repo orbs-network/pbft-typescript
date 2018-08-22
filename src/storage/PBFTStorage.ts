@@ -1,7 +1,7 @@
 import { Block } from "../Block";
 import { CommitMessage, PreparedProof, PrepareMessage, PrePrepareMessage, ViewChangeMessage } from "../networkCommunication/Messages";
 
-export interface Prepared {
+export interface PreparedMessages {
     preprepareMessage: PrePrepareMessage;
     prepareMessages: PrepareMessage[];
 }
@@ -18,7 +18,7 @@ export interface PBFTStorage {
     storePrepare(term: number, view: number, message: PrepareMessage): boolean;
     getPrepareSendersPks(term: number, view: number, blockHash: Buffer): string[];
     getPrepareMessages(term: number, view: number, blockHash: Buffer): PrepareMessage[];
-    getLatestPrepared(term: number, f: number): Prepared;
+    getLatestPrepared(term: number, f: number): PreparedMessages;
 
     storeCommit(term: number, view: number, message: CommitMessage): boolean;
     getCommitSendersPks(term: number, view: number, blockHash: Buffer): string[];

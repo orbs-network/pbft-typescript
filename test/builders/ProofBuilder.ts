@@ -2,7 +2,7 @@ import { Block } from "../../src";
 import { BlockMessageContent, MessageType, PreparedProof, SignaturePair, PrePrepareMessage, PrepareMessage } from "../../src/networkCommunication/Messages";
 import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 import { Node } from "../network/Node";
-import { Prepared } from "../../src/storage/PBFTStorage";
+import { PreparedMessages } from "../../src/storage/PBFTStorage";
 import { aPrePrepareMessage, aPrepareMessage } from "./MessagesBuilder";
 
 export function aPreparedProof(leader: Node, members: Node[], term: number, view: number, block: Block): PreparedProof {
@@ -45,8 +45,8 @@ export function aPreparedProofByMessages(PPMessage: PrePrepareMessage, PMessages
     };
 }
 
-export function aPrepared(leader: Node, members: Node[], term: number, view: number, block: Block): Prepared {
-    const result: Prepared = {
+export function aPrepared(leader: Node, members: Node[], term: number, view: number, block: Block): PreparedMessages {
+    const result: PreparedMessages = {
         preprepareMessage: aPrePrepareMessage(leader.config.keyManager, term, view, block),
         prepareMessages: members.map(m => aPrepareMessage(m.config.keyManager, term, view, block))
     };
