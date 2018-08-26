@@ -1,5 +1,5 @@
 import { Block, KeyManager } from "../../src";
-import { BlockMessageContent, CommitMessage, MessageType, NewViewContent, NewViewMessage, PreparedProof, PrepareMessage, PrePrepareMessage, SignaturePair, ViewChangeMessage, ViewChangeMessageContent, ViewChangeVote } from "../../src/networkCommunication/Messages";
+import { BlockMessageContent, CommitMessage, MessageType, NewViewContent, NewViewMessage, PreparedProof, PrepareMessage, PrePrepareMessage, SignaturePair, ViewChangeMessage, ViewChangeMessageContent, ViewChangeVote, BlockRefMessage } from "../../src/networkCommunication/Messages";
 import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 import { PreparedMessages } from "../../src/storage/PBFTStorage";
 
@@ -15,6 +15,10 @@ export function aPrePrepareMessage(keyManager: KeyManager, term: number, view: n
         signaturePair,
         block
     };
+}
+
+export function blockRefMessageFromPP(preprepareMessage: PrePrepareMessage): BlockRefMessage {
+    return { signaturePair: preprepareMessage.signaturePair, content: preprepareMessage.content };
 }
 
 export function aPrepareMessage(keyManager: KeyManager, term: number, view: number, block: Block): PrepareMessage {
@@ -44,13 +48,9 @@ export function aCommitMessage(keyManager: KeyManager, term: number, view: numbe
 }
 
 function generatePreparedProof(prepared: PreparedMessages): PreparedProof {
-    const { term, view, blockHash} = prepared.preprepareMessage.content;
     return {
-        term,
-        view,
-        blockHash,
-        preprepareMessageSignature: prepared.preprepareMessage.signaturePair,
-        prepareMessagesSignatures: prepared.prepareMessages ? prepared.prepareMessages.map(p => p.signaturePair) : undefined
+        preprepareBlockRefMessage: blockRefMessageFromPP(prepared.preprepareMessage),
+        prepareBlockRefMessages: prepared.prepareMessages
     };
 }
 

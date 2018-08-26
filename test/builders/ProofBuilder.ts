@@ -1,9 +1,9 @@
 import { Block } from "../../src";
-import { BlockMessageContent, MessageType, PreparedProof, SignaturePair, PrePrepareMessage, PrepareMessage } from "../../src/networkCommunication/Messages";
+import { BlockMessageContent, MessageType, PreparedProof, SignaturePair, PrePrepareMessage, PrepareMessage, BlockRefMessage } from "../../src/networkCommunication/Messages";
 import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 import { Node } from "../network/Node";
 import { PreparedMessages } from "../../src/storage/PBFTStorage";
-import { aPrePrepareMessage, aPrepareMessage } from "./MessagesBuilder";
+import { aPrePrepareMessage, aPrepareMessage, blockRefMessageFromPP } from "./MessagesBuilder";
 
 export function aPreparedProof(leader: Node, members: Node[], term: number, view: number, block: Block): PreparedProof {
     const blockHash: Buffer = calculateBlockHash(block);
@@ -20,28 +20,35 @@ export function aPreparedProof(leader: Node, members: Node[], term: number, view
         view,
         blockHash
     };
-    const preprepareMessageSignature: SignaturePair = {
-        contentSignature: leader.config.keyManager.sign(PPContent),
-        signerPublicKey: leader.config.keyManager.getMyPublicKey()
+
+    const preprepareBlockRefMessage: BlockRefMessage = {
+        content: PPContent,
+        signaturePair: {
+            contentSignature: leader.config.keyManager.sign(PPContent),
+            signerPublicKey: leader.config.keyManager.getMyPublicKey()
+        }
     };
 
-    const prepareMessagesSignatures: SignaturePair[] = members.map(member => {
+    const prepareBlockRefMessages: BlockRefMessage[] = members.map(member => {
         return {
-            contentSignature: member.config.keyManager.sign(PContent),
-            signerPublicKey: member.config.keyManager.getMyPublicKey()
+            content: PContent,
+            signaturePair: {
+                contentSignature: member.config.keyManager.sign(PContent),
+                signerPublicKey: member.config.keyManager.getMyPublicKey()
+            }
         };
     });
 
-    return { blockHash, term, view, preprepareMessageSignature, prepareMessagesSignatures };
+    return {
+        preprepareBlockRefMessage,
+        prepareBlockRefMessages
+    };
 }
 
 export function aPreparedProofByMessages(PPMessage: PrePrepareMessage, PMessages: PrepareMessage[]): PreparedProof {
     return {
-        blockHash: PPMessage.content.blockHash,
-        term: PPMessage.content.term,
-        view: PPMessage.content.view,
-        preprepareMessageSignature: PPMessage.signaturePair,
-        prepareMessagesSignatures: PMessages.map(p => p.signaturePair)
+        preprepareBlockRefMessage: blockRefMessageFromPP(PPMessage),
+        prepareBlockRefMessages: PMessages
     };
 }
 

@@ -7,12 +7,12 @@ import * as sinonChai from "sinon-chai";
 import { KeyManager, PBFT } from "../src";
 import { Block } from "../src/Block";
 import { Config } from "../src/Config";
-import { NewViewMessage, PrePrepareMessage, ViewChangeMessage, PreparedProof, ViewChangeVote } from "../src/networkCommunication/Messages";
+import { NewViewMessage, PrePrepareMessage, ViewChangeMessage, PreparedProof, ViewChangeVote, BlockRefMessage } from "../src/networkCommunication/Messages";
 import { PBFTTerm, TermConfig } from "../src/PBFTTerm";
 import { PreparedMessages } from "../src/storage/PBFTStorage";
 import { BlockUtilsMock, calculateBlockHash } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aCommitMessage, aNewViewMessage, aPrepareMessage, aPrePrepareMessage, aViewChangeMessage } from "./builders/MessagesBuilder";
+import { aCommitMessage, aNewViewMessage, aPrepareMessage, aPrePrepareMessage, aViewChangeMessage, blockRefMessageFromPP } from "./builders/MessagesBuilder";
 import { aPrepared } from "./builders/ProofBuilder";
 import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
 import { blockMatcher } from "./matchers/blockMatcher";
@@ -564,13 +564,10 @@ describe("PBFTTerm", () => {
         nextTick();
 
         const prepared: PreparedMessages = node1Config.pbftStorage.getLatestPrepared(0, 1);
-        const { term, view, blockHash } = prepared.preprepareMessage.content;
+        const preprepareBlockRefMessage: BlockRefMessage = blockRefMessageFromPP(prepared.preprepareMessage);
         const latestPreparedProof: PreparedProof = {
-            term,
-            view,
-            blockHash,
-            preprepareMessageSignature: prepared.preprepareMessage.signaturePair,
-            prepareMessagesSignatures: prepared.prepareMessages.map(p => p.signaturePair)
+            preprepareBlockRefMessage,
+            prepareBlockRefMessages: prepared.prepareMessages
         };
 
         expect(spy.args[0][1].content.preparedProof).to.deep.equal(latestPreparedProof);

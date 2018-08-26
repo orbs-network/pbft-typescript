@@ -16,21 +16,14 @@ export interface LeanHelixMessage {
     };
 }
 
-export interface PrePrepareMessage extends LeanHelixMessage {
-    content: BlockMessageContent;
-    signaturePair: SignaturePair;
-    block: Block;
-}
-
-export interface PrepareMessage extends LeanHelixMessage {
+export interface BlockRefMessage extends LeanHelixMessage {
     content: BlockMessageContent;
     signaturePair: SignaturePair;
 }
 
-export interface CommitMessage extends LeanHelixMessage {
-    content: BlockMessageContent;
-    signaturePair: SignaturePair;
-}
+export type PrePrepareMessage = BlockRefMessage & { block: Block };
+export type PrepareMessage = BlockRefMessage;
+export type CommitMessage = BlockRefMessage;
 
 export interface ViewChangeMessage extends LeanHelixMessage {
     content: ViewChangeMessageContent;
@@ -64,11 +57,8 @@ export interface ViewChangeMessageContent {
 }
 
 export interface PreparedProof {
-    blockHash: Buffer;
-    term: number;
-    view: number;
-    preprepareMessageSignature: SignaturePair;
-    prepareMessagesSignatures: SignaturePair[];
+    preprepareBlockRefMessage: BlockRefMessage;
+    prepareBlockRefMessages: BlockRefMessage[];
 }
 
 export interface NewViewContent {

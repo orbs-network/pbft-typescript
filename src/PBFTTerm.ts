@@ -228,13 +228,10 @@ export class PBFTTerm {
     }
 
     private generatePreparedProof(prepared: PreparedMessages): PreparedProof {
-        const { term, view, blockHash } = prepared.preprepareMessage.content;
+        const { preprepareMessage, prepareMessages } = prepared;
         return {
-            term,
-            view,
-            blockHash,
-            preprepareMessageSignature: prepared.preprepareMessage.signaturePair,
-            prepareMessagesSignatures: prepared.prepareMessages.map(p => p.signaturePair)
+            preprepareBlockRefMessage: {content: preprepareMessage.content, signaturePair: preprepareMessage.signaturePair},
+            prepareBlockRefMessages: prepareMessages
         };
     }
 
@@ -522,10 +519,10 @@ export class PBFTTerm {
     private latestBlockHash(votes: ViewChangeVote[]): Buffer {
         const filteredVotes = votes
             .filter(vote => vote.content.preparedProof !== undefined)
-            .sort((a, b) => b.content.preparedProof.view - a.content.preparedProof.view);
+            .sort((a, b) => b.content.preparedProof.preprepareBlockRefMessage.content.view - a.content.preparedProof.preprepareBlockRefMessage.content.view);
 
         if (filteredVotes.length > 0) {
-            return filteredVotes[0].content.preparedProof.blockHash;
+            return filteredVotes[0].content.preparedProof.preprepareBlockRefMessage.content.blockHash;
         } else {
             return undefined;
         }
