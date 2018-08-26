@@ -368,7 +368,13 @@ export class PBFTTerm {
     }
 
     public onReceiveViewChange(message: ViewChangeMessage): void {
-        if (this.isViewChangeMessageValid(this.myPk, this.view, message, message.block)) {
+        if (this.isViewChangeValid(this.myPk, this.view, message)) {
+            if (message.block && message.content.preparedProof) {
+                const isValidDigest = this.blockUtils.calculateBlockHash(message.block).equals(message.content.preparedProof.preprepareBlockRefMessage.content.blockHash);
+                if (!isValidDigest) {
+                    return;
+                }
+            }
             const { content } = message;
             const { view, term } = content;
             this.pbftStorage.storeViewChange(term, view, message);
@@ -380,7 +386,7 @@ export class PBFTTerm {
         return this.keyManager.verify(message.content, message.signaturePair.contentSignature, message.signaturePair.signerPublicKey);
     }
 
-    private isViewChangeMessageValid(targetLeaderPk: string, view: number, message: { content: ViewChangeMessageContent, signaturePair: SignaturePair }, block: Block): boolean {
+    private isViewChangeValid(targetLeaderPk: string, view: number, message: { content: ViewChangeMessageContent, signaturePair: SignaturePair }): boolean {
         const { content, signaturePair } = message;
         const { signerPublicKey: senderPk } = signaturePair;
         const { view: newView, term, preparedProof } = content;
@@ -395,7 +401,7 @@ export class PBFTTerm {
             return false;
         }
 
-        if (preparedProof && validatePreparedProof(this.term, newView, preparedProof, block, this.getF(), this.keyManager, this.blockUtils, this.termMembersPKs, (view: number) => this.calcLeaderPk(view)) === false) {
+        if (preparedProof && validatePreparedProof(this.term, newView, preparedProof, this.getF(), this.keyManager, this.termMembersPKs, (view: number) => this.calcLeaderPk(view)) === false) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the preparedProof is invalid` });
             return false;
         }
@@ -516,13 +522,13 @@ export class PBFTTerm {
         return true;
     }
 
-    private latestBlockHash(votes: ViewChangeVote[]): Buffer {
+    private latestViewChangeVote(votes: ViewChangeVote[]): ViewChangeVote {
         const filteredVotes = votes
             .filter(vote => vote.content.preparedProof !== undefined)
             .sort((a, b) => b.content.preparedProof.preprepareBlockRefMessage.content.view - a.content.preparedProof.preprepareBlockRefMessage.content.view);
 
         if (filteredVotes.length > 0) {
-            return filteredVotes[0].content.preparedProof.preprepareBlockRefMessage.content.blockHash;
+            return filteredVotes[0];
         } else {
             return undefined;
         }
@@ -564,16 +570,23 @@ export class PBFTTerm {
             return;
         }
 
-        const expectedBlockHash: Buffer = this.latestBlockHash(votes);
-        if (expectedBlockHash !== undefined) {
-            const ppBlockHash = this.blockUtils.calculateBlockHash(preprepareMessage.block);
-            if (expectedBlockHash.equals(ppBlockHash) === false) {
-                this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", the given block (PP.block) doesn't match the best block from the VCProof` });
+        const latestVote: ViewChangeVote = this.latestViewChangeVote(votes);
+        if (latestVote !== undefined) {
+            const viewChangeMessageValid = this.isViewChangeValid(futureLeaderId, view, latestVote);
+            if (!viewChangeMessageValid) {
+                this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", view change votes are invalid` });
                 return;
             }
-        }
 
-        const viewChangeMessageValid = votes.every(viewChangeVote => this.isViewChangeMessageValid(futureLeaderId, view, viewChangeVote, preprepareMessage.block));
+            const latestVoteBlockHash = latestVote.content.preparedProof && latestVote.content.preparedProof.preprepareBlockRefMessage.content.blockHash;
+            if (latestVoteBlockHash) {
+                const ppBlockHash = this.blockUtils.calculateBlockHash(preprepareMessage.block);
+                if (latestVoteBlockHash.equals(ppBlockHash) === false) {
+                    this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", the given block (PP.block) doesn't match the best block from the VCProof` });
+                    return;
+                }
+            }
+        }
 
         if (await this.validatePrePreapare(preprepareMessage)) {
             this.newViewLocally = view;

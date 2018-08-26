@@ -1,25 +1,17 @@
-import { Block } from "..";
-import { BlockUtils } from "../blockUtils/BlockUtils";
 import { KeyManager } from "../keyManager/KeyManager";
-import { PreparedProof, BlockMessageContent, MessageType } from "../networkCommunication/Messages";
+import { PreparedProof } from "../networkCommunication/Messages";
 
 export function validatePreparedProof(
     targetTerm: number,
     targetView: number,
     preparedProof: PreparedProof,
-    block: Block,
     f: number,
     keyManager: KeyManager,
-    blockUtils: BlockUtils,
     membersPKs: string[],
     calcLeaderPk: (view: number) => string): boolean {
 
     if (!preparedProof) {
         return true;
-    }
-
-    if (!block) {
-        return false;
     }
 
     const { prepareBlockRefMessages, preprepareBlockRefMessage } = preparedProof;
@@ -77,10 +69,10 @@ export function validatePreparedProof(
         return false;
     }
 
-    const isValidDigest = blockUtils.calculateBlockHash(block).equals(blockHash);
-    if (!isValidDigest) {
-        return false;
-    }
+    // const isValidDigest = blockUtils.calculateBlockHash(block).equals(blockHash);
+    // if (!isValidDigest) {
+    //     return false;
+    // }
 
     return true;
 }

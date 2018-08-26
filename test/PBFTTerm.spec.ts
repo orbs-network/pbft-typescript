@@ -620,17 +620,17 @@ describe("PBFTTerm", () => {
 
         it("onNewView should offer (On PP) the heighest block from the VCProof", async () => {
             const block: Block = aBlock(theGenesisBlock);
-            const term = 1;
+            const term = 0;
             const targetView = 5;
 
             // VC with prepared proof on view 3
             const blockOnView3 = aBlock(block, "Block on View 3");
-            const preparedProofOnView3: PreparedMessages = aPrepared(node3, [node1, node2], 1, 3, blockOnView3);
+            const preparedProofOnView3: PreparedMessages = aPrepared(node3, [node1, node2], term, 3, blockOnView3);
             const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.config.keyManager, term, targetView, preparedProofOnView3);
 
             // VC with prepared proof on view 4
             const blockOnView4 = aBlock(block, "Block on View 4");
-            const preparedProofOnView4: PreparedMessages = aPrepared(node0, [node1, node2], 1, 4, blockOnView4);
+            const preparedProofOnView4: PreparedMessages = aPrepared(node0, [node1, node2], term, 4, blockOnView4);
             const node2VCMessage: ViewChangeMessage = aViewChangeMessage(node2.config.keyManager, term, targetView, preparedProofOnView4);
 
             // VC with no prepared proof
