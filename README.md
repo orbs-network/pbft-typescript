@@ -100,6 +100,7 @@ On the project directory run: `npm run tdd`
 
 * [x] (Gil) messages should include message type (string)
 * [ ] (Gil) re-enable isViewChangeMessageValid in onReceiveNewView
+* [ ] (Gil) Extract the messages building functions out of PBFTTerm to a dedicated builder that can be used also in the tests
 * [ ] (Gil) verify preprepare.term in onReceiveNewView
 * [ ] (Gad) Check state still holds after async await functions (ex: when returning from requestNewBlock - view has changed)
 * [ ] (Gad) Think about view-change counting, when to count myself.
