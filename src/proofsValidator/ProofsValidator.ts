@@ -69,10 +69,5 @@ export function validatePreparedProof(
         return false;
     }
 
-    // const isValidDigest = blockUtils.calculateBlockHash(block).equals(blockHash);
-    // if (!isValidDigest) {
-    //     return false;
-    // }
-
     return true;
 }
