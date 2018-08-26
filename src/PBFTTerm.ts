@@ -230,7 +230,7 @@ export class PBFTTerm {
     private generatePreparedProof(prepared: PreparedMessages): PreparedProof {
         const { preprepareMessage, prepareMessages } = prepared;
         return {
-            preprepareBlockRefMessage: {content: preprepareMessage.content, signaturePair: preprepareMessage.signaturePair},
+            preprepareBlockRefMessage: { content: preprepareMessage.content, signaturePair: preprepareMessage.signaturePair },
             prepareBlockRefMessages: prepareMessages
         };
     }
@@ -368,7 +368,7 @@ export class PBFTTerm {
     }
 
     public onReceiveViewChange(message: ViewChangeMessage): void {
-        if (this.isViewChangeMessageValid(this.myPk, this.view, message)) {
+        if (this.isViewChangeMessageValid(this.myPk, this.view, message, message.block)) {
             const { content } = message;
             const { view, term } = content;
             this.pbftStorage.storeViewChange(term, view, message);
@@ -380,8 +380,8 @@ export class PBFTTerm {
         return this.keyManager.verify(message.content, message.signaturePair.contentSignature, message.signaturePair.signerPublicKey);
     }
 
-    private isViewChangeMessageValid(targetLeaderPk: string, view: number, message: ViewChangeMessage): boolean {
-        const { content, signaturePair, block } = message;
+    private isViewChangeMessageValid(targetLeaderPk: string, view: number, message: { content: ViewChangeMessageContent, signaturePair: SignaturePair }, block: Block): boolean {
+        const { content, signaturePair } = message;
         const { signerPublicKey: senderPk } = signaturePair;
         const { view: newView, term, preparedProof } = content;
 
@@ -538,8 +538,8 @@ export class PBFTTerm {
             return;
         }
 
-        const wanaBeLeaderId = this.calcLeaderPk(view);
-        if (wanaBeLeaderId !== senderPk) {
+        const futureLeaderId = this.calcLeaderPk(view);
+        if (futureLeaderId !== senderPk) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", rejected because it match the new id (${view})` });
             return;
         }
@@ -548,8 +548,6 @@ export class PBFTTerm {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", votes is invalid` });
             return;
         }
-
-        // const viewChangeMessageValid = votes.every(viewChangeVote => this.isViewChangeMessageValid(this.calcLeaderPk(view), view, viewChangeVote));
 
         if (this.view > view) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", view is from the past` });
@@ -574,6 +572,8 @@ export class PBFTTerm {
                 return;
             }
         }
+
+        const viewChangeMessageValid = votes.every(viewChangeVote => this.isViewChangeMessageValid(futureLeaderId, view, viewChangeVote, preprepareMessage.block));
 
         if (await this.validatePrePreapare(preprepareMessage)) {
             this.newViewLocally = view;
