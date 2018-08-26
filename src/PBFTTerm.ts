@@ -564,6 +564,11 @@ export class PBFTTerm {
             return;
         }
 
+        if (term !== preprepareMessage.content.term) {
+            this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${view}], onReceiveNewView from "${senderPk}", term doesn't match PP.term` });
+            return;
+        }
+
         const expectedBlockHash: Buffer = this.latestBlockHash(votes);
         if (expectedBlockHash !== undefined) {
             const ppBlockHash = this.blockUtils.calculateBlockHash(preprepareMessage.block);

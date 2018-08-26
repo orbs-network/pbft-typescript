@@ -375,6 +375,40 @@ describe("PBFTTerm", () => {
         expect(node0PbftTerm.getView()).to.equal(1);
     });
 
+    it("onReceiveNewView should not accept messages that don't match the PP.term", async () => {
+        const node0PbftTerm: PBFTTerm = createPBFTTerm(node0Config);
+
+        const block1: Block = aBlock(theGenesisBlock);
+        const votes1: ViewChangeVote[] = [
+            aViewChangeMessage(node0Config.keyManager, 1, 1),
+            aViewChangeMessage(node1Config.keyManager, 1, 1),
+            aViewChangeMessage(node2Config.keyManager, 1, 1)
+        ].map(vc => ({ content: vc.content, signaturePair: vc.signaturePair }));
+        const PPMessage1: PrePrepareMessage = aPrePrepareMessage(node1KeyManager, 1, 1, block1);
+        const nvMessage1: NewViewMessage = aNewViewMessage(node1KeyManager, 1, 1, PPMessage1, votes1);
+
+        // same view => ok
+        node0PbftTerm.onReceiveNewView(nvMessage1);
+        await nextTick();
+        await node0BlockUtils.resolveAllValidations(true);
+        expect(node0PbftTerm.getView()).to.equal(1);
+
+        const block2: Block = aBlock(block1);
+        const votes2: ViewChangeVote[] = [
+            aViewChangeMessage(node0Config.keyManager, 1, 2),
+            aViewChangeMessage(node1Config.keyManager, 1, 2),
+            aViewChangeMessage(node2Config.keyManager, 1, 2)
+        ].map(vc => ({ content: vc.content, signaturePair: vc.signaturePair }));
+        const PPMessage2: PrePrepareMessage = aPrePrepareMessage(node2KeyManager, 666, 2, block2);
+        const nvMessage2: NewViewMessage = aNewViewMessage(node2KeyManager, 1, 2, PPMessage2, votes2);
+
+        // miss matching term => ignore
+        node0PbftTerm.onReceiveNewView(nvMessage2);
+        await nextTick();
+        await node0BlockUtils.resolveAllValidations(true);
+        expect(node0PbftTerm.getView()).to.equal(1);
+    });
+
     it("onReceiveNewView should not accept messages that don't pass validation", async () => {
         const node0PbftTerm: PBFTTerm = createPBFTTerm(node0Config);
 
