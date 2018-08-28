@@ -75,7 +75,7 @@ export class PBFTTerm {
             }
 
             const message: PrePrepareMessage = this.buildPrePrepareMessage(this.term, this.view, block);
-            this.pbftStorage.storePrePrepare(this.term, this.view, message);
+            this.pbftStorage.storePrePrepare(message);
             this.sendPrePrepare(message);
         }
     }
@@ -128,7 +128,7 @@ export class PBFTTerm {
         this.logger.log({ subject: "Flow", FlowType: "LeaderChange", leaderPk: this.leaderPk, term: this.term, newView: this.view });
 
         const message: ViewChangeMessage = this.buildViewChangeMessage(this.term, this.view);
-        this.pbftStorage.storeViewChange(this.term, this.view, message);
+        this.pbftStorage.storeViewChange(message);
         if (this.isLeader()) {
             this.checkElected(this.term, this.view);
         } else {
@@ -283,8 +283,8 @@ export class PBFTTerm {
         }
 
         const prepareMessage: PrepareMessage = this.buildPrepareMessage(term, view, blockHash);
-        this.pbftStorage.storePrePrepare(term, view, preprepareMessage);
-        this.pbftStorage.storePrepare(term, view, prepareMessage);
+        this.pbftStorage.storePrePrepare(preprepareMessage);
+        this.pbftStorage.storePrepare(prepareMessage);
         this.sendPrepare(prepareMessage);
         this.checkPrepared(term, view, blockHash);
     }
@@ -360,7 +360,7 @@ export class PBFTTerm {
             return;
         }
 
-        this.pbftStorage.storePrepare(term, view, message);
+        this.pbftStorage.storePrepare(message);
 
         if (this.view === view) {
             this.checkPrepared(term, view, blockHash);
@@ -377,7 +377,7 @@ export class PBFTTerm {
             }
             const { content } = message;
             const { view, term } = content;
-            this.pbftStorage.storeViewChange(term, view, message);
+            this.pbftStorage.storeViewChange(message);
             this.checkElected(term, view);
         }
     }
@@ -439,7 +439,7 @@ export class PBFTTerm {
         const preprepareMessage: PrePrepareMessage = this.buildPrePrepareMessage(this.term, view, block);
         const viewChangeVotes: ViewChangeVote[] = viewChangeMessages.map(vc => ({ content: vc.content, signaturePair: vc.signaturePair }));
         const newViewMessage: NewViewMessage = this.buildNewViewMessage(this.term, view, preprepareMessage, viewChangeVotes);
-        this.pbftStorage.storePrePrepare(this.term, this.view, preprepareMessage);
+        this.pbftStorage.storePrePrepare(preprepareMessage);
         this.sendNewView(newViewMessage);
     }
 
@@ -464,7 +464,7 @@ export class PBFTTerm {
     private onPrepared(term: number, view: number, blockHash: Buffer): void {
         this.preparedLocally = true;
         const message: CommitMessage = this.buildCommitMessage(term, view, blockHash);
-        this.pbftStorage.storeCommit(term, view, message);
+        this.pbftStorage.storeCommit(message);
         this.sendCommit(message);
         this.checkCommitted(term, view, blockHash);
     }
@@ -479,7 +479,7 @@ export class PBFTTerm {
             return;
         }
 
-        this.pbftStorage.storeCommit(term, view, message);
+        this.pbftStorage.storeCommit(message);
         this.checkCommitted(term, view, blockHash);
     }
 

@@ -31,10 +31,10 @@ describe("PBFT In Memory Storage", () => {
         const VCMessage = aViewChangeMessage(keyManager, term, view);
 
         // storing
-        storage.storePrePrepare(term, view, PPMessage);
-        storage.storePrepare(term, view, PMessage);
-        storage.storeCommit(term, view, CMessage);
-        storage.storeViewChange(term, view, VCMessage);
+        storage.storePrePrepare(PPMessage);
+        storage.storePrepare(PMessage);
+        storage.storeCommit(CMessage);
+        storage.storeViewChange(VCMessage);
 
         expect(storage.getPrePrepareMessage(term, view)).to.not.be.undefined;
         expect(storage.getPrepareMessages(term, view, blockHash).length).to.equal(1);
@@ -57,9 +57,9 @@ describe("PBFT In Memory Storage", () => {
         const block = aBlock(theGenesisBlock);
         const keyManager: KeyManager = new KeyManagerMock("PK");
         const message = aPrePrepareMessage(keyManager, 1, 1, block);
-        const firstTime = storage.storePrePrepare(term, view, message);
+        const firstTime = storage.storePrePrepare(message);
         expect(firstTime).to.be.true;
-        const secondstime = storage.storePrePrepare(term, view, message);
+        const secondstime = storage.storePrePrepare(message);
         expect(secondstime).to.be.false;
     });
 
@@ -72,11 +72,11 @@ describe("PBFT In Memory Storage", () => {
         const sender1KeyManager: KeyManager = new KeyManagerMock(senderId1);
         const sender2KeyManager: KeyManager = new KeyManagerMock(senderId2);
         const block = aBlock(theGenesisBlock);
-        const firstTime = storage.storePrepare(term, view, aPrepareMessage(sender1KeyManager, term, view, block));
+        const firstTime = storage.storePrepare(aPrepareMessage(sender1KeyManager, term, view, block));
         expect(firstTime).to.be.true;
-        const secondstime = storage.storePrepare(term, view, aPrepareMessage(sender2KeyManager, term, view, block));
+        const secondstime = storage.storePrepare(aPrepareMessage(sender2KeyManager, term, view, block));
         expect(secondstime).to.be.true;
-        const thirdTime = storage.storePrepare(term, view, aPrepareMessage(sender2KeyManager, term, view, block));
+        const thirdTime = storage.storePrepare(aPrepareMessage(sender2KeyManager, term, view, block));
         expect(thirdTime).to.be.false;
     });
 
@@ -89,11 +89,11 @@ describe("PBFT In Memory Storage", () => {
         const sender1KeyManager: KeyManager = new KeyManagerMock(senderId1);
         const sender2KeyManager: KeyManager = new KeyManagerMock(senderId2);
         const block = aBlock(theGenesisBlock);
-        const firstTime = storage.storeCommit(term, view, aCommitMessage(sender1KeyManager, term, view, block));
+        const firstTime = storage.storeCommit(aCommitMessage(sender1KeyManager, term, view, block));
         expect(firstTime).to.be.true;
-        const secondstime = storage.storeCommit(term, view, aCommitMessage(sender2KeyManager, term, view, block));
+        const secondstime = storage.storeCommit(aCommitMessage(sender2KeyManager, term, view, block));
         expect(secondstime).to.be.true;
-        const thirdTime = storage.storeCommit(term, view, aCommitMessage(sender2KeyManager, term, view, block));
+        const thirdTime = storage.storeCommit(aCommitMessage(sender2KeyManager, term, view, block));
         expect(thirdTime).to.be.false;
     });
 
@@ -105,11 +105,11 @@ describe("PBFT In Memory Storage", () => {
         const senderId2 = Math.floor(Math.random() * 1000).toString();
         const sender1KeyManager: KeyManager = new KeyManagerMock(senderId1);
         const sender2KeyManager: KeyManager = new KeyManagerMock(senderId2);
-        const firstTime = storage.storeViewChange(term, view, aViewChangeMessage(sender1KeyManager, term, view));
+        const firstTime = storage.storeViewChange(aViewChangeMessage(sender1KeyManager, term, view));
         expect(firstTime).to.be.true;
-        const secondstime = storage.storeViewChange(term, view, aViewChangeMessage(sender2KeyManager, term, view));
+        const secondstime = storage.storeViewChange(aViewChangeMessage(sender2KeyManager, term, view));
         expect(secondstime).to.be.true;
-        const thirdTime = storage.storeViewChange(term, view, aViewChangeMessage(sender2KeyManager, term, view));
+        const thirdTime = storage.storeViewChange(aViewChangeMessage(sender2KeyManager, term, view));
         expect(thirdTime).to.be.false;
     });
 
@@ -128,11 +128,11 @@ describe("PBFT In Memory Storage", () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
         const block1Hash = calculateBlockHash(block1);
-        storage.storePrepare(term1, view1, aPrepareMessage(keyManager1, term1, view1, block1));
-        storage.storePrepare(term1, view1, aPrepareMessage(keyManager2, term1, view1, block1));
-        storage.storePrepare(term1, view1, aPrepareMessage(keyManager2, term1, view1, block2));
-        storage.storePrepare(term1, view2, aPrepareMessage(keyManager3, term1, view2, block1));
-        storage.storePrepare(term2, view1, aPrepareMessage(keyManager3, term2, view1, block2));
+        storage.storePrepare(aPrepareMessage(keyManager1, term1, view1, block1));
+        storage.storePrepare(aPrepareMessage(keyManager2, term1, view1, block1));
+        storage.storePrepare(aPrepareMessage(keyManager2, term1, view1, block2));
+        storage.storePrepare(aPrepareMessage(keyManager3, term1, view2, block1));
+        storage.storePrepare(aPrepareMessage(keyManager3, term2, view1, block2));
         const actual = storage.getPrepareSendersPks(term1, view1, block1Hash);
         const expected = [sender1Id, sender2Id];
         expect(actual).to.deep.equal(expected);
@@ -153,10 +153,10 @@ describe("PBFT In Memory Storage", () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
         const block1Hash = calculateBlockHash(block1);
-        storage.storeCommit(term1, view1, aCommitMessage(keyManager1, term1, view1, block1));
-        storage.storeCommit(term1, view1, aCommitMessage(keyManager2, term1, view1, block1));
-        storage.storeCommit(term1, view2, aCommitMessage(keyManager3, term1, view2, block1));
-        storage.storeCommit(term2, view1, aCommitMessage(keyManager3, term2, view1, block2));
+        storage.storeCommit(aCommitMessage(keyManager1, term1, view1, block1));
+        storage.storeCommit(aCommitMessage(keyManager2, term1, view1, block1));
+        storage.storeCommit(aCommitMessage(keyManager3, term1, view2, block1));
+        storage.storeCommit(aCommitMessage(keyManager3, term2, view1, block2));
         const actual = storage.getCommitSendersPks(term1, view1, block1Hash);
         const expected = [sender1Id, sender2Id];
         expect(actual).to.deep.equal(expected);
@@ -175,10 +175,10 @@ describe("PBFT In Memory Storage", () => {
                 const sender1KeyManager: KeyManager = new KeyManagerMock(sender1Id);
                 const sender2KeyManager: KeyManager = new KeyManagerMock(sender2Id);
                 const sender3KeyManager: KeyManager = new KeyManagerMock(sender3Id);
-                storage.storeViewChange(term1, view1, aViewChangeMessage(sender1KeyManager, term1, view1));
-                storage.storeViewChange(term1, view1, aViewChangeMessage(sender2KeyManager, term1, view1));
-                storage.storeViewChange(term1, view1, aViewChangeMessage(sender3KeyManager, term1, view1));
-                storage.storeViewChange(term2, view1, aViewChangeMessage(sender3KeyManager, term2, view1));
+                storage.storeViewChange(aViewChangeMessage(sender1KeyManager, term1, view1));
+                storage.storeViewChange(aViewChangeMessage(sender2KeyManager, term1, view1));
+                storage.storeViewChange(aViewChangeMessage(sender3KeyManager, term1, view1));
+                storage.storeViewChange(aViewChangeMessage(sender3KeyManager, term2, view1));
                 const actual = storage.getViewChangeMessages(term1, view1, 1);
                 const expected = 1 * 2 + 1;
                 expect(actual.length).to.deep.equal(expected);
@@ -202,9 +202,9 @@ describe("PBFT In Memory Storage", () => {
 
             it("should return the prepare proof", () => {
                 const storage = new InMemoryPBFTStorage(logger);
-                storage.storePrePrepare(term, view, preprepareMessage);
-                storage.storePrepare(term, view, prepareMessage1);
-                storage.storePrepare(term, view, prepareMessage2);
+                storage.storePrePrepare(preprepareMessage);
+                storage.storePrepare(prepareMessage1);
+                storage.storePrepare(prepareMessage2);
 
                 const expectedProof: PreparedMessages = {
                     preprepareMessage,
@@ -228,17 +228,17 @@ describe("PBFT In Memory Storage", () => {
                 const prepareMessage30_1: PrepareMessage = aPrepareMessage(sender1KeyManager, 1, 30, block);
                 const prepareMessage30_2: PrepareMessage = aPrepareMessage(sender2KeyManager, 1, 30, block);
 
-                storage.storePrePrepare(1, 10, prePrepareMessage10);
-                storage.storePrepare(1, 10, prepareMessage10_1);
-                storage.storePrepare(1, 10, prepareMessage10_2);
+                storage.storePrePrepare(prePrepareMessage10);
+                storage.storePrepare(prepareMessage10_1);
+                storage.storePrepare(prepareMessage10_2);
 
-                storage.storePrePrepare(1, 30, prePrepareMessage30);
-                storage.storePrepare(1, 30, prepareMessage30_1);
-                storage.storePrepare(1, 30, prepareMessage30_2);
+                storage.storePrePrepare(prePrepareMessage30);
+                storage.storePrepare(prepareMessage30_1);
+                storage.storePrepare(prepareMessage30_2);
 
-                storage.storePrePrepare(1, 20, prePrepareMessage20);
-                storage.storePrepare(1, 20, prepareMessage20_1);
-                storage.storePrepare(1, 20, prepareMessage20_2);
+                storage.storePrePrepare(prePrepareMessage20);
+                storage.storePrepare(prepareMessage20_1);
+                storage.storePrepare(prepareMessage20_2);
 
                 const expected: PreparedMessages = {
                     preprepareMessage: prePrepareMessage30,
@@ -250,8 +250,8 @@ describe("PBFT In Memory Storage", () => {
 
             it("should return undefined if there was no PrePrepare", () => {
                 const storage = new InMemoryPBFTStorage(logger);
-                storage.storePrepare(term, view, prepareMessage1);
-                storage.storePrepare(term, view, prepareMessage2);
+                storage.storePrepare(prepareMessage1);
+                storage.storePrepare(prepareMessage2);
 
                 const actual: PreparedMessages = storage.getLatestPrepared(term, 1);
                 expect(actual).to.be.undefined;
@@ -259,7 +259,7 @@ describe("PBFT In Memory Storage", () => {
 
             it("should return undefined if there was no Prepares", () => {
                 const storage = new InMemoryPBFTStorage(logger);
-                storage.storePrePrepare(term, view, preprepareMessage);
+                storage.storePrePrepare(preprepareMessage);
 
                 const actual: PreparedMessages = storage.getLatestPrepared(term, 1);
                 expect(actual).to.be.undefined;
@@ -267,8 +267,8 @@ describe("PBFT In Memory Storage", () => {
 
             it("should return undefined where not enough Prepares", () => {
                 const storage = new InMemoryPBFTStorage(logger);
-                storage.storePrePrepare(term, view, preprepareMessage);
-                storage.storePrepare(term, view, prepareMessage1);
+                storage.storePrePrepare(preprepareMessage);
+                storage.storePrepare(prepareMessage1);
 
                 const actual: PreparedMessages = storage.getLatestPrepared(term, 3);
                 expect(actual).to.be.undefined;

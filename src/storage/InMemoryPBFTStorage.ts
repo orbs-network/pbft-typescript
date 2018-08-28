@@ -18,7 +18,8 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         this.viewChangeStorage = new Map();
     }
 
-    storePrePrepare(term: number, view: number, message: PrePrepareMessage): boolean {
+    storePrePrepare(message: PrePrepareMessage): boolean {
+        const { term, view } = message.content;
         let viewsMap = this.prePrepareStorage.get(term);
         if (!viewsMap) {
             viewsMap = new Map();
@@ -49,7 +50,8 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         }
     }
 
-    storePrepare(term: number, view: number, message: PrepareMessage): boolean {
+    storePrepare(message: PrepareMessage): boolean {
+        const { term, view } = message.content;
         let viewsMap = this.prepareStorage.get(term);
         if (!viewsMap) {
             viewsMap = new Map();
@@ -134,7 +136,8 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         }
     }
 
-    storeCommit(term: number, view: number, message: CommitMessage): boolean {
+    storeCommit(message: CommitMessage): boolean {
+        const { term, view } = message.content;
         let viewsMap = this.commitStorage.get(term);
         if (!viewsMap) {
             viewsMap = new Map();
@@ -195,7 +198,8 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         return [];
     }
 
-    storeViewChange(term: number, view: number, message: ViewChangeMessage): boolean {
+    storeViewChange(message: ViewChangeMessage): boolean {
+        const { term, view } = message.content;
         let viewsMap = this.viewChangeStorage.get(term);
         if (!viewsMap) {
             viewsMap = new Map();

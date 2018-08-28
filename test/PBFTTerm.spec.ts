@@ -554,9 +554,9 @@ describe("PBFTTerm", () => {
         const spy = sinon.spy(node1Config.networkCommunication, "sendViewChange");
 
         // get node1 to be prepared on the block
-        node1Config.pbftStorage.storePrePrepare(0, 0, aPrePrepareMessage(node0KeyManager, 0, 0, block));
-        node1Config.pbftStorage.storePrepare(0, 0, aPrepareMessage(node2KeyManager, 0, 0, block));
-        node1Config.pbftStorage.storePrepare(0, 0, aPrepareMessage(node3KeyManager, 0, 0, block));
+        node1Config.pbftStorage.storePrePrepare(aPrePrepareMessage(node0KeyManager, 0, 0, block));
+        node1Config.pbftStorage.storePrepare(aPrepareMessage(node2KeyManager, 0, 0, block));
+        node1Config.pbftStorage.storePrepare(aPrepareMessage(node3KeyManager, 0, 0, block));
         node1PbftTerm.onReceiveViewChange(aViewChangeMessage(node0KeyManager, 0, 1));
         node1PbftTerm.onReceiveViewChange(aViewChangeMessage(node2KeyManager, 0, 1));
         node1PbftTerm.onReceiveViewChange(aViewChangeMessage(node3KeyManager, 0, 1));
@@ -649,7 +649,7 @@ describe("PBFTTerm", () => {
             await nextTick();
             await node1BlockUtils.resolveAllValidations(true);
 
-            expect(storePrePrepareSpy.args[0][2].block.header.blockHash).to.equal(blockOnView4.header.blockHash);
+            expect(storePrePrepareSpy.args[0][0].block.header.blockHash).to.equal(blockOnView4.header.blockHash);
         });
 
         it("onNewView should reject a new-view if the offered (On PP) block is not the heighest block on the VCProof", async () => {
