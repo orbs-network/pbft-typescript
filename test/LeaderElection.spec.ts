@@ -2,7 +2,7 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
-import { NewViewMessage, PreparedProof, PrePrepareMessage, ViewChangeMessage, ViewChangeVote } from "../src/networkCommunication/Messages";
+import { NewViewMessage, PreparedProof, PrePrepareMessage, ViewChangeMessage, ViewChangeVote, MessageType } from "../src/networkCommunication/Messages";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNewViewMessage, aPrePrepareMessage, aViewChangeMessage, aPrepareMessage } from "./builders/MessagesBuilder";
 import { aPreparedProof, aPrepared } from "./builders/ProofBuilder";
@@ -250,12 +250,9 @@ describe("Leader Election", () => {
 
     it("should not fire new-view if count of view-change is less than 2f+1", async () => {
         const { testNetwork, blockUtils } = aSimpleTestNetwork();
-        const leader = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
-        const node2 = testNetwork.nodes[2];
-
         const gossip = testNetwork.getNodeGossip(node1.pk);
-        const broadcastSpy = sinon.spy(gossip, "broadcast");
+        const multicastSpy = sinon.spy(gossip, "multicast");
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
@@ -264,7 +261,8 @@ describe("Leader Election", () => {
         gossip.onRemoteMessage(aViewChangeMessage(node1.config.keyManager, 1, 1));
         await blockUtils.resolveAllValidations(true);
 
-        expect(broadcastSpy).to.not.have.been.called;
+        const newViewSent = multicastSpy.getCalls().find(c => c.args[1].content.messageType === MessageType.NEW_VIEW) !== undefined;
+        expect(newViewSent).to.be.false;
         testNetwork.shutDown();
     });
 
@@ -274,7 +272,7 @@ describe("Leader Election", () => {
         const node1 = testNetwork.nodes[1];
 
         const gossip = testNetwork.getNodeGossip(node1.pk);
-        const broadcastSpy = sinon.spy(gossip, "broadcast");
+        const multicastSpy = sinon.spy(gossip, "multicast");
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
@@ -284,7 +282,9 @@ describe("Leader Election", () => {
         gossip.onRemoteMessage(aViewChangeMessage(node1.config.keyManager, 1, 1));
         await blockUtils.resolveAllValidations(true);
 
-        expect(broadcastSpy).to.not.have.been.called;
+        const newViewSent = multicastSpy.getCalls().find(c => c.args[1].content.messageType === MessageType.NEW_VIEW) !== undefined;
+        expect(newViewSent).to.be.false;
+
         testNetwork.shutDown();
     });
 });

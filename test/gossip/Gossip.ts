@@ -52,11 +52,6 @@ export class Gossip {
         this.subscriptions.delete(subscriptionToken);
     }
 
-    broadcast(message: LeanHelixMessage): void {
-        const targetsIds = this.discovery.getAllGossipsPks();
-        targetsIds.forEach(targetId => this.unicast(targetId, message));
-    }
-
     multicast(targetsIds: string[], message: LeanHelixMessage): void {
         targetsIds.forEach(targetId => this.unicast(targetId, message));
     }

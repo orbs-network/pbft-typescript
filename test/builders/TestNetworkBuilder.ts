@@ -36,8 +36,6 @@ class TestNetworkBuilder {
     private testNetwork: TestNetwork;
 
     public countOfNodes: number = 0;
-    public and = this;
-    public a = this;
 
     public get thatLogsToConsole(): this {
         this.thatLogsToCustomeLogger(ConsoleLogger);

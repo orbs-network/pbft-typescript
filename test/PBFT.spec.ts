@@ -149,11 +149,12 @@ describe("PBFT", () => {
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
+        const pks = testNetwork.gossipDiscovery.getAllGossipsPks();
         const gossip = testNetwork.getNodeGossip(byzantineNode.pk);
-        gossip.broadcast(aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock));
-        gossip.broadcast(aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock));
-        gossip.broadcast(aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock));
-        gossip.broadcast(aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock));
+        gossip.multicast(pks, aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock));
+        gossip.multicast(pks, aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock));
+        gossip.multicast(pks, aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock));
+        gossip.multicast(pks, aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock));
 
         await nextTick();
         await blockUtils.provideNextBlock();

@@ -23,8 +23,6 @@ export class NodeBuilder {
     private blockUtils: BlockUtils;
     private logsToConsole: boolean = false;
 
-    public and = this;
-
     constructor() {
     }
 
