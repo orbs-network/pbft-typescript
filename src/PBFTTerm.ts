@@ -8,6 +8,7 @@ import { BlockMessageContent, CommitMessage, LeanHelixMessage, MessageType, NewV
 import { NetworkCommunication } from "./networkCommunication/NetworkCommunication";
 import { validatePreparedProof } from "./proofsValidator/ProofsValidator";
 import { PBFTStorage, PreparedMessages } from "./storage/PBFTStorage";
+import { MessagesFactory } from "./networkCommunication/MessagesFactory";
 
 export type onNewBlockCB = (block: Block) => void;
 
@@ -30,6 +31,7 @@ export class PBFTTerm {
     private readonly myPk: string;
     private readonly termMembersPKs: string[];
     private readonly otherMembersPKs: string[];
+    private readonly messagesFactory: MessagesFactory;
 
     private leaderPk: string;
     private view: number;
@@ -52,6 +54,8 @@ export class PBFTTerm {
         this.myPk = this.keyManager.getMyPublicKey();
         this.termMembersPKs = this.networkCommunication.getMembersPKs(term);
         this.otherMembersPKs = this.termMembersPKs.filter(pk => pk !== this.myPk);
+        this.messagesFactory = new MessagesFactory(this.blockUtils, this.keyManager);
+
         this.startTerm();
     }
 
@@ -74,7 +78,7 @@ export class PBFTTerm {
                 return;
             }
 
-            const message: PrePrepareMessage = this.buildPrePrepareMessage(this.term, this.view, block);
+            const message: PrePrepareMessage = this.messagesFactory.createPreprepareMessage(this.term, this.view, block);
             this.pbftStorage.storePrePrepare(message);
             this.sendPrePrepare(message);
         }
@@ -127,7 +131,8 @@ export class PBFTTerm {
         this.setView(this.view + 1);
         this.logger.log({ subject: "Flow", FlowType: "LeaderChange", leaderPk: this.leaderPk, term: this.term, newView: this.view });
 
-        const message: ViewChangeMessage = this.buildViewChangeMessage(this.term, this.view);
+        const prepared: PreparedMessages = this.pbftStorage.getLatestPrepared(this.term, this.getF());
+        const message: ViewChangeMessage = this.messagesFactory.createViewChangeMessage(this.term, this.view, prepared);
         this.pbftStorage.storeViewChange(message);
         if (this.isLeader()) {
             this.checkElected(this.term, this.view);
@@ -199,76 +204,6 @@ export class PBFTTerm {
         });
     }
 
-    private buildPrePrepareMessage(term: number, view: number, block: Block): PrePrepareMessage {
-        const blockHash: Buffer = this.blockUtils.calculateBlockHash(block);
-        const content: BlockMessageContent = { messageType: MessageType.PREPREPARE, term, view, blockHash };
-        const signaturePair: SignaturePair = {
-            signerPublicKey: this.myPk,
-            contentSignature: this.keyManager.sign(content)
-        };
-        return { signaturePair, content, block };
-    }
-
-    private buildPrepareMessage(term: number, view: number, blockHash: Buffer): PrepareMessage {
-        const content: BlockMessageContent = { messageType: MessageType.PREPARE, term, view, blockHash };
-        const signaturePair: SignaturePair = {
-            signerPublicKey: this.myPk,
-            contentSignature: this.keyManager.sign(content)
-        };
-        return { signaturePair, content };
-    }
-
-    private buildCommitMessage(term: number, view: number, blockHash: Buffer): CommitMessage {
-        const content: BlockMessageContent = { messageType: MessageType.COMMIT, term, view, blockHash };
-        const signaturePair: SignaturePair = {
-            signerPublicKey: this.myPk,
-            contentSignature: this.keyManager.sign(content)
-        };
-        return { signaturePair, content };
-    }
-
-    private generatePreparedProof(prepared: PreparedMessages): PreparedProof {
-        const { preprepareMessage, prepareMessages } = prepared;
-        return {
-            preprepareBlockRefMessage: { content: preprepareMessage.content, signaturePair: preprepareMessage.signaturePair },
-            prepareBlockRefMessages: prepareMessages
-        };
-    }
-
-    private buildViewChangeMessage(term: number, view: number): ViewChangeMessage {
-        const prepared: PreparedMessages = this.pbftStorage.getLatestPrepared(term, this.getF());
-        let preparedProof: PreparedProof;
-        let block: Block;
-        if (prepared) {
-            preparedProof = this.generatePreparedProof(prepared);
-            block = prepared.preprepareMessage.block;
-        }
-
-        const content: ViewChangeMessageContent = { messageType: MessageType.VIEW_CHANGE, term, view, preparedProof };
-        const signaturePair: SignaturePair = {
-            signerPublicKey: this.myPk,
-            contentSignature: this.keyManager.sign(content)
-        };
-        return {
-            content,
-            signaturePair,
-            block
-        };
-    }
-
-    private buildNewViewMessage(term: number, view: number, preprepareMessage: PrePrepareMessage, votes: ViewChangeVote[]): NewViewMessage {
-        const content: NewViewContent = { messageType: MessageType.NEW_VIEW, term, view, votes };
-        const signaturePair: SignaturePair = {
-            signerPublicKey: this.myPk,
-            contentSignature: this.keyManager.sign(content)
-        };
-        return {
-            content,
-            signaturePair,
-            preprepareMessage
-        };
-    }
-
     public async onReceivePrePrepare(message: PrePrepareMessage): Promise<void> {
         if (await this.validatePrePreapare(message)) {
             this.processPrePrepare(message);
@@ -282,7 +217,7 @@ export class PBFTTerm {
             return;
         }
 
-        const prepareMessage: PrepareMessage = this.buildPrepareMessage(term, view, blockHash);
+        const prepareMessage: PrepareMessage = this.messagesFactory.createPrepareMessage(term, view, blockHash);
         this.pbftStorage.storePrePrepare(preprepareMessage);
         this.pbftStorage.storePrepare(prepareMessage);
         this.sendPrepare(prepareMessage);
@@ -436,9 +371,9 @@ export class PBFTTerm {
             }
         }
 
-        const preprepareMessage: PrePrepareMessage = this.buildPrePrepareMessage(this.term, view, block);
+        const preprepareMessage: PrePrepareMessage = this.messagesFactory.createPreprepareMessage(this.term, view, block);
         const viewChangeVotes: ViewChangeVote[] = viewChangeMessages.map(vc => ({ content: vc.content, signaturePair: vc.signaturePair }));
-        const newViewMessage: NewViewMessage = this.buildNewViewMessage(this.term, view, preprepareMessage, viewChangeVotes);
+        const newViewMessage: NewViewMessage = this.messagesFactory.createNewViewMessage(this.term, view, preprepareMessage, viewChangeVotes);
         this.pbftStorage.storePrePrepare(preprepareMessage);
         this.sendNewView(newViewMessage);
     }
@@ -463,7 +398,7 @@ export class PBFTTerm {
 
     private onPrepared(term: number, view: number, blockHash: Buffer): void {
         this.preparedLocally = true;
-        const message: CommitMessage = this.buildCommitMessage(term, view, blockHash);
+        const message: CommitMessage = this.messagesFactory.createCommitMessage(term, view, blockHash);
         this.pbftStorage.storeCommit(message);
         this.sendCommit(message);
         this.checkCommitted(term, view, blockHash);
