@@ -192,7 +192,7 @@ describe("PBFT", () => {
         const block2 = aBlock(block1);
         const block3 = aBlock(block1);
         const block4 = aBlock(block3);
-        const { testNetwork, blockUtils, triggerElection } = aSimpleTestNetwork(4, [block1, block2, block3, block4]);
+        const { testNetwork, blockUtils } = aSimpleTestNetwork(4, [block1, block2, block3, block4]);
 
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -220,7 +220,8 @@ describe("PBFT", () => {
         await blockUtils.provideNextBlock();
         await nextTick(); // await for notifyCommitted
 
-        triggerElection(); // force leader election before the block was verified, goes to block 3
+        // force leader election before the block was verified, goes to block 3
+        node0.triggerElection(); node2.triggerElection(); node3.triggerElection();
         expect(node0.isLeader()).to.be.false;
         expect(node1.isLeader()).to.be.true;
         expect(node2.isLeader()).to.be.false;

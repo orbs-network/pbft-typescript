@@ -1,6 +1,6 @@
 import { BlockUtils, NetworkCommunication } from "../../src";
 import { Config } from "../../src/Config";
-import { ElectionTriggerFactory } from "../../src/electionTrigger/ElectionTrigger";
+import { ElectionTrigger } from "../../src/electionTrigger/ElectionTrigger";
 import { KeyManager } from "../../src/keyManager/KeyManager";
 import { Logger } from "../../src/logger/Logger";
 import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
@@ -19,7 +19,7 @@ export class NodeBuilder {
     private publicKey: string;
     private pbftStorage: PBFTStorage;
     private logger: Logger;
-    private electionTriggerFactory: ElectionTriggerFactory;
+    private electionTrigger: ElectionTrigger;
     private blockUtils: BlockUtils;
     private logsToConsole: boolean = false;
 
@@ -61,9 +61,9 @@ export class NodeBuilder {
         return this;
     }
 
-    public electingLeaderUsing(electionTriggerFactory: ElectionTriggerFactory): this {
-        if (!this.electionTriggerFactory) {
-            this.electionTriggerFactory = electionTriggerFactory;
+    public electingLeaderUsing(electionTrigger: ElectionTrigger): this {
+        if (!this.electionTrigger) {
+            this.electionTrigger = electionTrigger;
         }
         return this;
     }
@@ -78,7 +78,7 @@ export class NodeBuilder {
     }
 
     private buildConfig(): Config {
-        const electionTriggerFactory: ElectionTriggerFactory = this.electionTriggerFactory ? this.electionTriggerFactory : () => new ElectionTriggerMock();
+        const electionTrigger: ElectionTrigger = this.electionTrigger ? this.electionTrigger : new ElectionTriggerMock();
         const blockUtils: BlockUtils = this.blockUtils ? this.blockUtils : new BlockUtilsMock();
         const keyManager: KeyManager = new KeyManagerMock(this.publicKey);
         const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(keyManager.getMyPublicKey()) : new SilentLogger();
@@ -88,7 +88,7 @@ export class NodeBuilder {
             networkCommunication: this.networkCommunication,
             logger,
             pbftStorage,
-            electionTriggerFactory,
+            electionTrigger,
             blockUtils,
             keyManager
         };

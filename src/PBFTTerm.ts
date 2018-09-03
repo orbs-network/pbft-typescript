@@ -1,7 +1,7 @@
 import { Block } from "./Block";
 import { getLatestBlockFromViewChangeMessages } from "./blockExtractor/BlockExtractor";
 import { BlockUtils } from "./blockUtils/BlockUtils";
-import { ElectionTrigger, ElectionTriggerFactory } from "./electionTrigger/ElectionTrigger";
+import { ElectionTrigger } from "./electionTrigger/ElectionTrigger";
 import { KeyManager } from "./keyManager/KeyManager";
 import { Logger } from "./logger/Logger";
 import { BlockMessageContent, CommitMessage, LeanHelixMessage, MessageType, NewViewContent, NewViewMessage, PreparedProof, PrepareMessage, PrePrepareMessage, SignaturePair, ViewChangeMessage, ViewChangeMessageContent, ViewChangeVote } from "./networkCommunication/Messages";
@@ -13,7 +13,7 @@ import { MessagesFactory } from "./networkCommunication/MessagesFactory";
 export type onNewBlockCB = (block: Block) => void;
 
 export interface TermConfig {
-    electionTriggerFactory: ElectionTriggerFactory;
+    electionTrigger: ElectionTrigger;
     networkCommunication: NetworkCommunication;
     pbftStorage: PBFTStorage;
     keyManager: KeyManager;
@@ -22,7 +22,7 @@ export interface TermConfig {
 }
 
 export class PBFTTerm {
-    private readonly electionTriggerFactory: ElectionTriggerFactory;
+    private readonly electionTrigger: ElectionTrigger;
     private readonly networkCommunication: NetworkCommunication;
     private readonly blockUtils: BlockUtils;
     private readonly pbftStorage: PBFTStorage;
@@ -36,7 +36,6 @@ export class PBFTTerm {
     private leaderPk: string;
     private view: number;
     private newViewLocally: number = -1;
-    private electionTrigger: ElectionTrigger;
     private disposed: boolean = false;
     private preparedLocally: boolean = false;
     private committedLocally: boolean = false;
@@ -48,13 +47,14 @@ export class PBFTTerm {
         this.networkCommunication = config.networkCommunication;
         this.pbftStorage = config.pbftStorage;
         this.logger = config.logger;
-        this.electionTriggerFactory = config.electionTriggerFactory;
+        this.electionTrigger = config.electionTrigger;
         this.blockUtils = config.blockUtils;
 
         this.myPk = this.keyManager.getMyPublicKey();
         this.termMembersPKs = this.networkCommunication.getMembersPKs(term);
         this.otherMembersPKs = this.termMembersPKs.filter(pk => pk !== this.myPk);
         this.messagesFactory = new MessagesFactory(this.blockUtils.calculateBlockHash, this.keyManager);
+        this.electionTrigger.registerOnTrigger(view => this.onLeaderChange(view));
 
         this.startTerm();
     }
@@ -98,28 +98,13 @@ export class PBFTTerm {
         this.preparedLocally = false;
         this.view = view;
         this.leaderPk = this.calcLeaderPk(this.view);
-        this.startElectionTrigger(view);
-    }
-
-    private stopElectionTrigger(): void {
-        if (this.electionTrigger) {
-            this.electionTrigger.stop();
-            this.electionTrigger = undefined;
-        }
-    }
-
-    private startElectionTrigger(view: number) {
-        this.stopElectionTrigger();
-        if (!this.electionTrigger) {
-            this.electionTrigger = this.electionTriggerFactory(view);
-            this.electionTrigger.start(() => this.onLeaderChange());
-        }
+        this.electionTrigger.setView(view);
     }
 
     public dispose(): void {
         this.pbftStorage.clearTermLogs(this.term);
         this.disposed = true;
-        this.stopElectionTrigger();
+        this.electionTrigger.unregisterOnTrigger();
     }
 
     private calcLeaderPk(view: number): string {
@@ -127,7 +112,10 @@ export class PBFTTerm {
         return this.termMembersPKs[index];
     }
 
-    private onLeaderChange(): void {
+    private onLeaderChange(view: number): void {
+        if (view !== this.view) {
+            return;
+        }
         this.setView(this.view + 1);
         this.logger.log({ subject: "Flow", FlowType: "LeaderChange", leaderPk: this.leaderPk, term: this.term, newView: this.view });
 
@@ -562,7 +550,7 @@ export class PBFTTerm {
     private commitBlock(block: Block, blockHash: Buffer): void {
         this.committedLocally = true;
         this.logger.log({ subject: "Flow", FlowType: "Commit", term: this.term, view: this.view, blockHash: blockHash.toString("Hex") });
-        this.stopElectionTrigger();
+        this.electionTrigger.unregisterOnTrigger();
         this.onCommittedBlock(block);
     }
 }

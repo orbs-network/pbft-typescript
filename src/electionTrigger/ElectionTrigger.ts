@@ -1,6 +1,5 @@
 export interface ElectionTrigger {
-    start(cb: () => void): void;
-    stop(): void;
+    setView(view: number): void;
+    registerOnTrigger(cb: (view: number) => void): void;
+    unregisterOnTrigger(): void;
 }
-
-export type ElectionTriggerFactory = (view: number) => ElectionTrigger;

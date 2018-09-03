@@ -1,27 +1,31 @@
 import { ElectionTrigger } from "./ElectionTrigger";
 
 export class TimerBasedElectionTrigger implements ElectionTrigger {
-    private cb: () => void;
+    private view: number = undefined;
+    private cb: (view: number) => void;
     private electionTimer: NodeJS.Timer;
 
-    constructor(private timeout: number) {
+    constructor(private minTimeout: number) {
     }
 
-    public start(cb: () => void): void {
+    public registerOnTrigger(cb: (view: number) => void): void {
         this.cb = cb;
-        this.startElectionTimer();
     }
 
-    public stop(): void {
+    public unregisterOnTrigger(): void {
         this.cb = undefined;
-        this.stopElectionTimer();
+        this.stop();
     }
 
-    private startElectionTimer(): void {
-        this.electionTimer = setInterval(() => this.onTimeout(), this.timeout);
+    public setView(view: number): void {
+        if (this.view !== view) {
+            this.view = view;
+            this.stop();
+            this.electionTimer = setInterval(() => this.onTimeout(), 2 ** view * this.minTimeout);
+        }
     }
 
-    private stopElectionTimer(): void {
+    private stop(): void {
         if (this.electionTimer) {
             clearTimeout(this.electionTimer);
             this.electionTimer = undefined;
@@ -30,7 +34,7 @@ export class TimerBasedElectionTrigger implements ElectionTrigger {
 
     private onTimeout(): void {
         if (this.cb) {
-            this.cb();
+            this.cb(this.view);
         }
     }
 }

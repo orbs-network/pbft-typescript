@@ -14,27 +14,29 @@ chai.use(sinonChai);
 
 describe("Leader Election", () => {
     it("should notify the next leader when the timeout expired", async () => {
-        const { testNetwork, blockUtils, triggerElection } = aSimpleTestNetwork(5);
+        const { testNetwork, blockUtils } = aSimpleTestNetwork();
 
-        const testedNode = testNetwork.nodes[4];
-        const nextLeader = testNetwork.nodes[1];
-        const gossip = testNetwork.getNodeGossip(testedNode.pk);
+        const node0 = testNetwork.nodes[0];
+        const node1 = testNetwork.nodes[1];
+        const node2 = testNetwork.nodes[2];
+        const node3 = testNetwork.nodes[3];
+        const gossip = testNetwork.getNodeGossip(node0.pk);
         const unicastSpy = sinon.spy(gossip, "unicast");
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
         await blockUtils.provideNextBlock();
-        triggerElection();
+        node0.triggerElection(); node2.triggerElection(); node3.triggerElection();
         await blockUtils.resolveAllValidations(true);
 
-        const node0Prepared: PreparedMessages = testedNode.config.pbftStorage.getLatestPrepared(1, 1);
-        expect(unicastSpy).to.have.been.calledWith(nextLeader.pk, aViewChangeMessage(testedNode.config.keyManager, 1, 1, node0Prepared));
+        const node0Prepared: PreparedMessages = node0.config.pbftStorage.getLatestPrepared(1, 1);
+        expect(unicastSpy).to.have.been.calledWith(node1.pk, aViewChangeMessage(node0.config.keyManager, 1, 1, node0Prepared));
 
         testNetwork.shutDown();
     });
 
     it("should cycle back to the first node on view-change", async () => {
-        const { testNetwork, blockUtils, triggerElection } = aSimpleTestNetwork();
+        const { testNetwork, blockUtils } = aSimpleTestNetwork();
 
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -51,28 +53,28 @@ describe("Leader Election", () => {
         expect(node3.isLeader()).to.be.false;
 
         // elect node 1 => view 1
-        triggerElection();
+        node0.triggerElection(); node2.triggerElection(); node3.triggerElection();
         expect(node0.isLeader()).to.be.false;
         expect(node1.isLeader()).to.be.true;
         expect(node2.isLeader()).to.be.false;
         expect(node3.isLeader()).to.be.false;
 
         // elect node 2 => view 2
-        triggerElection();
+        node0.triggerElection(); node1.triggerElection(); node3.triggerElection();
         expect(node0.isLeader()).to.be.false;
         expect(node1.isLeader()).to.be.false;
         expect(node2.isLeader()).to.be.true;
         expect(node3.isLeader()).to.be.false;
 
         // elect node 3 => view 3
-        triggerElection();
+        node0.triggerElection(); node1.triggerElection(); node2.triggerElection();
         expect(node0.isLeader()).to.be.false;
         expect(node1.isLeader()).to.be.false;
         expect(node2.isLeader()).to.be.false;
         expect(node3.isLeader()).to.be.true;
 
         // back to elect node 0 => view 4
-        triggerElection();
+        node1.triggerElection(); node2.triggerElection(); node3.triggerElection();
         expect(node0.isLeader()).to.be.true;
         expect(node1.isLeader()).to.be.false;
         expect(node2.isLeader()).to.be.false;
@@ -164,7 +166,11 @@ describe("Leader Election", () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(block1);
         const block3 = aBlock(block1);
-        const { testNetwork, blockUtils, triggerElection } = aSimpleTestNetwork(4, [block1, block2, block3]);
+        const { testNetwork, blockUtils } = aSimpleTestNetwork(4, [block1, block2, block3]);
+        const node0 = testNetwork.nodes[0];
+        const node1 = testNetwork.nodes[1];
+        const node2 = testNetwork.nodes[2];
+        const node3 = testNetwork.nodes[3];
 
         // block1
         testNetwork.startConsensusOnAllNodes();
@@ -178,7 +184,12 @@ describe("Leader Election", () => {
         // starting block2
         await blockUtils.provideNextBlock();
         await nextTick();
-        triggerElection(); // triggeting election before block2 was accepted, this will cause block3 to be accepted
+
+        // triggeting election before block2 was accepted, this will cause block3 to be accepted
+        node0.triggerElection();
+        node1.triggerElection();
+        node2.triggerElection();
+        node3.triggerElection();
         await blockUtils.resolveAllValidations(true);
         await nextTick();
 
@@ -196,7 +207,7 @@ describe("Leader Election", () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(block1);
         const block3 = aBlock(block1);
-        const { testNetwork, blockUtils, triggerElection } = aSimpleTestNetwork(4, [block1, block2, block3]);
+        const { testNetwork, blockUtils } = aSimpleTestNetwork(4, [block1, block2, block3]);
 
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -224,7 +235,11 @@ describe("Leader Election", () => {
         const spy2 = sinon.spy(gossip2, "unicast");
 
         await blockUtils.provideNextBlock();
-        triggerElection();
+        node0.triggerElection();
+        node1.triggerElection();
+        node2.triggerElection();
+        node3.triggerElection();
+
         await nextTick();
         await blockUtils.resolveAllValidations(true);
         await nextTick(); // await for blockStorage.getLastBlockHash

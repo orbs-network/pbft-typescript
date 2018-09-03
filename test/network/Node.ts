@@ -2,6 +2,7 @@ import { Config } from "../../src";
 import { Block } from "../../src/Block";
 import { PBFT } from "../../src/PBFT";
 import { InMemoryBlockStorage } from "../blockStorage/InMemoryBlockStorage";
+import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
 
 export class Node {
     private pbft: PBFT;
@@ -17,6 +18,10 @@ export class Node {
 
     public isLeader(): boolean {
         return this.pbft.isLeader();
+    }
+
+    public triggerElection(): void {
+        (this.config.electionTrigger as ElectionTriggerMock).trigger();
     }
 
     public onNewBlock(block: Block): void {

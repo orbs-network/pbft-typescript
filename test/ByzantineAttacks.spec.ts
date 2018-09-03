@@ -13,7 +13,7 @@ describe("Byzantine Attacks", () => {
     it("Block validation is completed after new election, old validation should be ignored", async () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
-        const { testNetwork, blockUtils, triggerElection } = aSimpleTestNetwork(4, [block1, block2]);
+        const { testNetwork, blockUtils } = aSimpleTestNetwork(4, [block1, block2]);
 
         const leader = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -27,7 +27,9 @@ describe("Byzantine Attacks", () => {
         await blockUtils.provideNextBlock();
         await nextTick();
 
-        triggerElection();
+        node1.triggerElection();
+        node2.triggerElection();
+        node3.triggerElection();
 
         await nextTick();
         await blockUtils.provideNextBlock();
@@ -81,7 +83,7 @@ describe("Byzantine Attacks", () => {
 
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
-        const { testNetwork, blockUtils, triggerElection } = aSimpleTestNetwork(4, [block1, block2]);
+        const { testNetwork, blockUtils } = aSimpleTestNetwork(4, [block1, block2]);
 
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -115,8 +117,10 @@ describe("Byzantine Attacks", () => {
         gossip3.clearOutGoingWhiteListPKs();
         gossip3.setIncomingWhiteListPKs([]);
 
-        // elect node2 as the leader
-        triggerElection();
+        // elect node1 as the leader
+        node0.triggerElection();
+        node2.triggerElection();
+        node3.triggerElection();
         await blockUtils.resolveAllValidations(true);
 
         await blockUtils.provideNextBlock();

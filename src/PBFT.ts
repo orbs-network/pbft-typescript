@@ -21,7 +21,7 @@ export class PBFT {
 
     public static buildTermConfig(config: Config): TermConfig {
         return {
-            electionTriggerFactory: config.electionTriggerFactory,
+            electionTrigger: config.electionTrigger,
             networkCommunication: config.networkCommunication,
             pbftStorage: config.pbftStorage || new InMemoryPBFTStorage(config.logger),
             keyManager: config.keyManager,

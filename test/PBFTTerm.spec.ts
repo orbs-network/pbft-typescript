@@ -47,7 +47,12 @@ describe("PBFTTerm", () => {
         const testNetworkData = aSimpleTestNetwork(4);
 
         testNetwork = testNetworkData.testNetwork;
-        triggerElection = testNetworkData.triggerElection;
+        triggerElection = () => {
+            node0.triggerElection();
+            node1.triggerElection();
+            node2.triggerElection();
+            node3.triggerElection();
+        };
         node0 = testNetwork.nodes[0];
         node1 = testNetwork.nodes[1];
         node2 = testNetwork.nodes[2];

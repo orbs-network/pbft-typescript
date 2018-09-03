@@ -1,7 +1,8 @@
 import { BlockUtils } from "../../src";
 import { Block } from "../../src/Block";
-import { ElectionTriggerFactory } from "../../src/electionTrigger/ElectionTrigger";
+import { ElectionTrigger } from "../../src/electionTrigger/ElectionTrigger";
 import { Logger } from "../../src/logger/Logger";
+import { SocketsLogger } from "../../src/logger/SocketsLogger";
 import { BlockUtilsMock } from "../blockUtils/BlockUtilsMock";
 import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
 import { Gossip } from "../gossip/Gossip";
@@ -13,7 +14,6 @@ import { TestNetwork } from "../network/TestNetwork";
 import { InMemoryNetworkCommunicaiton } from "../networkCommunication/InMemoryNetworkCommunicaiton";
 import { aBlock, theGenesisBlock } from "./BlockBuilder";
 import { aNode, NodeBuilder } from "./NodeBuilder";
-import { SocketsLogger } from "../../src/logger/SocketsLogger";
 export interface LoggerConstructor {
     new (id: string): Logger;
 }
@@ -30,7 +30,7 @@ export class With {
 class TestNetworkBuilder {
     private loggerCtor: LoggerConstructor = SilentLogger;
     private customNodes: NodeBuilder[] = [];
-    private electionTriggerFactory: ElectionTriggerFactory;
+    private electionTriggerFactory: () => ElectionTrigger;
     private blockUtils: BlockUtils;
     private blocksPool: Block[];
     private testNetwork: TestNetwork;
@@ -47,7 +47,7 @@ class TestNetworkBuilder {
         return this;
     }
 
-    public electingLeaderUsing(electionTriggerFactory: ElectionTriggerFactory): this {
+    public electingLeaderUsing(electionTriggerFactory: () => ElectionTrigger): this {
         this.electionTriggerFactory = electionTriggerFactory;
         return this;
     }
@@ -82,7 +82,7 @@ class TestNetworkBuilder {
 
     private buildNode(builder: NodeBuilder, pk: string, discovery: GossipDiscovery): Node {
         const logger: Logger = new this.loggerCtor(pk);
-        const electionTriggerFactory: ElectionTriggerFactory = this.electionTriggerFactory ? this.electionTriggerFactory : () => new ElectionTriggerMock();
+        const electionTrigger: ElectionTrigger = this.electionTriggerFactory ? this.electionTriggerFactory() : new ElectionTriggerMock();
         const blockUtils: BlockUtils = this.blockUtils ? this.blockUtils : new BlockUtilsMock();
         const gossip = new Gossip(discovery);
         discovery.registerGossip(pk, gossip);
@@ -90,7 +90,7 @@ class TestNetworkBuilder {
         return builder
             .thatIsPartOf(networkCommunication)
             .gettingBlocksVia(blockUtils)
-            .electingLeaderUsing(electionTriggerFactory)
+            .electingLeaderUsing(electionTrigger)
             .withPk(pk)
             .thatLogsTo(logger)
             .build();
@@ -117,16 +117,8 @@ export const aSimpleTestNetwork = (countOfNodes: number = 4, blocksPool?: Block[
     const block3 = aBlock(block2);
     const block4 = aBlock(block3);
     blocksPool = blocksPool || [block1, block2, block3, block4];
-    const electionTriggers: ElectionTriggerMock[] = [];
-    const electionTriggerFactory = () => {
-        const t = new ElectionTriggerMock();
-        electionTriggers.push(t);
-        return t;
-    };
-    const triggerElection = () => electionTriggers.map(e => e.trigger());
     const blockUtils = new BlockUtilsMock(blocksPool);
     const testNetwork = aTestNetwork()
-        .electingLeaderUsing(electionTriggerFactory)
         .gettingBlocksVia(blockUtils)
         .thatLogsToCustomeLogger(SocketsLogger)
         .with(countOfNodes).nodes
@@ -135,7 +127,6 @@ export const aSimpleTestNetwork = (countOfNodes: number = 4, blocksPool?: Block[
     return {
         testNetwork,
         blockUtils,
-        blocksPool,
-        triggerElection
+        blocksPool
     };
 };

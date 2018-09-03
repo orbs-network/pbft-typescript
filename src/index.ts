@@ -1,7 +1,7 @@
 export { BlockUtils } from "./blockUtils/BlockUtils";
 export { Config } from "./Config";
 export { TimerBasedElectionTrigger } from "./electionTrigger/TimerBasedElectionTrigger";
-export { ElectionTrigger, ElectionTriggerFactory } from "./electionTrigger/ElectionTrigger";
+export { ElectionTrigger } from "./electionTrigger/ElectionTrigger";
 export { NetworkCommunication } from "./networkCommunication/NetworkCommunication";
 export { Logger, LogTypes  } from "./logger/Logger";
 export { SocketsLogger  } from "./logger/SocketsLogger";
