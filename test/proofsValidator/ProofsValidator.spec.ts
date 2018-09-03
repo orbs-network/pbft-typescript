@@ -16,7 +16,6 @@ describe("Proofs Validator", () => {
     const leaderKeyManager: KeyManager = new KeyManagerMock("Leader PK");
     const node1KeyManager: KeyManager = new KeyManagerMock("Node 1");
     const node2KeyManager: KeyManager = new KeyManagerMock("Node 2");
-    const node3KeyManager: KeyManager = new KeyManagerMock("Node 3");
     const membersPKs: string[] = ["Leader PK", "Node 1", "Node 2", "Node 3"];
 
     const f = Math.floor(4 / 3);
@@ -73,12 +72,6 @@ describe("Proofs Validator", () => {
         expect(actual).to.be.false;
     });
 
-    it("should reject a proof that does not hold a block in the preprepare", async () => {
-        const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1]);
-        const actual = validatePreparedProof(targetTerm, targetView, prepareProof, f, keyManager, membersPKs, calcLeaderPk);
-        expect(actual).to.be.false;
-    });
-
     it("should reject a proof with mismatching targetTerm", async () => {
         const actual = validatePreparedProof(666, targetView, prepareProof, f, keyManager, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
@@ -115,18 +108,12 @@ describe("Proofs Validator", () => {
     });
 
     it("should reject a proof with a mismatching view to leader", async () => {
-        // Node 2 is the leader here, but it's sending view 0, which is indicating Node 1 as the leader
-        const preprepareMessage = aPrePrepareMessage(leaderKeyManager, term, view, block);
-        const prepareMessage1 = aPrepareMessage(node1KeyManager, term, view, block);
-        const prepareMessage2 = aPrepareMessage(node3KeyManager, term, view, block);
-        const calcLeaderPk = (view: number) => ["Node 1", "Node 2", "Node 3", "Node 4"][view];
-
-        const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1, prepareMessage2]);
+        const calcLeaderPk = (view: number) => "Some other node PK";
         const actual = validatePreparedProof(targetTerm, targetView, prepareProof, f, keyManager, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
 
-    it("should reject a proof that has a prepare that did not match the preprepare view or term", async () => {
+    it("should reject a proof that has a prepare that did not match the preprepare view, term or blackhash", async () => {
         // Good proof //
         const term = 5;
         const view = 0;
@@ -172,21 +159,6 @@ describe("Proofs Validator", () => {
             ]);
         const actualBadBlockHash = validatePreparedProof(targetTerm, targetView, badBlockHashPrepareProof, f, keyManager, membersPKs, calcLeaderPk);
         expect(actualBadBlockHash).to.be.false;
-    });
-
-    it("should reject a proof that given block (in the preprepare) doesn't match the blockHash in the messages", async () => {
-        const preprepareMessage: PrePrepareMessage = aPrePrepareMessage(leaderKeyManager, term, view, block);
-        const prepareMessage1: PrepareMessage = aPrepareMessage(leaderKeyManager, term, view, block);
-        const prepareMessage2: PrepareMessage = aPrepareMessage(leaderKeyManager, term, view, block);
-        const mismatchingBlockHash = calculateBlockHash(theGenesisBlock);
-
-        preprepareMessage.content.blockHash = mismatchingBlockHash;
-        prepareMessage1.content.blockHash = mismatchingBlockHash;
-        prepareMessage2.content.blockHash = mismatchingBlockHash;
-
-        const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1, prepareMessage2]);
-        const actual = validatePreparedProof(targetTerm, targetView, prepareProof, f, keyManager, membersPKs, calcLeaderPk);
-        expect(actual).to.be.false;
     });
 
     it("should reject a proof that with duplicate prepare sender PKs", async () => {
