@@ -1,23 +1,22 @@
 import * as chai from "chai";
-import * as sinonChai from "sinon-chai";
 import { expect } from "chai";
+import * as sinonChai from "sinon-chai";
+import { KeyManager } from "../../src";
+import { BlockMessageContent, CommitMessage, MessageType, NewViewContent, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage, ViewChangeMessageContent, ViewChangeVote } from "../../src/networkCommunication/Messages";
 import { MessagesFactory } from "../../src/networkCommunication/MessagesFactory";
-import { BlockUtils, KeyManager } from "../../src";
-import { BlockUtilsMock } from "../blockUtils/BlockUtilsMock";
-import { KeyManagerMock } from "../keyManager/KeyManagerMock";
-import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
-import { PrePrepareMessage, MessageType, BlockMessageContent, PrepareMessage, CommitMessage, ViewChangeMessage, ViewChangeMessageContent, PreparedProof, ViewChangeVote, NewViewMessage, NewViewContent } from "../../src/networkCommunication/Messages";
 import { PreparedMessages } from "../../src/storage/PBFTStorage";
+import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
+import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
+import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 chai.use(sinonChai);
 
 describe("Messages Factory", () => {
-    const blockUtils: BlockUtils = new BlockUtilsMock();
     const keyManager: KeyManager = new KeyManagerMock("My PK");
     const term = Math.floor(Math.random() * 1_000_000);
     const view = Math.floor(Math.random() * 1_000_000);
     const block = aBlock(theGenesisBlock);
-    const blockHash = blockUtils.calculateBlockHash(block);
-    const messagesFactory: MessagesFactory = new MessagesFactory(blockUtils, keyManager);
+    const blockHash = calculateBlockHash(block);
+    const messagesFactory: MessagesFactory = new MessagesFactory(calculateBlockHash, keyManager);
 
     it("should be able to construct a PrePrepare message", async () => {
         const content: BlockMessageContent = { messageType: MessageType.PREPREPARE, term, view, blockHash };

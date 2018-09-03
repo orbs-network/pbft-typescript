@@ -54,7 +54,7 @@ export class PBFTTerm {
         this.myPk = this.keyManager.getMyPublicKey();
         this.termMembersPKs = this.networkCommunication.getMembersPKs(term);
         this.otherMembersPKs = this.termMembersPKs.filter(pk => pk !== this.myPk);
-        this.messagesFactory = new MessagesFactory(this.blockUtils, this.keyManager);
+        this.messagesFactory = new MessagesFactory(this.blockUtils.calculateBlockHash, this.keyManager);
 
         this.startTerm();
     }
