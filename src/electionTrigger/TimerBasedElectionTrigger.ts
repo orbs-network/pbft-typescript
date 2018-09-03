@@ -24,6 +24,7 @@ export class TimerBasedElectionTrigger implements ElectionTrigger {
     private stopElectionTimer(): void {
         if (this.electionTimer) {
             clearTimeout(this.electionTimer);
+            this.electionTimer = undefined;
         }
     }
 
