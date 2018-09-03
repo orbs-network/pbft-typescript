@@ -218,7 +218,7 @@ export class PBFTTerm {
         return { signaturePair, content };
     }
 
-    private buildCommitMessage(term: number, view: number, blockHash: Buffer): PrepareMessage {
+    private buildCommitMessage(term: number, view: number, blockHash: Buffer): CommitMessage {
         const content: BlockMessageContent = { messageType: MessageType.COMMIT, term, view, blockHash };
         const signaturePair: SignaturePair = {
             signerPublicKey: this.myPk,
