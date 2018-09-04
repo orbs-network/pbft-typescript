@@ -54,7 +54,6 @@ export class PBFTTerm {
         this.termMembersPKs = this.networkCommunication.getMembersPKs(term);
         this.otherMembersPKs = this.termMembersPKs.filter(pk => pk !== this.myPk);
         this.messagesFactory = new MessagesFactory(this.blockUtils.calculateBlockHash, this.keyManager);
-        this.electionTrigger.registerOnTrigger(view => this.onLeaderChange(view));
 
         this.startTerm();
     }
@@ -98,7 +97,7 @@ export class PBFTTerm {
         this.preparedLocally = false;
         this.view = view;
         this.leaderPk = this.calcLeaderPk(this.view);
-        this.electionTrigger.setView(view);
+        this.electionTrigger.registerOnTrigger(this.view, view => this.onLeaderChange(view));
     }
 
     public dispose(): void {

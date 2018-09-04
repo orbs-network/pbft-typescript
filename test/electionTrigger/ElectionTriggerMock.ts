@@ -4,16 +4,13 @@ export class ElectionTriggerMock implements ElectionTrigger {
     private view: number = 0;
     private cb: (view: number) => void;
 
-    public registerOnTrigger(cb: (view: number) => void): void {
+    public registerOnTrigger(view: number, cb: (view: number) => void): void {
+        this.view = view;
         this.cb = cb;
     }
 
     public unregisterOnTrigger(): void {
         this.cb = undefined;
-    }
-
-    public setView(view: number): void {
-        this.view = view;
     }
 
     public trigger(): void {

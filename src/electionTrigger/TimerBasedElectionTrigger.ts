@@ -8,21 +8,18 @@ export class TimerBasedElectionTrigger implements ElectionTrigger {
     constructor(private minTimeout: number) {
     }
 
-    public registerOnTrigger(cb: (view: number) => void): void {
+    public registerOnTrigger(view: number, cb: (view: number) => void): void {
         this.cb = cb;
+        if (this.view !== view) {
+            this.view = view;
+            this.stop();
+            this.electionTimer = setTimeout(() => this.onTimeout(), 2 ** view * this.minTimeout);
+        }
     }
 
     public unregisterOnTrigger(): void {
         this.cb = undefined;
         this.stop();
-    }
-
-    public setView(view: number): void {
-        if (this.view !== view) {
-            this.view = view;
-            this.stop();
-            this.electionTimer = setInterval(() => this.onTimeout(), 2 ** view * this.minTimeout);
-        }
     }
 
     private stop(): void {
