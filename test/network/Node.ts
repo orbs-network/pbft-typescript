@@ -1,19 +1,21 @@
 import { Config } from "../../src";
 import { Block } from "../../src/Block";
 import { PBFT } from "../../src/PBFT";
-import { InMemoryBlockStorage } from "../blockStorage/InMemoryBlockStorage";
+import { InMemoryBlockChain } from "../InMemoryBlockChain/InMemoryBlockChain";
 import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
 
 export class Node {
     private pbft: PBFT;
+    private blockChain: InMemoryBlockChain;
 
-    constructor(public pk: string, public config: Config, private blockStorage: InMemoryBlockStorage) {
+    constructor(public pk: string, public config: Config) {
         this.pbft = new PBFT(config);
+        this.blockChain = new InMemoryBlockChain();
         this.pbft.registerOnCommitted(block => this.onNewBlock(block));
     }
 
     public getLatestCommittedBlock(): Block {
-        return this.blockStorage.getLastBlock();
+        return this.blockChain.getLastBlock();
     }
 
     public isLeader(): boolean {
@@ -24,8 +26,8 @@ export class Node {
         (this.config.electionTrigger as ElectionTriggerMock).trigger();
     }
 
-    public onNewBlock(block: Block): void {
-        this.blockStorage.appendBlockToChain(block);
+    private onNewBlock(block: Block): void {
+        this.blockChain.appendBlockToChain(block);
     }
 
     public startConsensus(): void {

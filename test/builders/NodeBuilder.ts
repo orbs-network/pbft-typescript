@@ -5,7 +5,6 @@ import { KeyManager } from "../../src/keyManager/KeyManager";
 import { Logger } from "../../src/logger/Logger";
 import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 import { PBFTStorage } from "../../src/storage/PBFTStorage";
-import { InMemoryBlockStorage } from "../blockStorage/InMemoryBlockStorage";
 import { BlockUtilsMock } from "../blockUtils/BlockUtilsMock";
 import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
@@ -74,7 +73,7 @@ export class NodeBuilder {
     }
 
     public build(): Node {
-        return new Node(this.publicKey, this.buildConfig(), new InMemoryBlockStorage());
+        return new Node(this.publicKey, this.buildConfig());
     }
 
     private buildConfig(): Config {

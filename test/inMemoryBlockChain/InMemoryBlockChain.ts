@@ -1,7 +1,7 @@
 import { theGenesisBlock } from "../builders/BlockBuilder";
 import { Block } from "../../src/Block";
 
-export class InMemoryBlockStorage {
+export class InMemoryBlockChain {
     private blockChain: Block[] = [theGenesisBlock];
 
     public appendBlockToChain(block: Block): void {

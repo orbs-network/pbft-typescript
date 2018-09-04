@@ -217,7 +217,7 @@ describe("Leader Election", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
         await blockUtils.provideNextBlock();
-        await nextTick(); // await for blockStorage.getLastBlockHash
+        await nextTick(); // await for blockChain.getLastBlockHash
         await blockUtils.resolveAllValidations(true);
         await nextTick(); // await for notifyCommitted
 
@@ -242,9 +242,9 @@ describe("Leader Election", () => {
 
         await nextTick();
         await blockUtils.resolveAllValidations(true);
-        await nextTick(); // await for blockStorage.getLastBlockHash
+        await nextTick(); // await for blockChain.getLastBlockHash
         await blockUtils.provideNextBlock();
-        await nextTick(); // await for blockStorage.getLastBlockHash
+        await nextTick(); // await for blockChain.getLastBlockHash
 
         const node0Prepared: PreparedMessages = node0.config.pbftStorage.getLatestPrepared(2, 1);
         const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.config.keyManager, 2, 1, node0Prepared);

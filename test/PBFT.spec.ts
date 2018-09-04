@@ -84,7 +84,7 @@ describe("PBFT", () => {
 
         testNetwork.nodes[3].startConsensus(); // pretending to be the leader
         await blockUtils.provideNextBlock();
-        await nextTick(); // await for blockStorage.getLastBlockHash
+        await nextTick(); // await for blockChain.getLastBlockHash
         await blockUtils.resolveAllValidations(true);
         await nextTick();
 
@@ -105,7 +105,7 @@ describe("PBFT", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
         await blockUtils.provideNextBlock();
-        await nextTick(); // await for blockStorage.getLastBlockHash
+        await nextTick(); // await for blockChain.getLastBlockHash
         await blockUtils.resolveAllValidations(true);
 
         // suggest block 2 to node 3.
@@ -113,7 +113,7 @@ describe("PBFT", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
         await blockUtils.provideNextBlock();
-        await nextTick(); // await for blockStorage.getLastBlockHash
+        await nextTick(); // await for blockChain.getLastBlockHash
         await blockUtils.resolveAllValidations(true);
         await nextTick(); // await for notifyCommitted
 
