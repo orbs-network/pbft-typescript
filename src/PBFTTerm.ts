@@ -29,8 +29,8 @@ export class PBFTTerm {
     private readonly keyManager: KeyManager;
     private readonly logger: Logger;
     private readonly myPk: string;
-    private readonly termMembersPKs: string[];
-    private readonly otherMembersPKs: string[];
+    private readonly committeeMembersPKs: string[];
+    private readonly noneCommitteeMembersPKs: string[];
     private readonly messagesFactory: MessagesFactory;
 
     private leaderPk: string;
@@ -51,8 +51,8 @@ export class PBFTTerm {
         this.blockUtils = config.blockUtils;
 
         this.myPk = this.keyManager.getMyPublicKey();
-        this.termMembersPKs = this.networkCommunication.getMembersPKs(term);
-        this.otherMembersPKs = this.termMembersPKs.filter(pk => pk !== this.myPk);
+        this.committeeMembersPKs = this.networkCommunication.requestOrderedCommittee(term);
+        this.noneCommitteeMembersPKs = this.committeeMembersPKs.filter(pk => pk !== this.myPk);
         this.messagesFactory = new MessagesFactory(this.blockUtils.calculateBlockHash, this.keyManager);
 
         this.startTerm();
@@ -107,8 +107,8 @@ export class PBFTTerm {
     }
 
     private calcLeaderPk(view: number): string {
-        const index = view % this.termMembersPKs.length;
-        return this.termMembersPKs[index];
+        const index = view % this.committeeMembersPKs.length;
+        return this.committeeMembersPKs[index];
     }
 
     private onLeaderChange(view: number): void {
@@ -129,12 +129,12 @@ export class PBFTTerm {
     }
 
     private sendPrePrepare(message: PrePrepareMessage): void {
-        this.networkCommunication.sendPrePrepare(this.otherMembersPKs, message);
+        this.networkCommunication.sendPrePrepare(this.noneCommitteeMembersPKs, message);
         this.logger.log({
             subject: "GossipSend",
             message: "preprepare",
             senderPk: this.myPk,
-            targetPks: this.otherMembersPKs,
+            targetPks: this.noneCommitteeMembersPKs,
             term: message.signedHeader.term,
             view: message.signedHeader.view,
             blockHash: message.signedHeader.blockHash.toString("Hex")
@@ -142,12 +142,12 @@ export class PBFTTerm {
     }
 
     private sendPrepare(message: PrepareMessage): void {
-        this.networkCommunication.sendPrepare(this.otherMembersPKs, message);
+        this.networkCommunication.sendPrepare(this.noneCommitteeMembersPKs, message);
         this.logger.log({
             subject: "GossipSend",
             message: "prepare",
             senderPk: this.myPk,
-            targetPks: this.otherMembersPKs,
+            targetPks: this.noneCommitteeMembersPKs,
             term: message.signedHeader.term,
             view: message.signedHeader.view,
             blockHash: message.signedHeader.blockHash.toString("Hex")
@@ -155,12 +155,12 @@ export class PBFTTerm {
     }
 
     private sendCommit(message: CommitMessage): void {
-        this.networkCommunication.sendCommit(this.otherMembersPKs, message);
+        this.networkCommunication.sendCommit(this.noneCommitteeMembersPKs, message);
         this.logger.log({
             subject: "GossipSend",
             message: "commit",
             senderPk: this.myPk,
-            targetPks: this.otherMembersPKs,
+            targetPks: this.noneCommitteeMembersPKs,
             term: message.signedHeader.term,
             view: message.signedHeader.view,
             blockHash: message.signedHeader.blockHash.toString("Hex")
@@ -180,12 +180,12 @@ export class PBFTTerm {
     }
 
     private sendNewView(message: NewViewMessage): void {
-        this.networkCommunication.sendNewView(this.otherMembersPKs, message);
+        this.networkCommunication.sendNewView(this.noneCommitteeMembersPKs, message);
         this.logger.log({
             subject: "GossipSend",
             message: "new-view",
             senderPk: this.myPk,
-            targetPks: this.otherMembersPKs,
+            targetPks: this.noneCommitteeMembersPKs,
             term: message.signedHeader.term,
             view: message.signedHeader.view
         });
@@ -323,7 +323,7 @@ export class PBFTTerm {
             return false;
         }
 
-        if (preparedProof && validatePreparedProof(this.term, newView, preparedProof, this.getF(), this.keyManager, this.termMembersPKs, (view: number) => this.calcLeaderPk(view)) === false) {
+        if (preparedProof && validatePreparedProof(this.term, newView, preparedProof, this.getF(), this.keyManager, this.committeeMembersPKs, (view: number) => this.calcLeaderPk(view)) === false) {
             this.logger.log({ subject: "Warning", message: `term:[${term}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the preparedProof is invalid` });
             return false;
         }
@@ -518,7 +518,7 @@ export class PBFTTerm {
     }
 
     private getF(): number {
-        return Math.floor((this.termMembersPKs.length - 1) / 3);
+        return Math.floor((this.committeeMembersPKs.length - 1) / 3);
     }
 
     public isLeader(): boolean {

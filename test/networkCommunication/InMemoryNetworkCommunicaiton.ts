@@ -50,7 +50,7 @@ export class InMemoryNetworkCommunicaiton implements NetworkCommunication {
 
     }
 
-    getMembersPKs(seed: number): string[] {
+    requestOrderedCommittee(seed: number): string[] {
         return this.discovery.getAllGossipsPks();
     }
 

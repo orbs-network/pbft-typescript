@@ -1,7 +1,7 @@
 import { CommitMessage, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage } from "./Messages";
 
 export interface NetworkCommunication {
-    getMembersPKs(seed: number): string[];
+    requestOrderedCommittee(seed: number): string[];
     isMember(pk: string): boolean;
 
     sendPrePrepare(pks: string[], message: PrePrepareMessage): void;
