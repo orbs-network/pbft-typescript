@@ -2,7 +2,7 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
-import { NewViewMessage, PreparedProof, PrePrepareMessage, ViewChangeMessage, ViewChangeVote, MessageType } from "../src/networkCommunication/Messages";
+import { NewViewMessage, PreparedProof, PrePrepareMessage, ViewChangeMessage, ViewChangeConfirmation, MessageType } from "../src/networkCommunication/Messages";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNewViewMessage, aPrePrepareMessage, aViewChangeMessage, aPrepareMessage } from "./builders/MessagesBuilder";
 import { aPreparedProof, aPrepared } from "./builders/ProofBuilder";
@@ -112,7 +112,7 @@ describe("Leader Election", () => {
 
         const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, 1, 1, block2);
         const VCProof: ViewChangeMessage[] = [node0VCMessage, node2VCMessage, node3VCMessage];
-        const votes: ViewChangeVote[] = VCProof.map(msg => ({ content: msg.content, signaturePair: msg.signaturePair }));
+        const votes: ViewChangeConfirmation[] = VCProof.map(msg => ({ signedHeader: msg.signedHeader, signer: msg.signer }));
         const message: NewViewMessage = aNewViewMessage(node1.config.keyManager, 1, 1, PPMessage, votes);
         expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], message);
         testNetwork.shutDown();
@@ -156,7 +156,7 @@ describe("Leader Election", () => {
         await nextTick();
 
         const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, 1, 5, blockOnView4);
-        const votes: ViewChangeVote[] = [node0VCMessage, node2VCMessage, node3VCMessage].map(msg => ({ content: msg.content, signaturePair: msg.signaturePair }));
+        const votes: ViewChangeConfirmation[] = [node0VCMessage, node2VCMessage, node3VCMessage].map(msg => ({ signedHeader: msg.signedHeader, signer: msg.signer }));
         const newViewMessage: NewViewMessage = aNewViewMessage(node1.config.keyManager, 1, 5, PPMessage, votes);
         expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], newViewMessage);
         testNetwork.shutDown();
@@ -256,7 +256,7 @@ describe("Leader Election", () => {
 
         const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, 2, 1, block3);
         const VCProof: ViewChangeMessage[] = node1.config.pbftStorage.getViewChangeMessages(2, 1, 1);
-        const votes: ViewChangeVote[] = VCProof.map(msg => ({ content: msg.content, signaturePair: msg.signaturePair }));
+        const votes: ViewChangeConfirmation[] = VCProof.map(msg => ({ signedHeader: msg.signedHeader, signer: msg.signer }));
         const node1NVExpectedMessage: NewViewMessage = aNewViewMessage(node1.config.keyManager, 2, 1, PPMessage, votes);
         expect(spy1).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], node1NVExpectedMessage);
 
@@ -276,7 +276,7 @@ describe("Leader Election", () => {
         gossip.onRemoteMessage(aViewChangeMessage(node1.config.keyManager, 1, 1));
         await blockUtils.resolveAllValidations(true);
 
-        const newViewSent = multicastSpy.getCalls().find(c => c.args[1].content.messageType === MessageType.NEW_VIEW) !== undefined;
+        const newViewSent = multicastSpy.getCalls().find(c => c.args[1].signedHeader.messageType === MessageType.NEW_VIEW) !== undefined;
         expect(newViewSent).to.be.false;
         testNetwork.shutDown();
     });
@@ -297,7 +297,7 @@ describe("Leader Election", () => {
         gossip.onRemoteMessage(aViewChangeMessage(node1.config.keyManager, 1, 1));
         await blockUtils.resolveAllValidations(true);
 
-        const newViewSent = multicastSpy.getCalls().find(c => c.args[1].content.messageType === MessageType.NEW_VIEW) !== undefined;
+        const newViewSent = multicastSpy.getCalls().find(c => c.args[1].signedHeader.messageType === MessageType.NEW_VIEW) !== undefined;
         expect(newViewSent).to.be.false;
 
         testNetwork.shutDown();

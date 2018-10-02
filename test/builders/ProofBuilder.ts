@@ -1,5 +1,5 @@
 import { Block } from "../../src";
-import { BlockMessageContent, MessageType, PreparedProof, SignaturePair, PrePrepareMessage, PrepareMessage, BlockRefMessage } from "../../src/networkCommunication/Messages";
+import { BlockMessageContent, MessageType, PreparedProof, SenderSignature, PrePrepareMessage, PrepareMessage, BlockRefMessage } from "../../src/networkCommunication/Messages";
 import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 import { Node } from "../network/Node";
 import { PreparedMessages } from "../../src/storage/PBFTStorage";
@@ -22,8 +22,8 @@ export function aPreparedProof(leader: Node, members: Node[], term: number, view
     };
 
     const preprepareBlockRefMessage: BlockRefMessage = {
-        content: PPContent,
-        signaturePair: {
+        signedHeader: PPContent,
+        signer: {
             contentSignature: leader.config.keyManager.sign(PPContent),
             signerPublicKey: leader.config.keyManager.getMyPublicKey()
         }
@@ -31,8 +31,8 @@ export function aPreparedProof(leader: Node, members: Node[], term: number, view
 
     const prepareBlockRefMessages: BlockRefMessage[] = members.map(member => {
         return {
-            content: PContent,
-            signaturePair: {
+            signedHeader: PContent,
+            signer: {
                 contentSignature: member.config.keyManager.sign(PContent),
                 signerPublicKey: member.config.keyManager.getMyPublicKey()
             }

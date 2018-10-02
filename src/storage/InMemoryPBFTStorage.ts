@@ -19,7 +19,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
     }
 
     storePrePrepare(message: PrePrepareMessage): boolean {
-        const { term, view } = message.content;
+        const { term, view } = message.signedHeader;
         let viewsMap = this.prePrepareStorage.get(term);
         if (!viewsMap) {
             viewsMap = new Map();
@@ -30,8 +30,8 @@ export class InMemoryPBFTStorage implements PBFTStorage {
             return false;
         }
         viewsMap.set(view, message);
-        const { signerPublicKey: senderPk } = message.signaturePair;
-        const { blockHash } = message.content;
+        const { signerPublicKey: senderPk } = message.signer;
+        const { blockHash } = message.signedHeader;
         this.logger.log({ subject: "Storage", StorageType: "PrePrepare", term, view, senderPk, blockHash: blockHash.toString("hex") });
         return true;
     }
@@ -51,7 +51,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
     }
 
     storePrepare(message: PrepareMessage): boolean {
-        const { term, view } = message.content;
+        const { term, view } = message.signedHeader;
         let viewsMap = this.prepareStorage.get(term);
         if (!viewsMap) {
             viewsMap = new Map();
@@ -64,7 +64,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
             viewsMap.set(view, blockHashesMap);
         }
 
-        const { blockHash } = message.content;
+        const { blockHash } = message.signedHeader;
         const key = blockHash.toString("hex");
         let sendersMap = blockHashesMap.get(key);
         if (!sendersMap) {
@@ -72,7 +72,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
             blockHashesMap.set(key, sendersMap);
         }
 
-        const { signerPublicKey: senderPk } = message.signaturePair;
+        const { signerPublicKey: senderPk } = message.signer;
         if (sendersMap.get(senderPk) !== undefined) {
             return false;
         }
@@ -128,7 +128,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         if (lastView !== undefined) {
             const preprepareMessage: PrePrepareMessage = this.getPrePrepareMessage(term, lastView);
             if (preprepareMessage) {
-                const prepareMessages: PrepareMessage[] = this.getPrepareMessages(term, lastView, preprepareMessage.content.blockHash);
+                const prepareMessages: PrepareMessage[] = this.getPrepareMessages(term, lastView, preprepareMessage.signedHeader.blockHash);
                 if (prepareMessages.length >= f * 2) {
                     return { preprepareMessage, prepareMessages };
                 }
@@ -137,7 +137,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
     }
 
     storeCommit(message: CommitMessage): boolean {
-        const { term, view } = message.content;
+        const { term, view } = message.signedHeader;
         let viewsMap = this.commitStorage.get(term);
         if (!viewsMap) {
             viewsMap = new Map();
@@ -150,7 +150,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
             viewsMap.set(view, blockHashesMap);
         }
 
-        const { blockHash } = message.content;
+        const { blockHash } = message.signedHeader;
         const key = blockHash.toString("hex");
         let sendersMap = blockHashesMap.get(key);
         if (!sendersMap) {
@@ -158,7 +158,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
             blockHashesMap.set(key, sendersMap);
         }
 
-        const { signerPublicKey: senderPk } = message.signaturePair;
+        const { signerPublicKey: senderPk } = message.signer;
         if (sendersMap.get(senderPk) !== undefined) {
             return false;
         }
@@ -199,7 +199,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
     }
 
     storeViewChange(message: ViewChangeMessage): boolean {
-        const { term, view } = message.content;
+        const { term, view } = message.signedHeader;
         let viewsMap = this.viewChangeStorage.get(term);
         if (!viewsMap) {
             viewsMap = new Map();
@@ -212,7 +212,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
             viewsMap.set(view, sendersMap);
         }
 
-        const { signerPublicKey: senderPk } = message.signaturePair;
+        const { signerPublicKey: senderPk } = message.signer;
         if (sendersMap.get(senderPk) !== undefined) {
             return false;
         }

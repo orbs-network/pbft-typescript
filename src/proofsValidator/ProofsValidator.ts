@@ -19,7 +19,7 @@ export function validatePreparedProof(
         return false;
     }
 
-    const { term, view, blockHash } = preprepareBlockRefMessage.content;
+    const { term, view, blockHash } = preprepareBlockRefMessage.signedHeader;
     if (term !== targetTerm) {
         return false;
     }
@@ -32,8 +32,8 @@ export function validatePreparedProof(
         return false;
     }
 
-    const { content: expectedPrePrepareMessageContent, signaturePair } = preprepareBlockRefMessage;
-    const { signerPublicKey: leaderPk, contentSignature } = signaturePair;
+    const { signedHeader: expectedPrePrepareMessageContent, signer } = preprepareBlockRefMessage;
+    const { signerPublicKey: leaderPk, contentSignature } = signer;
     if (keyManager.verify(expectedPrePrepareMessageContent, contentSignature, leaderPk) === false) {
         return false;
     }
@@ -42,27 +42,27 @@ export function validatePreparedProof(
         return false;
     }
 
-    const allPreparesPkAreUnique = prepareBlockRefMessages.reduce((prev, current) => prev.set(current.signaturePair.signerPublicKey, true), new Map()).size === prepareBlockRefMessages.length;
+    const allPreparesPkAreUnique = prepareBlockRefMessages.reduce((prev, current) => prev.set(current.signer.signerPublicKey, true), new Map()).size === prepareBlockRefMessages.length;
     if (!allPreparesPkAreUnique) {
         return false;
     }
 
-    const allPreparesPKsAreMembers = prepareBlockRefMessages.every(p => membersPKs.indexOf(p.signaturePair.signerPublicKey) > -1);
+    const allPreparesPKsAreMembers = prepareBlockRefMessages.every(p => membersPKs.indexOf(p.signer.signerPublicKey) > -1);
     if (allPreparesPKsAreMembers == false) {
         return false;
     }
 
-    const allPrepraresAreNotLeaders = prepareBlockRefMessages.every(p => p.signaturePair.signerPublicKey !== leaderPk);
+    const allPrepraresAreNotLeaders = prepareBlockRefMessages.every(p => p.signer.signerPublicKey !== leaderPk);
     if (allPrepraresAreNotLeaders === false) {
         return false;
     }
 
-    if (prepareBlockRefMessages.every(p => keyManager.verify(p.content, p.signaturePair.contentSignature, p.signaturePair.signerPublicKey)) === false) {
+    if (prepareBlockRefMessages.every(p => keyManager.verify(p.signedHeader, p.signer.contentSignature, p.signer.signerPublicKey)) === false) {
         return false;
     }
 
     const isPrepareMisMatch = prepareBlockRefMessages
-        .map(p => p.content)
+        .map(p => p.signedHeader)
         .findIndex(p => p.view !== view || p.term !== term || !p.blockHash.equals(blockHash)) > -1;
 
     if (isPrepareMisMatch) {

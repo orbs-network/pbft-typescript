@@ -12,11 +12,11 @@ chai.use(sinonChai);
 
 function aLeanHelixMessage(keyManager: KeyManager, content: string): LeanHelixMessage {
     return {
-        signaturePair: {
+        signer: {
             contentSignature: keyManager.sign(content),
             signerPublicKey: keyManager.getMyPublicKey()
         },
-        content: {
+        signedHeader: {
             messageType: MessageType.PREPARE,
             term: Math.floor(Math.random() * 1_000_000),
             view: Math.floor(Math.random() * 1_000_000),

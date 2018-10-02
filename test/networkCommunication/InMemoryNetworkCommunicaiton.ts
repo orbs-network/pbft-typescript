@@ -15,7 +15,7 @@ export class InMemoryNetworkCommunicaiton implements NetworkCommunication {
     }
 
     private onGossipMessage(message: LeanHelixMessage): void {
-        switch (message.content.messageType) {
+        switch (message.signedHeader.messageType) {
             case MessageType.PREPREPARE: {
                 if (this.PPCallback) {
                     this.PPCallback(message as PrePrepareMessage);

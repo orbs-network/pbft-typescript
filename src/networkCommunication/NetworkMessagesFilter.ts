@@ -16,7 +16,7 @@ export class NetworkMessagesFilter {
             return;
         }
 
-        const { signerPublicKey: senderPk } = message.signaturePair;
+        const { signerPublicKey: senderPk } = message.signer;
         if (senderPk === this.myPk) {
             return;
         }
@@ -25,11 +25,11 @@ export class NetworkMessagesFilter {
             return;
         }
 
-        if (message.content.term < this.term) {
+        if (message.signedHeader.term < this.term) {
             return;
         }
 
-        if (message.content.term > this.term) {
+        if (message.signedHeader.term > this.term) {
             this.messagesCache.push(message);
             return;
         }
@@ -38,7 +38,7 @@ export class NetworkMessagesFilter {
     }
 
     private processGossipMessage(message: LeanHelixMessage): void {
-        switch (message.content.messageType) {
+        switch (message.signedHeader.messageType) {
             case MessageType.PREPREPARE: {
                 this.messagesHandler.onReceivePrePrepare(message as PrePrepareMessage);
                 break;
@@ -72,7 +72,7 @@ export class NetworkMessagesFilter {
 
     private consumeCacheMessages(): void {
         this.messagesCache = this.messagesCache.reduce((prev, current) => {
-            if (current.content.term === this.term) {
+            if (current.signedHeader.term === this.term) {
                 this.processGossipMessage(current);
             } else {
                 prev.push(current);

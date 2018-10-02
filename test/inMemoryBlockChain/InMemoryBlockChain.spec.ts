@@ -27,7 +27,7 @@ describe("InMemory BlockChain", () => {
         blockChain.appendBlockToChain(block);
 
         const lastBlock = await blockChain.getLastBlock();
-        expect(lastBlock).to.equal(block);
+        expect(lastBlock).to.deep.equal(block);
     });
 
     it("should return the top most block", async () => {

@@ -150,7 +150,7 @@ describe("Proofs Validator", () => {
 
         // Mismatching blockHash //
         const badPrepareMessage: PrepareMessage = aPrepareMessage(node2KeyManager, term, view, block);
-        badPrepareMessage.content.blockHash = Buffer.from("XXXX");
+        badPrepareMessage.signedHeader.blockHash = Buffer.from("XXXX");
         const badBlockHashPrepareProof: PreparedProof = aPreparedProofByMessages(
             aPrePrepareMessage(leaderKeyManager, term, view, block),
             [

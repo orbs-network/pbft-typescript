@@ -1,53 +1,53 @@
 import { Block } from "../Block";
-import { SignaturePair, ViewChangeMessage, MessageType, NewViewMessage } from "./Messages";
+import { SenderSignature, ViewChangeMessage, MessageType, NewViewMessage } from "./Messages";
 
 const VC_TERM = 0;
 const VC_VIEW = 1;
 const PREPARED_VIEW = 0; // < VC_VIEW;
 const BLOCK: Block = undefined;
 const BLOCK_HASH: Buffer = undefined;
-const VC_SIGNATURE: SignaturePair = undefined;
-const PP_SIGNATURE: SignaturePair = undefined;
-const P_SIGNATURE1: SignaturePair = undefined;
-const P_SIGNATURE2: SignaturePair = undefined;
+const VC_SIGNATURE: SenderSignature = undefined;
+const PP_SIGNATURE: SenderSignature = undefined;
+const P_SIGNATURE1: SenderSignature = undefined;
+const P_SIGNATURE2: SenderSignature = undefined;
 
 const exampleViewChangeMessage: ViewChangeMessage = {
-    content: {
+    signedHeader: {
         messageType: MessageType.VIEW_CHANGE,
         term: VC_TERM,
         view: VC_VIEW,
         preparedProof: {
             preprepareBlockRefMessage: {
-                content: {
+                signedHeader: {
                     messageType: MessageType.PREPREPARE,
                     term: VC_TERM,
                     view: PREPARED_VIEW,
                     blockHash: BLOCK_HASH
                 },
-                signaturePair: PP_SIGNATURE
+                signer: PP_SIGNATURE
             },
             prepareBlockRefMessages: [
                 {
-                    content: {
+                    signedHeader: {
                         messageType: MessageType.PREPARE,
                         term: VC_TERM,
                         view: PREPARED_VIEW,
                         blockHash: BLOCK_HASH
                     },
-                    signaturePair: P_SIGNATURE1
+                    signer: P_SIGNATURE1
                 },
                 {
-                    content: {
+                    signedHeader: {
                         messageType: MessageType.PREPARE,
                         term: VC_TERM,
                         view: PREPARED_VIEW,
                         blockHash: BLOCK_HASH
                     },
-                    signaturePair: P_SIGNATURE2
+                    signer: P_SIGNATURE2
                 },
             ]
         }
     },
-    signaturePair: VC_SIGNATURE,
+    signer: VC_SIGNATURE,
     block: BLOCK
 };

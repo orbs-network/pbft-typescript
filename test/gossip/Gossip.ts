@@ -18,7 +18,7 @@ export class Gossip {
     onRemoteMessage(message: LeanHelixMessage): void {
         this.subscriptions.forEach(subscription => {
             if (this.inComingWhiteListPKs !== undefined) {
-                if (this.inComingWhiteListPKs.indexOf(message.signaturePair.signerPublicKey) === -1) {
+                if (this.inComingWhiteListPKs.indexOf(message.signer.signerPublicKey) === -1) {
                     return;
                 }
             }

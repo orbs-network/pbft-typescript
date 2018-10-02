@@ -106,10 +106,10 @@ describe("Byzantine Attacks", () => {
         await nextTick();
         await blockUtils.resolveAllValidations(true);
 
-        expect(await node0.getLatestCommittedBlock()).to.equal(theGenesisBlock);
-        expect(await node1.getLatestCommittedBlock()).to.equal(theGenesisBlock);
-        expect(await node2.getLatestCommittedBlock()).to.equal(theGenesisBlock);
-        expect(await node3.getLatestCommittedBlock()).to.equal(theGenesisBlock);
+        expect(await node0.getLatestCommittedBlock()).to.deep.equal(theGenesisBlock);
+        expect(await node1.getLatestCommittedBlock()).to.deep.equal(theGenesisBlock);
+        expect(await node2.getLatestCommittedBlock()).to.deep.equal(theGenesisBlock);
+        expect(await node3.getLatestCommittedBlock()).to.deep.equal(theGenesisBlock);
 
         gossip0.clearOutGoingWhiteListPKs();
         gossip1.clearOutGoingWhiteListPKs();
@@ -127,10 +127,10 @@ describe("Byzantine Attacks", () => {
         await nextTick();
         await blockUtils.resolveAllValidations(true);
 
-        expect(await node0.getLatestCommittedBlock()).to.equal(block2);
-        expect(await node1.getLatestCommittedBlock()).to.equal(block2);
-        expect(await node2.getLatestCommittedBlock()).to.equal(block2);
-        expect(await node3.getLatestCommittedBlock()).to.equal(theGenesisBlock);
+        expect(await node0.getLatestCommittedBlock()).to.deep.equal(block2);
+        expect(await node1.getLatestCommittedBlock()).to.deep.equal(block2);
+        expect(await node2.getLatestCommittedBlock()).to.deep.equal(block2);
+        expect(await node3.getLatestCommittedBlock()).to.deep.equal(theGenesisBlock);
 
         testNetwork.shutDown();
     });

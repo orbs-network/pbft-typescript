@@ -8,8 +8,8 @@ export enum MessageType {
     NEW_VIEW = 4,
 }
 export interface LeanHelixMessage {
-    signaturePair: SignaturePair;
-    content: {
+    signer: SenderSignature;
+    signedHeader: {
         messageType: MessageType;
         term: number;
         view: number;
@@ -17,8 +17,8 @@ export interface LeanHelixMessage {
 }
 
 export interface BlockRefMessage extends LeanHelixMessage {
-    content: BlockMessageContent;
-    signaturePair: SignaturePair;
+    signedHeader: BlockMessageContent;
+    signer: SenderSignature;
 }
 
 export type PrePrepareMessage = BlockRefMessage & { block: Block };
@@ -26,18 +26,18 @@ export type PrepareMessage = BlockRefMessage;
 export type CommitMessage = BlockRefMessage;
 
 export interface ViewChangeMessage extends LeanHelixMessage {
-    content: ViewChangeMessageContent;
-    signaturePair: SignaturePair;
+    signedHeader: ViewChangeMessageContent;
+    signer: SenderSignature;
     block?: Block;
 }
 
 export interface NewViewMessage extends LeanHelixMessage {
-    content: NewViewContent;
-    signaturePair: SignaturePair;
+    signedHeader: NewViewContent;
+    signer: SenderSignature;
     preprepareMessage: PrePrepareMessage;
 }
 
-export interface SignaturePair {
+export interface SenderSignature {
     signerPublicKey: string;
     contentSignature: string;
 }
@@ -65,10 +65,10 @@ export interface NewViewContent {
     messageType: MessageType;
     term: number;
     view: number;
-    votes: ViewChangeVote[];
+    viewChangeConfirmations: ViewChangeConfirmation[];
 }
 
-export interface ViewChangeVote {
-    content: ViewChangeMessageContent;
-    signaturePair: SignaturePair;
+export interface ViewChangeConfirmation {
+    signedHeader: ViewChangeMessageContent;
+    signer: SenderSignature;
 }

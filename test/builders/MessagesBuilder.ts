@@ -1,11 +1,11 @@
 import { Block, KeyManager } from "../../src";
-import { BlockRefMessage, CommitMessage, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage, ViewChangeVote } from "../../src/networkCommunication/Messages";
+import { BlockRefMessage, CommitMessage, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage, ViewChangeConfirmation } from "../../src/networkCommunication/Messages";
 import { MessagesFactory } from "../../src/networkCommunication/MessagesFactory";
 import { PreparedMessages } from "../../src/storage/PBFTStorage";
 import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 
 export function blockRefMessageFromPP(preprepareMessage: PrePrepareMessage): BlockRefMessage {
-    return { signaturePair: preprepareMessage.signaturePair, content: preprepareMessage.content };
+    return { signer: preprepareMessage.signer, signedHeader: preprepareMessage.signedHeader };
 }
 
 export function aPrePrepareMessage(keyManager: KeyManager, term: number, view: number, block: Block): PrePrepareMessage {
@@ -30,7 +30,7 @@ export function aViewChangeMessage(keyManager: KeyManager, term: number, view: n
     return mf.createViewChangeMessage(term, view, preparedMessages);
 }
 
-export function aNewViewMessage(keyManager: KeyManager, term: number, view: number, preprepareMessage: PrePrepareMessage, votes: ViewChangeVote[]): NewViewMessage {
+export function aNewViewMessage(keyManager: KeyManager, term: number, view: number, preprepareMessage: PrePrepareMessage, votes: ViewChangeConfirmation[]): NewViewMessage {
     const mf: MessagesFactory = new MessagesFactory(calculateBlockHash, keyManager);
     return mf.createNewViewMessage(term, view, preprepareMessage, votes);
 }

@@ -38,7 +38,7 @@ describe("PBFT", () => {
         await blockUtils.resolveAllValidations(true);
         await nextTick(); // await for notifyCommitted
         const preprepareCounter = (spy: sinon.SinonSpy) => {
-            return spy.getCalls().filter(c => c.args[1].content.messageType === MessageType.PREPREPARE).length;
+            return spy.getCalls().filter(c => c.args[1].signedHeader.messageType === MessageType.PREPREPARE).length;
         };
 
         expect(preprepareCounter(spy0)).to.equal(1);
@@ -117,9 +117,9 @@ describe("PBFT", () => {
         await blockUtils.resolveAllValidations(true);
         await nextTick(); // await for notifyCommitted
 
-        expect(await testNetwork.nodes[1].getLatestCommittedBlock()).to.equal(block1);
-        expect(await testNetwork.nodes[2].getLatestCommittedBlock()).to.equal(block1);
-        expect(await testNetwork.nodes[3].getLatestCommittedBlock()).to.equal(theGenesisBlock);
+        expect(await testNetwork.nodes[1].getLatestCommittedBlock()).to.deep.equal(block1);
+        expect(await testNetwork.nodes[2].getLatestCommittedBlock()).to.deep.equal(block1);
+        expect(await testNetwork.nodes[3].getLatestCommittedBlock()).to.deep.equal(theGenesisBlock);
         testNetwork.shutDown();
     });
 
@@ -266,10 +266,10 @@ describe("PBFT", () => {
         await blockUtils.resolveAllValidations(true);
         await nextTick();
 
-        expect(await testNetwork.nodes[0].getLatestCommittedBlock()).to.equal(block2);
-        expect(await testNetwork.nodes[1].getLatestCommittedBlock()).to.equal(block2);
-        expect(await testNetwork.nodes[2].getLatestCommittedBlock()).to.equal(block2);
-        expect(await testNetwork.nodes[3].getLatestCommittedBlock()).to.equal(theGenesisBlock);
+        expect(await testNetwork.nodes[0].getLatestCommittedBlock()).to.deep.equal(block2);
+        expect(await testNetwork.nodes[1].getLatestCommittedBlock()).to.deep.equal(block2);
+        expect(await testNetwork.nodes[2].getLatestCommittedBlock()).to.deep.equal(block2);
+        expect(await testNetwork.nodes[3].getLatestCommittedBlock()).to.deep.equal(theGenesisBlock);
 
         // release the hanging node for block 1
         await hangingBlockUtils.resolveAllValidations(true);
@@ -277,10 +277,10 @@ describe("PBFT", () => {
         await hangingBlockUtils.resolveAllValidations(true);
 
         // expect the hangking node to catch up (Saving future messages)
-        expect(await testNetwork.nodes[0].getLatestCommittedBlock()).to.equal(block2);
-        expect(await testNetwork.nodes[1].getLatestCommittedBlock()).to.equal(block2);
-        expect(await testNetwork.nodes[2].getLatestCommittedBlock()).to.equal(block2);
-        expect(await testNetwork.nodes[3].getLatestCommittedBlock()).to.equal(block2);
+        expect(await testNetwork.nodes[0].getLatestCommittedBlock()).to.deep.equal(block2);
+        expect(await testNetwork.nodes[1].getLatestCommittedBlock()).to.deep.equal(block2);
+        expect(await testNetwork.nodes[2].getLatestCommittedBlock()).to.deep.equal(block2);
+        expect(await testNetwork.nodes[3].getLatestCommittedBlock()).to.deep.equal(block2);
 
         testNetwork.shutDown();
     });
