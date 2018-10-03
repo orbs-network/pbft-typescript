@@ -140,7 +140,7 @@ describe("PBFTTerm", () => {
             expect(spy).to.have.been.called;
 
             // Destorying the signature => invalid, should be ignored
-            PPMessage.sender.signature = node0KeyManager.sign("FAKE_DATA");
+            PPMessage.sender.signature = "FAKE_SIGNATURE";
             spy.resetHistory();
             node1PbftTerm.onReceivePrePrepare(PPMessage);
             await nextTick();
@@ -157,7 +157,7 @@ describe("PBFTTerm", () => {
             expect(spy).to.have.been.called;
 
             // Destorying the signature => invalid, should be ignored
-            PMessage.sender.signature = node0KeyManager.sign("FAKE_DATA");
+            PMessage.sender.signature = "FAKE_SIGNATURE";
             spy.resetHistory();
             node1PbftTerm.onReceivePrepare(PMessage);
             expect(spy).to.not.have.been.called;
@@ -172,7 +172,7 @@ describe("PBFTTerm", () => {
             expect(spy).to.have.been.called;
 
             // Destorying the signature => invalid, should be ignored
-            CMessage.sender.signature = node0KeyManager.sign("FAKE_DATA");
+            CMessage.sender.signature = "FAKE_SIGNATURE";
             spy.resetHistory();
             node1PbftTerm.onReceiveCommit(CMessage);
             expect(spy).to.not.have.been.called;
@@ -190,7 +190,7 @@ describe("PBFTTerm", () => {
             const NVMessage: NewViewMessage = aNewViewMessage(node1KeyManager, 1, 2, aPrePrepareMessage(node1KeyManager, 1, 1, block), VCProof);
 
             // destorying the signature => invalid, should be ignored
-            NVMessage.sender.signature = node1KeyManager.sign("FAKE_DATA");
+            NVMessage.sender.signature = "FAKE_SIGNATURE";
             node0PbftTerm.onReceiveNewView(NVMessage);
             await nextTick();
             await node0BlockUtils.resolveAllValidations(true);
@@ -207,7 +207,7 @@ describe("PBFTTerm", () => {
 
             spy.resetHistory();
             // destorying the signature => invalid, should be ignored
-            VCMessage.sender.signature = node0KeyManager.sign("FAKE_DATA");
+            VCMessage.sender.signature = "FAKE_SIGNATURE";
             node1PbftTerm.onReceiveViewChange(VCMessage);
             expect(spy).to.not.have.been.called;
         });

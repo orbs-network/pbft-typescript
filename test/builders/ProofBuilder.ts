@@ -24,7 +24,7 @@ export function aPreparedProof(leader: Node, members: Node[], blockHeight: numbe
     const preprepareBlockRefMessage: BlockRefMessage = {
         signedHeader: PPContent,
         sender: {
-            signature: leader.config.keyManager.sign(PPContent),
+            signature: leader.config.keyManager.signBlockRef(PPContent),
             senderPublicKey: leader.config.keyManager.getMyPublicKey()
         }
     };
@@ -33,7 +33,7 @@ export function aPreparedProof(leader: Node, members: Node[], blockHeight: numbe
         return {
             signedHeader: PContent,
             sender: {
-                signature: member.config.keyManager.sign(PContent),
+                signature: member.config.keyManager.signBlockRef(PContent),
                 senderPublicKey: member.config.keyManager.getMyPublicKey()
             }
         };

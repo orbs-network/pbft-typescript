@@ -1,4 +1,5 @@
 import { KeyManager } from "../../src/keyManager/KeyManager";
+import { BlockRef, ViewChangeHeader, NewViewHeader, SenderSignature } from "../../src/networkCommunication/Messages";
 
 const PRIVATE_KEY_PREFIX = "PRIVATE_KEY";
 
@@ -6,12 +7,38 @@ export class KeyManagerMock implements KeyManager {
     constructor(private myPublicKey: string, private rejectedPKs: string[] = []) {
     }
 
-    sign(object: any): string {
+    signBlockRef(blockRef: BlockRef): string {
+        return this.sign(blockRef);
+    }
+
+    signViewChange(viewChangeHeader: ViewChangeHeader): string {
+        return this.sign(viewChangeHeader);
+    }
+
+    signNewView(newViewHeader: NewViewHeader): string {
+        return this.sign(newViewHeader);
+    }
+
+    private sign(object: any): string {
         return `${PRIVATE_KEY_PREFIX}-${this.myPublicKey}-${JSON.stringify(object)}`;
     }
 
-    verify(object: any, signature: string, publicKey: string): boolean {
-        if (this.rejectedPKs.indexOf(publicKey) > -1) {
+    verifyBlockRef(blockRef: BlockRef, sender: SenderSignature): boolean {
+        return this.verify(blockRef, sender);
+    }
+
+    verifyViewChange(viewChangeHeader: ViewChangeHeader, sender: SenderSignature): boolean {
+        return this.verify(viewChangeHeader, sender);
+    }
+
+    verifyNewView(newViewHeader: NewViewHeader, sender: SenderSignature): boolean {
+        return this.verify(newViewHeader, sender);
+    }
+
+    private verify(object: any, sender: SenderSignature): boolean {
+        const {signature, senderPublicKey} = sender;
+
+        if (this.rejectedPKs.indexOf(senderPublicKey) > -1) {
             return false;
         }
 
@@ -20,11 +47,11 @@ export class KeyManagerMock implements KeyManager {
         }
 
         const withoutPrefix = signature.substr(PRIVATE_KEY_PREFIX.length + 1);
-        if (withoutPrefix.indexOf(publicKey) === -1) {
+        if (withoutPrefix.indexOf(senderPublicKey) === -1) {
             return false;
         }
 
-        const withoutPublicKey = withoutPrefix.substr(publicKey.length + 1);
+        const withoutPublicKey = withoutPrefix.substr(senderPublicKey.length + 1);
         if (JSON.stringify(object) !== withoutPublicKey) {
             return false;
         }

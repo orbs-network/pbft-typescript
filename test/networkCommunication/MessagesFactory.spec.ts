@@ -24,7 +24,7 @@ describe("Messages Factory", () => {
             signedHeader,
             sender: {
                 senderPublicKey: keyManager.getMyPublicKey(),
-                signature: keyManager.sign(signedHeader)
+                signature: keyManager.signBlockRef(signedHeader)
             },
             block
         };
@@ -38,7 +38,7 @@ describe("Messages Factory", () => {
             signedHeader,
             sender: {
                 senderPublicKey: keyManager.getMyPublicKey(),
-                signature: keyManager.sign(signedHeader)
+                signature: keyManager.signBlockRef(signedHeader)
             }
         };
         const actualMessage: PrepareMessage = messagesFactory.createPrepareMessage(blockHeight, view, blockHash);
@@ -51,7 +51,7 @@ describe("Messages Factory", () => {
             signedHeader,
             sender: {
                 senderPublicKey: keyManager.getMyPublicKey(),
-                signature: keyManager.sign(signedHeader)
+                signature: keyManager.signBlockRef(signedHeader)
             }
         };
         const actualMessage: CommitMessage = messagesFactory.createCommitMessage(blockHeight, view, blockHash);
@@ -64,7 +64,7 @@ describe("Messages Factory", () => {
             signedHeader,
             sender: {
                 senderPublicKey: keyManager.getMyPublicKey(),
-                signature: keyManager.sign(signedHeader)
+                signature: keyManager.signViewChange(signedHeader)
             },
             block: undefined
         };
@@ -96,7 +96,7 @@ describe("Messages Factory", () => {
             signedHeader,
             sender: {
                 senderPublicKey: keyManager.getMyPublicKey(),
-                signature: keyManager.sign(signedHeader)
+                signature: keyManager.signViewChange(signedHeader)
             },
             block
         };
@@ -117,7 +117,7 @@ describe("Messages Factory", () => {
             signedHeader,
             sender: {
                 senderPublicKey: keyManager.getMyPublicKey(),
-                signature: keyManager.sign(signedHeader)
+                signature: keyManager.signNewView(signedHeader)
             },
             preprepareMessage
         };

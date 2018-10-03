@@ -15,7 +15,7 @@ export class MessagesFactory {
         const signedHeader: BlockRef = { messageType: MessageType.PREPREPARE, blockHeight, view, blockHash };
         const sender: SenderSignature = {
             senderPublicKey: this.myPk,
-            signature: this.keyManager.sign(signedHeader)
+            signature: this.keyManager.signBlockRef(signedHeader)
         };
         return {
             signedHeader,
@@ -28,7 +28,7 @@ export class MessagesFactory {
         const signedHeader: BlockRef = { messageType: MessageType.PREPARE, blockHeight, view, blockHash };
         const sender: SenderSignature = {
             senderPublicKey: this.myPk,
-            signature: this.keyManager.sign(signedHeader)
+            signature: this.keyManager.signBlockRef(signedHeader)
         };
         return { sender, signedHeader };
     }
@@ -37,7 +37,7 @@ export class MessagesFactory {
         const signedHeader: BlockRef = { messageType: MessageType.COMMIT, blockHeight, view, blockHash };
         const sender: SenderSignature = {
             senderPublicKey: this.myPk,
-            signature: this.keyManager.sign(signedHeader)
+            signature: this.keyManager.signBlockRef(signedHeader)
         };
         return { sender, signedHeader };
     }
@@ -64,7 +64,7 @@ export class MessagesFactory {
         const signedHeader: ViewChangeHeader = { messageType: MessageType.VIEW_CHANGE, blockHeight, view, preparedProof };
         const sender: SenderSignature = {
             senderPublicKey: this.myPk,
-            signature: this.keyManager.sign(signedHeader)
+            signature: this.keyManager.signViewChange(signedHeader)
         };
         return {
             signedHeader,
@@ -77,7 +77,7 @@ export class MessagesFactory {
         const signedHeader: NewViewHeader = { messageType: MessageType.NEW_VIEW, blockHeight, view, viewChangeConfirmations };
         const sender: SenderSignature = {
             senderPublicKey: this.myPk,
-            signature: this.keyManager.sign(signedHeader)
+            signature: this.keyManager.signNewView(signedHeader)
         };
         return {
             signedHeader,
