@@ -13,7 +13,7 @@ chai.use(sinonChai);
 function aLeanHelixMessage(keyManager: KeyManager, content: string): LeanHelixMessage {
     return {
         sender: {
-            contentSignature: keyManager.sign(content),
+            signature: keyManager.sign(content),
             senderPublicKey: keyManager.getMyPublicKey()
         },
         signedHeader: {

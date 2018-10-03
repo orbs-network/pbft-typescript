@@ -1,7 +1,7 @@
 import { BlockUtils } from "../blockUtils/BlockUtils";
 import { KeyManager } from "../keyManager/KeyManager";
 import { Block } from "../Block";
-import { SenderSignature, BlockMessageContent, MessageType, PrePrepareMessage, PrepareMessage, CommitMessage, ViewChangeMessage, ViewChangeMessageContent, PreparedProof, ViewChangeConfirmation, NewViewMessage, NewViewContent } from "./Messages";
+import { SenderSignature, BlockRef, MessageType, PrePrepareMessage, PrepareMessage, CommitMessage, ViewChangeMessage, ViewChangeHeader, PreparedProof, ViewChangeConfirmation, NewViewMessage, NewViewHeader } from "./Messages";
 import { PreparedMessages } from "../storage/PBFTStorage";
 
 export class MessagesFactory {
@@ -12,10 +12,10 @@ export class MessagesFactory {
 
     createPreprepareMessage(term: number, view: number, block: Block): PrePrepareMessage {
         const blockHash: Buffer = this.calculateBlockHash(block);
-        const signedHeader: BlockMessageContent = { messageType: MessageType.PREPREPARE, term, view, blockHash };
+        const signedHeader: BlockRef = { messageType: MessageType.PREPREPARE, term, view, blockHash };
         const sender: SenderSignature = {
             senderPublicKey: this.myPk,
-            contentSignature: this.keyManager.sign(signedHeader)
+            signature: this.keyManager.sign(signedHeader)
         };
         return {
             signedHeader,
@@ -25,19 +25,19 @@ export class MessagesFactory {
     }
 
     createPrepareMessage(term: number, view: number, blockHash: Buffer): PrepareMessage {
-        const signedHeader: BlockMessageContent = { messageType: MessageType.PREPARE, term, view, blockHash };
+        const signedHeader: BlockRef = { messageType: MessageType.PREPARE, term, view, blockHash };
         const sender: SenderSignature = {
             senderPublicKey: this.myPk,
-            contentSignature: this.keyManager.sign(signedHeader)
+            signature: this.keyManager.sign(signedHeader)
         };
         return { sender, signedHeader };
     }
 
     createCommitMessage(term: number, view: number, blockHash: Buffer): CommitMessage {
-        const signedHeader: BlockMessageContent = { messageType: MessageType.COMMIT, term, view, blockHash };
+        const signedHeader: BlockRef = { messageType: MessageType.COMMIT, term, view, blockHash };
         const sender: SenderSignature = {
             senderPublicKey: this.myPk,
-            contentSignature: this.keyManager.sign(signedHeader)
+            signature: this.keyManager.sign(signedHeader)
         };
         return { sender, signedHeader };
     }
@@ -61,10 +61,10 @@ export class MessagesFactory {
             block = preparedMessages.preprepareMessage.block;
         }
 
-        const signedHeader: ViewChangeMessageContent = { messageType: MessageType.VIEW_CHANGE, term, view, preparedProof };
+        const signedHeader: ViewChangeHeader = { messageType: MessageType.VIEW_CHANGE, term, view, preparedProof };
         const sender: SenderSignature = {
             senderPublicKey: this.myPk,
-            contentSignature: this.keyManager.sign(signedHeader)
+            signature: this.keyManager.sign(signedHeader)
         };
         return {
             signedHeader,
@@ -74,10 +74,10 @@ export class MessagesFactory {
     }
 
     createNewViewMessage(term: number, view: number, preprepareMessage: PrePrepareMessage, viewChangeConfirmations: ViewChangeConfirmation[]): NewViewMessage {
-        const signedHeader: NewViewContent = { messageType: MessageType.NEW_VIEW, term, view, viewChangeConfirmations };
+        const signedHeader: NewViewHeader = { messageType: MessageType.NEW_VIEW, term, view, viewChangeConfirmations };
         const sender: SenderSignature = {
             senderPublicKey: this.myPk,
-            contentSignature: this.keyManager.sign(signedHeader)
+            signature: this.keyManager.sign(signedHeader)
         };
         return {
             signedHeader,

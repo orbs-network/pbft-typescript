@@ -1,5 +1,5 @@
 import { Block } from "../../src";
-import { BlockMessageContent, MessageType, PreparedProof, SenderSignature, PrePrepareMessage, PrepareMessage, BlockRefMessage } from "../../src/networkCommunication/Messages";
+import { BlockRef, MessageType, PreparedProof, SenderSignature, PrePrepareMessage, PrepareMessage, BlockRefMessage } from "../../src/networkCommunication/Messages";
 import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 import { Node } from "../network/Node";
 import { PreparedMessages } from "../../src/storage/PBFTStorage";
@@ -8,13 +8,13 @@ import { aPrePrepareMessage, aPrepareMessage, blockRefMessageFromPP } from "./Me
 export function aPreparedProof(leader: Node, members: Node[], term: number, view: number, block: Block): PreparedProof {
     const blockHash: Buffer = calculateBlockHash(block);
 
-    const PPContent: BlockMessageContent = {
+    const PPContent: BlockRef = {
         messageType: MessageType.PREPREPARE,
         term,
         view,
         blockHash
     };
-    const PContent: BlockMessageContent = {
+    const PContent: BlockRef = {
         messageType: MessageType.PREPARE,
         term,
         view,
@@ -24,7 +24,7 @@ export function aPreparedProof(leader: Node, members: Node[], term: number, view
     const preprepareBlockRefMessage: BlockRefMessage = {
         signedHeader: PPContent,
         sender: {
-            contentSignature: leader.config.keyManager.sign(PPContent),
+            signature: leader.config.keyManager.sign(PPContent),
             senderPublicKey: leader.config.keyManager.getMyPublicKey()
         }
     };
@@ -33,7 +33,7 @@ export function aPreparedProof(leader: Node, members: Node[], term: number, view
         return {
             signedHeader: PContent,
             sender: {
-                contentSignature: member.config.keyManager.sign(PContent),
+                signature: member.config.keyManager.sign(PContent),
                 senderPublicKey: member.config.keyManager.getMyPublicKey()
             }
         };

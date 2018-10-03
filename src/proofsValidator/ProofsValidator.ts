@@ -33,8 +33,8 @@ export function validatePreparedProof(
     }
 
     const { signedHeader: expectedPrePrepareMessageContent, sender } = preprepareBlockRefMessage;
-    const { senderPublicKey: leaderPk, contentSignature } = sender;
-    if (keyManager.verify(expectedPrePrepareMessageContent, contentSignature, leaderPk) === false) {
+    const { senderPublicKey: leaderPk, signature } = sender;
+    if (keyManager.verify(expectedPrePrepareMessageContent, signature, leaderPk) === false) {
         return false;
     }
 
@@ -57,7 +57,7 @@ export function validatePreparedProof(
         return false;
     }
 
-    if (prepareBlockRefMessages.every(p => keyManager.verify(p.signedHeader, p.sender.contentSignature, p.sender.senderPublicKey)) === false) {
+    if (prepareBlockRefMessages.every(p => keyManager.verify(p.signedHeader, p.sender.signature, p.sender.senderPublicKey)) === false) {
         return false;
     }
 

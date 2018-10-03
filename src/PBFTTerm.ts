@@ -4,7 +4,7 @@ import { BlockUtils } from "./blockUtils/BlockUtils";
 import { ElectionTrigger } from "./electionTrigger/ElectionTrigger";
 import { KeyManager } from "./keyManager/KeyManager";
 import { Logger } from "./logger/Logger";
-import { BlockMessageContent, CommitMessage, LeanHelixMessage, MessageType, NewViewContent, NewViewMessage, PreparedProof, PrepareMessage, PrePrepareMessage, SenderSignature, ViewChangeMessage, ViewChangeMessageContent, ViewChangeConfirmation } from "./networkCommunication/Messages";
+import { BlockRef, CommitMessage, LeanHelixMessage, MessageType, NewViewHeader, NewViewMessage, PreparedProof, PrepareMessage, PrePrepareMessage, SenderSignature, ViewChangeMessage, ViewChangeHeader, ViewChangeConfirmation } from "./networkCommunication/Messages";
 import { NetworkCommunication } from "./networkCommunication/NetworkCommunication";
 import { validatePreparedProof } from "./proofsValidator/ProofsValidator";
 import { PBFTStorage, PreparedMessages } from "./storage/PBFTStorage";
@@ -305,10 +305,10 @@ export class PBFTTerm {
     }
 
     private verifyMessage(message: LeanHelixMessage): boolean {
-        return this.keyManager.verify(message.signedHeader, message.sender.contentSignature, message.sender.senderPublicKey);
+        return this.keyManager.verify(message.signedHeader, message.sender.signature, message.sender.senderPublicKey);
     }
 
-    private isViewChangeValid(targetLeaderPk: string, view: number, message: { signedHeader: ViewChangeMessageContent, sender: SenderSignature }): boolean {
+    private isViewChangeValid(targetLeaderPk: string, view: number, message: { signedHeader: ViewChangeHeader, sender: SenderSignature }): boolean {
         const { signedHeader, sender } = message;
         const { senderPublicKey: senderPk } = sender;
         const { view: newView, term, preparedProof } = signedHeader;

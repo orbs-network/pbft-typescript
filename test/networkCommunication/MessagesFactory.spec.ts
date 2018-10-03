@@ -2,7 +2,7 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
 import { KeyManager } from "../../src";
-import { BlockMessageContent, CommitMessage, MessageType, NewViewContent, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage, ViewChangeMessageContent, ViewChangeConfirmation } from "../../src/networkCommunication/Messages";
+import { BlockRef, CommitMessage, MessageType, NewViewHeader, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage, ViewChangeHeader, ViewChangeConfirmation } from "../../src/networkCommunication/Messages";
 import { MessagesFactory } from "../../src/networkCommunication/MessagesFactory";
 import { PreparedMessages } from "../../src/storage/PBFTStorage";
 import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
@@ -19,12 +19,12 @@ describe("Messages Factory", () => {
     const messagesFactory: MessagesFactory = new MessagesFactory(calculateBlockHash, keyManager);
 
     it("should be able to construct a PrePrepare message", async () => {
-        const signedHeader: BlockMessageContent = { messageType: MessageType.PREPREPARE, term, view, blockHash };
+        const signedHeader: BlockRef = { messageType: MessageType.PREPREPARE, term, view, blockHash };
         const expectedMessage: PrePrepareMessage = {
             signedHeader,
             sender: {
                 senderPublicKey: keyManager.getMyPublicKey(),
-                contentSignature: keyManager.sign(signedHeader)
+                signature: keyManager.sign(signedHeader)
             },
             block
         };
@@ -33,12 +33,12 @@ describe("Messages Factory", () => {
     });
 
     it("should be able to construct a Prepare message", async () => {
-        const signedHeader: BlockMessageContent = { messageType: MessageType.PREPARE, term, view, blockHash };
+        const signedHeader: BlockRef = { messageType: MessageType.PREPARE, term, view, blockHash };
         const expectedMessage: PrepareMessage = {
             signedHeader,
             sender: {
                 senderPublicKey: keyManager.getMyPublicKey(),
-                contentSignature: keyManager.sign(signedHeader)
+                signature: keyManager.sign(signedHeader)
             }
         };
         const actualMessage: PrepareMessage = messagesFactory.createPrepareMessage(term, view, blockHash);
@@ -46,12 +46,12 @@ describe("Messages Factory", () => {
     });
 
     it("should be able to construct a Commit message", async () => {
-        const signedHeader: BlockMessageContent = { messageType: MessageType.COMMIT, term, view, blockHash };
+        const signedHeader: BlockRef = { messageType: MessageType.COMMIT, term, view, blockHash };
         const expectedMessage: CommitMessage = {
             signedHeader,
             sender: {
                 senderPublicKey: keyManager.getMyPublicKey(),
-                contentSignature: keyManager.sign(signedHeader)
+                signature: keyManager.sign(signedHeader)
             }
         };
         const actualMessage: CommitMessage = messagesFactory.createCommitMessage(term, view, blockHash);
@@ -59,12 +59,12 @@ describe("Messages Factory", () => {
     });
 
     it("should be able to construct a ViewChange message without prepared proof", async () => {
-        const signedHeader: ViewChangeMessageContent = { messageType: MessageType.VIEW_CHANGE, term, view, preparedProof: undefined };
+        const signedHeader: ViewChangeHeader = { messageType: MessageType.VIEW_CHANGE, term, view, preparedProof: undefined };
         const expectedMessage: ViewChangeMessage = {
             signedHeader,
             sender: {
                 senderPublicKey: keyManager.getMyPublicKey(),
-                contentSignature: keyManager.sign(signedHeader)
+                signature: keyManager.sign(signedHeader)
             },
             block: undefined
         };
@@ -80,7 +80,7 @@ describe("Messages Factory", () => {
             preprepareMessage,
             prepareMessages: [prepareMessage1, prepareMessage2]
         };
-        const signedHeader: ViewChangeMessageContent = {
+        const signedHeader: ViewChangeHeader = {
             messageType: MessageType.VIEW_CHANGE,
             term,
             view,
@@ -96,7 +96,7 @@ describe("Messages Factory", () => {
             signedHeader,
             sender: {
                 senderPublicKey: keyManager.getMyPublicKey(),
-                contentSignature: keyManager.sign(signedHeader)
+                signature: keyManager.sign(signedHeader)
             },
             block
         };
@@ -112,12 +112,12 @@ describe("Messages Factory", () => {
         const vote2: ViewChangeConfirmation = { signedHeader: viewChange2.signedHeader, sender: viewChange2.sender };
         const viewChangeConfirmations: ViewChangeConfirmation[] = [vote1, vote2];
 
-        const signedHeader: NewViewContent = { messageType: MessageType.NEW_VIEW, term, view, viewChangeConfirmations };
+        const signedHeader: NewViewHeader = { messageType: MessageType.NEW_VIEW, term, view, viewChangeConfirmations };
         const expectedMessage: NewViewMessage = {
             signedHeader,
             sender: {
                 senderPublicKey: keyManager.getMyPublicKey(),
-                contentSignature: keyManager.sign(signedHeader)
+                signature: keyManager.sign(signedHeader)
             },
             preprepareMessage
         };
