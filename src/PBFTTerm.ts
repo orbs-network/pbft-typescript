@@ -30,7 +30,7 @@ export class PBFTTerm {
     private readonly logger: Logger;
     private readonly myPk: string;
     private readonly committeeMembersPKs: string[];
-    private readonly noneCommitteeMembersPKs: string[];
+    private readonly otherCommitteeMembersPKs: string[];
     private readonly messagesFactory: MessagesFactory;
 
     private leaderPk: string;
@@ -52,7 +52,7 @@ export class PBFTTerm {
 
         this.myPk = this.keyManager.getMyPublicKey();
         this.committeeMembersPKs = this.networkCommunication.requestOrderedCommittee(blockHeight);
-        this.noneCommitteeMembersPKs = this.committeeMembersPKs.filter(pk => pk !== this.myPk);
+        this.otherCommitteeMembersPKs = this.committeeMembersPKs.filter(pk => pk !== this.myPk);
         this.messagesFactory = new MessagesFactory(this.keyManager);
 
         this.startTerm();
@@ -129,12 +129,12 @@ export class PBFTTerm {
     }
 
     private sendPrePrepare(message: PrePrepareMessage): void {
-        this.networkCommunication.sendPrePrepare(this.noneCommitteeMembersPKs, message);
+        this.networkCommunication.sendPrePrepare(this.otherCommitteeMembersPKs, message);
         this.logger.log({
             subject: "GossipSend",
             message: "preprepare",
             senderPk: this.myPk,
-            targetPks: this.noneCommitteeMembersPKs,
+            targetPks: this.otherCommitteeMembersPKs,
             blockHeight: message.signedHeader.blockHeight,
             view: message.signedHeader.view,
             blockHash: message.signedHeader.blockHash.toString("Hex")
@@ -142,12 +142,12 @@ export class PBFTTerm {
     }
 
     private sendPrepare(message: PrepareMessage): void {
-        this.networkCommunication.sendPrepare(this.noneCommitteeMembersPKs, message);
+        this.networkCommunication.sendPrepare(this.otherCommitteeMembersPKs, message);
         this.logger.log({
             subject: "GossipSend",
             message: "prepare",
             senderPk: this.myPk,
-            targetPks: this.noneCommitteeMembersPKs,
+            targetPks: this.otherCommitteeMembersPKs,
             blockHeight: message.signedHeader.blockHeight,
             view: message.signedHeader.view,
             blockHash: message.signedHeader.blockHash.toString("Hex")
@@ -155,12 +155,12 @@ export class PBFTTerm {
     }
 
     private sendCommit(message: CommitMessage): void {
-        this.networkCommunication.sendCommit(this.noneCommitteeMembersPKs, message);
+        this.networkCommunication.sendCommit(this.otherCommitteeMembersPKs, message);
         this.logger.log({
             subject: "GossipSend",
             message: "commit",
             senderPk: this.myPk,
-            targetPks: this.noneCommitteeMembersPKs,
+            targetPks: this.otherCommitteeMembersPKs,
             blockHeight: message.signedHeader.blockHeight,
             view: message.signedHeader.view,
             blockHash: message.signedHeader.blockHash.toString("Hex")
@@ -180,12 +180,12 @@ export class PBFTTerm {
     }
 
     private sendNewView(message: NewViewMessage): void {
-        this.networkCommunication.sendNewView(this.noneCommitteeMembersPKs, message);
+        this.networkCommunication.sendNewView(this.otherCommitteeMembersPKs, message);
         this.logger.log({
             subject: "GossipSend",
             message: "new-view",
             senderPk: this.myPk,
-            targetPks: this.noneCommitteeMembersPKs,
+            targetPks: this.otherCommitteeMembersPKs,
             blockHeight: message.signedHeader.blockHeight,
             view: message.signedHeader.view
         });
