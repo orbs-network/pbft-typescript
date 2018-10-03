@@ -15,6 +15,7 @@ export type onNewBlockCB = (block: Block) => void;
 export interface TermConfig {
     electionTrigger: ElectionTrigger;
     networkCommunication: NetworkCommunication;
+    messagesFactory: MessagesFactory;
     pbftStorage: PBFTStorage;
     keyManager: KeyManager;
     logger: Logger;
@@ -45,6 +46,7 @@ export class PBFTTerm {
         // config
         this.keyManager = config.keyManager;
         this.networkCommunication = config.networkCommunication;
+        this.messagesFactory = config.messagesFactory;
         this.pbftStorage = config.pbftStorage;
         this.logger = config.logger;
         this.electionTrigger = config.electionTrigger;
@@ -53,7 +55,6 @@ export class PBFTTerm {
         this.myPk = this.keyManager.getMyPublicKey();
         this.committeeMembersPKs = this.networkCommunication.requestOrderedCommittee(blockHeight);
         this.otherCommitteeMembersPKs = this.committeeMembersPKs.filter(pk => pk !== this.myPk);
-        this.messagesFactory = new MessagesFactory(this.keyManager);
 
         this.startTerm();
     }

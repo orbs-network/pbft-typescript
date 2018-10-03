@@ -23,6 +23,7 @@ export class PBFT {
         return {
             electionTrigger: config.electionTrigger,
             networkCommunication: config.networkCommunication,
+            messagesFactory: config.messagesFactory,
             pbftStorage: config.pbftStorage || new InMemoryPBFTStorage(config.logger),
             keyManager: config.keyManager,
             logger: config.logger,
