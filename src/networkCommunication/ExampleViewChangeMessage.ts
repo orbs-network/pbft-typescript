@@ -24,7 +24,7 @@ const exampleViewChangeMessage: ViewChangeMessage = {
                     view: PREPARED_VIEW,
                     blockHash: BLOCK_HASH
                 },
-                signer: PP_SIGNATURE
+                sender: PP_SIGNATURE
             },
             prepareBlockRefMessages: [
                 {
@@ -34,7 +34,7 @@ const exampleViewChangeMessage: ViewChangeMessage = {
                         view: PREPARED_VIEW,
                         blockHash: BLOCK_HASH
                     },
-                    signer: P_SIGNATURE1
+                    sender: P_SIGNATURE1
                 },
                 {
                     signedHeader: {
@@ -43,11 +43,11 @@ const exampleViewChangeMessage: ViewChangeMessage = {
                         view: PREPARED_VIEW,
                         blockHash: BLOCK_HASH
                     },
-                    signer: P_SIGNATURE2
+                    sender: P_SIGNATURE2
                 },
             ]
         }
     },
-    signer: VC_SIGNATURE,
+    sender: VC_SIGNATURE,
     block: BLOCK
 };

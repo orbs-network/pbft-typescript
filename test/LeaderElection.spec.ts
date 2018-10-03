@@ -112,7 +112,7 @@ describe("Leader Election", () => {
 
         const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, 1, 1, block2);
         const VCProof: ViewChangeMessage[] = [node0VCMessage, node2VCMessage, node3VCMessage];
-        const votes: ViewChangeConfirmation[] = VCProof.map(msg => ({ signedHeader: msg.signedHeader, signer: msg.signer }));
+        const votes: ViewChangeConfirmation[] = VCProof.map(msg => ({ signedHeader: msg.signedHeader, sender: msg.sender }));
         const message: NewViewMessage = aNewViewMessage(node1.config.keyManager, 1, 1, PPMessage, votes);
         expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], message);
         testNetwork.shutDown();
@@ -156,7 +156,7 @@ describe("Leader Election", () => {
         await nextTick();
 
         const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, 1, 5, blockOnView4);
-        const votes: ViewChangeConfirmation[] = [node0VCMessage, node2VCMessage, node3VCMessage].map(msg => ({ signedHeader: msg.signedHeader, signer: msg.signer }));
+        const votes: ViewChangeConfirmation[] = [node0VCMessage, node2VCMessage, node3VCMessage].map(msg => ({ signedHeader: msg.signedHeader, sender: msg.sender }));
         const newViewMessage: NewViewMessage = aNewViewMessage(node1.config.keyManager, 1, 5, PPMessage, votes);
         expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], newViewMessage);
         testNetwork.shutDown();
@@ -256,7 +256,7 @@ describe("Leader Election", () => {
 
         const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, 2, 1, block3);
         const VCProof: ViewChangeMessage[] = node1.config.pbftStorage.getViewChangeMessages(2, 1, 1);
-        const votes: ViewChangeConfirmation[] = VCProof.map(msg => ({ signedHeader: msg.signedHeader, signer: msg.signer }));
+        const votes: ViewChangeConfirmation[] = VCProof.map(msg => ({ signedHeader: msg.signedHeader, sender: msg.sender }));
         const node1NVExpectedMessage: NewViewMessage = aNewViewMessage(node1.config.keyManager, 2, 1, PPMessage, votes);
         expect(spy1).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], node1NVExpectedMessage);
 

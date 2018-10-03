@@ -5,7 +5,7 @@ import { PreparedMessages } from "../../src/storage/PBFTStorage";
 import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 
 export function blockRefMessageFromPP(preprepareMessage: PrePrepareMessage): BlockRefMessage {
-    return { signer: preprepareMessage.signer, signedHeader: preprepareMessage.signedHeader };
+    return { sender: preprepareMessage.sender, signedHeader: preprepareMessage.signedHeader };
 }
 
 export function aPrePrepareMessage(keyManager: KeyManager, term: number, view: number, block: Block): PrePrepareMessage {

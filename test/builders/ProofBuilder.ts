@@ -23,18 +23,18 @@ export function aPreparedProof(leader: Node, members: Node[], term: number, view
 
     const preprepareBlockRefMessage: BlockRefMessage = {
         signedHeader: PPContent,
-        signer: {
+        sender: {
             contentSignature: leader.config.keyManager.sign(PPContent),
-            signerPublicKey: leader.config.keyManager.getMyPublicKey()
+            senderPublicKey: leader.config.keyManager.getMyPublicKey()
         }
     };
 
     const prepareBlockRefMessages: BlockRefMessage[] = members.map(member => {
         return {
             signedHeader: PContent,
-            signer: {
+            sender: {
                 contentSignature: member.config.keyManager.sign(PContent),
-                signerPublicKey: member.config.keyManager.getMyPublicKey()
+                senderPublicKey: member.config.keyManager.getMyPublicKey()
             }
         };
     });

@@ -140,7 +140,7 @@ describe("PBFTTerm", () => {
             expect(spy).to.have.been.called;
 
             // Destorying the signature => invalid, should be ignored
-            PPMessage.signer.contentSignature = node0KeyManager.sign("FAKE_DATA");
+            PPMessage.sender.contentSignature = node0KeyManager.sign("FAKE_DATA");
             spy.resetHistory();
             node1PbftTerm.onReceivePrePrepare(PPMessage);
             await nextTick();
@@ -157,7 +157,7 @@ describe("PBFTTerm", () => {
             expect(spy).to.have.been.called;
 
             // Destorying the signature => invalid, should be ignored
-            PMessage.signer.contentSignature = node0KeyManager.sign("FAKE_DATA");
+            PMessage.sender.contentSignature = node0KeyManager.sign("FAKE_DATA");
             spy.resetHistory();
             node1PbftTerm.onReceivePrepare(PMessage);
             expect(spy).to.not.have.been.called;
@@ -172,7 +172,7 @@ describe("PBFTTerm", () => {
             expect(spy).to.have.been.called;
 
             // Destorying the signature => invalid, should be ignored
-            CMessage.signer.contentSignature = node0KeyManager.sign("FAKE_DATA");
+            CMessage.sender.contentSignature = node0KeyManager.sign("FAKE_DATA");
             spy.resetHistory();
             node1PbftTerm.onReceiveCommit(CMessage);
             expect(spy).to.not.have.been.called;
@@ -190,7 +190,7 @@ describe("PBFTTerm", () => {
             const NVMessage: NewViewMessage = aNewViewMessage(node1KeyManager, 1, 2, aPrePrepareMessage(node1KeyManager, 1, 1, block), VCProof);
 
             // destorying the signature => invalid, should be ignored
-            NVMessage.signer.contentSignature = node1KeyManager.sign("FAKE_DATA");
+            NVMessage.sender.contentSignature = node1KeyManager.sign("FAKE_DATA");
             node0PbftTerm.onReceiveNewView(NVMessage);
             await nextTick();
             await node0BlockUtils.resolveAllValidations(true);
@@ -207,7 +207,7 @@ describe("PBFTTerm", () => {
 
             spy.resetHistory();
             // destorying the signature => invalid, should be ignored
-            VCMessage.signer.contentSignature = node0KeyManager.sign("FAKE_DATA");
+            VCMessage.sender.contentSignature = node0KeyManager.sign("FAKE_DATA");
             node1PbftTerm.onReceiveViewChange(VCMessage);
             expect(spy).to.not.have.been.called;
         });
@@ -388,7 +388,7 @@ describe("PBFTTerm", () => {
             aViewChangeMessage(node0Config.keyManager, 1, 1),
             aViewChangeMessage(node1Config.keyManager, 1, 1),
             aViewChangeMessage(node2Config.keyManager, 1, 1)
-        ].map(vc => ({ signedHeader: vc.signedHeader, signer: vc.signer }));
+        ].map(vc => ({ signedHeader: vc.signedHeader, sender: vc.sender }));
         const PPMessage1: PrePrepareMessage = aPrePrepareMessage(node1KeyManager, 1, 1, block1);
         const nvMessage1: NewViewMessage = aNewViewMessage(node1KeyManager, 1, 1, PPMessage1, votes1);
 
@@ -403,7 +403,7 @@ describe("PBFTTerm", () => {
             aViewChangeMessage(node0Config.keyManager, 1, 2),
             aViewChangeMessage(node1Config.keyManager, 1, 2),
             aViewChangeMessage(node2Config.keyManager, 1, 2)
-        ].map(vc => ({ signedHeader: vc.signedHeader, signer: vc.signer }));
+        ].map(vc => ({ signedHeader: vc.signedHeader, sender: vc.sender }));
         const PPMessage2: PrePrepareMessage = aPrePrepareMessage(node2KeyManager, 666, 2, block2);
         const nvMessage2: NewViewMessage = aNewViewMessage(node2KeyManager, 1, 2, PPMessage2, votes2);
 
@@ -677,7 +677,7 @@ describe("PBFTTerm", () => {
 
             const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, term, targetView, blockOnView3);
             const VCProof: ViewChangeMessage[] = [node0VCMessage, node2VCMessage, node3VCMessage];
-            const votes: ViewChangeConfirmation[] = VCProof.map(msg => ({ signedHeader: msg.signedHeader, signer: msg.signer }));
+            const votes: ViewChangeConfirmation[] = VCProof.map(msg => ({ signedHeader: msg.signedHeader, sender: msg.sender }));
             const message: NewViewMessage = aNewViewMessage(node1.config.keyManager, term, targetView, PPMessage, votes);
 
             const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);

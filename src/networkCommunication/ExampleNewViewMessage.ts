@@ -34,7 +34,7 @@ const exampleNewViewMessage: NewViewMessage = {
                                 view: PREPARED_VIEW,
                                 blockHash: BLOCK_HASH
                             },
-                            signer: PP_SIGNATURE
+                            sender: PP_SIGNATURE
                         },
                         prepareBlockRefMessages: [
                             {
@@ -44,7 +44,7 @@ const exampleNewViewMessage: NewViewMessage = {
                                     view: PREPARED_VIEW,
                                     blockHash: BLOCK_HASH
                                 },
-                                signer: P_SIGNATURE1
+                                sender: P_SIGNATURE1
                             },
                             {
                                 signedHeader: {
@@ -53,12 +53,12 @@ const exampleNewViewMessage: NewViewMessage = {
                                     view: PREPARED_VIEW,
                                     blockHash: BLOCK_HASH
                                 },
-                                signer: P_SIGNATURE2
+                                sender: P_SIGNATURE2
                             },
                         ]
                     }
                 },
-                signer: VC_SIGNATURE1
+                sender: VC_SIGNATURE1
             },
             {
                 signedHeader: {
@@ -73,7 +73,7 @@ const exampleNewViewMessage: NewViewMessage = {
                                 view: PREPARED_VIEW,
                                 blockHash: BLOCK_HASH
                             },
-                            signer: PP_SIGNATURE
+                            sender: PP_SIGNATURE
                         },
                         prepareBlockRefMessages: [
                             {
@@ -83,7 +83,7 @@ const exampleNewViewMessage: NewViewMessage = {
                                     view: PREPARED_VIEW,
                                     blockHash: BLOCK_HASH
                                 },
-                                signer: P_SIGNATURE1
+                                sender: P_SIGNATURE1
                             },
                             {
                                 signedHeader: {
@@ -92,12 +92,12 @@ const exampleNewViewMessage: NewViewMessage = {
                                     view: PREPARED_VIEW,
                                     blockHash: BLOCK_HASH
                                 },
-                                signer: P_SIGNATURE2
+                                sender: P_SIGNATURE2
                             },
                         ]
                     }
                 },
-                signer: VC_SIGNATURE2
+                sender: VC_SIGNATURE2
             },
             {
                 signedHeader: {
@@ -106,11 +106,11 @@ const exampleNewViewMessage: NewViewMessage = {
                     view: NV_VIEW,
                     preparedProof: undefined
                 },
-                signer: VC_SIGNATURE3
+                sender: VC_SIGNATURE3
             },
         ]
     },
-    signer: NV_SIGNATURE,
+    sender: NV_SIGNATURE,
     preprepareMessage: {
         signedHeader: {
             messageType: MessageType.PREPREPARE,
@@ -118,7 +118,7 @@ const exampleNewViewMessage: NewViewMessage = {
             view: NV_VIEW,
             blockHash: BLOCK_HASH
         },
-        signer: PP_SIGNATURE,
+        sender: PP_SIGNATURE,
         block: BLOCK
     }
 };

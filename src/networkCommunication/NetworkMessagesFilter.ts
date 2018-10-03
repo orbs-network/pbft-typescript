@@ -16,7 +16,7 @@ export class NetworkMessagesFilter {
             return;
         }
 
-        const { signerPublicKey: senderPk } = message.signer;
+        const { senderPublicKey: senderPk } = message.sender;
         if (senderPk === this.myPk) {
             return;
         }

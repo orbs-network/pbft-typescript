@@ -8,7 +8,7 @@ export enum MessageType {
     NEW_VIEW = 4,
 }
 export interface LeanHelixMessage {
-    signer: SenderSignature;
+    sender: SenderSignature;
     signedHeader: {
         messageType: MessageType;
         term: number;
@@ -18,7 +18,7 @@ export interface LeanHelixMessage {
 
 export interface BlockRefMessage extends LeanHelixMessage {
     signedHeader: BlockMessageContent;
-    signer: SenderSignature;
+    sender: SenderSignature;
 }
 
 export type PrePrepareMessage = BlockRefMessage & { block: Block };
@@ -27,18 +27,18 @@ export type CommitMessage = BlockRefMessage;
 
 export interface ViewChangeMessage extends LeanHelixMessage {
     signedHeader: ViewChangeMessageContent;
-    signer: SenderSignature;
+    sender: SenderSignature;
     block?: Block;
 }
 
 export interface NewViewMessage extends LeanHelixMessage {
     signedHeader: NewViewContent;
-    signer: SenderSignature;
+    sender: SenderSignature;
     preprepareMessage: PrePrepareMessage;
 }
 
 export interface SenderSignature {
-    signerPublicKey: string;
+    senderPublicKey: string;
     contentSignature: string;
 }
 
@@ -70,5 +70,5 @@ export interface NewViewContent {
 
 export interface ViewChangeConfirmation {
     signedHeader: ViewChangeMessageContent;
-    signer: SenderSignature;
+    sender: SenderSignature;
 }

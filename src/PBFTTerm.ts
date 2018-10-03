@@ -212,8 +212,8 @@ export class PBFTTerm {
     }
 
     private async validatePrePreapare(message: PrePrepareMessage): Promise<boolean> {
-        const { signedHeader, block, signer } = message;
-        const { signerPublicKey: senderPk } = signer;
+        const { signedHeader, block, sender } = message;
+        const { senderPublicKey: senderPk } = sender;
         const { view, term, blockHash } = signedHeader;
 
         if (this.hasPrePrepare(term, view)) {
@@ -256,8 +256,8 @@ export class PBFTTerm {
     }
 
     public onReceivePrepare(message: PrepareMessage): void {
-        const { signer, signedHeader } = message;
-        const { signerPublicKey: senderPk } = signer;
+        const { sender, signedHeader } = message;
+        const { senderPublicKey: senderPk } = sender;
         const { term, view, blockHash } = signedHeader;
         const metaData = {
             method: "onReceivePrepare",
@@ -305,12 +305,12 @@ export class PBFTTerm {
     }
 
     private verifyMessage(message: LeanHelixMessage): boolean {
-        return this.keyManager.verify(message.signedHeader, message.signer.contentSignature, message.signer.signerPublicKey);
+        return this.keyManager.verify(message.signedHeader, message.sender.contentSignature, message.sender.senderPublicKey);
     }
 
-    private isViewChangeValid(targetLeaderPk: string, view: number, message: { signedHeader: ViewChangeMessageContent, signer: SenderSignature }): boolean {
-        const { signedHeader, signer } = message;
-        const { signerPublicKey: senderPk } = signer;
+    private isViewChangeValid(targetLeaderPk: string, view: number, message: { signedHeader: ViewChangeMessageContent, sender: SenderSignature }): boolean {
+        const { signedHeader, sender } = message;
+        const { senderPublicKey: senderPk } = sender;
         const { view: newView, term, preparedProof } = signedHeader;
 
         if (!this.verifyMessage(message)) {
@@ -359,7 +359,7 @@ export class PBFTTerm {
         }
 
         const preprepareMessage: PrePrepareMessage = this.messagesFactory.createPreprepareMessage(this.term, view, block);
-        const viewChangeVotes: ViewChangeConfirmation[] = viewChangeMessages.map(vc => ({ signedHeader: vc.signedHeader, signer: vc.signer }));
+        const viewChangeVotes: ViewChangeConfirmation[] = viewChangeMessages.map(vc => ({ signedHeader: vc.signedHeader, sender: vc.sender }));
         const newViewMessage: NewViewMessage = this.messagesFactory.createNewViewMessage(this.term, view, preprepareMessage, viewChangeVotes);
         this.pbftStorage.storePrePrepare(preprepareMessage);
         this.sendNewView(newViewMessage);
@@ -392,8 +392,8 @@ export class PBFTTerm {
     }
 
     public onReceiveCommit(message: CommitMessage): void {
-        const { signedHeader, signer } = message;
-        const { signerPublicKey: senderPk } = signer;
+        const { signedHeader, sender } = message;
+        const { senderPublicKey: senderPk } = sender;
         const { view, term, blockHash } = signedHeader;
 
         if (!this.verifyMessage(message)) {
@@ -436,7 +436,7 @@ export class PBFTTerm {
             return false;
         }
 
-        const allPkAreUnique = votes.reduce((prev, current) => prev.set(current.signer.signerPublicKey, true), new Map()).size === votes.length;
+        const allPkAreUnique = votes.reduce((prev, current) => prev.set(current.sender.senderPublicKey, true), new Map()).size === votes.length;
         if (!allPkAreUnique) {
             return false;
         }
@@ -457,8 +457,8 @@ export class PBFTTerm {
     }
 
     public async onReceiveNewView(message: NewViewMessage): Promise<void> {
-        const { signedHeader, signer, preprepareMessage } = message;
-        const { signerPublicKey: senderPk } = signer;
+        const { signedHeader, sender, preprepareMessage } = message;
+        const { senderPublicKey: senderPk } = sender;
         const { view, term, viewChangeConfirmations } = signedHeader;
 
         if (!this.verifyMessage(message)) {

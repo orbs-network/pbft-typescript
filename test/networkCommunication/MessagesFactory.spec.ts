@@ -22,8 +22,8 @@ describe("Messages Factory", () => {
         const signedHeader: BlockMessageContent = { messageType: MessageType.PREPREPARE, term, view, blockHash };
         const expectedMessage: PrePrepareMessage = {
             signedHeader,
-            signer: {
-                signerPublicKey: keyManager.getMyPublicKey(),
+            sender: {
+                senderPublicKey: keyManager.getMyPublicKey(),
                 contentSignature: keyManager.sign(signedHeader)
             },
             block
@@ -36,8 +36,8 @@ describe("Messages Factory", () => {
         const signedHeader: BlockMessageContent = { messageType: MessageType.PREPARE, term, view, blockHash };
         const expectedMessage: PrepareMessage = {
             signedHeader,
-            signer: {
-                signerPublicKey: keyManager.getMyPublicKey(),
+            sender: {
+                senderPublicKey: keyManager.getMyPublicKey(),
                 contentSignature: keyManager.sign(signedHeader)
             }
         };
@@ -49,8 +49,8 @@ describe("Messages Factory", () => {
         const signedHeader: BlockMessageContent = { messageType: MessageType.COMMIT, term, view, blockHash };
         const expectedMessage: CommitMessage = {
             signedHeader,
-            signer: {
-                signerPublicKey: keyManager.getMyPublicKey(),
+            sender: {
+                senderPublicKey: keyManager.getMyPublicKey(),
                 contentSignature: keyManager.sign(signedHeader)
             }
         };
@@ -62,8 +62,8 @@ describe("Messages Factory", () => {
         const signedHeader: ViewChangeMessageContent = { messageType: MessageType.VIEW_CHANGE, term, view, preparedProof: undefined };
         const expectedMessage: ViewChangeMessage = {
             signedHeader,
-            signer: {
-                signerPublicKey: keyManager.getMyPublicKey(),
+            sender: {
+                senderPublicKey: keyManager.getMyPublicKey(),
                 contentSignature: keyManager.sign(signedHeader)
             },
             block: undefined
@@ -87,15 +87,15 @@ describe("Messages Factory", () => {
             preparedProof: {
                 preprepareBlockRefMessage: {
                     signedHeader: preprepareMessage.signedHeader,
-                    signer: preprepareMessage.signer
+                    sender: preprepareMessage.sender
                 },
                 prepareBlockRefMessages: preparedMessages.prepareMessages
             }
         };
         const expectedMessage: ViewChangeMessage = {
             signedHeader,
-            signer: {
-                signerPublicKey: keyManager.getMyPublicKey(),
+            sender: {
+                senderPublicKey: keyManager.getMyPublicKey(),
                 contentSignature: keyManager.sign(signedHeader)
             },
             block
@@ -107,16 +107,16 @@ describe("Messages Factory", () => {
     it("should be able to construct a New View message", async () => {
         const preprepareMessage: PrePrepareMessage = messagesFactory.createPreprepareMessage(term, view, block);
         const viewChange1: ViewChangeMessage = messagesFactory.createViewChangeMessage(term, view);
-        const vote1: ViewChangeConfirmation = { signedHeader: viewChange1.signedHeader, signer: viewChange1.signer };
+        const vote1: ViewChangeConfirmation = { signedHeader: viewChange1.signedHeader, sender: viewChange1.sender };
         const viewChange2: ViewChangeMessage = messagesFactory.createViewChangeMessage(term, view);
-        const vote2: ViewChangeConfirmation = { signedHeader: viewChange2.signedHeader, signer: viewChange2.signer };
+        const vote2: ViewChangeConfirmation = { signedHeader: viewChange2.signedHeader, sender: viewChange2.sender };
         const viewChangeConfirmations: ViewChangeConfirmation[] = [vote1, vote2];
 
         const signedHeader: NewViewContent = { messageType: MessageType.NEW_VIEW, term, view, viewChangeConfirmations };
         const expectedMessage: NewViewMessage = {
             signedHeader,
-            signer: {
-                signerPublicKey: keyManager.getMyPublicKey(),
+            sender: {
+                senderPublicKey: keyManager.getMyPublicKey(),
                 contentSignature: keyManager.sign(signedHeader)
             },
             preprepareMessage
