@@ -53,7 +53,7 @@ export class PBFTTerm {
         this.myPk = this.keyManager.getMyPublicKey();
         this.committeeMembersPKs = this.networkCommunication.requestOrderedCommittee(blockHeight);
         this.noneCommitteeMembersPKs = this.committeeMembersPKs.filter(pk => pk !== this.myPk);
-        this.messagesFactory = new MessagesFactory(this.blockUtils.calculateBlockHash, this.keyManager);
+        this.messagesFactory = new MessagesFactory(this.keyManager);
 
         this.startTerm();
     }

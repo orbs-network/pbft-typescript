@@ -44,7 +44,7 @@ export class PBFT {
     private createPBFTTerm(height: number): void {
         this.pbftTerm = new PBFTTerm(this.pbftTermConfig, height, block => {
             this.notifyCommitted(block);
-            this.start(block.header.height + 1);
+            this.start(block.getHeight() + 1);
         });
         this.networkMessagesFilter.setBlockHeight(height, this.pbftTerm);
     }

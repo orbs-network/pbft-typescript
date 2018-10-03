@@ -10,7 +10,7 @@ import { Config } from "../src/Config";
 import { NewViewMessage, PrePrepareMessage, ViewChangeMessage, PreparedProof, ViewChangeConfirmation, BlockRefMessage } from "../src/networkCommunication/Messages";
 import { PBFTTerm, TermConfig } from "../src/PBFTTerm";
 import { PreparedMessages } from "../src/storage/PBFTStorage";
-import { BlockUtilsMock, calculateBlockHash } from "./blockUtils/BlockUtilsMock";
+import { BlockUtilsMock } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aCommitMessage, aNewViewMessage, aPrepareMessage, aPrePrepareMessage, aViewChangeMessage, blockRefMessageFromPP } from "./builders/MessagesBuilder";
 import { aPrepared } from "./builders/ProofBuilder";
@@ -305,7 +305,6 @@ describe("PBFTTerm", () => {
     it("onReceivePrePrepare should not accept messages where the given block doesn't match the given blockHash", async () => {
         const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
         const block: Block = aBlock(theGenesisBlock);
-        const badBlockHash = calculateBlockHash(aBlock(block));
 
         const spy = sinon.spy(node1Config.blockUtils, "validateBlock");
         // blockHash match block's hash =>
@@ -316,7 +315,7 @@ describe("PBFTTerm", () => {
         // blockHash does NOT match block's hash =>
         spy.resetHistory();
         const preprepareMessage: PrePrepareMessage = aPrePrepareMessage(node2KeyManager, 1, 2, block);
-        preprepareMessage.signedHeader.blockHash = badBlockHash;
+        preprepareMessage.signedHeader.blockHash = Buffer.from("FAKE_BLOCK_HASH");
         node1PbftTerm.onReceivePrePrepare(preprepareMessage);
         await nextTick();
         expect(spy).to.not.have.been.called;
@@ -654,7 +653,7 @@ describe("PBFTTerm", () => {
             await nextTick();
             await node1BlockUtils.resolveAllValidations(true);
 
-            expect(storePrePrepareSpy.args[0][0].block.header.blockHash).to.equal(blockOnView4.header.blockHash);
+            expect(storePrePrepareSpy.args[0][0].block.getBlockHash()).to.equal(blockOnView4.getBlockHash());
         });
 
         it("onNewView should reject a new-view if the offered (On PP) block is not the heighest block on the VCProof", async () => {

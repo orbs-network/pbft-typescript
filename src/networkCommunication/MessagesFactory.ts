@@ -6,13 +6,12 @@ import { PreparedMessages } from "../storage/PBFTStorage";
 
 export class MessagesFactory {
     private myPk: string;
-    constructor(private calculateBlockHash: (block: Block) => Buffer, private keyManager: KeyManager) {
+    constructor(private keyManager: KeyManager) {
         this.myPk = keyManager.getMyPublicKey();
     }
 
     createPreprepareMessage(blockHeight: number, view: number, block: Block): PrePrepareMessage {
-        const blockHash: Buffer = this.calculateBlockHash(block);
-        const signedHeader: BlockRef = { messageType: MessageType.PREPREPARE, blockHeight, view, blockHash };
+        const signedHeader: BlockRef = { messageType: MessageType.PREPREPARE, blockHeight, view, blockHash: block.getBlockHash() };
         const sender: SenderSignature = {
             senderPublicKey: this.myPk,
             signature: this.keyManager.signBlockRef(signedHeader)

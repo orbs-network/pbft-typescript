@@ -6,7 +6,6 @@ import { KeyManager } from "../../src";
 import { Block } from "../../src/Block";
 import { NetworkMessagesFilter } from "../../src/networkCommunication/NetworkMessagesFilter";
 import { PBFTMessagesHandler } from "../../src/networkCommunication/PBFTMessagesHandler";
-import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { aCommitMessage, aNewViewMessage, aPrepareMessage, aPrePrepareMessage, aViewChangeMessage } from "../builders/MessagesBuilder";
 import { aSimpleTestNetwork } from "../builders/TestNetworkBuilder";
@@ -100,7 +99,6 @@ describe("Network Messages Filter", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         const gossip = testNetwork.getNodeGossip(node0.pk);
-        const blockHash = calculateBlockHash(block);
         const pks = testNetwork.gossipDiscovery.getAllGossipsPks();
         gossip.multicast(pks, aPrePrepareMessage(node0.config.keyManager, 3, 0, block));
         gossip.multicast(pks, aPrepareMessage(node0.config.keyManager, 3, 0, block));
@@ -134,7 +132,6 @@ describe("Network Messages Filter", () => {
 
         const block: Block = aBlock(theGenesisBlock);
         const gossip = testNetwork.getNodeGossip(node1.pk);
-        const blockHash = calculateBlockHash(block);
         const keyManager: KeyManager = new KeyManagerMock("External Node Pk");
         const pks = testNetwork.gossipDiscovery.getAllGossipsPks();
         gossip.multicast(pks, aPrePrepareMessage(keyManager, 3, 0, block));

@@ -5,7 +5,6 @@ import { KeyManager } from "../../src";
 import { BlockRef, CommitMessage, MessageType, NewViewHeader, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage, ViewChangeHeader, ViewChangeConfirmation } from "../../src/networkCommunication/Messages";
 import { MessagesFactory } from "../../src/networkCommunication/MessagesFactory";
 import { PreparedMessages } from "../../src/storage/PBFTStorage";
-import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 chai.use(sinonChai);
@@ -15,8 +14,8 @@ describe("Messages Factory", () => {
     const blockHeight = Math.floor(Math.random() * 1_000_000);
     const view = Math.floor(Math.random() * 1_000_000);
     const block = aBlock(theGenesisBlock);
-    const blockHash = calculateBlockHash(block);
-    const messagesFactory: MessagesFactory = new MessagesFactory(calculateBlockHash, keyManager);
+    const blockHash = block.getBlockHash();
+    const messagesFactory: MessagesFactory = new MessagesFactory(keyManager);
 
     it("should be able to construct a PrePrepare message", async () => {
         const signedHeader: BlockRef = { messageType: MessageType.PREPREPARE, blockHeight, view, blockHash };

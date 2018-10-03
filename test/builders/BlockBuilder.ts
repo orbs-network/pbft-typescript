@@ -1,24 +1,33 @@
 import { Block } from "../../src/Block";
-import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
+import { createHash } from "crypto";
 
 let globalCounter: number = 0;
 const genBody = () => `Block ${(globalCounter++).toString()}`;
 
-export function aBlock(previousBlock: Block, body: any = genBody()): Block {
-    const result: Block = {
-        header: {
-            height: previousBlock.header.height + 1,
-            blockHash: Buffer.from(body)
-        }
-    };
-    (result as any).body = body;
+export class BlockMock implements Block {
+    private readonly blockHash: Buffer;
 
-    return result;
+    constructor(private readonly height: number, private readonly body: string) {
+        this.height = height;
+        this.body = body;
+        this.blockHash = this.calculateBlockHash();
+    }
+
+    getHeight(): number {
+        return this.height;
+    }
+
+    getBlockHash(): Buffer {
+        return this.blockHash;
+    }
+
+    calculateBlockHash(): Buffer {
+        return createHash("sha256").update(this.height.toString()).update(this.body).digest();
+    }
 }
 
-export const theGenesisBlock: Block = {
-    header: {
-        height: 0,
-        blockHash: Buffer.from("The Genesis Block")
-    }
-};
+export function aBlock(previousBlock: Block, body: string = genBody()): Block {
+    return new BlockMock(previousBlock.getHeight() + 1, body);
+}
+
+export const theGenesisBlock: Block = new BlockMock(0, "The Genesis Block");

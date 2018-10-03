@@ -33,7 +33,7 @@ export class Node {
     public startConsensus(): void {
         if (this.pbft) {
             const lastCommittedBlock: Block = this.getLatestCommittedBlock();
-            this.pbft.start(lastCommittedBlock.header.height + 1);
+            this.pbft.start(lastCommittedBlock.getHeight() + 1);
         }
     }
 

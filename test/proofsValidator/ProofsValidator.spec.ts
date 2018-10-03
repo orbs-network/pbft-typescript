@@ -4,7 +4,6 @@ import * as sinonChai from "sinon-chai";
 import { Block, KeyManager } from "../../src";
 import { BlockRefMessage, PreparedProof, PrepareMessage, PrePrepareMessage } from "../../src/networkCommunication/Messages";
 import { validatePreparedProof } from "../../src/proofsValidator/ProofsValidator";
-import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { aPrepareMessage, aPrePrepareMessage, blockRefMessageFromPP } from "../builders/MessagesBuilder";
 import { aPreparedProofByMessages } from "../builders/ProofBuilder";

@@ -2,9 +2,7 @@ import { createHash } from "crypto";
 import * as stringify from "json-stable-stringify";
 import { Block } from "../../src/Block";
 import { BlockUtils } from "../../src/blockUtils/BlockUtils";
-import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
-
-export const calculateBlockHash = (block: Block): Buffer => createHash("sha256").update(stringify(block.header)).digest(); // .digest("base64");
+import { aBlock, theGenesisBlock, BlockMock } from "../builders/BlockBuilder";
 
 export class BlockUtilsMock implements BlockUtils {
     private blocksPromiseList: Promise<Block>[] = [];
@@ -78,7 +76,7 @@ export class BlockUtilsMock implements BlockUtils {
     }
 
     public calculateBlockHash(block: Block): Buffer {
-        return calculateBlockHash(block);
+        return (block as BlockMock).calculateBlockHash();
     }
 }
 

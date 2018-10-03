@@ -1,12 +1,11 @@
 import { Block } from "../../src";
 import { BlockRef, MessageType, PreparedProof, SenderSignature, PrePrepareMessage, PrepareMessage, BlockRefMessage } from "../../src/networkCommunication/Messages";
-import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 import { Node } from "../network/Node";
 import { PreparedMessages } from "../../src/storage/PBFTStorage";
 import { aPrePrepareMessage, aPrepareMessage, blockRefMessageFromPP } from "./MessagesBuilder";
 
 export function aPreparedProof(leader: Node, members: Node[], blockHeight: number, view: number, block: Block): PreparedProof {
-    const blockHash: Buffer = calculateBlockHash(block);
+    const blockHash: Buffer = block.getBlockHash();
 
     const PPContent: BlockRef = {
         messageType: MessageType.PREPREPARE,

@@ -3,15 +3,13 @@ import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
 import { KeyManager } from "../../src/keyManager/KeyManager";
 import { Logger } from "../../src/logger/Logger";
-import { PreparedProof, PrepareMessage, PrePrepareMessage } from "../../src/networkCommunication/Messages";
+import { PrepareMessage, PrePrepareMessage } from "../../src/networkCommunication/Messages";
 import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
-import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
+import { PreparedMessages } from "../../src/storage/PBFTStorage";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { aCommitMessage, aPrepareMessage, aPrePrepareMessage, aViewChangeMessage } from "../builders/MessagesBuilder";
-import { aPreparedProofByMessages, aPrepared } from "../builders/ProofBuilder";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 import { SilentLogger } from "../logger/SilentLogger";
-import { PreparedMessages } from "../../src/storage/PBFTStorage";
 
 chai.use(sinonChai);
 
@@ -23,7 +21,7 @@ describe("PBFT In Memory Storage", () => {
         const blockHeight = Math.floor(Math.random() * 1000);
         const view = Math.floor(Math.random() * 1000);
         const block = aBlock(theGenesisBlock);
-        const blockHash = calculateBlockHash(block);
+        const blockHash = block.getBlockHash();
         const keyManager: KeyManager = new KeyManagerMock("PK");
         const PPMessage = aPrePrepareMessage(keyManager, blockHeight, view, block);
         const PMessage = aPrepareMessage(keyManager, blockHeight, view, block);
@@ -125,7 +123,7 @@ describe("PBFT In Memory Storage", () => {
         const keyManager3: KeyManager = new KeyManagerMock(sender3Id);
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
-        const block1Hash = calculateBlockHash(block1);
+        const block1Hash = block1.getBlockHash();
         storage.storePrepare(aPrepareMessage(keyManager1, blockHeight1, view1, block1));
         storage.storePrepare(aPrepareMessage(keyManager2, blockHeight1, view1, block1));
         storage.storePrepare(aPrepareMessage(keyManager2, blockHeight1, view1, block2));
@@ -150,7 +148,7 @@ describe("PBFT In Memory Storage", () => {
         const keyManager3: KeyManager = new KeyManagerMock(sender3Id);
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
-        const block1Hash = calculateBlockHash(block1);
+        const block1Hash = block1.getBlockHash();
         storage.storeCommit(aCommitMessage(keyManager1, blockHeight1, view1, block1));
         storage.storeCommit(aCommitMessage(keyManager2, blockHeight1, view1, block1));
         storage.storeCommit(aCommitMessage(keyManager3, blockHeight1, view2, block1));
