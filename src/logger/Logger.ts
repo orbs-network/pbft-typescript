@@ -3,7 +3,7 @@ import { Block } from "../Block";
 /// STORAGE ///
 type StorePrePrepare = {
     StorageType: "PrePrepare",
-    term: number,
+    blockHeight: number,
     view: number,
     blockHash: string,
     senderPk: string
@@ -11,7 +11,7 @@ type StorePrePrepare = {
 
 type StorePrepare = {
     StorageType: "Prepare",
-    term: number,
+    blockHeight: number,
     view: number,
     blockHash: string,
     senderPk: string
@@ -19,7 +19,7 @@ type StorePrepare = {
 
 type StoreCommit = {
     StorageType: "Commit",
-    term: number,
+    blockHeight: number,
     view: number,
     blockHash: string,
     senderPk: string
@@ -27,17 +27,17 @@ type StoreCommit = {
 
 type StoreViewChange = {
     StorageType: "ViewChange",
-    term: number,
+    blockHeight: number,
     view: number,
     senderPk: string
 };
 
-type ClearTerm = {
-    StorageType: "ClearTerm",
-    term: number
+type ClearHeight = {
+    StorageType: "ClearHeight",
+    blockHeight: number
 };
 
-type StorageLogData = { subject: "Storage" } & (StorePrePrepare | StorePrepare | StoreCommit | StoreViewChange | ClearTerm);
+type StorageLogData = { subject: "Storage" } & (StorePrePrepare | StorePrepare | StoreCommit | StoreViewChange | ClearHeight);
 
 /// GOSSIP ///
 type GossipSendLogData = {
@@ -45,7 +45,7 @@ type GossipSendLogData = {
     message: string,
     targetPks: string[],
     senderPk: string,
-    term: number,
+    blockHeight: number,
     view: number,
     blockHash?: string
 };
@@ -54,20 +54,20 @@ type GossipSendLogData = {
 // FLOW
 type FlowElected = {
     FlowType: "Elected",
-    term: number,
+    blockHeight: number,
     view: number
 };
 
 type FlowCommit = {
     FlowType: "Commit",
-    term: number,
+    blockHeight: number,
     view: number,
     blockHash: string
 };
 
 type FlowLeaderChange = {
     FlowType: "LeaderChange",
-    term: number,
+    blockHeight: number,
     newView: number,
     leaderPk: string
 };

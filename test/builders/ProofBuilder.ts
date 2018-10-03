@@ -5,18 +5,18 @@ import { Node } from "../network/Node";
 import { PreparedMessages } from "../../src/storage/PBFTStorage";
 import { aPrePrepareMessage, aPrepareMessage, blockRefMessageFromPP } from "./MessagesBuilder";
 
-export function aPreparedProof(leader: Node, members: Node[], term: number, view: number, block: Block): PreparedProof {
+export function aPreparedProof(leader: Node, members: Node[], blockHeight: number, view: number, block: Block): PreparedProof {
     const blockHash: Buffer = calculateBlockHash(block);
 
     const PPContent: BlockRef = {
         messageType: MessageType.PREPREPARE,
-        term,
+        blockHeight,
         view,
         blockHash
     };
     const PContent: BlockRef = {
         messageType: MessageType.PREPARE,
-        term,
+        blockHeight,
         view,
         blockHash
     };
@@ -52,10 +52,10 @@ export function aPreparedProofByMessages(PPMessage: PrePrepareMessage, PMessages
     };
 }
 
-export function aPrepared(leader: Node, members: Node[], term: number, view: number, block: Block): PreparedMessages {
+export function aPrepared(leader: Node, members: Node[], blockHeight: number, view: number, block: Block): PreparedMessages {
     const result: PreparedMessages = {
-        preprepareMessage: aPrePrepareMessage(leader.config.keyManager, term, view, block),
-        prepareMessages: members.map(m => aPrepareMessage(m.config.keyManager, term, view, block))
+        preprepareMessage: aPrePrepareMessage(leader.config.keyManager, blockHeight, view, block),
+        prepareMessages: members.map(m => aPrepareMessage(m.config.keyManager, blockHeight, view, block))
     };
 
     return result;

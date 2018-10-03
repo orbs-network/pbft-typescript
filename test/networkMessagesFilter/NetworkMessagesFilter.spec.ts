@@ -16,7 +16,7 @@ import { PBFTMessagesHandlerMock } from "./PBFTMessagesHandlerMock";
 chai.use(sinonChai);
 
 describe("Network Messages Filter", () => {
-    it("should be able to set the term and recive messages from gossip", async () => {
+    it("should be able to set the blockHeight and recive messages from gossip", async () => {
         // a network with 4 nodes
         const { testNetwork } = aSimpleTestNetwork();
         const node0 = testNetwork.nodes[0];
@@ -31,7 +31,7 @@ describe("Network Messages Filter", () => {
         const VCSpy = sinon.spy(messagesHandler, "onReceiveViewChange");
         const NVSpy = sinon.spy(messagesHandler, "onReceiveNewView");
 
-        gossipFilter.setTerm(3, messagesHandler);
+        gossipFilter.setBlockHeight(3, messagesHandler);
 
         const block: Block = aBlock(theGenesisBlock);
         const gossip = testNetwork.getNodeGossip(node1.pk);
@@ -49,7 +49,7 @@ describe("Network Messages Filter", () => {
         expect(NVSpy).to.have.been.calledOnce;
     });
 
-    it("should ignore messages if not the in current term", async () => {
+    it("should ignore messages if not the in current blockHeight", async () => {
         // a network with 4 nodes
         const { testNetwork } = aSimpleTestNetwork();
         const node0 = testNetwork.nodes[0];
@@ -64,7 +64,7 @@ describe("Network Messages Filter", () => {
         const VCSpy = sinon.spy(messagesHandler, "onReceiveViewChange");
         const NVSpy = sinon.spy(messagesHandler, "onReceiveNewView");
 
-        gossipFilter.setTerm(2, messagesHandler);
+        gossipFilter.setBlockHeight(2, messagesHandler);
 
         const block: Block = aBlock(theGenesisBlock);
         const gossip = testNetwork.getNodeGossip(node1.pk);
@@ -96,7 +96,7 @@ describe("Network Messages Filter", () => {
         const VCSpy = sinon.spy(messagesHandler, "onReceiveViewChange");
         const NVSpy = sinon.spy(messagesHandler, "onReceiveNewView");
 
-        gossipFilter.setTerm(3, messagesHandler);
+        gossipFilter.setBlockHeight(3, messagesHandler);
 
         const block: Block = aBlock(theGenesisBlock);
         const gossip = testNetwork.getNodeGossip(node0.pk);
@@ -130,7 +130,7 @@ describe("Network Messages Filter", () => {
         const VCSpy = sinon.spy(messagesHandler, "onReceiveViewChange");
         const NVSpy = sinon.spy(messagesHandler, "onReceiveNewView");
 
-        gossipFilter.setTerm(3, messagesHandler);
+        gossipFilter.setBlockHeight(3, messagesHandler);
 
         const block: Block = aBlock(theGenesisBlock);
         const gossip = testNetwork.getNodeGossip(node1.pk);

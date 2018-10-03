@@ -2,7 +2,7 @@ import { KeyManager } from "../keyManager/KeyManager";
 import { PreparedProof } from "../networkCommunication/Messages";
 
 export function validatePreparedProof(
-    targetTerm: number,
+    targetBlockHeight: number,
     targetView: number,
     preparedProof: PreparedProof,
     f: number,
@@ -19,8 +19,8 @@ export function validatePreparedProof(
         return false;
     }
 
-    const { term, view, blockHash } = preprepareBlockRefMessage.signedHeader;
-    if (term !== targetTerm) {
+    const { blockHeight, view, blockHash } = preprepareBlockRefMessage.signedHeader;
+    if (blockHeight !== targetBlockHeight) {
         return false;
     }
 
@@ -63,7 +63,7 @@ export function validatePreparedProof(
 
     const isPrepareMisMatch = prepareBlockRefMessages
         .map(p => p.signedHeader)
-        .findIndex(p => p.view !== view || p.term !== term || !p.blockHash.equals(blockHash)) > -1;
+        .findIndex(p => p.view !== view || p.blockHeight !== blockHeight || !p.blockHash.equals(blockHash)) > -1;
 
     if (isPrepareMisMatch) {
         return false;

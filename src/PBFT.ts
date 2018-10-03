@@ -46,7 +46,7 @@ export class PBFT {
             this.notifyCommitted(block);
             this.start(block.header.height + 1);
         });
-        this.networkMessagesFilter.setTerm(height, this.pbftTerm);
+        this.networkMessagesFilter.setBlockHeight(height, this.pbftTerm);
     }
 
     public isLeader(): boolean {

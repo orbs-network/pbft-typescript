@@ -11,26 +11,26 @@ const P_SIGNATURE1: SenderSignature = undefined;
 const P_SIGNATURE2: SenderSignature = undefined;
 
 const NV_SIGNATURE: SenderSignature = undefined;
-const NV_TERM = 0;
+const NV_BLOCK_HEIGHT = 0;
 const NV_VIEW = 1;
 const PREPARED_VIEW = 0; // < NV_VIEW
 
 const exampleNewViewMessage: NewViewMessage = {
     signedHeader: {
         messageType: MessageType.NEW_VIEW,
-        term: NV_TERM,
+        blockHeight: NV_BLOCK_HEIGHT,
         view: NV_VIEW,
         viewChangeConfirmations: [
             {
                 signedHeader: {
                     messageType: MessageType.VIEW_CHANGE,
-                    term: NV_TERM,
+                    blockHeight: NV_BLOCK_HEIGHT,
                     view: NV_VIEW,
                     preparedProof: {
                         preprepareBlockRefMessage: {
                             signedHeader: {
                                 messageType: MessageType.PREPREPARE,
-                                term: NV_TERM,
+                                blockHeight: NV_BLOCK_HEIGHT,
                                 view: PREPARED_VIEW,
                                 blockHash: BLOCK_HASH
                             },
@@ -40,7 +40,7 @@ const exampleNewViewMessage: NewViewMessage = {
                             {
                                 signedHeader: {
                                     messageType: MessageType.PREPARE,
-                                    term: NV_TERM,
+                                    blockHeight: NV_BLOCK_HEIGHT,
                                     view: PREPARED_VIEW,
                                     blockHash: BLOCK_HASH
                                 },
@@ -49,7 +49,7 @@ const exampleNewViewMessage: NewViewMessage = {
                             {
                                 signedHeader: {
                                     messageType: MessageType.PREPARE,
-                                    term: NV_TERM,
+                                    blockHeight: NV_BLOCK_HEIGHT,
                                     view: PREPARED_VIEW,
                                     blockHash: BLOCK_HASH
                                 },
@@ -63,13 +63,13 @@ const exampleNewViewMessage: NewViewMessage = {
             {
                 signedHeader: {
                     messageType: MessageType.VIEW_CHANGE,
-                    term: NV_TERM,
+                    blockHeight: NV_BLOCK_HEIGHT,
                     view: NV_VIEW,
                     preparedProof: {
                         preprepareBlockRefMessage: {
                             signedHeader: {
                                 messageType: MessageType.PREPREPARE,
-                                term: NV_TERM,
+                                blockHeight: NV_BLOCK_HEIGHT,
                                 view: PREPARED_VIEW,
                                 blockHash: BLOCK_HASH
                             },
@@ -79,7 +79,7 @@ const exampleNewViewMessage: NewViewMessage = {
                             {
                                 signedHeader: {
                                     messageType: MessageType.PREPARE,
-                                    term: NV_TERM,
+                                    blockHeight: NV_BLOCK_HEIGHT,
                                     view: PREPARED_VIEW,
                                     blockHash: BLOCK_HASH
                                 },
@@ -88,7 +88,7 @@ const exampleNewViewMessage: NewViewMessage = {
                             {
                                 signedHeader: {
                                     messageType: MessageType.PREPARE,
-                                    term: NV_TERM,
+                                    blockHeight: NV_BLOCK_HEIGHT,
                                     view: PREPARED_VIEW,
                                     blockHash: BLOCK_HASH
                                 },
@@ -102,7 +102,7 @@ const exampleNewViewMessage: NewViewMessage = {
             {
                 signedHeader: {
                     messageType: MessageType.VIEW_CHANGE,
-                    term: NV_TERM,
+                    blockHeight: NV_BLOCK_HEIGHT,
                     view: NV_VIEW,
                     preparedProof: undefined
                 },
@@ -114,7 +114,7 @@ const exampleNewViewMessage: NewViewMessage = {
     preprepareMessage: {
         signedHeader: {
             messageType: MessageType.PREPREPARE,
-            term: NV_TERM,
+            blockHeight: NV_BLOCK_HEIGHT,
             view: NV_VIEW,
             blockHash: BLOCK_HASH
         },

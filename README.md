@@ -7,8 +7,8 @@ This library is a PBFT implementation of the PBFT algorithm (Practical Byzantine
 ## Algorithm
 
 * Flow
-* Terminology: term; view; node; leader;
-* Initial setup: leader; storage; term; view
+* Terminology: blockHeight; view; node; leader;
+* Initial setup: leader; storage; blockHeight; view
 * PBFT phases
 * Passing data between nodes: messages; filters; Gossip
 * Leader change: request view change; election; new view
@@ -35,7 +35,7 @@ Exponential timeouts
 
 #### PBFT
 
-There is a single instance of `PBFT` class. It handles multiple *term*s.
+There is a single instance of `PBFT` class. It handles multiple *blockHeight*s.
 
 * `start()` disposes of the previous `PBFTTerm` and creates a new one.
 
@@ -45,7 +45,7 @@ createPBFTTerm(): holds CB when block can be committed. The CB notifies listener
 
 #### PBFTTerm
 
-Each *term* has a separate instance of `PBFTTerm`.
+Each *term* (blockHeight) has a separate instance of `PBFTTerm`.
 
 * `startTerm()`: calls setView(), if node is not leader, it waits.
 * `isLeader()`

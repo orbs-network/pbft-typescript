@@ -1,7 +1,7 @@
 import { Block } from "../Block";
 import { SenderSignature, ViewChangeMessage, MessageType, NewViewMessage } from "./Messages";
 
-const VC_TERM = 0;
+const VC_BLOCK_HEIGHT = 0;
 const VC_VIEW = 1;
 const PREPARED_VIEW = 0; // < VC_VIEW;
 const BLOCK: Block = undefined;
@@ -14,13 +14,13 @@ const P_SIGNATURE2: SenderSignature = undefined;
 const exampleViewChangeMessage: ViewChangeMessage = {
     signedHeader: {
         messageType: MessageType.VIEW_CHANGE,
-        term: VC_TERM,
+        blockHeight: VC_BLOCK_HEIGHT,
         view: VC_VIEW,
         preparedProof: {
             preprepareBlockRefMessage: {
                 signedHeader: {
                     messageType: MessageType.PREPREPARE,
-                    term: VC_TERM,
+                    blockHeight: VC_BLOCK_HEIGHT,
                     view: PREPARED_VIEW,
                     blockHash: BLOCK_HASH
                 },
@@ -30,7 +30,7 @@ const exampleViewChangeMessage: ViewChangeMessage = {
                 {
                     signedHeader: {
                         messageType: MessageType.PREPARE,
-                        term: VC_TERM,
+                        blockHeight: VC_BLOCK_HEIGHT,
                         view: PREPARED_VIEW,
                         blockHash: BLOCK_HASH
                     },
@@ -39,7 +39,7 @@ const exampleViewChangeMessage: ViewChangeMessage = {
                 {
                     signedHeader: {
                         messageType: MessageType.PREPARE,
-                        term: VC_TERM,
+                        blockHeight: VC_BLOCK_HEIGHT,
                         view: PREPARED_VIEW,
                         blockHash: BLOCK_HASH
                     },

@@ -10,9 +10,9 @@ export class MessagesFactory {
         this.myPk = keyManager.getMyPublicKey();
     }
 
-    createPreprepareMessage(term: number, view: number, block: Block): PrePrepareMessage {
+    createPreprepareMessage(blockHeight: number, view: number, block: Block): PrePrepareMessage {
         const blockHash: Buffer = this.calculateBlockHash(block);
-        const signedHeader: BlockRef = { messageType: MessageType.PREPREPARE, term, view, blockHash };
+        const signedHeader: BlockRef = { messageType: MessageType.PREPREPARE, blockHeight, view, blockHash };
         const sender: SenderSignature = {
             senderPublicKey: this.myPk,
             signature: this.keyManager.sign(signedHeader)
@@ -24,8 +24,8 @@ export class MessagesFactory {
         };
     }
 
-    createPrepareMessage(term: number, view: number, blockHash: Buffer): PrepareMessage {
-        const signedHeader: BlockRef = { messageType: MessageType.PREPARE, term, view, blockHash };
+    createPrepareMessage(blockHeight: number, view: number, blockHash: Buffer): PrepareMessage {
+        const signedHeader: BlockRef = { messageType: MessageType.PREPARE, blockHeight, view, blockHash };
         const sender: SenderSignature = {
             senderPublicKey: this.myPk,
             signature: this.keyManager.sign(signedHeader)
@@ -33,8 +33,8 @@ export class MessagesFactory {
         return { sender, signedHeader };
     }
 
-    createCommitMessage(term: number, view: number, blockHash: Buffer): CommitMessage {
-        const signedHeader: BlockRef = { messageType: MessageType.COMMIT, term, view, blockHash };
+    createCommitMessage(blockHeight: number, view: number, blockHash: Buffer): CommitMessage {
+        const signedHeader: BlockRef = { messageType: MessageType.COMMIT, blockHeight, view, blockHash };
         const sender: SenderSignature = {
             senderPublicKey: this.myPk,
             signature: this.keyManager.sign(signedHeader)
@@ -53,7 +53,7 @@ export class MessagesFactory {
         };
     }
 
-    createViewChangeMessage(term: number, view: number, preparedMessages?: PreparedMessages): ViewChangeMessage {
+    createViewChangeMessage(blockHeight: number, view: number, preparedMessages?: PreparedMessages): ViewChangeMessage {
         let preparedProof: PreparedProof;
         let block: Block;
         if (preparedMessages) {
@@ -61,7 +61,7 @@ export class MessagesFactory {
             block = preparedMessages.preprepareMessage.block;
         }
 
-        const signedHeader: ViewChangeHeader = { messageType: MessageType.VIEW_CHANGE, term, view, preparedProof };
+        const signedHeader: ViewChangeHeader = { messageType: MessageType.VIEW_CHANGE, blockHeight, view, preparedProof };
         const sender: SenderSignature = {
             senderPublicKey: this.myPk,
             signature: this.keyManager.sign(signedHeader)
@@ -73,8 +73,8 @@ export class MessagesFactory {
         };
     }
 
-    createNewViewMessage(term: number, view: number, preprepareMessage: PrePrepareMessage, viewChangeConfirmations: ViewChangeConfirmation[]): NewViewMessage {
-        const signedHeader: NewViewHeader = { messageType: MessageType.NEW_VIEW, term, view, viewChangeConfirmations };
+    createNewViewMessage(blockHeight: number, view: number, preprepareMessage: PrePrepareMessage, viewChangeConfirmations: ViewChangeConfirmation[]): NewViewMessage {
+        const signedHeader: NewViewHeader = { messageType: MessageType.NEW_VIEW, blockHeight, view, viewChangeConfirmations };
         const sender: SenderSignature = {
             senderPublicKey: this.myPk,
             signature: this.keyManager.sign(signedHeader)

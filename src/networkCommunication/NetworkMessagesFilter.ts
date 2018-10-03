@@ -3,7 +3,7 @@ import { NetworkCommunication } from "./NetworkCommunication";
 import { PBFTMessagesHandler } from "./PBFTMessagesHandler";
 
 export class NetworkMessagesFilter {
-    private term: number;
+    private blockHeight: number;
     private messagesHandler: PBFTMessagesHandler;
     private messagesCache: LeanHelixMessage[] = [];
 
@@ -25,11 +25,11 @@ export class NetworkMessagesFilter {
             return;
         }
 
-        if (message.signedHeader.term < this.term) {
+        if (message.signedHeader.blockHeight < this.blockHeight) {
             return;
         }
 
-        if (message.signedHeader.term > this.term) {
+        if (message.signedHeader.blockHeight > this.blockHeight) {
             this.messagesCache.push(message);
             return;
         }
@@ -72,7 +72,7 @@ export class NetworkMessagesFilter {
 
     private consumeCacheMessages(): void {
         this.messagesCache = this.messagesCache.reduce((prev, current) => {
-            if (current.signedHeader.term === this.term) {
+            if (current.signedHeader.blockHeight === this.blockHeight) {
                 this.processGossipMessage(current);
             } else {
                 prev.push(current);
@@ -81,8 +81,8 @@ export class NetworkMessagesFilter {
         }, []);
     }
 
-    public setTerm(term: number, messagesHandler: PBFTMessagesHandler) {
-        this.term = term;
+    public setBlockHeight(blockHeight: number, messagesHandler: PBFTMessagesHandler) {
+        this.blockHeight = blockHeight;
         this.messagesHandler = messagesHandler;
         this.consumeCacheMessages();
     }

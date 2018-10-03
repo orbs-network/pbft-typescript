@@ -380,7 +380,7 @@ describe("PBFTTerm", () => {
         expect(node0PbftTerm.getView()).to.equal(1);
     });
 
-    it("onReceiveNewView should not accept messages that don't match the PP.term", async () => {
+    it("onReceiveNewView should not accept messages that don't match the PP.blockHeight", async () => {
         const node0PbftTerm: PBFTTerm = createPBFTTerm(node0Config);
 
         const block1: Block = aBlock(theGenesisBlock);
@@ -407,7 +407,7 @@ describe("PBFTTerm", () => {
         const PPMessage2: PrePrepareMessage = aPrePrepareMessage(node2KeyManager, 666, 2, block2);
         const nvMessage2: NewViewMessage = aNewViewMessage(node2KeyManager, 1, 2, PPMessage2, votes2);
 
-        // miss matching term => ignore
+        // miss matching blockHeight => ignore
         node0PbftTerm.onReceiveNewView(nvMessage2);
         await nextTick();
         await node0BlockUtils.resolveAllValidations(true);
@@ -463,7 +463,7 @@ describe("PBFTTerm", () => {
         expect(node0PbftTerm.getView()).to.equal(1);
     });
 
-    it("onReceiveNewView should not accept messages with VCProof dont have matching term", async () => {
+    it("onReceiveNewView should not accept messages with VCProof dont have matching blockHeight", async () => {
         const node0PbftTerm: PBFTTerm = createPBFTTerm(node0Config);
 
         const block: Block = aBlock(theGenesisBlock);
@@ -472,7 +472,7 @@ describe("PBFTTerm", () => {
         const viewChange2_good: ViewChangeMessage = aViewChangeMessage(node2Config.keyManager, 1, 1);
         const VCProofGood: ViewChangeMessage[] = [viewChange0_good, viewChange1_good, viewChange2_good];
 
-        // matching terms senders => ok
+        // matching blockHeight senders => ok
         node0PbftTerm.onReceiveNewView(aNewViewMessage(node1KeyManager, 1, 1, aPrePrepareMessage(node1KeyManager, 1, 1, block), VCProofGood));
         await nextTick();
         await node0BlockUtils.resolveAllValidations(true);
@@ -483,7 +483,7 @@ describe("PBFTTerm", () => {
         const viewChange2_bad: ViewChangeMessage = aViewChangeMessage(node2Config.keyManager, 1, 2);
         const VCProofBad: ViewChangeMessage[] = [viewChange0_bad, viewChange1_bad, viewChange2_bad];
 
-        // viewChange0 offered term 666
+        // viewChange0 offered blockHeight 666
         node0PbftTerm.onReceiveNewView(aNewViewMessage(node2KeyManager, 1, 2, aPrePrepareMessage(node2KeyManager, 1, 2, block), VCProofBad));
         await nextTick();
         await node0BlockUtils.resolveAllValidations(true);
@@ -533,7 +533,7 @@ describe("PBFTTerm", () => {
         expect(node0PbftTerm.getView()).to.equal(1);
     });
 
-    it("dipose should clear all the storage related to its term", async () => {
+    it("dipose should clear all the storage related to its blockHeight", async () => {
         const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
 
         const block: Block = aBlock(theGenesisBlock);
@@ -625,25 +625,25 @@ describe("PBFTTerm", () => {
 
         it("onNewView should offer (On PP) the heighest block from the VCProof", async () => {
             const block: Block = aBlock(theGenesisBlock);
-            const term = 0;
+            const blockHeight = 0;
             const targetView = 5;
 
             // VC with prepared proof on view 3
             const blockOnView3 = aBlock(block, "Block on View 3");
-            const preparedProofOnView3: PreparedMessages = aPrepared(node3, [node1, node2], term, 3, blockOnView3);
-            const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.config.keyManager, term, targetView, preparedProofOnView3);
+            const preparedProofOnView3: PreparedMessages = aPrepared(node3, [node1, node2], blockHeight, 3, blockOnView3);
+            const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.config.keyManager, blockHeight, targetView, preparedProofOnView3);
 
             // VC with prepared proof on view 4
             const blockOnView4 = aBlock(block, "Block on View 4");
-            const preparedProofOnView4: PreparedMessages = aPrepared(node0, [node1, node2], term, 4, blockOnView4);
-            const node2VCMessage: ViewChangeMessage = aViewChangeMessage(node2.config.keyManager, term, targetView, preparedProofOnView4);
+            const preparedProofOnView4: PreparedMessages = aPrepared(node0, [node1, node2], blockHeight, 4, blockOnView4);
+            const node2VCMessage: ViewChangeMessage = aViewChangeMessage(node2.config.keyManager, blockHeight, targetView, preparedProofOnView4);
 
             // VC with no prepared proof
-            const node3VCMessage: ViewChangeMessage = aViewChangeMessage(node3.config.keyManager, term, targetView);
+            const node3VCMessage: ViewChangeMessage = aViewChangeMessage(node3.config.keyManager, blockHeight, targetView);
 
-            const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, term, targetView, blockOnView4);
+            const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, blockHeight, targetView, blockOnView4);
             const VCProof: ViewChangeMessage[] = [node0VCMessage, node2VCMessage, node3VCMessage];
-            const message: NewViewMessage = aNewViewMessage(node1.config.keyManager, term, targetView, PPMessage, VCProof);
+            const message: NewViewMessage = aNewViewMessage(node1.config.keyManager, blockHeight, targetView, PPMessage, VCProof);
 
 
             const storePrePrepareSpy = sinon.spy(node1.config.pbftStorage, "storePrePrepare");
@@ -659,26 +659,26 @@ describe("PBFTTerm", () => {
 
         it("onNewView should reject a new-view if the offered (On PP) block is not the heighest block on the VCProof", async () => {
             const block: Block = aBlock(theGenesisBlock);
-            const term = 1;
+            const blockHeight = 1;
             const targetView = 5;
 
             // VC with prepared proof on view 3
             const blockOnView3 = aBlock(block, "Block on View 3");
             const preparedOnView3: PreparedMessages = aPrepared(node0, [node1, node2], 1, 3, blockOnView3);
-            const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.config.keyManager, term, targetView, preparedOnView3);
+            const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.config.keyManager, blockHeight, targetView, preparedOnView3);
 
             // VC with prepared proof on view 4
             const blockOnView4 = aBlock(block, "Block on View 4");
             const preparedOnView4: PreparedMessages = aPrepared(node0, [node1, node2], 1, 4, blockOnView4);
-            const node2VCMessage: ViewChangeMessage = aViewChangeMessage(node2.config.keyManager, term, targetView, preparedOnView4);
+            const node2VCMessage: ViewChangeMessage = aViewChangeMessage(node2.config.keyManager, blockHeight, targetView, preparedOnView4);
 
             // VC with no prepared proof
-            const node3VCMessage: ViewChangeMessage = aViewChangeMessage(node3.config.keyManager, term, targetView);
+            const node3VCMessage: ViewChangeMessage = aViewChangeMessage(node3.config.keyManager, blockHeight, targetView);
 
-            const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, term, targetView, blockOnView3);
+            const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, blockHeight, targetView, blockOnView3);
             const VCProof: ViewChangeMessage[] = [node0VCMessage, node2VCMessage, node3VCMessage];
             const votes: ViewChangeConfirmation[] = VCProof.map(msg => ({ signedHeader: msg.signedHeader, sender: msg.sender }));
-            const message: NewViewMessage = aNewViewMessage(node1.config.keyManager, term, targetView, PPMessage, votes);
+            const message: NewViewMessage = aNewViewMessage(node1.config.keyManager, blockHeight, targetView, PPMessage, votes);
 
             const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
             expect(node1PbftTerm.getView()).to.equal(0);

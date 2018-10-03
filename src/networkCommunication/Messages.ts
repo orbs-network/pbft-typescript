@@ -11,7 +11,7 @@ export interface LeanHelixMessage {
     sender: SenderSignature;
     signedHeader: {
         messageType: MessageType;
-        term: number;
+        blockHeight: number;
         view: number;
     };
 }
@@ -44,14 +44,14 @@ export interface SenderSignature {
 
 export interface BlockRef {
     messageType: MessageType;
-    term: number;
+    blockHeight: number;
     view: number;
     blockHash: Buffer;
 }
 
 export interface ViewChangeHeader {
     messageType: MessageType;
-    term: number;
+    blockHeight: number;
     view: number;
     preparedProof?: PreparedProof;
 }
@@ -63,7 +63,7 @@ export interface PreparedProof {
 
 export interface NewViewHeader {
     messageType: MessageType;
-    term: number;
+    blockHeight: number;
     view: number;
     viewChangeConfirmations: ViewChangeConfirmation[];
 }

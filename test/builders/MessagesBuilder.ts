@@ -8,29 +8,29 @@ export function blockRefMessageFromPP(preprepareMessage: PrePrepareMessage): Blo
     return { sender: preprepareMessage.sender, signedHeader: preprepareMessage.signedHeader };
 }
 
-export function aPrePrepareMessage(keyManager: KeyManager, term: number, view: number, block: Block): PrePrepareMessage {
+export function aPrePrepareMessage(keyManager: KeyManager, blockHeight: number, view: number, block: Block): PrePrepareMessage {
     const mf: MessagesFactory = new MessagesFactory(calculateBlockHash, keyManager);
-    return mf.createPreprepareMessage(term, view, block);
+    return mf.createPreprepareMessage(blockHeight, view, block);
 }
 
-export function aPrepareMessage(keyManager: KeyManager, term: number, view: number, block: Block): PrepareMessage {
+export function aPrepareMessage(keyManager: KeyManager, blockHeight: number, view: number, block: Block): PrepareMessage {
     const blockHash: Buffer = calculateBlockHash(block);
     const mf: MessagesFactory = new MessagesFactory(calculateBlockHash, keyManager);
-    return mf.createPrepareMessage(term, view, blockHash);
+    return mf.createPrepareMessage(blockHeight, view, blockHash);
 }
 
-export function aCommitMessage(keyManager: KeyManager, term: number, view: number, block: Block): CommitMessage {
+export function aCommitMessage(keyManager: KeyManager, blockHeight: number, view: number, block: Block): CommitMessage {
     const blockHash: Buffer = calculateBlockHash(block);
     const mf: MessagesFactory = new MessagesFactory(calculateBlockHash, keyManager);
-    return mf.createCommitMessage(term, view, blockHash);
+    return mf.createCommitMessage(blockHeight, view, blockHash);
 }
 
-export function aViewChangeMessage(keyManager: KeyManager, term: number, view: number, preparedMessages?: PreparedMessages): ViewChangeMessage {
+export function aViewChangeMessage(keyManager: KeyManager, blockHeight: number, view: number, preparedMessages?: PreparedMessages): ViewChangeMessage {
     const mf: MessagesFactory = new MessagesFactory(calculateBlockHash, keyManager);
-    return mf.createViewChangeMessage(term, view, preparedMessages);
+    return mf.createViewChangeMessage(blockHeight, view, preparedMessages);
 }
 
-export function aNewViewMessage(keyManager: KeyManager, term: number, view: number, preprepareMessage: PrePrepareMessage, votes: ViewChangeConfirmation[]): NewViewMessage {
+export function aNewViewMessage(keyManager: KeyManager, blockHeight: number, view: number, preprepareMessage: PrePrepareMessage, votes: ViewChangeConfirmation[]): NewViewMessage {
     const mf: MessagesFactory = new MessagesFactory(calculateBlockHash, keyManager);
-    return mf.createNewViewMessage(term, view, preprepareMessage, votes);
+    return mf.createNewViewMessage(blockHeight, view, preprepareMessage, votes);
 }
