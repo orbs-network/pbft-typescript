@@ -4,11 +4,11 @@ import { BlockUtils } from "./blockUtils/BlockUtils";
 import { ElectionTrigger } from "./electionTrigger/ElectionTrigger";
 import { KeyManager } from "./keyManager/KeyManager";
 import { Logger } from "./logger/Logger";
-import { BlockRef, CommitMessage, LeanHelixMessage, MessageType, NewViewHeader, NewViewMessage, PreparedProof, PrepareMessage, PrePrepareMessage, SenderSignature, ViewChangeMessage, ViewChangeHeader, ViewChangeConfirmation } from "./networkCommunication/Messages";
+import { CommitMessage, NewViewMessage, PrepareMessage, PrePrepareMessage, SenderSignature, ViewChangeConfirmation, ViewChangeHeader, ViewChangeMessage } from "./networkCommunication/Messages";
+import { MessagesFactory } from "./networkCommunication/MessagesFactory";
 import { NetworkCommunication } from "./networkCommunication/NetworkCommunication";
 import { validatePreparedProof } from "./proofsValidator/ProofsValidator";
 import { PBFTStorage, PreparedMessages } from "./storage/PBFTStorage";
-import { MessagesFactory } from "./networkCommunication/MessagesFactory";
 
 export type onNewBlockCB = (block: Block) => void;
 
