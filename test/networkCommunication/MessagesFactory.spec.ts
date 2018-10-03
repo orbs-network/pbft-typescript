@@ -21,10 +21,7 @@ describe("Messages Factory", () => {
         const signedHeader: BlockRef = { messageType: MessageType.PREPREPARE, blockHeight, view, blockHash };
         const expectedMessage: PrePrepareMessage = {
             signedHeader,
-            sender: {
-                senderPublicKey: keyManager.getMyPublicKey(),
-                signature: keyManager.signBlockRef(signedHeader)
-            },
+            sender: keyManager.signBlockRef(signedHeader),
             block
         };
         const actualMessage: PrePrepareMessage = messagesFactory.createPreprepareMessage(blockHeight, view, block);
@@ -35,10 +32,7 @@ describe("Messages Factory", () => {
         const signedHeader: BlockRef = { messageType: MessageType.PREPARE, blockHeight, view, blockHash };
         const expectedMessage: PrepareMessage = {
             signedHeader,
-            sender: {
-                senderPublicKey: keyManager.getMyPublicKey(),
-                signature: keyManager.signBlockRef(signedHeader)
-            }
+            sender: keyManager.signBlockRef(signedHeader)
         };
         const actualMessage: PrepareMessage = messagesFactory.createPrepareMessage(blockHeight, view, blockHash);
         expect(actualMessage).to.deep.equal(expectedMessage);
@@ -48,10 +42,7 @@ describe("Messages Factory", () => {
         const signedHeader: BlockRef = { messageType: MessageType.COMMIT, blockHeight, view, blockHash };
         const expectedMessage: CommitMessage = {
             signedHeader,
-            sender: {
-                senderPublicKey: keyManager.getMyPublicKey(),
-                signature: keyManager.signBlockRef(signedHeader)
-            }
+            sender: keyManager.signBlockRef(signedHeader)
         };
         const actualMessage: CommitMessage = messagesFactory.createCommitMessage(blockHeight, view, blockHash);
         expect(actualMessage).to.deep.equal(expectedMessage);
@@ -61,10 +52,7 @@ describe("Messages Factory", () => {
         const signedHeader: ViewChangeHeader = { messageType: MessageType.VIEW_CHANGE, blockHeight, view, preparedProof: undefined };
         const expectedMessage: ViewChangeMessage = {
             signedHeader,
-            sender: {
-                senderPublicKey: keyManager.getMyPublicKey(),
-                signature: keyManager.signViewChange(signedHeader)
-            },
+            sender: keyManager.signViewChange(signedHeader),
             block: undefined
         };
         const actualMessage: ViewChangeMessage = messagesFactory.createViewChangeMessage(blockHeight, view);
@@ -93,10 +81,7 @@ describe("Messages Factory", () => {
         };
         const expectedMessage: ViewChangeMessage = {
             signedHeader,
-            sender: {
-                senderPublicKey: keyManager.getMyPublicKey(),
-                signature: keyManager.signViewChange(signedHeader)
-            },
+            sender: keyManager.signViewChange(signedHeader),
             block
         };
         const actualMessage: ViewChangeMessage = messagesFactory.createViewChangeMessage(blockHeight, view, preparedMessages);
@@ -114,10 +99,7 @@ describe("Messages Factory", () => {
         const signedHeader: NewViewHeader = { messageType: MessageType.NEW_VIEW, blockHeight, view, viewChangeConfirmations };
         const expectedMessage: NewViewMessage = {
             signedHeader,
-            sender: {
-                senderPublicKey: keyManager.getMyPublicKey(),
-                signature: keyManager.signNewView(signedHeader)
-            },
+            sender: keyManager.signNewView(signedHeader),
             preprepareMessage
         };
         const actualMessage: NewViewMessage = messagesFactory.createNewViewMessage(blockHeight, view, preprepareMessage, viewChangeConfirmations);

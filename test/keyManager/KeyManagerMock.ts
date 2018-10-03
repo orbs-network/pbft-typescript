@@ -7,16 +7,25 @@ export class KeyManagerMock implements KeyManager {
     constructor(private myPublicKey: string, private rejectedPKs: string[] = []) {
     }
 
-    signBlockRef(blockRef: BlockRef): string {
-        return this.sign(blockRef);
+    signBlockRef(blockRef: BlockRef): SenderSignature {
+        return {
+            senderPublicKey: this.myPublicKey,
+            signature: this.sign(blockRef)
+        };
     }
 
-    signViewChange(viewChangeHeader: ViewChangeHeader): string {
-        return this.sign(viewChangeHeader);
+    signViewChange(viewChangeHeader: ViewChangeHeader): SenderSignature {
+        return {
+            senderPublicKey: this.myPublicKey,
+            signature: this.sign(viewChangeHeader)
+        };
     }
 
-    signNewView(newViewHeader: NewViewHeader): string {
-        return this.sign(newViewHeader);
+    signNewView(newViewHeader: NewViewHeader): SenderSignature {
+        return {
+            senderPublicKey: this.myPublicKey,
+            signature: this.sign(newViewHeader)
+        };
     }
 
     private sign(object: any): string {
