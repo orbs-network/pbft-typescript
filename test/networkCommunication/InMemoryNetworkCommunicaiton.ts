@@ -2,48 +2,39 @@ import { CommitMessage, LeanHelixMessage, MessageType, NewViewMessage, PrepareMe
 import { NetworkCommunication } from "../../src/networkCommunication/NetworkCommunication";
 import { Gossip } from "../gossip/Gossip";
 import { GossipDiscovery } from "../gossip/GossipDiscovery";
+import { MessagesHandler } from "../../src/networkCommunication/MessagesHandler";
 
 export class InMemoryNetworkCommunicaiton implements NetworkCommunication {
-    private PPCallback: (message: PrePrepareMessage) => void;
-    private PCallback: (message: PrepareMessage) => void;
-    private CCallback: (message: CommitMessage) => void;
-    private VCCallback: (message: ViewChangeMessage) => void;
-    private NVCallback: (message: NewViewMessage) => void;
+    private messagesHandler: MessagesHandler;
 
     constructor(private discovery: GossipDiscovery, private gossip: Gossip) {
         this.gossip.subscribe((message: LeanHelixMessage) => this.onGossipMessage(message));
     }
 
     private onGossipMessage(message: LeanHelixMessage): void {
+        if (!this.messagesHandler) {
+            return;
+        }
+
         switch (message.signedHeader.messageType) {
             case MessageType.PREPREPARE: {
-                if (this.PPCallback) {
-                    this.PPCallback(message as PrePrepareMessage);
-                }
+                this.messagesHandler.onReceivePrePrepare(message as PrePrepareMessage);
                 break;
             }
             case MessageType.PREPARE: {
-                if (this.PCallback) {
-                    this.PCallback(message as PrepareMessage);
-                }
+                this.messagesHandler.onReceivePrepare(message as PrepareMessage);
                 break;
             }
             case MessageType.COMMIT: {
-                if (this.CCallback) {
-                    this.CCallback(message as CommitMessage);
-                }
+                this.messagesHandler.onReceiveCommit(message as CommitMessage);
                 break;
             }
             case MessageType.VIEW_CHANGE: {
-                if (this.VCCallback) {
-                    this.VCCallback(message as ViewChangeMessage);
-                }
+                this.messagesHandler.onReceiveViewChange(message as ViewChangeMessage);
                 break;
             }
             case MessageType.NEW_VIEW: {
-                if (this.NVCallback) {
-                    this.NVCallback(message as NewViewMessage);
-                }
+                this.messagesHandler.onReceiveNewView(message as NewViewMessage);
                 break;
             }
         }
@@ -74,24 +65,8 @@ export class InMemoryNetworkCommunicaiton implements NetworkCommunication {
         this.gossip.multicast(pks, message);
     }
 
-    registerToPrePrepare(cb: (message: PrePrepareMessage) => void): void {
-        this.PPCallback = cb;
-    }
-
-    registerToPrepare(cb: (message: PrepareMessage) => void): void {
-        this.PCallback = cb;
-    }
-
-    registerToCommit(cb: (message: CommitMessage) => void): void {
-        this.CCallback = cb;
-    }
-
-    registerToViewChange(cb: (message: ViewChangeMessage) => void): void {
-        this.VCCallback = cb;
-    }
-
-    registerToNewView(cb: (message: NewViewMessage) => void): void {
-        this.NVCallback = cb;
+    registerHandler(messagesHandler: MessagesHandler): void {
+        this.messagesHandler = messagesHandler;
     }
 
     isMember(pk: string): boolean {

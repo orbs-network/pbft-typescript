@@ -1,7 +1,7 @@
 import { CommitMessage, NewViewMessage, PrepareMessage, ViewChangeMessage, PrePrepareMessage } from "../../src/networkCommunication/Messages";
-import { PBFTMessagesHandler } from "../../src/networkCommunication/PBFTMessagesHandler";
+import { MessagesHandler } from "../../src/networkCommunication/MessagesHandler";
 
-export class PBFTMessagesHandlerMock implements PBFTMessagesHandler {
+export class PBFTMessagesHandlerMock implements MessagesHandler {
     public onReceivePrePrepare(message: PrePrepareMessage): any {
 
     }

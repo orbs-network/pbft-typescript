@@ -5,12 +5,12 @@ import * as sinonChai from "sinon-chai";
 import { KeyManager } from "../../src";
 import { Block } from "../../src/Block";
 import { NetworkMessagesFilter } from "../../src/networkCommunication/NetworkMessagesFilter";
-import { PBFTMessagesHandler } from "../../src/networkCommunication/PBFTMessagesHandler";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { aCommitMessage, aNewViewMessage, aPrepareMessage, aPrePrepareMessage, aViewChangeMessage } from "../builders/MessagesBuilder";
 import { aSimpleTestNetwork } from "../builders/TestNetworkBuilder";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 import { PBFTMessagesHandlerMock } from "./PBFTMessagesHandlerMock";
+import { MessagesHandler } from "../../src/networkCommunication/MessagesHandler";
 
 chai.use(sinonChai);
 
@@ -22,7 +22,7 @@ describe("Network Messages Filter", () => {
         const node1 = testNetwork.nodes[1];
 
         const gossipFilter: NetworkMessagesFilter = new NetworkMessagesFilter(node0.config.networkCommunication, node0.pk);
-        const messagesHandler: PBFTMessagesHandler = new PBFTMessagesHandlerMock();
+        const messagesHandler: MessagesHandler = new PBFTMessagesHandlerMock();
 
         const PPSpy = sinon.spy(messagesHandler, "onReceivePrePrepare");
         const PSpy = sinon.spy(messagesHandler, "onReceivePrepare");
@@ -55,7 +55,7 @@ describe("Network Messages Filter", () => {
         const node1 = testNetwork.nodes[1];
 
         const gossipFilter: NetworkMessagesFilter = new NetworkMessagesFilter(node0.config.networkCommunication, node0.pk);
-        const messagesHandler: PBFTMessagesHandler = new PBFTMessagesHandlerMock();
+        const messagesHandler: MessagesHandler = new PBFTMessagesHandlerMock();
 
         const PPSpy = sinon.spy(messagesHandler, "onReceivePrePrepare");
         const PSpy = sinon.spy(messagesHandler, "onReceivePrepare");
@@ -87,7 +87,7 @@ describe("Network Messages Filter", () => {
         const node0 = testNetwork.nodes[0];
 
         const gossipFilter: NetworkMessagesFilter = new NetworkMessagesFilter(node0.config.networkCommunication, node0.pk);
-        const messagesHandler: PBFTMessagesHandler = new PBFTMessagesHandlerMock();
+        const messagesHandler: MessagesHandler = new PBFTMessagesHandlerMock();
 
         const PPSpy = sinon.spy(messagesHandler, "onReceivePrePrepare");
         const PSpy = sinon.spy(messagesHandler, "onReceivePrepare");
@@ -120,7 +120,7 @@ describe("Network Messages Filter", () => {
         const node1 = testNetwork.nodes[1];
 
         const gossipFilter: NetworkMessagesFilter = new NetworkMessagesFilter(node0.config.networkCommunication, node0.pk);
-        const messagesHandler: PBFTMessagesHandler = new PBFTMessagesHandlerMock();
+        const messagesHandler: MessagesHandler = new PBFTMessagesHandlerMock();
 
         const PPSpy = sinon.spy(messagesHandler, "onReceivePrePrepare");
         const PSpy = sinon.spy(messagesHandler, "onReceivePrepare");

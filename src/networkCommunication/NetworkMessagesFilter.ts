@@ -1,18 +1,18 @@
 import { CommitMessage, LeanHelixMessage, MessageType, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage } from "./Messages";
 import { NetworkCommunication } from "./NetworkCommunication";
-import { PBFTMessagesHandler } from "./PBFTMessagesHandler";
+import { MessagesHandler } from "./MessagesHandler";
 
-export class NetworkMessagesFilter {
+export class NetworkMessagesFilter implements MessagesHandler {
     private blockHeight: number;
-    private messagesHandler: PBFTMessagesHandler;
+    private PBFTMessagesHandler: MessagesHandler;
     private messagesCache: LeanHelixMessage[] = [];
 
     constructor(private readonly networkCommunication: NetworkCommunication, private myPk: string) {
-        this.subscribeToGossip();
+        this.networkCommunication.registerHandler(this);
     }
 
     private onGossipMessage(message: LeanHelixMessage): void {
-        if (this.messagesHandler === undefined) {
+        if (this.PBFTMessagesHandler === undefined) {
             return;
         }
 
@@ -40,34 +40,26 @@ export class NetworkMessagesFilter {
     private processGossipMessage(message: LeanHelixMessage): void {
         switch (message.signedHeader.messageType) {
             case MessageType.PREPREPARE: {
-                this.messagesHandler.onReceivePrePrepare(message as PrePrepareMessage);
+                this.PBFTMessagesHandler.onReceivePrePrepare(message as PrePrepareMessage);
                 break;
             }
             case MessageType.PREPARE: {
-                this.messagesHandler.onReceivePrepare(message as PrepareMessage);
+                this.PBFTMessagesHandler.onReceivePrepare(message as PrepareMessage);
                 break;
             }
             case MessageType.COMMIT: {
-                this.messagesHandler.onReceiveCommit(message as CommitMessage);
+                this.PBFTMessagesHandler.onReceiveCommit(message as CommitMessage);
                 break;
             }
             case MessageType.VIEW_CHANGE: {
-                this.messagesHandler.onReceiveViewChange(message as ViewChangeMessage);
+                this.PBFTMessagesHandler.onReceiveViewChange(message as ViewChangeMessage);
                 break;
             }
             case MessageType.NEW_VIEW: {
-                this.messagesHandler.onReceiveNewView(message as NewViewMessage);
+                this.PBFTMessagesHandler.onReceiveNewView(message as NewViewMessage);
                 break;
             }
         }
-    }
-
-    private subscribeToGossip(): void {
-        this.networkCommunication.registerToPrePrepare((message: PrePrepareMessage) => this.onGossipMessage(message));
-        this.networkCommunication.registerToPrepare((message: PrepareMessage) => this.onGossipMessage(message));
-        this.networkCommunication.registerToCommit((message: CommitMessage) => this.onGossipMessage(message));
-        this.networkCommunication.registerToViewChange((message: ViewChangeMessage) => this.onGossipMessage(message));
-        this.networkCommunication.registerToNewView((message: NewViewMessage) => this.onGossipMessage(message));
     }
 
     private consumeCacheMessages(): void {
@@ -81,9 +73,29 @@ export class NetworkMessagesFilter {
         }, []);
     }
 
-    public setBlockHeight(blockHeight: number, messagesHandler: PBFTMessagesHandler) {
+    public onReceivePrePrepare(message: PrePrepareMessage) {
+        this.onGossipMessage(message);
+    }
+
+    public onReceivePrepare(message: import("/Users/gil/projects/PBFT-Typescript/src/networkCommunication/Messages").BlockRefMessage) {
+        this.onGossipMessage(message);
+    }
+
+    public onReceiveViewChange(message: ViewChangeMessage) {
+        this.onGossipMessage(message);
+    }
+
+    public onReceiveCommit(message: import("/Users/gil/projects/PBFT-Typescript/src/networkCommunication/Messages").BlockRefMessage) {
+        this.onGossipMessage(message);
+    }
+
+    public onReceiveNewView(message: NewViewMessage) {
+        this.onGossipMessage(message);
+    }
+
+    public setBlockHeight(blockHeight: number, messagesHandler: MessagesHandler) {
         this.blockHeight = blockHeight;
-        this.messagesHandler = messagesHandler;
+        this.PBFTMessagesHandler = messagesHandler;
         this.consumeCacheMessages();
     }
 }
