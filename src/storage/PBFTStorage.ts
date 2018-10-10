@@ -1,10 +1,6 @@
 import { Block } from "../Block";
-import { CommitMessage, PreparedProof, PrepareMessage, PrePrepareMessage, ViewChangeMessage } from "../networkCommunication/Messages";
+import { CommitMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage } from "../networkCommunication/Messages";
 
-export interface PreparedMessages {
-    preprepareMessage: PrePrepareMessage;
-    prepareMessages: PrepareMessage[];
-}
 //
 // This API stores messages that the PBFT received.
 // The only assumption is that a message will be stored only once per parameter
@@ -18,7 +14,7 @@ export interface PBFTStorage {
     storePrepare(message: PrepareMessage): boolean;
     getPrepareSendersPks(blockHeight: number, view: number, blockHash: Buffer): string[];
     getPrepareMessages(blockHeight: number, view: number, blockHash: Buffer): PrepareMessage[];
-    getLatestPrepared(blockHeight: number, f: number): PreparedMessages;
+    getLatestPrePrepare(blockHeight: number): PrePrepareMessage;
 
     storeCommit(message: CommitMessage): boolean;
     getCommitSendersPks(blockHeight: number, view: number, blockHash: Buffer): string[];

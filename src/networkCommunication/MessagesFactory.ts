@@ -1,6 +1,6 @@
 import { Block } from "../Block";
-import { PreparedMessages } from "../storage/PBFTStorage";
 import { CommitMessage, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeConfirmation, ViewChangeMessage } from "./Messages";
+import { PreparedMessages } from "../storage/PreparedMessagesExtractor";
 
 export interface MessagesFactory {
     createPreprepareMessage(blockHeight: number, view: number, block: Block): PrePrepareMessage;

@@ -8,7 +8,8 @@ import { CommitMessage, NewViewMessage, PrepareMessage, PrePrepareMessage, Sende
 import { MessagesFactory } from "./networkCommunication/MessagesFactory";
 import { NetworkCommunication } from "./networkCommunication/NetworkCommunication";
 import { validatePreparedProof } from "./proofsValidator/ProofsValidator";
-import { PBFTStorage, PreparedMessages } from "./storage/PBFTStorage";
+import { PBFTStorage } from "./storage/PBFTStorage";
+import { extractPreparedMessages, PreparedMessages } from "./storage/PreparedMessagesExtractor";
 
 export type onNewBlockCB = (block: Block) => void;
 
@@ -119,7 +120,7 @@ export class PBFTTerm {
         this.setView(this.view + 1);
         this.logger.log({ subject: "Flow", FlowType: "LeaderChange", leaderPk: this.leaderPk, blockHeight: this.blockHeight, newView: this.view });
 
-        const prepared: PreparedMessages = this.pbftStorage.getLatestPrepared(this.blockHeight, this.getF());
+        const prepared: PreparedMessages = extractPreparedMessages(this.blockHeight, this.pbftStorage, this.getF());
         const message: ViewChangeMessage = this.messagesFactory.createViewChangeMessage(this.blockHeight, this.view, prepared);
         this.pbftStorage.storeViewChange(message);
         if (this.isLeader()) {

@@ -1,8 +1,8 @@
 import { Block, KeyManager } from "../../src";
 import { BlockRefMessage, CommitMessage, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeConfirmation, ViewChangeMessage } from "../../src/networkCommunication/Messages";
 import { MessagesFactory } from "../../src/networkCommunication/MessagesFactory";
-import { PreparedMessages } from "../../src/storage/PBFTStorage";
 import { MessagesFactoryMock } from "../networkCommunication/MessagesFactoryMock";
+import { PreparedMessages } from "../../src/storage/PreparedMessagesExtractor";
 
 export function blockRefMessageFromPP(preprepareMessage: PrePrepareMessage): BlockRefMessage {
     return { sender: preprepareMessage.sender, signedHeader: preprepareMessage.signedHeader };

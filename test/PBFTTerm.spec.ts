@@ -9,7 +9,6 @@ import { Block } from "../src/Block";
 import { Config } from "../src/Config";
 import { NewViewMessage, PrePrepareMessage, ViewChangeMessage, PreparedProof, ViewChangeConfirmation, BlockRefMessage } from "../src/networkCommunication/Messages";
 import { PBFTTerm, TermConfig } from "../src/PBFTTerm";
-import { PreparedMessages } from "../src/storage/PBFTStorage";
 import { BlockUtilsMock } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aCommitMessage, aNewViewMessage, aPrepareMessage, aPrePrepareMessage, aViewChangeMessage, blockRefMessageFromPP } from "./builders/MessagesBuilder";
@@ -19,6 +18,7 @@ import { blockMatcher } from "./matchers/blockMatcher";
 import { Node } from "./network/Node";
 import { TestNetwork } from "./network/TestNetwork";
 import { nextTick } from "./timeUtils";
+import { extractPreparedMessages, PreparedMessages } from "../src/storage/PreparedMessagesExtractor";
 chai.use(sinonChai);
 chai.use(blockMatcher);
 
@@ -567,7 +567,7 @@ describe("PBFTTerm", () => {
         triggerElection();
         nextTick();
 
-        const prepared: PreparedMessages = node1Config.pbftStorage.getLatestPrepared(0, 1);
+        const prepared: PreparedMessages = extractPreparedMessages(0, node1Config.pbftStorage, 1);
         const preprepareBlockRefMessage: BlockRefMessage = blockRefMessageFromPP(prepared.preprepareMessage);
         const latestPreparedProof: PreparedProof = {
             preprepareBlockRefMessage,

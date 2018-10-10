@@ -3,13 +3,13 @@ import * as sinonChai from "sinon-chai";
 import { expect } from "chai";
 import { getLatestBlockFromViewChangeMessages } from "../../src/blockExtractor/BlockExtractor";
 import { aViewChangeMessage } from "../builders/MessagesBuilder";
-import { PreparedMessages } from "../../src/storage/PBFTStorage";
 import { aPrepared } from "../builders/ProofBuilder";
 import { Block, KeyManager } from "../../src";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { ViewChangeMessage } from "../../src/networkCommunication/Messages";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 import { aSimpleTestNetwork } from "../builders/TestNetworkBuilder";
+import { PreparedMessages } from "../../src/storage/PreparedMessagesExtractor";
 chai.use(sinonChai);
 
 describe("Block Extractor", () => {

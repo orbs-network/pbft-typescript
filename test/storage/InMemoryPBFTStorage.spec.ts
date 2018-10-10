@@ -3,9 +3,7 @@ import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
 import { KeyManager } from "../../src/keyManager/KeyManager";
 import { Logger } from "../../src/logger/Logger";
-import { PrepareMessage, PrePrepareMessage } from "../../src/networkCommunication/Messages";
 import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
-import { PreparedMessages } from "../../src/storage/PBFTStorage";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { aCommitMessage, aPrepareMessage, aPrePrepareMessage, aViewChangeMessage } from "../builders/MessagesBuilder";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
@@ -178,96 +176,6 @@ describe("PBFT In Memory Storage", () => {
                 const actual = storage.getViewChangeMessages(blockHeight1, view1, 1);
                 const expected = 1 * 2 + 1;
                 expect(actual.length).to.deep.equal(expected);
-            });
-        });
-
-        describe("Prepared", () => {
-            const blockHeight = Math.floor(Math.random() * 1000);
-            const view = Math.floor(Math.random() * 1000);
-            const leaderId = Math.floor(Math.random() * 1000).toString();
-            const senderId1 = Math.floor(Math.random() * 1000).toString();
-            const senderId2 = Math.floor(Math.random() * 1000).toString();
-            const leaderKeyManager: KeyManager = new KeyManagerMock(leaderId);
-            const sender1KeyManager: KeyManager = new KeyManagerMock(senderId1);
-            const sender2KeyManager: KeyManager = new KeyManagerMock(senderId2);
-            const block = aBlock(theGenesisBlock);
-
-            const preprepareMessage: PrePrepareMessage = aPrePrepareMessage(leaderKeyManager, blockHeight, view, block);
-            const prepareMessage1: PrepareMessage = aPrepareMessage(sender1KeyManager, blockHeight, view, block);
-            const prepareMessage2: PrepareMessage = aPrepareMessage(sender2KeyManager, blockHeight, view, block);
-
-            it("should return the prepare proof", () => {
-                const storage = new InMemoryPBFTStorage(logger);
-                storage.storePrePrepare(preprepareMessage);
-                storage.storePrepare(prepareMessage1);
-                storage.storePrepare(prepareMessage2);
-
-                const expectedProof: PreparedMessages = {
-                    preprepareMessage,
-                    prepareMessages: [prepareMessage1, prepareMessage2]
-                };
-                const actual: PreparedMessages = storage.getLatestPrepared(blockHeight, 1);
-                expect(actual).to.deep.equal(expectedProof);
-            });
-
-            it("should return the latest (heighest view) prepare proof", () => {
-                const storage = new InMemoryPBFTStorage(logger);
-                const prePrepareMessage10: PrePrepareMessage = aPrePrepareMessage(leaderKeyManager, 1, 10, block);
-                const prepareMessage10_1: PrepareMessage = aPrepareMessage(sender1KeyManager, 1, 10, block);
-                const prepareMessage10_2: PrepareMessage = aPrepareMessage(sender2KeyManager, 1, 10, block);
-
-                const prePrepareMessage20: PrePrepareMessage = aPrePrepareMessage(leaderKeyManager, 1, 20, block);
-                const prepareMessage20_1: PrepareMessage = aPrepareMessage(sender1KeyManager, 1, 20, block);
-                const prepareMessage20_2: PrepareMessage = aPrepareMessage(sender2KeyManager, 1, 20, block);
-
-                const prePrepareMessage30: PrePrepareMessage = aPrePrepareMessage(leaderKeyManager, 1, 30, block);
-                const prepareMessage30_1: PrepareMessage = aPrepareMessage(sender1KeyManager, 1, 30, block);
-                const prepareMessage30_2: PrepareMessage = aPrepareMessage(sender2KeyManager, 1, 30, block);
-
-                storage.storePrePrepare(prePrepareMessage10);
-                storage.storePrepare(prepareMessage10_1);
-                storage.storePrepare(prepareMessage10_2);
-
-                storage.storePrePrepare(prePrepareMessage30);
-                storage.storePrepare(prepareMessage30_1);
-                storage.storePrepare(prepareMessage30_2);
-
-                storage.storePrePrepare(prePrepareMessage20);
-                storage.storePrepare(prepareMessage20_1);
-                storage.storePrepare(prepareMessage20_2);
-
-                const expected: PreparedMessages = {
-                    preprepareMessage: prePrepareMessage30,
-                    prepareMessages: [prepareMessage30_1, prepareMessage30_2]
-                };
-                const actual: PreparedMessages = storage.getLatestPrepared(1, 1);
-                expect(actual).to.deep.equal(expected);
-            });
-
-            it("should return undefined if there was no PrePrepare", () => {
-                const storage = new InMemoryPBFTStorage(logger);
-                storage.storePrepare(prepareMessage1);
-                storage.storePrepare(prepareMessage2);
-
-                const actual: PreparedMessages = storage.getLatestPrepared(blockHeight, 1);
-                expect(actual).to.be.undefined;
-            });
-
-            it("should return undefined if there was no Prepares", () => {
-                const storage = new InMemoryPBFTStorage(logger);
-                storage.storePrePrepare(preprepareMessage);
-
-                const actual: PreparedMessages = storage.getLatestPrepared(blockHeight, 1);
-                expect(actual).to.be.undefined;
-            });
-
-            it("should return undefined where not enough Prepares", () => {
-                const storage = new InMemoryPBFTStorage(logger);
-                storage.storePrePrepare(preprepareMessage);
-                storage.storePrepare(prepareMessage1);
-
-                const actual: PreparedMessages = storage.getLatestPrepared(blockHeight, 3);
-                expect(actual).to.be.undefined;
             });
         });
     });

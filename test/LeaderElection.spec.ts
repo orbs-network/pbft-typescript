@@ -2,13 +2,13 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
-import { NewViewMessage, PreparedProof, PrePrepareMessage, ViewChangeMessage, ViewChangeConfirmation, MessageType } from "../src/networkCommunication/Messages";
+import { MessageType, NewViewMessage, PrePrepareMessage, ViewChangeConfirmation, ViewChangeMessage } from "../src/networkCommunication/Messages";
+import { extractPreparedMessages, PreparedMessages } from "../src/storage/PreparedMessagesExtractor";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aNewViewMessage, aPrePrepareMessage, aViewChangeMessage, aPrepareMessage } from "./builders/MessagesBuilder";
-import { aPreparedProof, aPrepared } from "./builders/ProofBuilder";
+import { aNewViewMessage, aPrePrepareMessage, aViewChangeMessage } from "./builders/MessagesBuilder";
+import { aPrepared } from "./builders/ProofBuilder";
 import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
 import { nextTick } from "./timeUtils";
-import { PreparedMessages } from "../src/storage/PBFTStorage";
 
 chai.use(sinonChai);
 
@@ -29,7 +29,7 @@ describe("Leader Election", () => {
         node0.triggerElection(); node2.triggerElection(); node3.triggerElection();
         await blockUtils.resolveAllValidations(true);
 
-        const node0Prepared: PreparedMessages = node0.config.pbftStorage.getLatestPrepared(1, 1);
+        const node0Prepared: PreparedMessages = extractPreparedMessages(1, node0.config.pbftStorage, 1);
         expect(unicastSpy).to.have.been.calledWith(node1.pk, aViewChangeMessage(node0.config.keyManager, 1, 1, node0Prepared));
 
         testNetwork.shutDown();
@@ -246,11 +246,11 @@ describe("Leader Election", () => {
         await blockUtils.provideNextBlock();
         await nextTick(); // await for blockChain.getLastBlockHash
 
-        const node0Prepared: PreparedMessages = node0.config.pbftStorage.getLatestPrepared(2, 1);
+        const node0Prepared: PreparedMessages = extractPreparedMessages(2, node0.config.pbftStorage, 1);
         const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.config.keyManager, 2, 1, node0Prepared);
         expect(spy0).to.have.been.calledWith(node1.pk, node0VCMessage);
 
-        const node2Prepared: PreparedMessages = node2.config.pbftStorage.getLatestPrepared(2, 1);
+        const node2Prepared: PreparedMessages = extractPreparedMessages(2, node2.config.pbftStorage, 1);
         const node2VCMessage: ViewChangeMessage = aViewChangeMessage(node2.config.keyManager, 2, 1, node2Prepared);
         expect(spy2).to.have.been.calledWith(node1.pk, node2VCMessage);
 

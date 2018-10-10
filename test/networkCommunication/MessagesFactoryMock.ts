@@ -1,6 +1,6 @@
 import { KeyManager, Block } from "../../src";
-import { PreparedMessages } from "../../src/storage/PBFTStorage";
 import { PrePrepareMessage, BlockRef, MessageType, SenderSignature, PrepareMessage, CommitMessage, PreparedProof, ViewChangeMessage, ViewChangeHeader, ViewChangeConfirmation, NewViewMessage, NewViewHeader } from "../../src/networkCommunication/Messages";
+import { PreparedMessages } from "../../src/storage/PreparedMessagesExtractor";
 
 export class MessagesFactoryMock {
     constructor(private keyManager: KeyManager) { }

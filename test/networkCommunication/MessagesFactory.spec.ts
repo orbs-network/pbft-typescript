@@ -5,9 +5,9 @@ import { KeyManager } from "../../src";
 import { BlockRef, CommitMessage, MessageType, NewViewHeader, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage, ViewChangeHeader, ViewChangeConfirmation } from "../../src/networkCommunication/Messages";
 import { MessagesFactory } from "../../src/networkCommunication/MessagesFactory";
 import { MessagesFactoryMock } from "./MessagesFactoryMock";
-import { PreparedMessages } from "../../src/storage/PBFTStorage";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
+import { PreparedMessages } from "../../src/storage/PreparedMessagesExtractor";
 chai.use(sinonChai);
 
 describe("Messages Factory", () => {

@@ -1,7 +1,7 @@
 import { Block } from "../Block";
 import { Logger } from "../logger/Logger";
-import { CommitMessage, PreparedProof, PrepareMessage, PrePrepareMessage, ViewChangeMessage } from "../networkCommunication/Messages";
-import { PBFTStorage, PreparedMessages } from "./PBFTStorage";
+import { CommitMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage } from "../networkCommunication/Messages";
+import { PBFTStorage } from "./PBFTStorage";
 
 type BlockHeightToViewMap<V> = Map<number, Map<number, V>>;
 
@@ -123,16 +123,10 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         }
     }
 
-    getLatestPrepared(blockHeight: number, f: number): PreparedMessages {
+    getLatestPrePrepare(blockHeight: number): PrePrepareMessage {
         const lastView = this.getLatestPrePrepareView(blockHeight);
         if (lastView !== undefined) {
-            const preprepareMessage: PrePrepareMessage = this.getPrePrepareMessage(blockHeight, lastView);
-            if (preprepareMessage) {
-                const prepareMessages: PrepareMessage[] = this.getPrepareMessages(blockHeight, lastView, preprepareMessage.signedHeader.blockHash);
-                if (prepareMessages.length >= f * 2) {
-                    return { preprepareMessage, prepareMessages };
-                }
-            }
+            return this.getPrePrepareMessage(blockHeight, lastView);
         }
     }
 
