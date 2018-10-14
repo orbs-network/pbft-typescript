@@ -8,6 +8,7 @@ import { MessagesFactoryMock } from "./MessagesFactoryMock";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 import { PreparedMessages } from "../../src/storage/PreparedMessagesExtractor";
+import { aPreparedProofByMessages } from "../builders/ProofBuilder";
 chai.use(sinonChai);
 
 describe("Messages Factory", () => {
@@ -72,13 +73,7 @@ describe("Messages Factory", () => {
             messageType: MessageType.VIEW_CHANGE,
             blockHeight,
             view,
-            preparedProof: {
-                preprepareBlockRefMessage: {
-                    signedHeader: preprepareMessage.signedHeader,
-                    sender: preprepareMessage.sender
-                },
-                prepareBlockRefMessages: preparedMessages.prepareMessages
-            }
+            preparedProof: aPreparedProofByMessages(preprepareMessage, preparedMessages.prepareMessages)
         };
         const expectedMessage: ViewChangeMessage = {
             signedHeader,

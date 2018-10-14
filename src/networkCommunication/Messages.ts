@@ -57,8 +57,10 @@ export interface ViewChangeHeader {
 }
 
 export interface PreparedProof {
-    preprepareBlockRefMessage: BlockRefMessage;
-    prepareBlockRefMessages: BlockRefMessage[];
+    preprepareBlockRef: BlockRef;
+    preprepareSender: SenderSignature;
+    prepareBlockRef: BlockRef;
+    prepareSenders: SenderSignature[];
 }
 
 export interface NewViewHeader {

@@ -14,12 +14,12 @@ export function validatePreparedProof(
         return true;
     }
 
-    const { prepareBlockRefMessages, preprepareBlockRefMessage } = preparedProof;
-    if (!prepareBlockRefMessages || !preprepareBlockRefMessage) {
+    const { preprepareSender, prepareSenders, preprepareBlockRef, prepareBlockRef } = preparedProof;
+    if (!prepareBlockRef || !preprepareBlockRef || !preprepareSender || !prepareSenders) {
         return false;
     }
 
-    const { blockHeight, view, blockHash } = preprepareBlockRefMessage.signedHeader;
+    const { blockHeight, view } = preprepareBlockRef;
     if (blockHeight !== targetBlockHeight) {
         return false;
     }
@@ -28,46 +28,42 @@ export function validatePreparedProof(
         return false;
     }
 
-    if (prepareBlockRefMessages.length < 2 * f) {
+    if (prepareSenders.length < 2 * f) {
         return false;
     }
 
-    const { signedHeader: expectedPrePrepareMessageContent, sender } = preprepareBlockRefMessage;
-    if (keyManager.verifyBlockRef(expectedPrePrepareMessageContent, sender) === false) {
+    if (keyManager.verifyBlockRef(preprepareBlockRef, preprepareSender) === false) {
         return false;
     }
 
-    const leaderPk = sender.senderPublicKey;
+    const leaderPk = preprepareSender.senderPublicKey;
     if (calcLeaderPk(view) !== leaderPk) {
         return false;
     }
 
-    const allPreparesPkAreUnique = prepareBlockRefMessages.reduce((prev, current) => prev.set(current.sender.senderPublicKey, true), new Map()).size === prepareBlockRefMessages.length;
+    const allPreparesPkAreUnique = prepareSenders.reduce((prev, current) => prev.set(current.senderPublicKey, true), new Map()).size === prepareSenders.length;
     if (!allPreparesPkAreUnique) {
         return false;
     }
 
-    const allPreparesPKsAreMembers = prepareBlockRefMessages.every(p => membersPKs.indexOf(p.sender.senderPublicKey) > -1);
+    const allPreparesPKsAreMembers = prepareSenders.every(p => membersPKs.indexOf(p.senderPublicKey) > -1);
     if (allPreparesPKsAreMembers == false) {
         return false;
     }
 
-    const allPrepraresAreNotLeaders = prepareBlockRefMessages.every(p => p.sender.senderPublicKey !== leaderPk);
+    const allPrepraresAreNotLeaders = prepareSenders.every(p => p.senderPublicKey !== leaderPk);
     if (allPrepraresAreNotLeaders === false) {
         return false;
     }
 
-    if (prepareBlockRefMessages.every(p => keyManager.verifyBlockRef(p.signedHeader, p.sender)) === false) {
+    if (prepareSenders.every(sender => keyManager.verifyBlockRef(prepareBlockRef, sender)) === false) {
         return false;
     }
 
-    const isPrepareMisMatch = prepareBlockRefMessages
-        .map(p => p.signedHeader)
-        .findIndex(p => p.view !== view || p.blockHeight !== blockHeight || !p.blockHash.equals(blockHash)) > -1;
+    const isPrepareMatch =
+        preprepareBlockRef.view === prepareBlockRef.view &&
+        preprepareBlockRef.blockHeight === prepareBlockRef.blockHeight &&
+        preprepareBlockRef.blockHash.equals(prepareBlockRef.blockHash);
 
-    if (isPrepareMisMatch) {
-        return false;
-    }
-
-    return true;
+    return isPrepareMatch;
 }

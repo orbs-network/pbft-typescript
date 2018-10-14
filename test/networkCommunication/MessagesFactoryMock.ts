@@ -30,11 +30,10 @@ export class MessagesFactoryMock {
     private generatePreparedProof(prepared: PreparedMessages): PreparedProof {
         const { preprepareMessage, prepareMessages } = prepared;
         return {
-            preprepareBlockRefMessage: {
-                signedHeader: preprepareMessage.signedHeader,
-                sender: preprepareMessage.sender
-            },
-            prepareBlockRefMessages: prepareMessages
+            preprepareBlockRef: preprepareMessage ? preprepareMessage.signedHeader : undefined,
+            preprepareSender: preprepareMessage ? preprepareMessage.sender : undefined,
+            prepareBlockRef: prepareMessages ? prepareMessages[0].signedHeader : undefined,
+            prepareSenders: prepareMessages ? prepareMessages.map(m => m.sender) : undefined
         };
     }
 

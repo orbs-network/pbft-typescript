@@ -294,7 +294,7 @@ export class PBFTTerm {
     public onReceiveViewChange(message: ViewChangeMessage): void {
         if (this.isViewChangeValid(this.myPk, this.view, message)) {
             if (message.block && message.signedHeader.preparedProof) {
-                const isValidDigest = this.blockUtils.calculateBlockHash(message.block).equals(message.signedHeader.preparedProof.preprepareBlockRefMessage.signedHeader.blockHash);
+                const isValidDigest = this.blockUtils.calculateBlockHash(message.block).equals(message.signedHeader.preparedProof.preprepareBlockRef.blockHash);
                 if (!isValidDigest) {
                     return;
                 }
@@ -445,7 +445,7 @@ export class PBFTTerm {
     private latestViewChangeVote(votes: ViewChangeConfirmation[]): ViewChangeConfirmation {
         const filteredVotes = votes
             .filter(vote => vote.signedHeader.preparedProof !== undefined)
-            .sort((a, b) => b.signedHeader.preparedProof.preprepareBlockRefMessage.signedHeader.view - a.signedHeader.preparedProof.preprepareBlockRefMessage.signedHeader.view);
+            .sort((a, b) => b.signedHeader.preparedProof.preprepareBlockRef.view - a.signedHeader.preparedProof.preprepareBlockRef.view);
 
         if (filteredVotes.length > 0) {
             return filteredVotes[0];
@@ -498,7 +498,7 @@ export class PBFTTerm {
                 return;
             }
 
-            const latestVoteBlockHash = latestVote.signedHeader.preparedProof && latestVote.signedHeader.preparedProof.preprepareBlockRefMessage.signedHeader.blockHash;
+            const latestVoteBlockHash = latestVote.signedHeader.preparedProof && latestVote.signedHeader.preparedProof.preprepareBlockRef.blockHash;
             if (latestVoteBlockHash) {
                 const ppBlockHash = this.blockUtils.calculateBlockHash(preprepareMessage.block);
                 if (latestVoteBlockHash.equals(ppBlockHash) === false) {

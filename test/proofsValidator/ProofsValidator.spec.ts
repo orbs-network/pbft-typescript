@@ -24,26 +24,19 @@ describe("Proofs Validator", () => {
     const targetView = view + 1;
     const block: Block = aBlock(theGenesisBlock);
     const preprepareMessage = aPrePrepareMessage(leaderKeyManager, blockHeight, view, block);
-    const preprepareBlockRefMessage: BlockRefMessage = blockRefMessageFromPP(preprepareMessage);
     const prepareMessage1 = aPrepareMessage(node1KeyManager, blockHeight, view, block);
     const prepareMessage2 = aPrepareMessage(node2KeyManager, blockHeight, view, block);
     const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1, prepareMessage2]);
     const calcLeaderPk = (view: number) => membersPKs[view];
 
     it("should reject a proof that did not have a preprepare", async () => {
-        const prepareProof: PreparedProof = {
-            preprepareBlockRefMessage: undefined,
-            prepareBlockRefMessages: [prepareMessage1, prepareMessage2]
-        };
+        const prepareProof: PreparedProof = aPreparedProofByMessages(undefined, [prepareMessage1, prepareMessage2]);
         const actual = validatePreparedProof(targetBlockHeight, targetView, prepareProof, f, keyManager, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
 
     it("should reject a proof that did not have a prepare", async () => {
-        const prepareProof: PreparedProof = {
-            preprepareBlockRefMessage: preprepareBlockRefMessage,
-            prepareBlockRefMessages: undefined
-        };
+        const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, undefined);
         const actual = validatePreparedProof(targetBlockHeight, targetView, prepareProof, f, keyManager, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
@@ -154,8 +147,9 @@ describe("Proofs Validator", () => {
             aPrePrepareMessage(leaderKeyManager, blockHeight, view, block),
             [
                 aPrepareMessage(node1KeyManager, blockHeight, view, block),
-                badPrepareMessage,
+                aPrepareMessage(node2KeyManager, blockHeight, view, block)
             ]);
+        badBlockHashPrepareProof.prepareBlockRef.blockHash = Buffer.from("XXXX");
         const actualBadBlockHash = validatePreparedProof(targetBlockHeight, targetView, badBlockHashPrepareProof, f, keyManager, membersPKs, calcLeaderPk);
         expect(actualBadBlockHash).to.be.false;
     });

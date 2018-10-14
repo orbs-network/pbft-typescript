@@ -12,7 +12,7 @@ import { PBFTTerm, TermConfig } from "../src/PBFTTerm";
 import { BlockUtilsMock } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aCommitMessage, aNewViewMessage, aPrepareMessage, aPrePrepareMessage, aViewChangeMessage, blockRefMessageFromPP } from "./builders/MessagesBuilder";
-import { aPrepared } from "./builders/ProofBuilder";
+import { aPrepared, aPreparedProofByMessages } from "./builders/ProofBuilder";
 import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
 import { blockMatcher } from "./matchers/blockMatcher";
 import { Node } from "./network/Node";
@@ -568,11 +568,7 @@ describe("PBFTTerm", () => {
         nextTick();
 
         const prepared: PreparedMessages = extractPreparedMessages(0, node1Config.pbftStorage, 1);
-        const preprepareBlockRefMessage: BlockRefMessage = blockRefMessageFromPP(prepared.preprepareMessage);
-        const latestPreparedProof: PreparedProof = {
-            preprepareBlockRefMessage,
-            prepareBlockRefMessages: prepared.prepareMessages
-        };
+        const latestPreparedProof: PreparedProof = aPreparedProofByMessages(prepared.preprepareMessage, prepared.prepareMessages);
 
         expect(spy.args[0][1].signedHeader.preparedProof).to.deep.equal(latestPreparedProof);
     });

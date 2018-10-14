@@ -7,41 +7,33 @@ import { PreparedMessages } from "../../src/storage/PreparedMessagesExtractor";
 export function aPreparedProof(leader: Node, members: Node[], blockHeight: number, view: number, block: Block): PreparedProof {
     const blockHash: Buffer = block.getBlockHash();
 
-    const PPContent: BlockRef = {
+    const preprepareBlockRef: BlockRef = {
         messageType: MessageType.PREPREPARE,
         blockHeight,
         view,
         blockHash
     };
-    const PContent: BlockRef = {
+    const prepareBlockRef: BlockRef = {
         messageType: MessageType.PREPARE,
         blockHeight,
         view,
         blockHash
     };
 
-    const preprepareBlockRefMessage: BlockRefMessage = {
-        signedHeader: PPContent,
-        sender: leader.config.keyManager.signBlockRef(PPContent)
-    };
-
-    const prepareBlockRefMessages: BlockRefMessage[] = members.map(member => {
-        return {
-            signedHeader: PContent,
-            sender: member.config.keyManager.signBlockRef(PContent)
-        };
-    });
-
     return {
-        preprepareBlockRefMessage,
-        prepareBlockRefMessages
+        preprepareBlockRef,
+        preprepareSender: leader.config.keyManager.signBlockRef(preprepareBlockRef),
+        prepareBlockRef,
+        prepareSenders: members.map(member => member.config.keyManager.signBlockRef(prepareBlockRef))
     };
 }
 
 export function aPreparedProofByMessages(PPMessage: PrePrepareMessage, PMessages: PrepareMessage[]): PreparedProof {
     return {
-        preprepareBlockRefMessage: blockRefMessageFromPP(PPMessage),
-        prepareBlockRefMessages: PMessages
+        preprepareBlockRef: PPMessage ? PPMessage.signedHeader : undefined,
+        preprepareSender: PPMessage ? PPMessage.sender : undefined,
+        prepareBlockRef: PMessages ? PMessages[0].signedHeader : undefined,
+        prepareSenders: PMessages ? PMessages.map(m => m.sender) : undefined
     };
 }
 
