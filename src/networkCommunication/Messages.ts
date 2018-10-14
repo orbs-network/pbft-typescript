@@ -12,7 +12,6 @@ export interface LeanHelixMessage {
     signedHeader: {
         messageType: MessageType;
         blockHeight: number;
-        view: number;
     };
 }
 

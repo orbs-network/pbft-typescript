@@ -18,8 +18,7 @@ function aLeanHelixMessage(keyManager: KeyManager): LeanHelixMessage {
         },
         signedHeader: {
             messageType: MessageType.PREPARE,
-            blockHeight: Math.floor(Math.random() * 1_000_000),
-            view: Math.floor(Math.random() * 1_000_000),
+            blockHeight: Math.floor(Math.random() * 1_000_000)
         }
     };
 }
