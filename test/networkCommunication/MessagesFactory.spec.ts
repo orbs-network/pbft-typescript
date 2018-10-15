@@ -3,12 +3,11 @@ import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
 import { KeyManager } from "../../src";
 import { BlockRef, CommitMessage, MessageType, NewViewHeader, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage, ViewChangeHeader, ViewChangeContent } from "../../src/networkCommunication/Messages";
-import { MessagesFactory } from "../../src/networkCommunication/MessagesFactory";
-import { MessagesFactoryMock } from "./MessagesFactoryMock";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 import { PreparedMessages } from "../../src/storage/PreparedMessagesExtractor";
 import { aPreparedProofByMessages } from "../builders/ProofBuilder";
+import { MessagesFactory } from "../../src/networkCommunication/MessagesFactory";
 chai.use(sinonChai);
 
 describe("Messages Factory", () => {
@@ -17,7 +16,7 @@ describe("Messages Factory", () => {
     const view = Math.floor(Math.random() * 1_000_000);
     const block = aBlock(theGenesisBlock);
     const blockHash = block.getBlockHash();
-    const messagesFactory: MessagesFactory = new MessagesFactoryMock(keyManager);
+    const messagesFactory: MessagesFactory = new MessagesFactory(keyManager);
 
     it("should be able to construct a PrePrepare message", async () => {
         const signedHeader: BlockRef = { messageType: MessageType.PREPREPARE, blockHeight, view, blockHash };

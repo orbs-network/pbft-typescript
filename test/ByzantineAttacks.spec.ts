@@ -26,7 +26,7 @@ describe("Byzantine Attacks", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
         await blockUtils.provideNextBlock();
-        await nextTick(); 
+        await nextTick();
 
         node1.triggerElection();
         node2.triggerElection();

@@ -12,8 +12,6 @@ import { ConsoleLogger } from "../logger/ConsoleLogger";
 import { SilentLogger } from "../logger/SilentLogger";
 import { Node } from "../network/Node";
 import { InMemoryNetworkCommunicaiton } from "../networkCommunication/InMemoryNetworkCommunicaiton";
-import { MessagesFactory } from "../../src/networkCommunication/MessagesFactory";
-import { MessagesFactoryMock } from "../networkCommunication/MessagesFactoryMock";
 
 export class NodeBuilder {
     private networkCommunication: NetworkCommunication;
@@ -84,11 +82,9 @@ export class NodeBuilder {
         const keyManager: KeyManager = new KeyManagerMock(this.publicKey);
         const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(keyManager.getMyPublicKey()) : new SilentLogger();
         const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage(logger);
-        const messagesFactory: MessagesFactory = new MessagesFactoryMock(keyManager);
 
         return {
             networkCommunication: this.networkCommunication,
-            messagesFactory,
             logger,
             pbftStorage,
             electionTrigger,

@@ -556,7 +556,7 @@ describe("PBFTTerm", () => {
     });
 
     it("should send the prepared proof in the view-change", async () => {
-        const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config); 
+        const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
         const block: Block = aBlock(theGenesisBlock);
         const spy = sinon.spy(node1Config.networkCommunication, "sendMessage");
 
