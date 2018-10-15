@@ -1,4 +1,4 @@
-import { CommitMessage, LeanHelixMessage, MessageType, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage } from "./Messages";
+import { CommitMessage, LeanHelixMessage, MessageType, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage, BlockRefMessage } from "./Messages";
 import { NetworkCommunication } from "./NetworkCommunication";
 import { MessagesHandler } from "./MessagesHandler";
 
@@ -77,7 +77,7 @@ export class NetworkMessagesFilter implements MessagesHandler {
         this.onGossipMessage(message);
     }
 
-    public onReceivePrepare(message: import("/Users/gil/projects/PBFT-Typescript/src/networkCommunication/Messages").BlockRefMessage) {
+    public onReceivePrepare(message: BlockRefMessage) {
         this.onGossipMessage(message);
     }
 
@@ -85,7 +85,7 @@ export class NetworkMessagesFilter implements MessagesHandler {
         this.onGossipMessage(message);
     }
 
-    public onReceiveCommit(message: import("/Users/gil/projects/PBFT-Typescript/src/networkCommunication/Messages").BlockRefMessage) {
+    public onReceiveCommit(message: BlockRefMessage) {
         this.onGossipMessage(message);
     }
 

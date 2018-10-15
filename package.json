@@ -12,9 +12,9 @@
     "dist"
   ],
   "scripts": {
-    "build": "yarn run tsc",
-    "tdd": "NODE_ENV=test yarn run mocha --require ts-node/register --watch --watch-extensions ts \"test/**/*.spec.ts\"",
-    "test": "NODE_ENV=test yarn run mocha --exit \"dist/test/**/*.spec.js\"",
+    "build": "tsc",
+    "tdd": "mocha --require ts-node/register --watch --watch-extensions ts \"test/**/*.spec.ts\"",
+    "test": "mocha --exit \"dist/test/**/*.spec.js\"",
     "lint": "tslint -c tslint.json"
   },
   "author": "Gil Amran",
