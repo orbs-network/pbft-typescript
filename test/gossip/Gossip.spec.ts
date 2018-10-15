@@ -12,14 +12,16 @@ chai.use(sinonChai);
 
 function aDummyMessage(keyManager: KeyManager) {
     return JSON.stringify({
-        sender: {
-            signature: `DUMMY_SIGNATURE`,
-            senderPublicKey: keyManager.getMyPublicKey()
-        },
-        signedHeader: {
-            messageType: MessageType.PREPARE,
-            blockHeight: Math.floor(Math.random() * 1_000_000)
-        }
+        content: JSON.stringify({
+            sender: {
+                signature: `DUMMY_SIGNATURE`,
+                senderPublicKey: keyManager.getMyPublicKey()
+            },
+            signedHeader: {
+                messageType: MessageType.PREPARE,
+                blockHeight: Math.floor(Math.random() * 1_000_000)
+            }
+        })
     });
 }
 

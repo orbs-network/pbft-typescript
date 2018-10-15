@@ -4,16 +4,16 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
-import { deserializeMessage, MessageType } from "../src/networkCommunication/Messages";
+import { MessageType } from "../src/networkCommunication/Messages";
 import { BlockUtilsMock } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aPrePrepareMessage } from "./builders/MessagesBuilder";
 import { aNode } from "./builders/NodeBuilder";
 import { aSimpleTestNetwork, aTestNetwork } from "./builders/TestNetworkBuilder";
+import { gossipMessageCounter } from "./gossip/Gossip";
 import { blockMatcher } from "./matchers/blockMatcher";
 import { messageToGossip } from "./networkCommunication/InMemoryNetworkCommunicaiton";
 import { nextTick } from "./timeUtils";
-import { gossipMessageCounter } from "./gossip/Gossip";
 
 chai.use(sinonChai);
 chai.use(blockMatcher);

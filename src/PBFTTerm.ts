@@ -4,7 +4,7 @@ import { BlockUtils } from "./blockUtils/BlockUtils";
 import { ElectionTrigger } from "./electionTrigger/ElectionTrigger";
 import { KeyManager } from "./keyManager/KeyManager";
 import { Logger } from "./logger/Logger";
-import { CommitMessage, NewViewMessage, PrepareMessage, PrePrepareMessage, SenderSignature, ViewChangeHeader, ViewChangeMessage, serializeMessage, ViewChangeContent } from "./networkCommunication/Messages";
+import { CommitMessage, NewViewMessage, PrepareMessage, PrePrepareMessage, SenderSignature, ViewChangeHeader, ViewChangeMessage, serializeMessageContent, ViewChangeContent } from "./networkCommunication/Messages";
 import { MessagesFactory } from "./networkCommunication/MessagesFactory";
 import { NetworkCommunication } from "./networkCommunication/NetworkCommunication";
 import { validatePreparedProof } from "./proofsValidator/ProofsValidator";
@@ -131,7 +131,7 @@ export class PBFTTerm {
     }
 
     private sendPrePrepare(message: PrePrepareMessage): void {
-        this.networkCommunication.sendMessage(this.otherCommitteeMembersPKs, serializeMessage(message.content), message.block);
+        this.networkCommunication.sendMessage(this.otherCommitteeMembersPKs, serializeMessageContent(message.content), message.block);
         const { blockHeight, view, blockHash } = message.content.signedHeader;
         this.logger.log({
             subject: "GossipSend",
@@ -145,7 +145,7 @@ export class PBFTTerm {
     }
 
     private sendPrepare(message: PrepareMessage): void {
-        this.networkCommunication.sendMessage(this.otherCommitteeMembersPKs, serializeMessage(message.content));
+        this.networkCommunication.sendMessage(this.otherCommitteeMembersPKs, serializeMessageContent(message.content));
         const { blockHeight, view, blockHash } = message.content.signedHeader;
         this.logger.log({
             subject: "GossipSend",
@@ -159,7 +159,7 @@ export class PBFTTerm {
     }
 
     private sendCommit(message: CommitMessage): void {
-        this.networkCommunication.sendMessage(this.otherCommitteeMembersPKs, serializeMessage(message.content));
+        this.networkCommunication.sendMessage(this.otherCommitteeMembersPKs, serializeMessageContent(message.content));
         const { blockHeight, view, blockHash } = message.content.signedHeader;
         this.logger.log({
             subject: "GossipSend",
@@ -173,7 +173,7 @@ export class PBFTTerm {
     }
 
     private sendViewChange(message: ViewChangeMessage): void {
-        this.networkCommunication.sendMessage([this.leaderPk], serializeMessage(message.content), message.block);
+        this.networkCommunication.sendMessage([this.leaderPk], serializeMessageContent(message.content), message.block);
         const { blockHeight, view } = message.content.signedHeader;
         this.logger.log({
             subject: "GossipSend",
@@ -186,7 +186,7 @@ export class PBFTTerm {
     }
 
     private sendNewView(message: NewViewMessage): void {
-        this.networkCommunication.sendMessage(this.otherCommitteeMembersPKs, serializeMessage(message.content), message.block);
+        this.networkCommunication.sendMessage(this.otherCommitteeMembersPKs, serializeMessageContent(message.content), message.block);
         const { blockHeight, view } = message.content.signedHeader;
         this.logger.log({
             subject: "GossipSend",

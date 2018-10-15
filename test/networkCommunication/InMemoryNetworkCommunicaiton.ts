@@ -3,21 +3,21 @@ import { Gossip } from "../gossip/Gossip";
 import { GossipDiscovery } from "../gossip/GossipDiscovery";
 import { Block } from "../../src";
 import { BlockMock } from "../builders/BlockBuilder";
-import { PrePrepareMessage, PrepareMessage, CommitMessage, ViewChangeMessage, NewViewMessage, serializeMessage } from "../../src/networkCommunication/Messages";
+import { PrePrepareMessage, PrepareMessage, CommitMessage, ViewChangeMessage, NewViewMessage, serializeMessageContent } from "../../src/networkCommunication/Messages";
 
 export function messageToGossip(message: PrePrepareMessage | PrepareMessage | CommitMessage | ViewChangeMessage | NewViewMessage): string {
-    return toGossipMessage(serializeMessage(message.content), (message as any).block);
+    return toGossipMessage(serializeMessageContent(message.content), (message as any).block);
 }
 
-export function toGossipMessage(messageContent: string, block?: Block): string {
-    const message = JSON.stringify({ messageContent, block });
+export function toGossipMessage(content: string, block?: Block): string {
+    const message = JSON.stringify({ content, block });
     return message;
 }
 
-export function fromGossipMessage(gossipMessage: string): { messageContent: string, block?: Block } {
-    const { messageContent, block } = JSON.parse(gossipMessage);
+export function fromGossipMessage(gossipMessage: string): { content: string, block?: Block } {
+    const { content, block } = JSON.parse(gossipMessage);
     const result: any = {
-        messageContent
+        content
     };
 
     if (block) {
@@ -28,7 +28,7 @@ export function fromGossipMessage(gossipMessage: string): { messageContent: stri
 }
 
 export class InMemoryNetworkCommunicaiton implements NetworkCommunication {
-    private cb: (messageContent: string, block?: Block) => void;
+    private cb: (content: string, block?: Block) => void;
 
     constructor(private discovery: GossipDiscovery, private gossip: Gossip) {
         this.gossip.subscribe((message: string) => this.onGossipMessage(message));
@@ -38,12 +38,12 @@ export class InMemoryNetworkCommunicaiton implements NetworkCommunication {
         return this.discovery.getAllGossipsPks();
     }
 
-    sendMessage(pks: string[], messageContent: string, block?: Block): void {
-        const message = toGossipMessage(messageContent, block);
+    sendMessage(pks: string[], content: string, block?: Block): void {
+        const message = toGossipMessage(content, block);
         this.gossip.multicast(pks, message);
     }
 
-    registerOnMessage(cb: (messageContent: string, block?: Block) => void): void {
+    registerOnMessage(cb: (content: string, block?: Block) => void): void {
         this.cb = cb;
     }
 
@@ -56,7 +56,7 @@ export class InMemoryNetworkCommunicaiton implements NetworkCommunication {
             return;
         }
 
-        const { messageContent, block } = fromGossipMessage(message);
-        this.cb(messageContent, block);
+        const { content, block } = fromGossipMessage(message);
+        this.cb(content, block);
     }
 }

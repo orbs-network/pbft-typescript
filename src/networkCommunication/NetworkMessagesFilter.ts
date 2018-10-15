@@ -1,4 +1,4 @@
-import { CommitMessage, MessageType, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage, deserializeMessage } from "./Messages";
+import { CommitMessage, MessageType, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage, deserializeMessageContent } from "./Messages";
 import { NetworkCommunication } from "./NetworkCommunication";
 import { MessagesHandler } from "./MessagesHandler";
 import { Block } from "../Block";
@@ -17,8 +17,7 @@ export class NetworkMessagesFilter {
             return;
         }
 
-        const message = deserializeMessage(messageContent, block);
-        const { content } = message;
+        const content = deserializeMessageContent(messageContent);
         const { senderPublicKey: senderPk } = content.sender;
         if (senderPk === this.myPk) {
             return;
@@ -32,6 +31,7 @@ export class NetworkMessagesFilter {
             return;
         }
 
+        const message = { content, block };
         if (content.signedHeader.blockHeight > this.blockHeight) {
             this.messagesCache.push(message);
             return;

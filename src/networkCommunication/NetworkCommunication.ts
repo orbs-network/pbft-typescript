@@ -1,5 +1,3 @@
-import { CommitMessage, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage } from "./Messages";
-import { MessagesHandler } from "./MessagesHandler";
 import { Block } from "../Block";
 
 export interface NetworkCommunication {

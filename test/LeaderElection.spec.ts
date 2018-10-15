@@ -2,15 +2,15 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
-import { MessageType, NewViewMessage, PrePrepareMessage, ViewChangeMessage, deserializeMessage } from "../src/networkCommunication/Messages";
+import { MessageType, NewViewMessage, PrePrepareMessage, ViewChangeMessage } from "../src/networkCommunication/Messages";
 import { extractPreparedMessages, PreparedMessages } from "../src/storage/PreparedMessagesExtractor";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNewViewMessage, aPrePrepareMessage, aViewChangeMessage } from "./builders/MessagesBuilder";
 import { aPrepared } from "./builders/ProofBuilder";
 import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
-import { messageToGossip, toGossipMessage } from "./networkCommunication/InMemoryNetworkCommunicaiton";
-import { nextTick } from "./timeUtils";
 import { gossipMessageCounter } from "./gossip/Gossip";
+import { messageToGossip } from "./networkCommunication/InMemoryNetworkCommunicaiton";
+import { nextTick } from "./timeUtils";
 
 chai.use(sinonChai);
 

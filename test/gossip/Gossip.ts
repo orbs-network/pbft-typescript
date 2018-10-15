@@ -1,6 +1,7 @@
 import { GossipDiscovery } from "./GossipDiscovery";
-import { deserializeMessage, MessageType } from "../../src/networkCommunication/Messages";
+import { deserializeMessageContent, MessageType } from "../../src/networkCommunication/Messages";
 import * as sinon from "sinon";
+import { fromGossipMessage } from "../networkCommunication/InMemoryNetworkCommunicaiton";
 
 type GossipCallback = (message: string) => void;
 type SubscriptionsValue = {
@@ -11,7 +12,7 @@ export const gossipMessageCounter = (spy: sinon.SinonSpy, messageType: MessageTy
     return spy.getCalls()
         .map(c => c.args[1])
         .map(c => JSON.parse(c))
-        .map(c => deserializeMessage(c.messageContent))
+        .map(c => deserializeMessageContent(c.content))
         .filter(m => m.content.signedHeader.messageType === messageType).length;
 };
 
@@ -24,15 +25,16 @@ export class Gossip {
     constructor(private discovery: GossipDiscovery) {
     }
 
-    onRemoteMessage(message: string): void {
+    onRemoteMessage(gossipMessage: string): void {
         this.subscriptions.forEach(subscription => {
             if (this.inComingWhiteListPKs !== undefined) {
-                const seriazliedMessage = deserializeMessage(message);
-                if (this.inComingWhiteListPKs.indexOf(seriazliedMessage.content.sender.senderPublicKey) === -1) {
+                const message = fromGossipMessage(gossipMessage);
+                const content = deserializeMessageContent(message.content);
+                if (this.inComingWhiteListPKs.indexOf(content.sender.senderPublicKey) === -1) {
                     return;
                 }
             }
-            subscription.cb(message);
+            subscription.cb(gossipMessage);
         });
     }
 

@@ -7,18 +7,18 @@ import * as sinonChai from "sinon-chai";
 import { KeyManager, PBFT } from "../src";
 import { Block } from "../src/Block";
 import { Config } from "../src/Config";
-import { NewViewMessage, PrePrepareMessage, ViewChangeMessage, PreparedProof, BlockRefContent, ViewChangeContent, deserializeMessage } from "../src/networkCommunication/Messages";
+import { deserializeMessageContent, NewViewMessage, PreparedProof, PrePrepareMessage, ViewChangeMessage } from "../src/networkCommunication/Messages";
 import { PBFTTerm, TermConfig } from "../src/PBFTTerm";
+import { extractPreparedMessages, PreparedMessages } from "../src/storage/PreparedMessagesExtractor";
 import { BlockUtilsMock } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aCommitMessage, aNewViewMessage, aPrepareMessage, aPrePrepareMessage, aViewChangeMessage, blockRefMessageFromPP } from "./builders/MessagesBuilder";
+import { aCommitMessage, aNewViewMessage, aPrepareMessage, aPrePrepareMessage, aViewChangeMessage } from "./builders/MessagesBuilder";
 import { aPrepared, aPreparedProofByMessages } from "./builders/ProofBuilder";
 import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
 import { blockMatcher } from "./matchers/blockMatcher";
 import { Node } from "./network/Node";
 import { TestNetwork } from "./network/TestNetwork";
 import { nextTick } from "./timeUtils";
-import { extractPreparedMessages, PreparedMessages } from "../src/storage/PreparedMessagesExtractor";
 chai.use(sinonChai);
 chai.use(blockMatcher);
 
@@ -573,7 +573,7 @@ describe("PBFTTerm", () => {
         const prepared: PreparedMessages = extractPreparedMessages(0, node1Config.pbftStorage, 1);
         const latestPreparedProof: PreparedProof = aPreparedProofByMessages(prepared.preprepareMessage, prepared.prepareMessages);
 
-        const message = deserializeMessage(spy.args[0][1]);
+        const message = deserializeMessageContent(spy.args[0][1]);
         expect(message.content.signedHeader.preparedProof).to.deep.equal(latestPreparedProof);
     });
 

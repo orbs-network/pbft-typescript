@@ -1,6 +1,6 @@
 import { Block } from "../Block";
 
-export function serializeMessage(messageContent: BlockRefContent | ViewChangeContent | NewViewContent): string {
+export function serializeMessageContent(messageContent: BlockRefContent | ViewChangeContent | NewViewContent): string {
     return JSON.stringify(messageContent);
 }
 
@@ -20,16 +20,8 @@ function recursiveDeserializeBuffers(obj: any): any {
     return obj;
 }
 
-export function deserializeMessage(messageContent: string, block?: Block): any {
-    const result: any = {
-        content: recursiveDeserializeBuffers(JSON.parse(messageContent)),
-    };
-
-    if (block) {
-        result.block = block;
-    }
-
-    return result;
+export function deserializeMessageContent(messageContent: string): any {
+    return recursiveDeserializeBuffers(JSON.parse(messageContent));
 }
 
 export enum MessageType {
