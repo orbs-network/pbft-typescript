@@ -26,7 +26,7 @@ describe("Byzantine Attacks", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
         await blockUtils.provideNextBlock();
-        await nextTick();
+        await nextTick(); 
 
         node1.triggerElection();
         node2.triggerElection();
@@ -37,10 +37,10 @@ describe("Byzantine Attacks", () => {
         await nextTick();
         await blockUtils.resolveAllValidations(true);
 
-        expect(await node1.getLatestCommittedBlock()).to.equal(block2);
-        expect(await node2.getLatestCommittedBlock()).to.equal(block2);
-        expect(await node3.getLatestCommittedBlock()).to.equal(block2);
-        expect(await node3.getLatestCommittedBlock()).to.equal(block2);
+        expect(await node1.getLatestCommittedBlock()).to.deep.equal(block2);
+        expect(await node2.getLatestCommittedBlock()).to.deep.equal(block2);
+        expect(await node3.getLatestCommittedBlock()).to.deep.equal(block2);
+        expect(await node3.getLatestCommittedBlock()).to.deep.equal(block2);
         testNetwork.shutDown();
     });
 

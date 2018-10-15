@@ -13,7 +13,7 @@ export const gossipMessageCounter = (spy: sinon.SinonSpy, messageType: MessageTy
         .map(c => c.args[1])
         .map(c => JSON.parse(c))
         .map(c => deserializeMessageContent(c.content))
-        .filter(m => m.content.signedHeader.messageType === messageType).length;
+        .filter(c => c.signedHeader.messageType === messageType).length;
 };
 
 export class Gossip {
