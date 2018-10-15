@@ -32,7 +32,8 @@ export function validatePreparedProof(
         return false;
     }
 
-    if (keyManager.verifyBlockRef(preprepareBlockRef, preprepareSender) === false) {
+    const signedPreprepareBlockRef = JSON.stringify(preprepareBlockRef);
+    if (keyManager.verify(signedPreprepareBlockRef, preprepareSender) === false) {
         return false;
     }
 
@@ -56,7 +57,8 @@ export function validatePreparedProof(
         return false;
     }
 
-    if (prepareSenders.every(sender => keyManager.verifyBlockRef(prepareBlockRef, sender)) === false) {
+    const signedPrepareBlockRef = JSON.stringify(prepareBlockRef);
+    if (prepareSenders.every(sender => keyManager.verify(signedPrepareBlockRef, sender)) === false) {
         return false;
     }
 

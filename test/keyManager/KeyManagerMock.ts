@@ -7,45 +7,16 @@ export class KeyManagerMock implements KeyManager {
     constructor(private myPublicKey: string, private rejectedPKs: string[] = []) {
     }
 
-    signBlockRef(blockRef: BlockRef): SenderSignature {
+    sign(data: string): SenderSignature {
+        const signature = `${PRIVATE_KEY_PREFIX}-${this.myPublicKey}-${data}`;
         return {
             senderPublicKey: this.myPublicKey,
-            signature: this.sign(blockRef)
+            signature
         };
     }
 
-    signViewChange(viewChangeHeader: ViewChangeHeader): SenderSignature {
-        return {
-            senderPublicKey: this.myPublicKey,
-            signature: this.sign(viewChangeHeader)
-        };
-    }
-
-    signNewView(newViewHeader: NewViewHeader): SenderSignature {
-        return {
-            senderPublicKey: this.myPublicKey,
-            signature: this.sign(newViewHeader)
-        };
-    }
-
-    private sign(object: any): string {
-        return `${PRIVATE_KEY_PREFIX}-${this.myPublicKey}-${JSON.stringify(object)}`;
-    }
-
-    verifyBlockRef(blockRef: BlockRef, sender: SenderSignature): boolean {
-        return this.verify(blockRef, sender);
-    }
-
-    verifyViewChange(viewChangeHeader: ViewChangeHeader, sender: SenderSignature): boolean {
-        return this.verify(viewChangeHeader, sender);
-    }
-
-    verifyNewView(newViewHeader: NewViewHeader, sender: SenderSignature): boolean {
-        return this.verify(newViewHeader, sender);
-    }
-
-    private verify(object: any, sender: SenderSignature): boolean {
-        const {signature, senderPublicKey} = sender;
+    verify(signedData: string, sender: SenderSignature): boolean {
+        const { signature, senderPublicKey } = sender;
 
         if (this.rejectedPKs.indexOf(senderPublicKey) > -1) {
             return false;
@@ -61,7 +32,7 @@ export class KeyManagerMock implements KeyManager {
         }
 
         const withoutPublicKey = withoutPrefix.substr(senderPublicKey.length + 1);
-        if (JSON.stringify(object) !== withoutPublicKey) {
+        if (signedData !== withoutPublicKey) {
             return false;
         }
 

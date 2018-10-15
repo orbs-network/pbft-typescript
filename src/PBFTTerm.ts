@@ -246,7 +246,8 @@ export class PBFTTerm {
             return false;
         }
 
-        if (!this.keyManager.verifyBlockRef(signedHeader, sender)) {
+        const signedData = JSON.stringify(signedHeader);
+        if (!this.keyManager.verify(signedData, sender)) {
             this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], validatePrePreapare from "${senderPk}", ignored because the signature verification failed` });
             return;
         }
@@ -292,7 +293,8 @@ export class PBFTTerm {
             senderPk
         };
 
-        if (!this.keyManager.verifyBlockRef(signedHeader, sender)) {
+        const signedData = JSON.stringify(signedHeader);
+        if (!this.keyManager.verify(signedData, sender)) {
             this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceivePrepare from "${senderPk}", ignored because the signature verification failed` });
             return;
         }
@@ -335,7 +337,8 @@ export class PBFTTerm {
         const { senderPublicKey: senderPk } = sender;
         const { view: newView, blockHeight, preparedProof } = signedHeader;
 
-        if (!this.keyManager.verifyViewChange(message.signedHeader, message.sender)) {
+        const signedData = JSON.stringify(signedHeader);
+        if (!this.keyManager.verify(signedData, sender)) {
             this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the signature verification failed` });
             return false;
         }
@@ -418,7 +421,8 @@ export class PBFTTerm {
         const { senderPublicKey: senderPk } = sender;
         const { view, blockHeight, blockHash } = signedHeader;
 
-        if (!this.keyManager.verifyBlockRef(signedHeader, sender)) {
+        const signedData = JSON.stringify(signedHeader);
+        if (!this.keyManager.verify(signedData, sender)) {
             this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveCommit from "${senderPk}", ignored because the signature verification failed` });
             return;
         }
@@ -484,7 +488,8 @@ export class PBFTTerm {
         const { senderPublicKey: senderPk } = sender;
         const { view, blockHeight, viewChangeConfirmations } = signedHeader;
 
-        if (!this.keyManager.verifyNewView(signedHeader, sender)) {
+        const signedData = JSON.stringify(signedHeader);
+        if (!this.keyManager.verify(signedData, sender)) {
             this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveNewView from "${senderPk}", ignored because the signature verification failed` });
             return;
         }

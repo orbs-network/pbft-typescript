@@ -20,10 +20,11 @@ describe("Messages Factory", () => {
 
     it("should be able to construct a PrePrepare message", async () => {
         const signedHeader: BlockRef = { messageType: MessageType.PREPREPARE, blockHeight, view, blockHash };
+        const dataToSign: string = JSON.stringify(signedHeader);
         const expectedMessage: PrePrepareMessage = {
             content: {
                 signedHeader,
-                sender: keyManager.signBlockRef(signedHeader),
+                sender: keyManager.sign(dataToSign),
             },
             block
         };
@@ -33,10 +34,11 @@ describe("Messages Factory", () => {
 
     it("should be able to construct a Prepare message", async () => {
         const signedHeader: BlockRef = { messageType: MessageType.PREPARE, blockHeight, view, blockHash };
+        const dataToSign: string = JSON.stringify(signedHeader);
         const expectedMessage: PrepareMessage = {
             content: {
                 signedHeader,
-                sender: keyManager.signBlockRef(signedHeader)
+                sender: keyManager.sign(dataToSign)
             }
         };
         const actualMessage: PrepareMessage = messagesFactory.createPrepareMessage(blockHeight, view, blockHash);
@@ -45,10 +47,11 @@ describe("Messages Factory", () => {
 
     it("should be able to construct a Commit message", async () => {
         const signedHeader: BlockRef = { messageType: MessageType.COMMIT, blockHeight, view, blockHash };
+        const dataToSign: string = JSON.stringify(signedHeader);
         const expectedMessage: CommitMessage = {
             content: {
                 signedHeader,
-                sender: keyManager.signBlockRef(signedHeader)
+                sender: keyManager.sign(dataToSign)
             }
         };
         const actualMessage: CommitMessage = messagesFactory.createCommitMessage(blockHeight, view, blockHash);
@@ -57,10 +60,11 @@ describe("Messages Factory", () => {
 
     it("should be able to construct a ViewChange message without prepared proof", async () => {
         const signedHeader: ViewChangeHeader = { messageType: MessageType.VIEW_CHANGE, blockHeight, view, preparedProof: undefined };
+        const dataToSign: string = JSON.stringify(signedHeader);
         const expectedMessage: ViewChangeMessage = {
             content: {
                 signedHeader,
-                sender: keyManager.signViewChange(signedHeader),
+                sender: keyManager.sign(dataToSign),
             },
             block: undefined
         };
@@ -82,10 +86,11 @@ describe("Messages Factory", () => {
             view,
             preparedProof: aPreparedProofByMessages(preprepareMessage, preparedMessages.prepareMessages)
         };
+        const dataToSign: string = JSON.stringify(signedHeader);
         const expectedMessage: ViewChangeMessage = {
             content: {
                 signedHeader,
-                sender: keyManager.signViewChange(signedHeader),
+                sender: keyManager.sign(dataToSign),
             },
             block
         };
@@ -102,10 +107,11 @@ describe("Messages Factory", () => {
         const viewChangeConfirmations: ViewChangeContent[] = [vote1, vote2];
 
         const signedHeader: NewViewHeader = { messageType: MessageType.NEW_VIEW, blockHeight, view, viewChangeConfirmations };
+        const dataToSign: string = JSON.stringify(signedHeader);
         const expectedMessage: NewViewMessage = {
             content: {
                 signedHeader,
-                sender: keyManager.signNewView(signedHeader),
+                sender: keyManager.sign(dataToSign),
                 preprepareContent: preprepareMessage.content
             },
             block
