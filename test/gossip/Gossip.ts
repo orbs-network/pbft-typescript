@@ -1,7 +1,7 @@
-import { GossipDiscovery } from "./GossipDiscovery";
-import { deserializeMessageContent, MessageType } from "../../src/networkCommunication/Messages";
 import * as sinon from "sinon";
-import { fromGossipMessage } from "../networkCommunication/InMemoryNetworkCommunicaiton";
+import { deserializeMessageContent, MessageType } from "../../src/networkCommunication/Messages";
+import { extractSenderPublicKeyFromGossipMessage } from "../networkCommunication/InMemoryNetworkCommunicaiton";
+import { GossipDiscovery } from "./GossipDiscovery";
 
 type GossipCallback = (message: string) => void;
 type SubscriptionsValue = {
@@ -28,9 +28,8 @@ export class Gossip {
     onRemoteMessage(gossipMessage: string): void {
         this.subscriptions.forEach(subscription => {
             if (this.inComingWhiteListPKs !== undefined) {
-                const message = fromGossipMessage(gossipMessage);
-                const content = deserializeMessageContent(message.content);
-                if (this.inComingWhiteListPKs.indexOf(content.sender.senderPublicKey) === -1) {
+                const senderPublicKey = extractSenderPublicKeyFromGossipMessage(gossipMessage);
+                if (this.inComingWhiteListPKs.indexOf(senderPublicKey) === -1) {
                     return;
                 }
             }

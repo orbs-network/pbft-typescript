@@ -1,8 +1,11 @@
 import { Block } from "../Block";
-import { ConsensusRawMessage } from "./NetworkCommunication";
 
 export function serializeMessageContent(content: BlockRefContent | ViewChangeContent | NewViewContent): string {
     return JSON.stringify(content);
+}
+
+export function deserializeMessageContent(content: string): BlockRefContent | ViewChangeContent | NewViewContent {
+    return recursiveDeserializeBuffers(JSON.parse(content));
 }
 
 function recursiveDeserializeBuffers(obj: any): any {
@@ -19,10 +22,6 @@ function recursiveDeserializeBuffers(obj: any): any {
     }
 
     return obj;
-}
-
-export function deserializeMessageContent(content: string): BlockRefContent | ViewChangeContent | NewViewContent {
-    return recursiveDeserializeBuffers(JSON.parse(content));
 }
 
 export enum MessageType {

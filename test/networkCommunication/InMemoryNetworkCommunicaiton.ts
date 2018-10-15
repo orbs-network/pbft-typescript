@@ -1,9 +1,8 @@
-import { NetworkCommunication, ConsensusRawMessage } from "../../src/networkCommunication/NetworkCommunication";
+import { CommitMessage, deserializeMessageContent, NewViewMessage, PrepareMessage, PrePrepareMessage, serializeMessageContent, ViewChangeMessage } from "../../src/networkCommunication/Messages";
+import { ConsensusRawMessage, NetworkCommunication } from "../../src/networkCommunication/NetworkCommunication";
+import { BlockMock } from "../builders/BlockBuilder";
 import { Gossip } from "../gossip/Gossip";
 import { GossipDiscovery } from "../gossip/GossipDiscovery";
-import { Block } from "../../src";
-import { BlockMock } from "../builders/BlockBuilder";
-import { PrePrepareMessage, PrepareMessage, CommitMessage, ViewChangeMessage, NewViewMessage, serializeMessageContent } from "../../src/networkCommunication/Messages";
 
 export function messageToGossip(message: PrePrepareMessage | PrepareMessage | CommitMessage | ViewChangeMessage | NewViewMessage): string {
     const consesnsusRawMessage: ConsensusRawMessage = {
@@ -28,6 +27,12 @@ export function fromGossipMessage(gossipMessage: string): ConsensusRawMessage {
     }
 
     return result;
+}
+
+export function extractSenderPublicKeyFromGossipMessage(gossipMessage: string): string {
+    const consensusRawMessage: ConsensusRawMessage = fromGossipMessage(gossipMessage);
+    const content = deserializeMessageContent(consensusRawMessage.content);
+    return content.sender.senderPublicKey;
 }
 
 export class InMemoryNetworkCommunicaiton implements NetworkCommunication {
