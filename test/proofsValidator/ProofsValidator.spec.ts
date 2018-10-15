@@ -2,7 +2,7 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
 import { Block, KeyManager } from "../../src";
-import { BlockRefMessage, PreparedProof, PrepareMessage, PrePrepareMessage } from "../../src/networkCommunication/Messages";
+import { BlockRefContent, PreparedProof, PrepareMessage, PrePrepareMessage } from "../../src/networkCommunication/Messages";
 import { validatePreparedProof } from "../../src/proofsValidator/ProofsValidator";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { aPrepareMessage, aPrePrepareMessage, blockRefMessageFromPP } from "../builders/MessagesBuilder";
@@ -142,7 +142,7 @@ describe("Proofs Validator", () => {
 
         // Mismatching blockHash //
         const badPrepareMessage: PrepareMessage = aPrepareMessage(node2KeyManager, blockHeight, view, block);
-        badPrepareMessage.signedHeader.blockHash = Buffer.from("XXXX");
+        badPrepareMessage.content.signedHeader.blockHash = Buffer.from("XXXX");
         const badBlockHashPrepareProof: PreparedProof = aPreparedProofByMessages(
             aPrePrepareMessage(leaderKeyManager, blockHeight, view, block),
             [

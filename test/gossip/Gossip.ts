@@ -1,7 +1,7 @@
-import { LeanHelixMessage } from "../../src/networkCommunication/Messages";
 import { GossipDiscovery } from "./GossipDiscovery";
+import { deserializeMessage } from "../../src/networkCommunication/Messages";
 
-type GossipCallback = (message: LeanHelixMessage) => void;
+type GossipCallback = (message: string) => void;
 type SubscriptionsValue = {
     cb: GossipCallback;
 };
@@ -15,10 +15,12 @@ export class Gossip {
     constructor(private discovery: GossipDiscovery) {
     }
 
-    onRemoteMessage(message: LeanHelixMessage): void {
+    onRemoteMessage(message: string): void {
         this.subscriptions.forEach(subscription => {
             if (this.inComingWhiteListPKs !== undefined) {
-                if (this.inComingWhiteListPKs.indexOf(message.sender.senderPublicKey) === -1) {
+                const { messageContent } = JSON.parse(message);
+                const seriazliedMessage = deserializeMessage(messageContent);
+                if (this.inComingWhiteListPKs.indexOf(seriazliedMessage.content.sender.senderPublicKey) === -1) {
                     return;
                 }
             }
@@ -52,11 +54,11 @@ export class Gossip {
         this.subscriptions.delete(subscriptionToken);
     }
 
-    multicast(targetsIds: string[], message: LeanHelixMessage): void {
+    multicast(targetsIds: string[], message: string): void {
         targetsIds.forEach(targetId => this.unicast(targetId, message));
     }
 
-    unicast(pk: string, message: LeanHelixMessage): void {
+    unicast(pk: string, message: string): void {
         if (this.outGoingWhiteListPKs !== undefined) {
             if (this.outGoingWhiteListPKs.indexOf(pk) === -1) {
                 return;

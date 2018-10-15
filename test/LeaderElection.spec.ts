@@ -2,12 +2,13 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
-import { MessageType, NewViewMessage, PrePrepareMessage, ViewChangeConfirmation, ViewChangeMessage } from "../src/networkCommunication/Messages";
+import { MessageType, NewViewMessage, PrePrepareMessage, ViewChangeMessage } from "../src/networkCommunication/Messages";
 import { extractPreparedMessages, PreparedMessages } from "../src/storage/PreparedMessagesExtractor";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNewViewMessage, aPrePrepareMessage, aViewChangeMessage } from "./builders/MessagesBuilder";
 import { aPrepared } from "./builders/ProofBuilder";
 import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
+import { messageToGossip } from "./networkCommunication/InMemoryNetworkCommunicaiton";
 import { nextTick } from "./timeUtils";
 
 chai.use(sinonChai);
@@ -103,17 +104,16 @@ describe("Leader Election", () => {
         const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.config.keyManager, 1, 1);
         const node2VCMessage: ViewChangeMessage = aViewChangeMessage(node2.config.keyManager, 1, 1);
         const node3VCMessage: ViewChangeMessage = aViewChangeMessage(node3.config.keyManager, 1, 1);
-        gossip.onRemoteMessage(node0VCMessage);
-        gossip.onRemoteMessage(node2VCMessage);
-        gossip.onRemoteMessage(node3VCMessage);
+        gossip.onRemoteMessage(messageToGossip(node0VCMessage));
+        gossip.onRemoteMessage(messageToGossip(node2VCMessage));
+        gossip.onRemoteMessage(messageToGossip(node3VCMessage));
         await nextTick();
         await blockUtils.provideNextBlock();
         await nextTick();
 
         const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, 1, 1, block2);
         const VCProof: ViewChangeMessage[] = [node0VCMessage, node2VCMessage, node3VCMessage];
-        const votes: ViewChangeConfirmation[] = VCProof.map(msg => ({ signedHeader: msg.signedHeader, sender: msg.sender }));
-        const message: NewViewMessage = aNewViewMessage(node1.config.keyManager, 1, 1, PPMessage, votes);
+        const message: NewViewMessage = aNewViewMessage(node1.config.keyManager, 1, 1, PPMessage, VCProof);
         expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], message);
         testNetwork.shutDown();
     });
@@ -148,15 +148,15 @@ describe("Leader Election", () => {
         const node3VCMessage: ViewChangeMessage = aViewChangeMessage(node3.config.keyManager, 1, 5);
 
         // send the view-change
-        node1Gossip.onRemoteMessage(node0VCMessage);
-        node1Gossip.onRemoteMessage(node2VCMessage);
-        node1Gossip.onRemoteMessage(node3VCMessage);
+        node1Gossip.onRemoteMessage(messageToGossip(node0VCMessage));
+        node1Gossip.onRemoteMessage(messageToGossip(node2VCMessage));
+        node1Gossip.onRemoteMessage(messageToGossip(node3VCMessage));
         await nextTick();
         await blockUtils.provideNextBlock();
         await nextTick();
 
         const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, 1, 5, blockOnView4);
-        const votes: ViewChangeConfirmation[] = [node0VCMessage, node2VCMessage, node3VCMessage].map(msg => ({ signedHeader: msg.signedHeader, sender: msg.sender }));
+        const votes: ViewChangeMessage[] = [node0VCMessage, node2VCMessage, node3VCMessage];
         const newViewMessage: NewViewMessage = aNewViewMessage(node1.config.keyManager, 1, 5, PPMessage, votes);
         expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], newViewMessage);
         testNetwork.shutDown();
@@ -256,8 +256,7 @@ describe("Leader Election", () => {
 
         const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, 2, 1, block3);
         const VCProof: ViewChangeMessage[] = node1.config.pbftStorage.getViewChangeMessages(2, 1, 1);
-        const votes: ViewChangeConfirmation[] = VCProof.map(msg => ({ signedHeader: msg.signedHeader, sender: msg.sender }));
-        const node1NVExpectedMessage: NewViewMessage = aNewViewMessage(node1.config.keyManager, 2, 1, PPMessage, votes);
+        const node1NVExpectedMessage: NewViewMessage = aNewViewMessage(node1.config.keyManager, 2, 1, PPMessage, VCProof);
         expect(spy1).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], node1NVExpectedMessage);
 
         testNetwork.shutDown();
@@ -272,8 +271,8 @@ describe("Leader Election", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
         await blockUtils.provideNextBlock();
-        gossip.onRemoteMessage(aViewChangeMessage(node1.config.keyManager, 1, 1));
-        gossip.onRemoteMessage(aViewChangeMessage(node1.config.keyManager, 1, 1));
+        gossip.onRemoteMessage(messageToGossip(aViewChangeMessage(node1.config.keyManager, 1, 1)));
+        gossip.onRemoteMessage(messageToGossip(aViewChangeMessage(node1.config.keyManager, 1, 1)));
         await blockUtils.resolveAllValidations(true);
 
         const newViewSent = multicastSpy.getCalls().find(c => c.args[1].signedHeader.messageType === MessageType.NEW_VIEW) !== undefined;
@@ -292,9 +291,9 @@ describe("Leader Election", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
         await blockUtils.provideNextBlock();
-        gossip.onRemoteMessage(aViewChangeMessage(node1.config.keyManager, 1, 1));
-        gossip.onRemoteMessage(aViewChangeMessage(node1.config.keyManager, 1, 1));
-        gossip.onRemoteMessage(aViewChangeMessage(node1.config.keyManager, 1, 1));
+        gossip.onRemoteMessage(messageToGossip(aViewChangeMessage(node1.config.keyManager, 1, 1)));
+        gossip.onRemoteMessage(messageToGossip(aViewChangeMessage(node1.config.keyManager, 1, 1)));
+        gossip.onRemoteMessage(messageToGossip(aViewChangeMessage(node1.config.keyManager, 1, 1)));
         await blockUtils.resolveAllValidations(true);
 
         const newViewSent = multicastSpy.getCalls().find(c => c.args[1].signedHeader.messageType === MessageType.NEW_VIEW) !== undefined;

@@ -2,7 +2,7 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
 import { KeyManager } from "../../src";
-import { BlockRef, CommitMessage, MessageType, NewViewHeader, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage, ViewChangeHeader, ViewChangeConfirmation } from "../../src/networkCommunication/Messages";
+import { BlockRef, CommitMessage, MessageType, NewViewHeader, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage, ViewChangeHeader, ViewChangeContent } from "../../src/networkCommunication/Messages";
 import { MessagesFactory } from "../../src/networkCommunication/MessagesFactory";
 import { MessagesFactoryMock } from "./MessagesFactoryMock";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
@@ -22,8 +22,10 @@ describe("Messages Factory", () => {
     it("should be able to construct a PrePrepare message", async () => {
         const signedHeader: BlockRef = { messageType: MessageType.PREPREPARE, blockHeight, view, blockHash };
         const expectedMessage: PrePrepareMessage = {
-            signedHeader,
-            sender: keyManager.signBlockRef(signedHeader),
+            content: {
+                signedHeader,
+                sender: keyManager.signBlockRef(signedHeader),
+            },
             block
         };
         const actualMessage: PrePrepareMessage = messagesFactory.createPreprepareMessage(blockHeight, view, block);
@@ -33,8 +35,10 @@ describe("Messages Factory", () => {
     it("should be able to construct a Prepare message", async () => {
         const signedHeader: BlockRef = { messageType: MessageType.PREPARE, blockHeight, view, blockHash };
         const expectedMessage: PrepareMessage = {
-            signedHeader,
-            sender: keyManager.signBlockRef(signedHeader)
+            content: {
+                signedHeader,
+                sender: keyManager.signBlockRef(signedHeader)
+            }
         };
         const actualMessage: PrepareMessage = messagesFactory.createPrepareMessage(blockHeight, view, blockHash);
         expect(actualMessage).to.deep.equal(expectedMessage);
@@ -43,8 +47,10 @@ describe("Messages Factory", () => {
     it("should be able to construct a Commit message", async () => {
         const signedHeader: BlockRef = { messageType: MessageType.COMMIT, blockHeight, view, blockHash };
         const expectedMessage: CommitMessage = {
-            signedHeader,
-            sender: keyManager.signBlockRef(signedHeader)
+            content: {
+                signedHeader,
+                sender: keyManager.signBlockRef(signedHeader)
+            }
         };
         const actualMessage: CommitMessage = messagesFactory.createCommitMessage(blockHeight, view, blockHash);
         expect(actualMessage).to.deep.equal(expectedMessage);
@@ -53,8 +59,10 @@ describe("Messages Factory", () => {
     it("should be able to construct a ViewChange message without prepared proof", async () => {
         const signedHeader: ViewChangeHeader = { messageType: MessageType.VIEW_CHANGE, blockHeight, view, preparedProof: undefined };
         const expectedMessage: ViewChangeMessage = {
-            signedHeader,
-            sender: keyManager.signViewChange(signedHeader),
+            content: {
+                signedHeader,
+                sender: keyManager.signViewChange(signedHeader),
+            },
             block: undefined
         };
         const actualMessage: ViewChangeMessage = messagesFactory.createViewChangeMessage(blockHeight, view);
@@ -76,8 +84,10 @@ describe("Messages Factory", () => {
             preparedProof: aPreparedProofByMessages(preprepareMessage, preparedMessages.prepareMessages)
         };
         const expectedMessage: ViewChangeMessage = {
-            signedHeader,
-            sender: keyManager.signViewChange(signedHeader),
+            content: {
+                signedHeader,
+                sender: keyManager.signViewChange(signedHeader),
+            },
             block
         };
         const actualMessage: ViewChangeMessage = messagesFactory.createViewChangeMessage(blockHeight, view, preparedMessages);
@@ -87,16 +97,19 @@ describe("Messages Factory", () => {
     it("should be able to construct a New View message", async () => {
         const preprepareMessage: PrePrepareMessage = messagesFactory.createPreprepareMessage(blockHeight, view, block);
         const viewChange1: ViewChangeMessage = messagesFactory.createViewChangeMessage(blockHeight, view);
-        const vote1: ViewChangeConfirmation = { signedHeader: viewChange1.signedHeader, sender: viewChange1.sender };
+        const vote1: ViewChangeContent = { signedHeader: viewChange1.content.signedHeader, sender: viewChange1.content.sender };
         const viewChange2: ViewChangeMessage = messagesFactory.createViewChangeMessage(blockHeight, view);
-        const vote2: ViewChangeConfirmation = { signedHeader: viewChange2.signedHeader, sender: viewChange2.sender };
-        const viewChangeConfirmations: ViewChangeConfirmation[] = [vote1, vote2];
+        const vote2: ViewChangeContent = { signedHeader: viewChange2.content.signedHeader, sender: viewChange2.content.sender };
+        const viewChangeConfirmations: ViewChangeContent[] = [vote1, vote2];
 
         const signedHeader: NewViewHeader = { messageType: MessageType.NEW_VIEW, blockHeight, view, viewChangeConfirmations };
         const expectedMessage: NewViewMessage = {
-            signedHeader,
-            sender: keyManager.signNewView(signedHeader),
-            preprepareMessage
+            content: {
+                signedHeader,
+                sender: keyManager.signNewView(signedHeader),
+                preprepareContent: preprepareMessage.content
+            },
+            block
         };
         const actualMessage: NewViewMessage = messagesFactory.createNewViewMessage(blockHeight, view, preprepareMessage, viewChangeConfirmations);
         expect(actualMessage).to.deep.equal(expectedMessage);

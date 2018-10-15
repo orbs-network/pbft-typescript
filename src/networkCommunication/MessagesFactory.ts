@@ -1,5 +1,5 @@
 import { Block } from "../Block";
-import { CommitMessage, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeConfirmation, ViewChangeMessage } from "./Messages";
+import { CommitMessage, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage, ViewChangeContent } from "./Messages";
 import { PreparedMessages } from "../storage/PreparedMessagesExtractor";
 
 export interface MessagesFactory {
@@ -7,5 +7,5 @@ export interface MessagesFactory {
     createPrepareMessage(blockHeight: number, view: number, blockHash: Buffer): PrepareMessage;
     createCommitMessage(blockHeight: number, view: number, blockHash: Buffer): CommitMessage;
     createViewChangeMessage(blockHeight: number, view: number, preparedMessages?: PreparedMessages): ViewChangeMessage;
-    createNewViewMessage(blockHeight: number, view: number, preprepareMessage: PrePrepareMessage, viewChangeConfirmations: ViewChangeConfirmation[]): NewViewMessage;
+    createNewViewMessage(blockHeight: number, view: number, preprepareMessage: PrePrepareMessage, viewChangeConfirmations: ViewChangeContent[]): NewViewMessage;
 }

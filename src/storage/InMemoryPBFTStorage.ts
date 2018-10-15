@@ -19,7 +19,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
     }
 
     storePrePrepare(message: PrePrepareMessage): boolean {
-        const { blockHeight, view } = message.signedHeader;
+        const { blockHeight, view } = message.content.signedHeader;
         let viewsMap = this.prePrepareStorage.get(blockHeight);
         if (!viewsMap) {
             viewsMap = new Map();
@@ -30,8 +30,8 @@ export class InMemoryPBFTStorage implements PBFTStorage {
             return false;
         }
         viewsMap.set(view, message);
-        const { senderPublicKey: senderPk } = message.sender;
-        const { blockHash } = message.signedHeader;
+        const { senderPublicKey: senderPk } = message.content.sender;
+        const { blockHash } = message.content.signedHeader;
         this.logger.log({ subject: "Storage", StorageType: "PrePrepare", blockHeight, view, senderPk, blockHash: blockHash.toString("hex") });
         return true;
     }
@@ -51,7 +51,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
     }
 
     storePrepare(message: PrepareMessage): boolean {
-        const { blockHeight, view } = message.signedHeader;
+        const { blockHeight, view } = message.content.signedHeader;
         let viewsMap = this.prepareStorage.get(blockHeight);
         if (!viewsMap) {
             viewsMap = new Map();
@@ -64,7 +64,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
             viewsMap.set(view, blockHashesMap);
         }
 
-        const { blockHash } = message.signedHeader;
+        const { blockHash } = message.content.signedHeader;
         const key = blockHash.toString("hex");
         let sendersMap = blockHashesMap.get(key);
         if (!sendersMap) {
@@ -72,7 +72,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
             blockHashesMap.set(key, sendersMap);
         }
 
-        const { senderPublicKey: senderPk } = message.sender;
+        const { senderPublicKey: senderPk } = message.content.sender;
         if (sendersMap.get(senderPk) !== undefined) {
             return false;
         }
@@ -131,7 +131,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
     }
 
     storeCommit(message: CommitMessage): boolean {
-        const { blockHeight, view } = message.signedHeader;
+        const { blockHeight, view } = message.content.signedHeader;
         let viewsMap = this.commitStorage.get(blockHeight);
         if (!viewsMap) {
             viewsMap = new Map();
@@ -144,7 +144,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
             viewsMap.set(view, blockHashesMap);
         }
 
-        const { blockHash } = message.signedHeader;
+        const { blockHash } = message.content.signedHeader;
         const key = blockHash.toString("hex");
         let sendersMap = blockHashesMap.get(key);
         if (!sendersMap) {
@@ -152,7 +152,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
             blockHashesMap.set(key, sendersMap);
         }
 
-        const { senderPublicKey: senderPk } = message.sender;
+        const { senderPublicKey: senderPk } = message.content.sender;
         if (sendersMap.get(senderPk) !== undefined) {
             return false;
         }
@@ -193,7 +193,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
     }
 
     storeViewChange(message: ViewChangeMessage): boolean {
-        const { blockHeight, view } = message.signedHeader;
+        const { blockHeight, view } = message.content.signedHeader;
         let viewsMap = this.viewChangeStorage.get(blockHeight);
         if (!viewsMap) {
             viewsMap = new Map();
@@ -206,7 +206,7 @@ export class InMemoryPBFTStorage implements PBFTStorage {
             viewsMap.set(view, sendersMap);
         }
 
-        const { senderPublicKey: senderPk } = message.sender;
+        const { senderPublicKey: senderPk } = message.content.sender;
         if (sendersMap.get(senderPk) !== undefined) {
             return false;
         }

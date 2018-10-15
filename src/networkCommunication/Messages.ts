@@ -1,5 +1,37 @@
 import { Block } from "../Block";
 
+export function serializeMessage(messageContent: BlockRefContent | ViewChangeContent | NewViewContent): string {
+    return JSON.stringify(messageContent);
+}
+
+function recursiveDeserializeBuffers(obj: any): any {
+    if (typeof obj !== "object") {
+        return obj;
+    }
+
+    if (obj.type === "Buffer" && Array.isArray(obj.data)) {
+        return Buffer.from(obj.data);
+    }
+
+    for (const key in obj) {
+        obj[key] = recursiveDeserializeBuffers(obj[key]);
+    }
+
+    return obj;
+}
+
+export function deserializeMessage(messageContent: string, block?: Block): any {
+    const result: any = {
+        content: recursiveDeserializeBuffers(JSON.parse(messageContent)),
+    };
+
+    if (block) {
+        result.block = block;
+    }
+
+    return result;
+}
+
 export enum MessageType {
     PREPREPARE = 0,
     PREPARE = 1,
@@ -7,33 +39,43 @@ export enum MessageType {
     VIEW_CHANGE = 3,
     NEW_VIEW = 4,
 }
-export interface LeanHelixMessage {
-    sender: SenderSignature;
-    signedHeader: {
-        messageType: MessageType;
-        blockHeight: number;
-    };
-}
-
-export interface BlockRefMessage extends LeanHelixMessage {
+export interface BlockRefContent {
     signedHeader: BlockRef;
     sender: SenderSignature;
 }
 
-export type PrePrepareMessage = BlockRefMessage & { block: Block };
-export type PrepareMessage = BlockRefMessage;
-export type CommitMessage = BlockRefMessage;
+export type PrePrepareMessage = {
+    content: BlockRefContent;
+    block: Block;
+};
 
-export interface ViewChangeMessage extends LeanHelixMessage {
+export type PrepareMessage = {
+    content: BlockRefContent;
+};
+
+export type CommitMessage = {
+    content: BlockRefContent;
+};
+
+export type ViewChangeMessage = {
+    content: ViewChangeContent;
+    block: Block;
+};
+
+export type NewViewMessage = {
+    content: NewViewContent;
+    block: Block;
+};
+
+export interface ViewChangeContent {
     signedHeader: ViewChangeHeader;
     sender: SenderSignature;
-    block?: Block;
 }
 
-export interface NewViewMessage extends LeanHelixMessage {
+export interface NewViewContent {
     signedHeader: NewViewHeader;
     sender: SenderSignature;
-    preprepareMessage: PrePrepareMessage;
+    preprepareContent: BlockRefContent;
 }
 
 export interface SenderSignature {
@@ -66,10 +108,5 @@ export interface NewViewHeader {
     messageType: MessageType;
     blockHeight: number;
     view: number;
-    viewChangeConfirmations: ViewChangeConfirmation[];
-}
-
-export interface ViewChangeConfirmation {
-    signedHeader: ViewChangeHeader;
-    sender: SenderSignature;
+    viewChangeConfirmations: ViewChangeContent[];
 }

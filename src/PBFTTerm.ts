@@ -4,7 +4,7 @@ import { BlockUtils } from "./blockUtils/BlockUtils";
 import { ElectionTrigger } from "./electionTrigger/ElectionTrigger";
 import { KeyManager } from "./keyManager/KeyManager";
 import { Logger } from "./logger/Logger";
-import { CommitMessage, NewViewMessage, PrepareMessage, PrePrepareMessage, SenderSignature, ViewChangeConfirmation, ViewChangeHeader, ViewChangeMessage } from "./networkCommunication/Messages";
+import { CommitMessage, NewViewMessage, PrepareMessage, PrePrepareMessage, SenderSignature, ViewChangeHeader, ViewChangeMessage, serializeMessage, ViewChangeContent } from "./networkCommunication/Messages";
 import { MessagesFactory } from "./networkCommunication/MessagesFactory";
 import { NetworkCommunication } from "./networkCommunication/NetworkCommunication";
 import { validatePreparedProof } from "./proofsValidator/ProofsValidator";
@@ -131,65 +131,70 @@ export class PBFTTerm {
     }
 
     private sendPrePrepare(message: PrePrepareMessage): void {
-        this.networkCommunication.sendPrePrepare(this.otherCommitteeMembersPKs, message);
+        this.networkCommunication.sendMessage(this.otherCommitteeMembersPKs, serializeMessage(message.content), message.block);
+        const { blockHeight, view, blockHash } = message.content.signedHeader;
         this.logger.log({
             subject: "GossipSend",
             message: "preprepare",
             senderPk: this.myPk,
             targetPks: this.otherCommitteeMembersPKs,
-            blockHeight: message.signedHeader.blockHeight,
-            view: message.signedHeader.view,
-            blockHash: message.signedHeader.blockHash.toString("Hex")
+            blockHeight,
+            view,
+            blockHash: blockHash.toString("Hex")
         });
     }
 
     private sendPrepare(message: PrepareMessage): void {
-        this.networkCommunication.sendPrepare(this.otherCommitteeMembersPKs, message);
+        this.networkCommunication.sendMessage(this.otherCommitteeMembersPKs, serializeMessage(message.content));
+        const { blockHeight, view, blockHash } = message.content.signedHeader;
         this.logger.log({
             subject: "GossipSend",
             message: "prepare",
             senderPk: this.myPk,
             targetPks: this.otherCommitteeMembersPKs,
-            blockHeight: message.signedHeader.blockHeight,
-            view: message.signedHeader.view,
-            blockHash: message.signedHeader.blockHash.toString("Hex")
+            blockHeight,
+            view,
+            blockHash: blockHash.toString("Hex")
         });
     }
 
     private sendCommit(message: CommitMessage): void {
-        this.networkCommunication.sendCommit(this.otherCommitteeMembersPKs, message);
+        this.networkCommunication.sendMessage(this.otherCommitteeMembersPKs, serializeMessage(message.content));
+        const { blockHeight, view, blockHash } = message.content.signedHeader;
         this.logger.log({
             subject: "GossipSend",
             message: "commit",
             senderPk: this.myPk,
             targetPks: this.otherCommitteeMembersPKs,
-            blockHeight: message.signedHeader.blockHeight,
-            view: message.signedHeader.view,
-            blockHash: message.signedHeader.blockHash.toString("Hex")
+            blockHeight,
+            view,
+            blockHash: blockHash.toString("Hex")
         });
     }
 
     private sendViewChange(message: ViewChangeMessage): void {
-        this.networkCommunication.sendViewChange(this.leaderPk, message);
+        this.networkCommunication.sendMessage([this.leaderPk], serializeMessage(message.content), message.block);
+        const { blockHeight, view } = message.content.signedHeader;
         this.logger.log({
             subject: "GossipSend",
             message: "view-change",
             senderPk: this.myPk,
             targetPks: [this.leaderPk],
-            blockHeight: message.signedHeader.blockHeight,
-            view: message.signedHeader.view
+            blockHeight,
+            view
         });
     }
 
     private sendNewView(message: NewViewMessage): void {
-        this.networkCommunication.sendNewView(this.otherCommitteeMembersPKs, message);
+        this.networkCommunication.sendMessage(this.otherCommitteeMembersPKs, serializeMessage(message.content), message.block);
+        const { blockHeight, view } = message.content.signedHeader;
         this.logger.log({
             subject: "GossipSend",
             message: "new-view",
             senderPk: this.myPk,
             targetPks: this.otherCommitteeMembersPKs,
-            blockHeight: message.signedHeader.blockHeight,
-            view: message.signedHeader.view
+            blockHeight,
+            view
         });
     }
 
@@ -200,7 +205,7 @@ export class PBFTTerm {
     }
 
     private processPrePrepare(preprepareMessage: PrePrepareMessage): void {
-        const { view, blockHeight, blockHash } = preprepareMessage.signedHeader;
+        const { view, blockHeight, blockHash } = preprepareMessage.content.signedHeader;
         if (this.view !== view) {
             this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], processPrePrepare, view doesn't match` });
             return;
@@ -214,7 +219,8 @@ export class PBFTTerm {
     }
 
     private async validatePrePreapare(message: PrePrepareMessage): Promise<boolean> {
-        const { signedHeader, block, sender } = message;
+        const { block, content } = message;
+        const { signedHeader, sender } = content;
         const { senderPublicKey: senderPk } = sender;
         const { view, blockHeight, blockHash } = signedHeader;
 
@@ -223,7 +229,7 @@ export class PBFTTerm {
             return false;
         }
 
-        if (!this.keyManager.verifyBlockRef(message.signedHeader, message.sender)) {
+        if (!this.keyManager.verifyBlockRef(signedHeader, sender)) {
             this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], validatePrePreapare from "${senderPk}", ignored because the signature verification failed` });
             return;
         }
@@ -258,7 +264,7 @@ export class PBFTTerm {
     }
 
     public onReceivePrepare(message: PrepareMessage): void {
-        const { sender, signedHeader } = message;
+        const { sender, signedHeader } = message.content;
         const { senderPublicKey: senderPk } = sender;
         const { blockHeight, view, blockHash } = signedHeader;
         const metaData = {
@@ -269,7 +275,7 @@ export class PBFTTerm {
             senderPk
         };
 
-        if (!this.keyManager.verifyBlockRef(message.signedHeader, message.sender)) {
+        if (!this.keyManager.verifyBlockRef(signedHeader, sender)) {
             this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceivePrepare from "${senderPk}", ignored because the signature verification failed` });
             return;
         }
@@ -292,14 +298,15 @@ export class PBFTTerm {
     }
 
     public onReceiveViewChange(message: ViewChangeMessage): void {
-        if (this.isViewChangeValid(this.myPk, this.view, message)) {
-            if (message.block && message.signedHeader.preparedProof) {
-                const isValidDigest = this.blockUtils.calculateBlockHash(message.block).equals(message.signedHeader.preparedProof.preprepareBlockRef.blockHash);
+        const { block, content } = message;
+        if (this.isViewChangeValid(this.myPk, this.view, content)) {
+            if (block && content.signedHeader.preparedProof) {
+                const isValidDigest = this.blockUtils.calculateBlockHash(block).equals(content.signedHeader.preparedProof.preprepareBlockRef.blockHash);
                 if (!isValidDigest) {
                     return;
                 }
             }
-            const { signedHeader } = message;
+            const { signedHeader } = content;
             const { view, blockHeight } = signedHeader;
             this.pbftStorage.storeViewChange(message);
             this.checkElected(blockHeight, view);
@@ -357,7 +364,7 @@ export class PBFTTerm {
         }
 
         const preprepareMessage: PrePrepareMessage = this.messagesFactory.createPreprepareMessage(this.blockHeight, view, block);
-        const viewChangeVotes: ViewChangeConfirmation[] = viewChangeMessages.map(vc => ({ signedHeader: vc.signedHeader, sender: vc.sender }));
+        const viewChangeVotes: ViewChangeContent[] = viewChangeMessages.map(vc => ({ signedHeader: vc.content.signedHeader, sender: vc.content.sender }));
         const newViewMessage: NewViewMessage = this.messagesFactory.createNewViewMessage(this.blockHeight, view, preprepareMessage, viewChangeVotes);
         this.pbftStorage.storePrePrepare(preprepareMessage);
         this.sendNewView(newViewMessage);
@@ -390,7 +397,7 @@ export class PBFTTerm {
     }
 
     public onReceiveCommit(message: CommitMessage): void {
-        const { signedHeader, sender } = message;
+        const { signedHeader, sender } = message.content;
         const { senderPublicKey: senderPk } = sender;
         const { view, blockHeight, blockHash } = signedHeader;
 
@@ -415,7 +422,7 @@ export class PBFTTerm {
         }
     }
 
-    private validateViewChangeVotes(targetBlockHeight: number, targetView: number, votes: ViewChangeConfirmation[]): boolean {
+    private validateViewChangeVotes(targetBlockHeight: number, targetView: number, votes: ViewChangeContent[]): boolean {
         if (!votes || !Array.isArray(votes)) {
             return false;
         }
@@ -442,7 +449,7 @@ export class PBFTTerm {
         return true;
     }
 
-    private latestViewChangeVote(votes: ViewChangeConfirmation[]): ViewChangeConfirmation {
+    private latestViewChangeVote(votes: ViewChangeContent[]): ViewChangeContent {
         const filteredVotes = votes
             .filter(vote => vote.signedHeader.preparedProof !== undefined)
             .sort((a, b) => b.signedHeader.preparedProof.preprepareBlockRef.view - a.signedHeader.preparedProof.preprepareBlockRef.view);
@@ -455,11 +462,12 @@ export class PBFTTerm {
     }
 
     public async onReceiveNewView(message: NewViewMessage): Promise<void> {
-        const { signedHeader, sender, preprepareMessage } = message;
+        const { block, content } = message;
+        const { signedHeader, sender, preprepareContent } = content;
         const { senderPublicKey: senderPk } = sender;
         const { view, blockHeight, viewChangeConfirmations } = signedHeader;
 
-        if (!this.keyManager.verifyNewView(message.signedHeader, message.sender)) {
+        if (!this.keyManager.verifyNewView(signedHeader, sender)) {
             this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveNewView from "${senderPk}", ignored because the signature verification failed` });
             return;
         }
@@ -480,17 +488,17 @@ export class PBFTTerm {
             return;
         }
 
-        if (view !== preprepareMessage.signedHeader.view) {
+        if (view !== preprepareContent.signedHeader.view) {
             this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveNewView from "${senderPk}", view doesn't match PP.view` });
             return;
         }
 
-        if (blockHeight !== preprepareMessage.signedHeader.blockHeight) {
+        if (blockHeight !== preprepareContent.signedHeader.blockHeight) {
             this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveNewView from "${senderPk}", blockHeight doesn't match PP.blockHeight` });
             return;
         }
 
-        const latestVote: ViewChangeConfirmation = this.latestViewChangeVote(viewChangeConfirmations);
+        const latestVote: ViewChangeContent = this.latestViewChangeVote(viewChangeConfirmations);
         if (latestVote !== undefined) {
             const viewChangeMessageValid = this.isViewChangeValid(futureLeaderId, view, latestVote);
             if (!viewChangeMessageValid) {
@@ -500,7 +508,7 @@ export class PBFTTerm {
 
             const latestVoteBlockHash = latestVote.signedHeader.preparedProof && latestVote.signedHeader.preparedProof.preprepareBlockRef.blockHash;
             if (latestVoteBlockHash) {
-                const ppBlockHash = this.blockUtils.calculateBlockHash(preprepareMessage.block);
+                const ppBlockHash = this.blockUtils.calculateBlockHash(block);
                 if (latestVoteBlockHash.equals(ppBlockHash) === false) {
                     this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveNewView from "${senderPk}", the given block (PP.block) doesn't match the best block from the VCProof` });
                     return;
@@ -508,6 +516,7 @@ export class PBFTTerm {
             }
         }
 
+        const preprepareMessage: PrePrepareMessage = { content: preprepareContent, block };
         if (await this.validatePrePreapare(preprepareMessage)) {
             this.newViewLocally = view;
             this.setView(view);

@@ -5,6 +5,7 @@ import { CommitMessage, PrepareMessage, PrePrepareMessage } from "../src/network
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aCommitMessage, aPrepareMessage, aPrePrepareMessage } from "./builders/MessagesBuilder";
 import { aSimpleTestNetwork, aTestNetwork } from "./builders/TestNetworkBuilder";
+import { messageToGossip } from "./networkCommunication/InMemoryNetworkCommunicaiton";
 import { nextTick } from "./timeUtils";
 
 chai.use(sinonChai);
@@ -152,21 +153,21 @@ describe("Byzantine Attacks", () => {
         const PPmessage1: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, 1, 0, block1);
         const Pmessage1: PrepareMessage = aPrepareMessage(node1.config.keyManager, 1, 0, block1);
         const Cmessage1: CommitMessage = aCommitMessage(node1.config.keyManager, 1, 0, block1);
-        gossip1.onRemoteMessage(PPmessage1); // node1 causing preprepare on node1
-        gossip1.onRemoteMessage(Pmessage1); // node1 pretending to send prepare as node1000
-        gossip1.onRemoteMessage(Pmessage1); // node1 pretending to send prepare as node2000
-        gossip1.onRemoteMessage(Cmessage1); // node1 pretending to send commit as node1000
-        gossip1.onRemoteMessage(Cmessage1); // node1 pretending to send commit as node2000
+        gossip1.onRemoteMessage(messageToGossip(PPmessage1)); // node1 causing preprepare on node1
+        gossip1.onRemoteMessage(messageToGossip(Pmessage1)); // node1 pretending to send prepare as node1000
+        gossip1.onRemoteMessage(messageToGossip(Pmessage1)); // node1 pretending to send prepare as node2000
+        gossip1.onRemoteMessage(messageToGossip(Cmessage1)); // node1 pretending to send commit as node1000
+        gossip1.onRemoteMessage(messageToGossip(Cmessage1)); // node1 pretending to send commit as node2000
 
         const block2 = aBlock(theGenesisBlock);
         const PPmessage2: PrePrepareMessage = aPrePrepareMessage(node2.config.keyManager, 1, 0, block2);
         const Pmessage2: PrepareMessage = aPrepareMessage(node2.config.keyManager, 1, 0, block2);
         const Cmessge2: CommitMessage = aCommitMessage(node2.config.keyManager, 1, 0, block2);
-        gossip2.onRemoteMessage(PPmessage2); // node1 causing preprepare on node2
-        gossip2.onRemoteMessage(Pmessage2); // node1 pretending to send prepare as node1000
-        gossip2.onRemoteMessage(Pmessage2); // node1 pretending to send prepare as node2000
-        gossip2.onRemoteMessage(Cmessge2); // node1 pretending to send commit as node1000
-        gossip2.onRemoteMessage(Cmessge2); // node1 pretending to send commit as node2000
+        gossip2.onRemoteMessage(messageToGossip(PPmessage2)); // node1 causing preprepare on node2
+        gossip2.onRemoteMessage(messageToGossip(Pmessage2)); // node1 pretending to send prepare as node1000
+        gossip2.onRemoteMessage(messageToGossip(Pmessage2)); // node1 pretending to send prepare as node2000
+        gossip2.onRemoteMessage(messageToGossip(Cmessge2)); // node1 pretending to send commit as node1000
+        gossip2.onRemoteMessage(messageToGossip(Cmessge2)); // node1 pretending to send commit as node2000
 
         await nextTick();
         expect(await node1.getLatestCommittedBlock()).to.not.equal(block1);

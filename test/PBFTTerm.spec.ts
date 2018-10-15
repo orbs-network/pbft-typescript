@@ -7,7 +7,7 @@ import * as sinonChai from "sinon-chai";
 import { KeyManager, PBFT } from "../src";
 import { Block } from "../src/Block";
 import { Config } from "../src/Config";
-import { NewViewMessage, PrePrepareMessage, ViewChangeMessage, PreparedProof, ViewChangeConfirmation, BlockRefMessage } from "../src/networkCommunication/Messages";
+import { NewViewMessage, PrePrepareMessage, ViewChangeMessage, PreparedProof, BlockRefContent, ViewChangeContent } from "../src/networkCommunication/Messages";
 import { PBFTTerm, TermConfig } from "../src/PBFTTerm";
 import { BlockUtilsMock } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
@@ -140,7 +140,7 @@ describe("PBFTTerm", () => {
             expect(spy).to.have.been.called;
 
             // Destorying the signature => invalid, should be ignored
-            PPMessage.sender.signature = "FAKE_SIGNATURE";
+            PPMessage.content.sender.signature = "FAKE_SIGNATURE";
             spy.resetHistory();
             node1PbftTerm.onReceivePrePrepare(PPMessage);
             await nextTick();
@@ -157,7 +157,7 @@ describe("PBFTTerm", () => {
             expect(spy).to.have.been.called;
 
             // Destorying the signature => invalid, should be ignored
-            PMessage.sender.signature = "FAKE_SIGNATURE";
+            PMessage.content.sender.signature = "FAKE_SIGNATURE";
             spy.resetHistory();
             node1PbftTerm.onReceivePrepare(PMessage);
             expect(spy).to.not.have.been.called;
@@ -172,7 +172,7 @@ describe("PBFTTerm", () => {
             expect(spy).to.have.been.called;
 
             // Destorying the signature => invalid, should be ignored
-            CMessage.sender.signature = "FAKE_SIGNATURE";
+            CMessage.content.sender.signature = "FAKE_SIGNATURE";
             spy.resetHistory();
             node1PbftTerm.onReceiveCommit(CMessage);
             expect(spy).to.not.have.been.called;
@@ -185,12 +185,12 @@ describe("PBFTTerm", () => {
             const viewChange0: ViewChangeMessage = aViewChangeMessage(node0Config.keyManager, 1, 1);
             const viewChange1: ViewChangeMessage = aViewChangeMessage(node1Config.keyManager, 1, 1);
             const viewChange2: ViewChangeMessage = aViewChangeMessage(node2Config.keyManager, 1, 1);
-            const VCProof: ViewChangeMessage[] = [viewChange0, viewChange1, viewChange2];
+            const votes: ViewChangeMessage[] = [viewChange0, viewChange1, viewChange2];
 
-            const NVMessage: NewViewMessage = aNewViewMessage(node1KeyManager, 1, 2, aPrePrepareMessage(node1KeyManager, 1, 1, block), VCProof);
+            const NVMessage: NewViewMessage = aNewViewMessage(node1KeyManager, 1, 2, aPrePrepareMessage(node1KeyManager, 1, 1, block), votes);
 
             // destorying the signature => invalid, should be ignored
-            NVMessage.sender.signature = "FAKE_SIGNATURE";
+            NVMessage.content.sender.signature = "FAKE_SIGNATURE";
             node0PbftTerm.onReceiveNewView(NVMessage);
             await nextTick();
             await node0BlockUtils.resolveAllValidations(true);
@@ -207,7 +207,7 @@ describe("PBFTTerm", () => {
 
             spy.resetHistory();
             // destorying the signature => invalid, should be ignored
-            VCMessage.sender.signature = "FAKE_SIGNATURE";
+            VCMessage.content.sender.signature = "FAKE_SIGNATURE";
             node1PbftTerm.onReceiveViewChange(VCMessage);
             expect(spy).to.not.have.been.called;
         });
@@ -315,7 +315,7 @@ describe("PBFTTerm", () => {
         // blockHash does NOT match block's hash =>
         spy.resetHistory();
         const preprepareMessage: PrePrepareMessage = aPrePrepareMessage(node2KeyManager, 1, 2, block);
-        preprepareMessage.signedHeader.blockHash = Buffer.from("FAKE_BLOCK_HASH");
+        preprepareMessage.content.signedHeader.blockHash = Buffer.from("FAKE_BLOCK_HASH");
         node1PbftTerm.onReceivePrePrepare(preprepareMessage);
         await nextTick();
         expect(spy).to.not.have.been.called;
@@ -383,11 +383,11 @@ describe("PBFTTerm", () => {
         const node0PbftTerm: PBFTTerm = createPBFTTerm(node0Config);
 
         const block1: Block = aBlock(theGenesisBlock);
-        const votes1: ViewChangeConfirmation[] = [
+        const votes1: ViewChangeMessage[] = [
             aViewChangeMessage(node0Config.keyManager, 1, 1),
             aViewChangeMessage(node1Config.keyManager, 1, 1),
             aViewChangeMessage(node2Config.keyManager, 1, 1)
-        ].map(vc => ({ signedHeader: vc.signedHeader, sender: vc.sender }));
+        ];
         const PPMessage1: PrePrepareMessage = aPrePrepareMessage(node1KeyManager, 1, 1, block1);
         const nvMessage1: NewViewMessage = aNewViewMessage(node1KeyManager, 1, 1, PPMessage1, votes1);
 
@@ -398,11 +398,11 @@ describe("PBFTTerm", () => {
         expect(node0PbftTerm.getView()).to.equal(1);
 
         const block2: Block = aBlock(block1);
-        const votes2: ViewChangeConfirmation[] = [
+        const votes2: ViewChangeMessage[] = [
             aViewChangeMessage(node0Config.keyManager, 1, 2),
             aViewChangeMessage(node1Config.keyManager, 1, 2),
             aViewChangeMessage(node2Config.keyManager, 1, 2)
-        ].map(vc => ({ signedHeader: vc.signedHeader, sender: vc.sender }));
+        ];
         const PPMessage2: PrePrepareMessage = aPrePrepareMessage(node2KeyManager, 666, 2, block2);
         const nvMessage2: NewViewMessage = aNewViewMessage(node2KeyManager, 1, 2, PPMessage2, votes2);
 
@@ -555,7 +555,7 @@ describe("PBFTTerm", () => {
     it("should send the prepared proof in the view-change", async () => {
         const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
         const block: Block = aBlock(theGenesisBlock);
-        const spy = sinon.spy(node1Config.networkCommunication, "sendViewChange");
+        const spy = sinon.spy(node1Config.networkCommunication, "sendMessage");
 
         // get node1 to be prepared on the block
         node1Config.pbftStorage.storePrePrepare(aPrePrepareMessage(node0KeyManager, 0, 0, block));
@@ -672,8 +672,7 @@ describe("PBFTTerm", () => {
 
             const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, blockHeight, targetView, blockOnView3);
             const VCProof: ViewChangeMessage[] = [node0VCMessage, node2VCMessage, node3VCMessage];
-            const votes: ViewChangeConfirmation[] = VCProof.map(msg => ({ signedHeader: msg.signedHeader, sender: msg.sender }));
-            const message: NewViewMessage = aNewViewMessage(node1.config.keyManager, blockHeight, targetView, PPMessage, votes);
+            const message: NewViewMessage = aNewViewMessage(node1.config.keyManager, blockHeight, targetView, PPMessage, VCProof);
 
             const node1PbftTerm: PBFTTerm = createPBFTTerm(node1Config);
             expect(node1PbftTerm.getView()).to.equal(0);

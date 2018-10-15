@@ -1,15 +1,11 @@
 import { CommitMessage, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage } from "./Messages";
 import { MessagesHandler } from "./MessagesHandler";
+import { Block } from "../Block";
 
 export interface NetworkCommunication {
     requestOrderedCommittee(seed: number): string[];
     isMember(pk: string): boolean;
 
-    sendPrePrepare(pks: string[], message: PrePrepareMessage): void;
-    sendPrepare(pks: string[], message: PrepareMessage): void;
-    sendCommit(pks: string[], message: CommitMessage): void;
-    sendViewChange(pk: string, message: ViewChangeMessage): void;
-    sendNewView(pks: string[], message: NewViewMessage): void;
-
-    registerHandler(messagesHandler: MessagesHandler): void;
+    sendMessage(pks: string[], messageContent: string, block?: Block): void;
+    registerOnMessage(cb: (messageContent: string, block?: Block) => void): void;
 }

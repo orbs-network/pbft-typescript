@@ -1,22 +1,25 @@
-import { CommitMessage, LeanHelixMessage, MessageType, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage } from "./Messages";
+import { CommitMessage, MessageType, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage, deserializeMessage } from "./Messages";
 import { NetworkCommunication } from "./NetworkCommunication";
 import { MessagesHandler } from "./MessagesHandler";
+import { Block } from "../Block";
 
-export class NetworkMessagesFilter implements MessagesHandler {
+export class NetworkMessagesFilter {
     private blockHeight: number;
     private PBFTMessagesHandler: MessagesHandler;
-    private messagesCache: LeanHelixMessage[] = [];
+    private messagesCache: any[] = [];
 
     constructor(private readonly networkCommunication: NetworkCommunication, private myPk: string) {
-        this.networkCommunication.registerHandler(this);
+        this.networkCommunication.registerOnMessage((messageContent: string, block: Block) => this.onGossipMessage(messageContent, block));
     }
 
-    private onGossipMessage(message: LeanHelixMessage): void {
+    private onGossipMessage(messageContent: string, block: Block): void {
         if (this.PBFTMessagesHandler === undefined) {
             return;
         }
 
-        const { senderPublicKey: senderPk } = message.sender;
+        const message = deserializeMessage(messageContent, block);
+        const { content } = message;
+        const { senderPublicKey: senderPk } = content.sender;
         if (senderPk === this.myPk) {
             return;
         }
@@ -25,11 +28,11 @@ export class NetworkMessagesFilter implements MessagesHandler {
             return;
         }
 
-        if (message.signedHeader.blockHeight < this.blockHeight) {
+        if (content.signedHeader.blockHeight < this.blockHeight) {
             return;
         }
 
-        if (message.signedHeader.blockHeight > this.blockHeight) {
+        if (content.signedHeader.blockHeight > this.blockHeight) {
             this.messagesCache.push(message);
             return;
         }
@@ -37,8 +40,8 @@ export class NetworkMessagesFilter implements MessagesHandler {
         this.processGossipMessage(message);
     }
 
-    private processGossipMessage(message: LeanHelixMessage): void {
-        switch (message.signedHeader.messageType) {
+    private processGossipMessage(message: any): void {
+        switch (message.content.signedHeader.messageType) {
             case MessageType.PREPREPARE: {
                 this.PBFTMessagesHandler.onReceivePrePrepare(message as PrePrepareMessage);
                 break;
@@ -64,33 +67,13 @@ export class NetworkMessagesFilter implements MessagesHandler {
 
     private consumeCacheMessages(): void {
         this.messagesCache = this.messagesCache.reduce((prev, current) => {
-            if (current.signedHeader.blockHeight === this.blockHeight) {
+            if (current.content.signedHeader.blockHeight === this.blockHeight) {
                 this.processGossipMessage(current);
             } else {
                 prev.push(current);
             }
             return prev;
         }, []);
-    }
-
-    public onReceivePrePrepare(message: PrePrepareMessage) {
-        this.onGossipMessage(message);
-    }
-
-    public onReceivePrepare(message: import("/Users/gil/projects/PBFT-Typescript/src/networkCommunication/Messages").BlockRefMessage) {
-        this.onGossipMessage(message);
-    }
-
-    public onReceiveViewChange(message: ViewChangeMessage) {
-        this.onGossipMessage(message);
-    }
-
-    public onReceiveCommit(message: import("/Users/gil/projects/PBFT-Typescript/src/networkCommunication/Messages").BlockRefMessage) {
-        this.onGossipMessage(message);
-    }
-
-    public onReceiveNewView(message: NewViewMessage) {
-        this.onGossipMessage(message);
     }
 
     public setBlockHeight(blockHeight: number, messagesHandler: MessagesHandler) {

@@ -3,15 +3,15 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { KeyManager } from "../../src/keyManager/KeyManager";
-import { LeanHelixMessage, MessageType } from "../../src/networkCommunication/Messages";
+import { MessageType } from "../../src/networkCommunication/Messages";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 import { Gossip } from "./Gossip";
 import { GossipDiscovery } from "./GossipDiscovery";
 
 chai.use(sinonChai);
 
-function aLeanHelixMessage(keyManager: KeyManager): LeanHelixMessage {
-    return {
+function aDummyMessage(keyManager: KeyManager) {
+    return JSON.stringify({
         sender: {
             signature: `DUMMY_SIGNATURE`,
             senderPublicKey: keyManager.getMyPublicKey()
@@ -20,7 +20,7 @@ function aLeanHelixMessage(keyManager: KeyManager): LeanHelixMessage {
             messageType: MessageType.PREPARE,
             blockHeight: Math.floor(Math.random() * 1_000_000)
         }
-    };
+    });
 }
 
 
@@ -37,7 +37,7 @@ describe("Gossip", () => {
         discovery.registerGossip(listenerPk, listener);
         discovery.registerGossip(broadcasterPk, broadcaster);
         const spy = sinon.spy();
-        const message = aLeanHelixMessage(keyManager);
+        const message = aDummyMessage(keyManager);
 
         listener.subscribe(spy);
         const pks = discovery.getAllGossipsPks();
@@ -60,7 +60,7 @@ describe("Gossip", () => {
         discovery.registerGossip(broadcasterPk, broadcaster);
         const spy1 = sinon.spy();
         const spy2 = sinon.spy();
-        const message = aLeanHelixMessage(keyManager);
+        const message = aDummyMessage(keyManager);
         listener1.subscribe(spy1);
         listener2.subscribe(spy2);
         const pks = discovery.getAllGossipsPks();
@@ -87,7 +87,7 @@ describe("Gossip", () => {
         const spy1 = sinon.spy();
         const spy2 = sinon.spy();
         const spy3 = sinon.spy();
-        const message = aLeanHelixMessage(keyManager);
+        const message = aDummyMessage(keyManager);
         listener1.subscribe(spy1);
         listener2.subscribe(spy2);
         listener3.subscribe(spy3);
@@ -113,7 +113,7 @@ describe("Gossip", () => {
         listener.subscribe(spy2);
         listener.unsubscribe(subscriptionToken);
 
-        const message = aLeanHelixMessage(keyManager);
+        const message = aDummyMessage(keyManager);
         const pks = discovery.getAllGossipsPks();
         broadcaster.multicast(pks, message);
         expect(spy1).to.not.have.been.called;
@@ -130,7 +130,7 @@ describe("Gossip", () => {
         discovery.registerGossip(listenerPk, listener);
         discovery.registerGossip(broadcasterPk, broadcaster);
         const spy = sinon.spy();
-        const message = aLeanHelixMessage(keyManager);
+        const message = aDummyMessage(keyManager);
         listener.subscribe(spy);
 
         const pks = discovery.getAllGossipsPks();
@@ -150,7 +150,7 @@ describe("Gossip", () => {
         discovery.registerGossip("broadcaster", broadcaster);
         const spy1 = sinon.spy();
         const spy2 = sinon.spy();
-        const message = aLeanHelixMessage(keyManager);
+        const message = aDummyMessage(keyManager);
         listener1.subscribe(spy1);
         listener2.subscribe(spy2);
 
@@ -204,7 +204,7 @@ describe("Gossip", () => {
             it("should ignore all messages if outGoing list is empty", () => {
                 gossip1.setOutGoingWhiteListPKs([]);
 
-                gossip1.multicast(pks, aLeanHelixMessage(gossip1keyManager));
+                gossip1.multicast(pks, aDummyMessage(gossip1keyManager));
                 expect(spy2).to.not.have.been.called;
                 expect(spy3).to.not.have.been.called;
                 expect(spy4).to.not.have.been.called;
@@ -213,9 +213,9 @@ describe("Gossip", () => {
             it("should ignore unicast messages that don't apply to the outgoing white list", () => {
                 gossip1.setOutGoingWhiteListPKs(["gossip3"]);
 
-                const msgTo2 = aLeanHelixMessage(gossip1keyManager);
-                const msgTo3 = aLeanHelixMessage(gossip1keyManager);
-                const msgTo4 = aLeanHelixMessage(gossip1keyManager);
+                const msgTo2 = aDummyMessage(gossip1keyManager);
+                const msgTo3 = aDummyMessage(gossip1keyManager);
+                const msgTo4 = aDummyMessage(gossip1keyManager);
                 gossip1.unicast("gossip2", msgTo2);
                 gossip1.unicast("gossip3", msgTo3);
                 gossip1.unicast("gossip4", msgTo4);
@@ -227,7 +227,7 @@ describe("Gossip", () => {
             it("should keep sending messages after the outGoing list was cleared", () => {
                 gossip1.setOutGoingWhiteListPKs(["gossip3"]);
 
-                const message = aLeanHelixMessage(gossip1keyManager);
+                const message = aDummyMessage(gossip1keyManager);
                 gossip1.multicast(pks, message);
                 expect(spy2).to.not.have.been.called;
                 expect(spy3).to.have.been.calledWith(message);
@@ -242,7 +242,7 @@ describe("Gossip", () => {
 
             it("should ignore broadcast messages that don't apply to the outgoing white list", () => {
                 gossip1.setOutGoingWhiteListPKs(["gossip3"]);
-                const message = aLeanHelixMessage(gossip1keyManager);
+                const message = aDummyMessage(gossip1keyManager);
 
                 gossip1.multicast(pks, message);
                 expect(spy2).to.not.have.been.called;
@@ -257,7 +257,7 @@ describe("Gossip", () => {
                 gossip3.setIncomingWhiteListPKs([]);
                 gossip4.setIncomingWhiteListPKs([]);
 
-                const message = aLeanHelixMessage(gossip1keyManager);
+                const message = aDummyMessage(gossip1keyManager);
                 gossip1.multicast(pks, message);
                 expect(spy2).to.not.have.been.called;
                 expect(spy3).to.not.have.been.called;
@@ -267,9 +267,9 @@ describe("Gossip", () => {
             it("should ignore unicast messages that don't apply to the incoming white list", () => {
                 gossip4.setIncomingWhiteListPKs([gossip2Pk]);
 
-                const message1 = aLeanHelixMessage(gossip1keyManager);
-                const message2 = aLeanHelixMessage(gossip2keyManager);
-                const message3 = aLeanHelixMessage(gossip3keyManager);
+                const message1 = aDummyMessage(gossip1keyManager);
+                const message2 = aDummyMessage(gossip2keyManager);
+                const message3 = aDummyMessage(gossip3keyManager);
                 gossip1.unicast("gossip4", message1);
                 gossip2.unicast("gossip4", message2);
                 gossip3.unicast("gossip4", message3);
@@ -281,7 +281,7 @@ describe("Gossip", () => {
                 gossip3.setIncomingWhiteListPKs([gossip1Pk]);
                 gossip4.setIncomingWhiteListPKs([]);
 
-                const message = aLeanHelixMessage(gossip1keyManager);
+                const message = aDummyMessage(gossip1keyManager);
                 gossip1.multicast(pks, message);
                 expect(spy2).to.not.have.been.called;
                 expect(spy3).to.have.been.calledWith(message);
@@ -299,8 +299,8 @@ describe("Gossip", () => {
             it("should ignore broadcast messages that don't apply to the incoming white list", () => {
                 gossip4.setIncomingWhiteListPKs([gossip2Pk]);
 
-                const message1 = aLeanHelixMessage(gossip1keyManager);
-                const message2 = aLeanHelixMessage(gossip2keyManager);
+                const message1 = aDummyMessage(gossip1keyManager);
+                const message2 = aDummyMessage(gossip2keyManager);
                 gossip1.multicast(pks, message1);
                 gossip2.multicast(pks, message2);
                 expect(spy4).to.have.been.calledOnce.calledWith(message2);

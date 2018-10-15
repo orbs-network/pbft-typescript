@@ -1,5 +1,5 @@
 import { Block } from "../../src";
-import { BlockRef, MessageType, PreparedProof, SenderSignature, PrePrepareMessage, PrepareMessage, BlockRefMessage } from "../../src/networkCommunication/Messages";
+import { BlockRef, MessageType, PreparedProof, SenderSignature, PrePrepareMessage, PrepareMessage, BlockRefContent } from "../../src/networkCommunication/Messages";
 import { Node } from "../network/Node";
 import { aPrePrepareMessage, aPrepareMessage, blockRefMessageFromPP } from "./MessagesBuilder";
 import { PreparedMessages } from "../../src/storage/PreparedMessagesExtractor";
@@ -30,10 +30,10 @@ export function aPreparedProof(leader: Node, members: Node[], blockHeight: numbe
 
 export function aPreparedProofByMessages(PPMessage: PrePrepareMessage, PMessages: PrepareMessage[]): PreparedProof {
     return {
-        preprepareBlockRef: PPMessage ? PPMessage.signedHeader : undefined,
-        preprepareSender: PPMessage ? PPMessage.sender : undefined,
-        prepareBlockRef: PMessages ? PMessages[0].signedHeader : undefined,
-        prepareSenders: PMessages ? PMessages.map(m => m.sender) : undefined
+        preprepareBlockRef: PPMessage ? PPMessage.content.signedHeader : undefined,
+        preprepareSender: PPMessage ? PPMessage.content.sender : undefined,
+        prepareBlockRef: PMessages ? PMessages[0].content.signedHeader : undefined,
+        prepareSenders: PMessages ? PMessages.map(m => m.content.sender) : undefined
     };
 }
 
