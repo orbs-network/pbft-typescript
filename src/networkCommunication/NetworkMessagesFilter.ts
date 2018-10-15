@@ -1,5 +1,5 @@
 import { CommitMessage, MessageType, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage, deserializeMessageContent } from "./Messages";
-import { NetworkCommunication } from "./NetworkCommunication";
+import { NetworkCommunication, ConsensusRawMessage } from "./NetworkCommunication";
 import { MessagesHandler } from "./MessagesHandler";
 import { Block } from "../Block";
 
@@ -9,15 +9,15 @@ export class NetworkMessagesFilter {
     private messagesCache: any[] = [];
 
     constructor(private readonly networkCommunication: NetworkCommunication, private myPk: string) {
-        this.networkCommunication.registerOnMessage((messageContent: string, block: Block) => this.onGossipMessage(messageContent, block));
+        this.networkCommunication.registerOnMessage((consensusRawMessage: ConsensusRawMessage) => this.onGossipMessage(consensusRawMessage));
     }
 
-    private onGossipMessage(messageContent: string, block: Block): void {
+    private onGossipMessage(consensusRawMessage: ConsensusRawMessage): void {
         if (this.PBFTMessagesHandler === undefined) {
             return;
         }
 
-        const content = deserializeMessageContent(messageContent);
+        const content = deserializeMessageContent(consensusRawMessage.content);
         const { senderPublicKey: senderPk } = content.sender;
         if (senderPk === this.myPk) {
             return;
@@ -31,7 +31,11 @@ export class NetworkMessagesFilter {
             return;
         }
 
-        const message = { content, block };
+        const message = {
+            content,
+            block: consensusRawMessage.block
+        };
+
         if (content.signedHeader.blockHeight > this.blockHeight) {
             this.messagesCache.push(message);
             return;

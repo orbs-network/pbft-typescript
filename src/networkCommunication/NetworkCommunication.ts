@@ -1,9 +1,14 @@
 import { Block } from "../Block";
 
+export interface ConsensusRawMessage {
+    content: string;
+    block?: Block;
+}
+
 export interface NetworkCommunication {
     requestOrderedCommittee(seed: number): string[];
     isMember(pk: string): boolean;
 
-    sendMessage(pks: string[], messageContent: string, block?: Block): void;
-    registerOnMessage(cb: (messageContent: string, block?: Block) => void): void;
+    sendMessage(pks: string[], consensusRawMessage: ConsensusRawMessage): void;
+    registerOnMessage(cb: (consensusRawMessage: ConsensusRawMessage) => void): void;
 }
