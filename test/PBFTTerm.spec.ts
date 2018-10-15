@@ -7,7 +7,7 @@ import * as sinonChai from "sinon-chai";
 import { KeyManager, PBFT } from "../src";
 import { Block } from "../src/Block";
 import { Config } from "../src/Config";
-import { NewViewMessage, PrePrepareMessage, ViewChangeMessage, PreparedProof, BlockRefContent, ViewChangeContent } from "../src/networkCommunication/Messages";
+import { NewViewMessage, PrePrepareMessage, ViewChangeMessage, PreparedProof, BlockRefContent, ViewChangeContent, deserializeMessage } from "../src/networkCommunication/Messages";
 import { PBFTTerm, TermConfig } from "../src/PBFTTerm";
 import { BlockUtilsMock } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
@@ -85,7 +85,10 @@ describe("PBFTTerm", () => {
         triggerElection();
         expect(pbftTerm.getView()).to.equal(1);
 
-        pbftTerm.onReceiveNewView(aNewViewMessage(node0KeyManager, 1, 0, undefined, undefined));
+        const block: Block = aBlock(theGenesisBlock);
+        const preprepareMessage: PrePrepareMessage = aPrePrepareMessage(node0KeyManager, 1, 0, block);
+        const newViewMessage: NewViewMessage = aNewViewMessage(node0KeyManager, 1, 0, preprepareMessage, []);
+        pbftTerm.onReceiveNewView(newViewMessage);
         expect(pbftTerm.getView()).to.equal(1);
     });
 
@@ -570,7 +573,8 @@ describe("PBFTTerm", () => {
         const prepared: PreparedMessages = extractPreparedMessages(0, node1Config.pbftStorage, 1);
         const latestPreparedProof: PreparedProof = aPreparedProofByMessages(prepared.preprepareMessage, prepared.prepareMessages);
 
-        expect(spy.args[0][1].signedHeader.preparedProof).to.deep.equal(latestPreparedProof);
+        const message = deserializeMessage(spy.args[0][1]);
+        expect(message.content.signedHeader.preparedProof).to.deep.equal(latestPreparedProof);
     });
 
     it("should ignore view-change with an invalid prepared proof", async () => {
@@ -606,12 +610,7 @@ describe("PBFTTerm", () => {
         }
 
         it("onNewView should not accept new view without view-change proofs", async () => {
-            await testProof(undefined, false);
-        });
-
-        it("onNewView should not accept new view with invalid view-change", async () => {
-            const badValue: any = 666;
-            await testProof(badValue, false);
+            await testProof([], false);
         });
 
         it("onNewView should not accept new view without 2f+1 view-change proofs", async () => {
