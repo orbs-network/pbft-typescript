@@ -2,14 +2,15 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
-import { MessageType, NewViewMessage, PrePrepareMessage, ViewChangeMessage } from "../src/networkCommunication/Messages";
+import { MessageType, NewViewMessage, PrePrepareMessage, ViewChangeMessage, deserializeMessage } from "../src/networkCommunication/Messages";
 import { extractPreparedMessages, PreparedMessages } from "../src/storage/PreparedMessagesExtractor";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNewViewMessage, aPrePrepareMessage, aViewChangeMessage } from "./builders/MessagesBuilder";
 import { aPrepared } from "./builders/ProofBuilder";
 import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
-import { messageToGossip } from "./networkCommunication/InMemoryNetworkCommunicaiton";
+import { messageToGossip, toGossipMessage } from "./networkCommunication/InMemoryNetworkCommunicaiton";
 import { nextTick } from "./timeUtils";
+import { gossipMessageCounter } from "./gossip/Gossip";
 
 chai.use(sinonChai);
 
@@ -31,7 +32,8 @@ describe("Leader Election", () => {
         await blockUtils.resolveAllValidations(true);
 
         const node0Prepared: PreparedMessages = extractPreparedMessages(1, node0.config.pbftStorage, 1);
-        expect(unicastSpy).to.have.been.calledWith(node1.pk, aViewChangeMessage(node0.config.keyManager, 1, 1, node0Prepared));
+        const newViewMessage = aViewChangeMessage(node0.config.keyManager, 1, 1, node0Prepared);
+        expect(unicastSpy).to.have.been.calledWith(node1.pk, messageToGossip(newViewMessage));
 
         testNetwork.shutDown();
     });
@@ -114,7 +116,8 @@ describe("Leader Election", () => {
         const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, 1, 1, block2);
         const VCProof: ViewChangeMessage[] = [node0VCMessage, node2VCMessage, node3VCMessage];
         const message: NewViewMessage = aNewViewMessage(node1.config.keyManager, 1, 1, PPMessage, VCProof);
-        expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], message);
+
+        expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], messageToGossip(message));
         testNetwork.shutDown();
     });
 
@@ -158,7 +161,8 @@ describe("Leader Election", () => {
         const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, 1, 5, blockOnView4);
         const votes: ViewChangeMessage[] = [node0VCMessage, node2VCMessage, node3VCMessage];
         const newViewMessage: NewViewMessage = aNewViewMessage(node1.config.keyManager, 1, 5, PPMessage, votes);
-        expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], newViewMessage);
+
+        expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], messageToGossip(newViewMessage));
         testNetwork.shutDown();
     });
 
@@ -248,16 +252,16 @@ describe("Leader Election", () => {
 
         const node0Prepared: PreparedMessages = extractPreparedMessages(2, node0.config.pbftStorage, 1);
         const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.config.keyManager, 2, 1, node0Prepared);
-        expect(spy0).to.have.been.calledWith(node1.pk, node0VCMessage);
+        expect(spy0).to.have.been.calledWith(node1.pk, messageToGossip(node0VCMessage));
 
         const node2Prepared: PreparedMessages = extractPreparedMessages(2, node2.config.pbftStorage, 1);
         const node2VCMessage: ViewChangeMessage = aViewChangeMessage(node2.config.keyManager, 2, 1, node2Prepared);
-        expect(spy2).to.have.been.calledWith(node1.pk, node2VCMessage);
+        expect(spy2).to.have.been.calledWith(node1.pk, messageToGossip(node2VCMessage));
 
         const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, 2, 1, block3);
         const VCProof: ViewChangeMessage[] = node1.config.pbftStorage.getViewChangeMessages(2, 1, 1);
         const node1NVExpectedMessage: NewViewMessage = aNewViewMessage(node1.config.keyManager, 2, 1, PPMessage, VCProof);
-        expect(spy1).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], node1NVExpectedMessage);
+        expect(spy1).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], messageToGossip(node1NVExpectedMessage));
 
         testNetwork.shutDown();
     });
@@ -275,8 +279,7 @@ describe("Leader Election", () => {
         gossip.onRemoteMessage(messageToGossip(aViewChangeMessage(node1.config.keyManager, 1, 1)));
         await blockUtils.resolveAllValidations(true);
 
-        const newViewSent = multicastSpy.getCalls().find(c => c.args[1].signedHeader.messageType === MessageType.NEW_VIEW) !== undefined;
-        expect(newViewSent).to.be.false;
+        expect(gossipMessageCounter(multicastSpy, MessageType.NEW_VIEW)).to.equal(0);
         testNetwork.shutDown();
     });
 
@@ -296,8 +299,7 @@ describe("Leader Election", () => {
         gossip.onRemoteMessage(messageToGossip(aViewChangeMessage(node1.config.keyManager, 1, 1)));
         await blockUtils.resolveAllValidations(true);
 
-        const newViewSent = multicastSpy.getCalls().find(c => c.args[1].signedHeader.messageType === MessageType.NEW_VIEW) !== undefined;
-        expect(newViewSent).to.be.false;
+        expect(gossipMessageCounter(multicastSpy, MessageType.NEW_VIEW)).to.equal(0);
 
         testNetwork.shutDown();
     });

@@ -1,9 +1,18 @@
 import { GossipDiscovery } from "./GossipDiscovery";
-import { deserializeMessage } from "../../src/networkCommunication/Messages";
+import { deserializeMessage, MessageType } from "../../src/networkCommunication/Messages";
+import * as sinon from "sinon";
 
 type GossipCallback = (message: string) => void;
 type SubscriptionsValue = {
     cb: GossipCallback;
+};
+
+export const gossipMessageCounter = (spy: sinon.SinonSpy, messageType: MessageType) => {
+    return spy.getCalls()
+        .map(c => c.args[1])
+        .map(c => JSON.parse(c))
+        .map(c => deserializeMessage(c.messageContent))
+        .filter(m => m.content.signedHeader.messageType === messageType).length;
 };
 
 export class Gossip {

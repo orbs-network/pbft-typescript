@@ -13,6 +13,7 @@ import { aSimpleTestNetwork, aTestNetwork } from "./builders/TestNetworkBuilder"
 import { blockMatcher } from "./matchers/blockMatcher";
 import { messageToGossip } from "./networkCommunication/InMemoryNetworkCommunicaiton";
 import { nextTick } from "./timeUtils";
+import { gossipMessageCounter } from "./gossip/Gossip";
 
 chai.use(sinonChai);
 chai.use(blockMatcher);
@@ -38,17 +39,11 @@ describe("PBFT", () => {
         await blockUtils.provideNextBlock();
         await blockUtils.resolveAllValidations(true);
         await nextTick(); // await for notifyCommitted
-        const preprepareCounter = (spy: sinon.SinonSpy) => {
-            return spy.getCalls()
-                .map(c => JSON.parse(c.args[1]).messageContent)
-                .map(c => deserializeMessage(c))
-                .filter(m => m.content.signedHeader.messageType === MessageType.PREPREPARE).length;
-        };
 
-        expect(preprepareCounter(spy0)).to.equal(1);
-        expect(preprepareCounter(spy1)).to.equal(0);
-        expect(preprepareCounter(spy2)).to.equal(0);
-        expect(preprepareCounter(spy3)).to.equal(0);
+        expect(gossipMessageCounter(spy0, MessageType.PREPREPARE)).to.equal(1);
+        expect(gossipMessageCounter(spy1, MessageType.PREPREPARE)).to.equal(0);
+        expect(gossipMessageCounter(spy2, MessageType.PREPREPARE)).to.equal(0);
+        expect(gossipMessageCounter(spy3, MessageType.PREPREPARE)).to.equal(0);
 
         testNetwork.shutDown();
     });
