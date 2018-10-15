@@ -18,8 +18,7 @@ export class Gossip {
     onRemoteMessage(message: string): void {
         this.subscriptions.forEach(subscription => {
             if (this.inComingWhiteListPKs !== undefined) {
-                const { messageContent } = JSON.parse(message);
-                const seriazliedMessage = deserializeMessage(messageContent);
+                const seriazliedMessage = deserializeMessage(message);
                 if (this.inComingWhiteListPKs.indexOf(seriazliedMessage.content.sender.senderPublicKey) === -1) {
                     return;
                 }
