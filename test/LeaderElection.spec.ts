@@ -22,7 +22,7 @@ describe("Leader Election", () => {
         const node2 = testNetwork.nodes[2];
         const node3 = testNetwork.nodes[3];
         const gossip = testNetwork.getNodeGossip(node0.pk);
-        const unicastSpy = sinon.spy(gossip, "unicast");
+        const sendToNodeSpy = sinon.spy(gossip, "sendToNode");
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
@@ -32,7 +32,7 @@ describe("Leader Election", () => {
 
         const node0Prepared: PreparedMessages = extractPreparedMessages(1, node0.config.pbftStorage, 1);
         const newViewMessage = aViewChangeMessage(node0.config.keyManager, 1, 1, node0Prepared);
-        expect(unicastSpy).to.have.been.calledWith(node1.pk, messageToGossip(newViewMessage));
+        expect(sendToNodeSpy).to.have.been.calledWith(node1.pk, messageToGossip(newViewMessage));
 
         testNetwork.shutDown();
     });
@@ -96,7 +96,7 @@ describe("Leader Election", () => {
         const node3 = testNetwork.nodes[3];
 
         const gossip = testNetwork.getNodeGossip(node1.pk);
-        const multicastSpy = sinon.spy(gossip, "multicast");
+        const multicastSpy = sinon.spy(gossip, "sendMessage");
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
         await blockUtils.provideNextBlock();
@@ -130,7 +130,7 @@ describe("Leader Election", () => {
         const node3 = testNetwork.nodes[3];
 
         const node1Gossip = testNetwork.getNodeGossip(node1.pk);
-        const multicastSpy = sinon.spy(node1Gossip, "multicast");
+        const multicastSpy = sinon.spy(node1Gossip, "sendMessage");
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
         await blockUtils.provideNextBlock();
@@ -233,9 +233,9 @@ describe("Leader Election", () => {
         const gossip1 = testNetwork.getNodeGossip(node1.pk);
         const gossip2 = testNetwork.getNodeGossip(node2.pk);
 
-        const spy0 = sinon.spy(gossip0, "unicast");
-        const spy1 = sinon.spy(gossip1, "multicast");
-        const spy2 = sinon.spy(gossip2, "unicast");
+        const spy0 = sinon.spy(gossip0, "sendToNode");
+        const spy1 = sinon.spy(gossip1, "sendMessage");
+        const spy2 = sinon.spy(gossip2, "sendToNode");
 
         await blockUtils.provideNextBlock();
         node0.triggerElection();
@@ -269,7 +269,7 @@ describe("Leader Election", () => {
         const { testNetwork, blockUtils } = aSimpleTestNetwork();
         const node1 = testNetwork.nodes[1];
         const gossip = testNetwork.getNodeGossip(node1.pk);
-        const multicastSpy = sinon.spy(gossip, "multicast");
+        const multicastSpy = sinon.spy(gossip, "sendMessage");
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
@@ -288,7 +288,7 @@ describe("Leader Election", () => {
         const node1 = testNetwork.nodes[1];
 
         const gossip = testNetwork.getNodeGossip(node1.pk);
-        const multicastSpy = sinon.spy(gossip, "multicast");
+        const multicastSpy = sinon.spy(gossip, "sendMessage");
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick();

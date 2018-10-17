@@ -36,11 +36,11 @@ describe("Network Messages Filter", () => {
         const block: Block = aBlock(theGenesisBlock);
         const gossip = testNetwork.getNodeGossip(node1.pk);
         const pks = testNetwork.gossipDiscovery.getAllGossipsPks();
-        gossip.multicast(pks, messageToGossip(aPrePrepareMessage(node1.config.keyManager, 3, 0, block)));
-        gossip.multicast(pks, messageToGossip(aPrepareMessage(node1.config.keyManager, 3, 0, block)));
-        gossip.multicast(pks, messageToGossip(aCommitMessage(node1.config.keyManager, 3, 0, block)));
-        gossip.multicast(pks, messageToGossip(aViewChangeMessage(node1.config.keyManager, 3, 0)));
-        gossip.multicast(pks, messageToGossip(aNewViewMessage(node1.config.keyManager, 3, 0, aPrePrepareMessage(node1.config.keyManager, 3, 0, block), [])));
+        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(node1.config.keyManager, 3, 0, block)));
+        gossip.sendMessage(pks, messageToGossip(aPrepareMessage(node1.config.keyManager, 3, 0, block)));
+        gossip.sendMessage(pks, messageToGossip(aCommitMessage(node1.config.keyManager, 3, 0, block)));
+        gossip.sendMessage(pks, messageToGossip(aViewChangeMessage(node1.config.keyManager, 3, 0)));
+        gossip.sendMessage(pks, messageToGossip(aNewViewMessage(node1.config.keyManager, 3, 0, aPrePrepareMessage(node1.config.keyManager, 3, 0, block), [])));
 
         expect(PPSpy).to.have.been.calledOnce;
         expect(PSpy).to.have.been.calledOnce;
@@ -69,11 +69,11 @@ describe("Network Messages Filter", () => {
         const block: Block = aBlock(theGenesisBlock);
         const gossip = testNetwork.getNodeGossip(node1.pk);
         const pks = testNetwork.gossipDiscovery.getAllGossipsPks();
-        gossip.multicast(pks, messageToGossip(aPrePrepareMessage(node1.config.keyManager, 3, 0, block)));
-        gossip.multicast(pks, messageToGossip(aPrepareMessage(node1.config.keyManager, 3, 0, block)));
-        gossip.multicast(pks, messageToGossip(aCommitMessage(node1.config.keyManager, 3, 0, block)));
-        gossip.multicast(pks, messageToGossip(aViewChangeMessage(node1.config.keyManager, 3, 0)));
-        gossip.multicast(pks, messageToGossip(aNewViewMessage(node1.config.keyManager, 3, 0, aPrePrepareMessage(node1.config.keyManager, 3, 0, block), [])));
+        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(node1.config.keyManager, 3, 0, block)));
+        gossip.sendMessage(pks, messageToGossip(aPrepareMessage(node1.config.keyManager, 3, 0, block)));
+        gossip.sendMessage(pks, messageToGossip(aCommitMessage(node1.config.keyManager, 3, 0, block)));
+        gossip.sendMessage(pks, messageToGossip(aViewChangeMessage(node1.config.keyManager, 3, 0)));
+        gossip.sendMessage(pks, messageToGossip(aNewViewMessage(node1.config.keyManager, 3, 0, aPrePrepareMessage(node1.config.keyManager, 3, 0, block), [])));
 
         expect(PPSpy).to.not.have.been.calledOnce;
         expect(PSpy).to.not.have.been.calledOnce;
@@ -101,11 +101,11 @@ describe("Network Messages Filter", () => {
         const block: Block = aBlock(theGenesisBlock);
         const gossip = testNetwork.getNodeGossip(node0.pk);
         const pks = testNetwork.gossipDiscovery.getAllGossipsPks();
-        gossip.multicast(pks, messageToGossip(aPrePrepareMessage(node0.config.keyManager, 3, 0, block)));
-        gossip.multicast(pks, messageToGossip(aPrepareMessage(node0.config.keyManager, 3, 0, block)));
-        gossip.multicast(pks, messageToGossip(aCommitMessage(node0.config.keyManager, 3, 0, block)));
-        gossip.multicast(pks, messageToGossip(aViewChangeMessage(node0.config.keyManager, 3, 0)));
-        gossip.multicast(pks, messageToGossip(aNewViewMessage(node0.config.keyManager, 3, 0, aPrePrepareMessage(node0.config.keyManager, 3, 0, block), [])));
+        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(node0.config.keyManager, 3, 0, block)));
+        gossip.sendMessage(pks, messageToGossip(aPrepareMessage(node0.config.keyManager, 3, 0, block)));
+        gossip.sendMessage(pks, messageToGossip(aCommitMessage(node0.config.keyManager, 3, 0, block)));
+        gossip.sendMessage(pks, messageToGossip(aViewChangeMessage(node0.config.keyManager, 3, 0)));
+        gossip.sendMessage(pks, messageToGossip(aNewViewMessage(node0.config.keyManager, 3, 0, aPrePrepareMessage(node0.config.keyManager, 3, 0, block), [])));
 
         expect(PPSpy).to.not.have.been.calledOnce;
         expect(PSpy).to.not.have.been.calledOnce;
@@ -136,11 +136,11 @@ describe("Network Messages Filter", () => {
         const keyManager: KeyManager = new KeyManagerMock("External Node Pk");
         const pks = testNetwork.gossipDiscovery.getAllGossipsPks();
 
-        gossip.multicast(pks, messageToGossip(aPrePrepareMessage(keyManager, 3, 0, block)));
-        gossip.multicast(pks, messageToGossip(aPrepareMessage(keyManager, 3, 0, block)));
-        gossip.multicast(pks, messageToGossip(aCommitMessage(keyManager, 3, 0, block)));
-        gossip.multicast(pks, messageToGossip(aViewChangeMessage(keyManager, 3, 0)));
-        gossip.multicast(pks, messageToGossip(aNewViewMessage(keyManager, 3, 0, aPrePrepareMessage(keyManager, 3, 0, block), [])));
+        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(keyManager, 3, 0, block)));
+        gossip.sendMessage(pks, messageToGossip(aPrepareMessage(keyManager, 3, 0, block)));
+        gossip.sendMessage(pks, messageToGossip(aCommitMessage(keyManager, 3, 0, block)));
+        gossip.sendMessage(pks, messageToGossip(aViewChangeMessage(keyManager, 3, 0)));
+        gossip.sendMessage(pks, messageToGossip(aNewViewMessage(keyManager, 3, 0, aPrePrepareMessage(keyManager, 3, 0, block), [])));
 
         expect(PPSpy).to.not.have.been.calledOnce;
         expect(PSpy).to.not.have.been.calledOnce;

@@ -1,11 +1,10 @@
-import { ConsensusRawMessage, NetworkCommunication } from "../../src/networkCommunication/NetworkCommunication";
+import { ConsensusRawMessage, NetworkCommunication, NetworkCommunicationCallback } from "../../src/networkCommunication/NetworkCommunication";
 import { BlockMock } from "../builders/BlockBuilder";
 import { GossipDiscovery } from "./GossipDiscovery";
-import { extractSenderPublicKeyFromGossipMessage } from "./GossipTestUtils";
+import { extractSenderPublicKeyFromConsensusRawMessage } from "./GossipTestUtils";
 
-type GossipCallback = (message: string) => void;
 type SubscriptionsValue = {
-    cb: GossipCallback;
+    cb: NetworkCommunicationCallback;
 };
 
 export function toGossipMessage(consensusRawMessage: ConsensusRawMessage): string {
@@ -39,28 +38,33 @@ export class Gossip implements NetworkCommunication {
         return this.discovery.getAllGossipsPks();
     }
 
-    sendMessage(pks: string[], consensusRawMessage: ConsensusRawMessage): void {
-        const message = toGossipMessage(consensusRawMessage);
-        this.multicast(pks, message);
-    }
-
-    registerOnMessage(cb: (consensusRawMessage: ConsensusRawMessage) => void): void {
-        this.subscribe(msg => cb(fromGossipMessage(msg)));
-    }
-
     isMember(pk: string): boolean {
         return this.discovery.getGossipByPk(pk) !== undefined;
     }
 
+    sendMessage(pks: string[], consensusRawMessage: ConsensusRawMessage): void {
+        pks.forEach(pk => this.sendToNode(pk, consensusRawMessage));
+    }
+
+    registerOnMessage(cb: (consensusRawMessage: ConsensusRawMessage) => void): number {
+        this.totalSubscriptions++;
+        this.subscriptions.set(this.totalSubscriptions, { cb });
+        return this.totalSubscriptions;
+    }
+
+    unRegisterOnMessage(subscriptionToken: number): void {
+        this.subscriptions.delete(subscriptionToken);
+    }
 
 
 
 
 
-    onRemoteMessage(gossipMessage: string): void {
+
+    onRemoteMessage(gossipMessage: ConsensusRawMessage): void {
         this.subscriptions.forEach(subscription => {
             if (this.inComingWhiteListPKs !== undefined) {
-                const senderPublicKey = extractSenderPublicKeyFromGossipMessage(gossipMessage);
+                const senderPublicKey = extractSenderPublicKeyFromConsensusRawMessage(gossipMessage);
                 if (this.inComingWhiteListPKs.indexOf(senderPublicKey) === -1) {
                     return;
                 }
@@ -85,21 +89,7 @@ export class Gossip implements NetworkCommunication {
         this.inComingWhiteListPKs = undefined;
     }
 
-    subscribe(cb: GossipCallback): number {
-        this.totalSubscriptions++;
-        this.subscriptions.set(this.totalSubscriptions, { cb });
-        return this.totalSubscriptions;
-    }
-
-    unsubscribe(subscriptionToken: number): void {
-        this.subscriptions.delete(subscriptionToken);
-    }
-
-    multicast(targetsIds: string[], message: string): void {
-        targetsIds.forEach(targetId => this.unicast(targetId, message));
-    }
-
-    unicast(pk: string, message: string): void {
+    sendToNode(pk: string, consensusRawMessage: ConsensusRawMessage): void {
         if (this.outGoingWhiteListPKs !== undefined) {
             if (this.outGoingWhiteListPKs.indexOf(pk) === -1) {
                 return;
@@ -107,7 +97,7 @@ export class Gossip implements NetworkCommunication {
         }
         const targetGossip = this.discovery.getGossipByPk(pk);
         if (targetGossip) {
-            targetGossip.onRemoteMessage(message);
+            targetGossip.onRemoteMessage(consensusRawMessage);
         }
     }
 }

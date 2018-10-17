@@ -31,9 +31,9 @@ describe("Gossip", () => {
         const spy = sinon.spy();
         const message = aDummyMessage(keyManager);
 
-        listener.subscribe(spy);
+        listener.registerOnMessage(spy);
         const pks = discovery.getAllGossipsPks();
-        broadcaster.multicast(pks, message);
+        broadcaster.sendMessage(pks, message);
 
         expect(spy).to.have.been.calledOnce;
     });
@@ -53,15 +53,15 @@ describe("Gossip", () => {
         const spy1 = sinon.spy();
         const spy2 = sinon.spy();
         const message = aDummyMessage(keyManager);
-        listener1.subscribe(spy1);
-        listener2.subscribe(spy2);
+        listener1.registerOnMessage(spy1);
+        listener2.registerOnMessage(spy2);
         const pks = discovery.getAllGossipsPks();
-        broadcaster.multicast(pks, message);
+        broadcaster.sendMessage(pks, message);
         expect(spy1).to.have.been.calledOnce;
         expect(spy2).to.have.been.calledOnce;
     });
 
-    it("should be able to unicast a message to the given clients", () => {
+    it("should be able to sendToNode a message to the given clients", () => {
         const discovery = new GossipDiscovery();
         const listener1Pk = genPk();
         const listener2Pk = genPk();
@@ -80,11 +80,11 @@ describe("Gossip", () => {
         const spy2 = sinon.spy();
         const spy3 = sinon.spy();
         const message = aDummyMessage(keyManager);
-        listener1.subscribe(spy1);
-        listener2.subscribe(spy2);
-        listener3.subscribe(spy3);
+        listener1.registerOnMessage(spy1);
+        listener2.registerOnMessage(spy2);
+        listener3.registerOnMessage(spy3);
 
-        broadcaster.multicast([listener1Pk, listener2Pk], message);
+        broadcaster.sendMessage([listener1Pk, listener2Pk], message);
         expect(spy1).to.have.been.calledOnce;
         expect(spy2).to.have.been.calledOnce;
         expect(spy3).to.not.have.been.calledOnce;
@@ -101,13 +101,13 @@ describe("Gossip", () => {
         discovery.registerGossip(broadcasterPk, broadcaster);
         const spy1 = sinon.spy();
         const spy2 = sinon.spy();
-        const subscriptionToken = listener.subscribe(spy1);
-        listener.subscribe(spy2);
-        listener.unsubscribe(subscriptionToken);
+        const subscriptionToken = listener.registerOnMessage(spy1);
+        listener.registerOnMessage(spy2);
+        listener.unRegisterOnMessage(subscriptionToken);
 
         const message = aDummyMessage(keyManager);
         const pks = discovery.getAllGossipsPks();
-        broadcaster.multicast(pks, message);
+        broadcaster.sendMessage(pks, message);
         expect(spy1).to.not.have.been.called;
         expect(spy2).to.have.been.calledOnce;
     });
@@ -123,14 +123,14 @@ describe("Gossip", () => {
         discovery.registerGossip(broadcasterPk, broadcaster);
         const spy = sinon.spy();
         const message = aDummyMessage(keyManager);
-        listener.subscribe(spy);
+        listener.registerOnMessage(spy);
 
         const pks = discovery.getAllGossipsPks();
-        broadcaster.multicast(pks, message);
+        broadcaster.sendMessage(pks, message);
         expect(spy).to.have.been.calledWith(message);
     });
 
-    it("should be able to unicast a message to a single client", () => {
+    it("should be able to sendToNode a message to a single client", () => {
         const discovery = new GossipDiscovery();
         const broadcasterPk = genPk();
         const keyManager: KeyManager = new KeyManagerMock(broadcasterPk);
@@ -143,10 +143,10 @@ describe("Gossip", () => {
         const spy1 = sinon.spy();
         const spy2 = sinon.spy();
         const message = aDummyMessage(keyManager);
-        listener1.subscribe(spy1);
-        listener2.subscribe(spy2);
+        listener1.registerOnMessage(spy1);
+        listener2.registerOnMessage(spy2);
 
-        broadcaster.unicast("listener1", message);
+        broadcaster.sendToNode("listener1", message);
         expect(spy1).to.have.been.calledWith(message);
         expect(spy2).to.not.have.been.called;
     });
@@ -185,10 +185,10 @@ describe("Gossip", () => {
             spy2 = sinon.spy();
             spy3 = sinon.spy();
             spy4 = sinon.spy();
-            gossip1.subscribe(spy1);
-            gossip2.subscribe(spy2);
-            gossip3.subscribe(spy3);
-            gossip4.subscribe(spy4);
+            gossip1.registerOnMessage(spy1);
+            gossip2.registerOnMessage(spy2);
+            gossip3.registerOnMessage(spy3);
+            gossip4.registerOnMessage(spy4);
             pks = discovery.getAllGossipsPks();
         });
 
@@ -196,21 +196,21 @@ describe("Gossip", () => {
             it("should ignore all messages if outGoing list is empty", () => {
                 gossip1.setOutGoingWhiteListPKs([]);
 
-                gossip1.multicast(pks, aDummyMessage(gossip1keyManager));
+                gossip1.sendMessage(pks, aDummyMessage(gossip1keyManager));
                 expect(spy2).to.not.have.been.called;
                 expect(spy3).to.not.have.been.called;
                 expect(spy4).to.not.have.been.called;
             });
 
-            it("should ignore unicast messages that don't apply to the outgoing white list", () => {
+            it("should ignore sendToNode messages that don't apply to the outgoing white list", () => {
                 gossip1.setOutGoingWhiteListPKs(["gossip3"]);
 
                 const msgTo2 = aDummyMessage(gossip1keyManager);
                 const msgTo3 = aDummyMessage(gossip1keyManager);
                 const msgTo4 = aDummyMessage(gossip1keyManager);
-                gossip1.unicast("gossip2", msgTo2);
-                gossip1.unicast("gossip3", msgTo3);
-                gossip1.unicast("gossip4", msgTo4);
+                gossip1.sendToNode("gossip2", msgTo2);
+                gossip1.sendToNode("gossip3", msgTo3);
+                gossip1.sendToNode("gossip4", msgTo4);
                 expect(spy2).to.not.have.been.called;
                 expect(spy3).to.have.been.calledWith(msgTo3);
                 expect(spy4).to.not.have.been.called;
@@ -220,13 +220,13 @@ describe("Gossip", () => {
                 gossip1.setOutGoingWhiteListPKs(["gossip3"]);
 
                 const message = aDummyMessage(gossip1keyManager);
-                gossip1.multicast(pks, message);
+                gossip1.sendMessage(pks, message);
                 expect(spy2).to.not.have.been.called;
                 expect(spy3).to.have.been.calledWith(message);
                 expect(spy4).to.not.have.been.called;
 
                 gossip1.clearOutGoingWhiteListPKs();
-                gossip1.multicast(pks, message);
+                gossip1.sendMessage(pks, message);
                 expect(spy2).to.have.been.calledWith(message);
                 expect(spy3).to.have.been.calledWith(message);
                 expect(spy4).to.have.been.calledWith(message);
@@ -236,7 +236,7 @@ describe("Gossip", () => {
                 gossip1.setOutGoingWhiteListPKs(["gossip3"]);
                 const message = aDummyMessage(gossip1keyManager);
 
-                gossip1.multicast(pks, message);
+                gossip1.sendMessage(pks, message);
                 expect(spy2).to.not.have.been.called;
                 expect(spy3).to.have.been.calledWith(message);
                 expect(spy4).to.not.have.been.called;
@@ -250,21 +250,21 @@ describe("Gossip", () => {
                 gossip4.setIncomingWhiteListPKs([]);
 
                 const message = aDummyMessage(gossip1keyManager);
-                gossip1.multicast(pks, message);
+                gossip1.sendMessage(pks, message);
                 expect(spy2).to.not.have.been.called;
                 expect(spy3).to.not.have.been.called;
                 expect(spy4).to.not.have.been.called;
             });
 
-            it("should ignore unicast messages that don't apply to the incoming white list", () => {
+            it("should ignore sendToNode messages that don't apply to the incoming white list", () => {
                 gossip4.setIncomingWhiteListPKs([gossip2Pk]);
 
                 const message1 = aDummyMessage(gossip1keyManager);
                 const message2 = aDummyMessage(gossip2keyManager);
                 const message3 = aDummyMessage(gossip3keyManager);
-                gossip1.unicast("gossip4", message1);
-                gossip2.unicast("gossip4", message2);
-                gossip3.unicast("gossip4", message3);
+                gossip1.sendToNode("gossip4", message1);
+                gossip2.sendToNode("gossip4", message2);
+                gossip3.sendToNode("gossip4", message3);
                 expect(spy4).to.have.been.calledOnce.calledWith(message2);
             });
 
@@ -274,7 +274,7 @@ describe("Gossip", () => {
                 gossip4.setIncomingWhiteListPKs([]);
 
                 const message = aDummyMessage(gossip1keyManager);
-                gossip1.multicast(pks, message);
+                gossip1.sendMessage(pks, message);
                 expect(spy2).to.not.have.been.called;
                 expect(spy3).to.have.been.calledWith(message);
                 expect(spy4).to.not.have.been.called;
@@ -282,7 +282,7 @@ describe("Gossip", () => {
                 gossip2.clearIncommingWhiteListPKs();
                 gossip3.clearIncommingWhiteListPKs();
                 gossip4.clearIncommingWhiteListPKs();
-                gossip1.multicast(pks, message);
+                gossip1.sendMessage(pks, message);
                 expect(spy2).to.have.been.calledWith(message);
                 expect(spy3).to.have.been.calledWith(message);
                 expect(spy4).to.have.been.calledWith(message);
@@ -293,8 +293,8 @@ describe("Gossip", () => {
 
                 const message1 = aDummyMessage(gossip1keyManager);
                 const message2 = aDummyMessage(gossip2keyManager);
-                gossip1.multicast(pks, message1);
-                gossip2.multicast(pks, message2);
+                gossip1.sendMessage(pks, message1);
+                gossip2.sendMessage(pks, message2);
                 expect(spy4).to.have.been.calledOnce.calledWith(message2);
             });
         });

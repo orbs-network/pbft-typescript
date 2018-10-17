@@ -28,10 +28,10 @@ describe("PBFT", () => {
         const gossip1 = testNetwork.getNodeGossip(node1.pk);
         const gossip2 = testNetwork.getNodeGossip(node2.pk);
         const gossip3 = testNetwork.getNodeGossip(node3.pk);
-        const spy0 = sinon.spy(gossip0, "multicast");
-        const spy1 = sinon.spy(gossip1, "multicast");
-        const spy2 = sinon.spy(gossip2, "multicast");
-        const spy3 = sinon.spy(gossip3, "multicast");
+        const spy0 = sinon.spy(gossip0, "sendMessage");
+        const spy1 = sinon.spy(gossip1, "sendMessage");
+        const spy2 = sinon.spy(gossip2, "sendMessage");
+        const spy3 = sinon.spy(gossip3, "sendMessage");
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
@@ -149,10 +149,10 @@ describe("PBFT", () => {
         await nextTick();
         const pks = testNetwork.gossipDiscovery.getAllGossipsPks();
         const gossip = testNetwork.getNodeGossip(byzantineNode.pk);
-        gossip.multicast(pks, messageToGossip(aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock)));
-        gossip.multicast(pks, messageToGossip(aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock)));
-        gossip.multicast(pks, messageToGossip(aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock)));
-        gossip.multicast(pks, messageToGossip(aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock)));
+        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock)));
+        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock)));
+        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock)));
+        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock)));
 
         await nextTick();
         await blockUtils.provideNextBlock();
