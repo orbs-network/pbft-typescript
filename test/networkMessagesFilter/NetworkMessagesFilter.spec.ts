@@ -10,8 +10,8 @@ import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { aCommitMessage, aNewViewMessage, aPrepareMessage, aPrePrepareMessage, aViewChangeMessage } from "../builders/MessagesBuilder";
 import { aSimpleTestNetwork } from "../builders/TestNetworkBuilder";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
-import { messageToGossip } from "../networkCommunication/InMemoryNetworkCommunicaiton";
 import { PBFTMessagesHandlerMock } from "./PBFTMessagesHandlerMock";
+import { messageToGossip } from "../gossip/GossipTestUtils";
 
 chai.use(sinonChai);
 

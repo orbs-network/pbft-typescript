@@ -11,7 +11,6 @@ import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 import { ConsoleLogger } from "../logger/ConsoleLogger";
 import { SilentLogger } from "../logger/SilentLogger";
 import { Node } from "../network/Node";
-import { InMemoryNetworkCommunicaiton } from "../networkCommunication/InMemoryNetworkCommunicaiton";
 
 export class NodeBuilder {
     private networkCommunication: NetworkCommunication;
@@ -25,7 +24,7 @@ export class NodeBuilder {
     constructor() {
     }
 
-    public thatIsPartOf(networkCommunication: InMemoryNetworkCommunicaiton): this {
+    public thatIsPartOf(networkCommunication: NetworkCommunication): this {
         if (!this.networkCommunication) {
             this.networkCommunication = networkCommunication;
         }

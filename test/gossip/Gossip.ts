@@ -1,22 +1,32 @@
-import * as sinon from "sinon";
-import { deserializeMessageContent, MessageType } from "../../src/networkCommunication/Messages";
-import { extractSenderPublicKeyFromGossipMessage } from "../networkCommunication/InMemoryNetworkCommunicaiton";
+import { ConsensusRawMessage, NetworkCommunication } from "../../src/networkCommunication/NetworkCommunication";
+import { BlockMock } from "../builders/BlockBuilder";
 import { GossipDiscovery } from "./GossipDiscovery";
+import { extractSenderPublicKeyFromGossipMessage } from "./GossipTestUtils";
 
 type GossipCallback = (message: string) => void;
 type SubscriptionsValue = {
     cb: GossipCallback;
 };
 
-export const gossipMessageCounter = (spy: sinon.SinonSpy, messageType: MessageType) => {
-    return spy.getCalls()
-        .map(c => c.args[1])
-        .map(c => JSON.parse(c))
-        .map(c => deserializeMessageContent(c.content))
-        .filter(c => c.signedHeader.messageType === messageType).length;
-};
+export function toGossipMessage(consensusRawMessage: ConsensusRawMessage): string {
+    return JSON.stringify(consensusRawMessage);
+}
 
-export class Gossip {
+export function fromGossipMessage(gossipMessage: string): ConsensusRawMessage {
+    const { content, block } = JSON.parse(gossipMessage);
+    const result: any = {
+        content
+    };
+
+    if (block) {
+        result.block = new BlockMock(block.height, block.body);
+    }
+
+    return result;
+}
+
+
+export class Gossip implements NetworkCommunication {
     private totalSubscriptions: number = 0;
     private subscriptions: Map<number, SubscriptionsValue> = new Map();
     private outGoingWhiteListPKs: string[];
@@ -24,6 +34,28 @@ export class Gossip {
 
     constructor(private discovery: GossipDiscovery) {
     }
+
+    requestOrderedCommittee(seed: number): string[] {
+        return this.discovery.getAllGossipsPks();
+    }
+
+    sendMessage(pks: string[], consensusRawMessage: ConsensusRawMessage): void {
+        const message = toGossipMessage(consensusRawMessage);
+        this.multicast(pks, message);
+    }
+
+    registerOnMessage(cb: (consensusRawMessage: ConsensusRawMessage) => void): void {
+        this.subscribe(msg => cb(fromGossipMessage(msg)));
+    }
+
+    isMember(pk: string): boolean {
+        return this.discovery.getGossipByPk(pk) !== undefined;
+    }
+
+
+
+
+
 
     onRemoteMessage(gossipMessage: string): void {
         this.subscriptions.forEach(subscription => {

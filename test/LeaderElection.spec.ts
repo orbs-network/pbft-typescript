@@ -8,9 +8,8 @@ import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNewViewMessage, aPrePrepareMessage, aViewChangeMessage } from "./builders/MessagesBuilder";
 import { aPrepared } from "./builders/ProofBuilder";
 import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
-import { gossipMessageCounter } from "./gossip/Gossip";
-import { messageToGossip } from "./networkCommunication/InMemoryNetworkCommunicaiton";
 import { nextTick } from "./timeUtils";
+import { messageToGossip, gossipMessageCounter } from "./gossip/GossipTestUtils";
 
 chai.use(sinonChai);
 

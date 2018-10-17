@@ -1,4 +1,4 @@
-import { BlockUtils } from "../../src";
+import { BlockUtils, NetworkCommunication } from "../../src";
 import { Block } from "../../src/Block";
 import { ElectionTrigger } from "../../src/electionTrigger/ElectionTrigger";
 import { Logger } from "../../src/logger/Logger";
@@ -11,7 +11,6 @@ import { ConsoleLogger } from "../logger/ConsoleLogger";
 import { SilentLogger } from "../logger/SilentLogger";
 import { Node } from "../network/Node";
 import { TestNetwork } from "../network/TestNetwork";
-import { InMemoryNetworkCommunicaiton } from "../networkCommunication/InMemoryNetworkCommunicaiton";
 import { aBlock, theGenesisBlock } from "./BlockBuilder";
 import { aNode, NodeBuilder } from "./NodeBuilder";
 export interface LoggerConstructor {
@@ -86,9 +85,8 @@ class TestNetworkBuilder {
         const blockUtils: BlockUtils = this.blockUtils ? this.blockUtils : new BlockUtilsMock();
         const gossip = new Gossip(discovery);
         discovery.registerGossip(pk, gossip);
-        const networkCommunication: InMemoryNetworkCommunicaiton = new InMemoryNetworkCommunicaiton(discovery, gossip);
         return builder
-            .thatIsPartOf(networkCommunication)
+            .thatIsPartOf(gossip)
             .gettingBlocksVia(blockUtils)
             .electingLeaderUsing(electionTrigger)
             .withPk(pk)

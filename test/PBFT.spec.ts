@@ -10,9 +10,8 @@ import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aPrePrepareMessage } from "./builders/MessagesBuilder";
 import { aNode } from "./builders/NodeBuilder";
 import { aSimpleTestNetwork, aTestNetwork } from "./builders/TestNetworkBuilder";
-import { gossipMessageCounter } from "./gossip/Gossip";
+import { gossipMessageCounter, messageToGossip } from "./gossip/GossipTestUtils";
 import { blockMatcher } from "./matchers/blockMatcher";
-import { messageToGossip } from "./networkCommunication/InMemoryNetworkCommunicaiton";
 import { nextTick } from "./timeUtils";
 
 chai.use(sinonChai);

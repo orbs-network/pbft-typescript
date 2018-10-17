@@ -5,8 +5,8 @@ import { CommitMessage, PrepareMessage, PrePrepareMessage } from "../src/network
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aCommitMessage, aPrepareMessage, aPrePrepareMessage } from "./builders/MessagesBuilder";
 import { aSimpleTestNetwork, aTestNetwork } from "./builders/TestNetworkBuilder";
-import { messageToGossip } from "./networkCommunication/InMemoryNetworkCommunicaiton";
 import { nextTick } from "./timeUtils";
+import { messageToGossip } from "./gossip/GossipTestUtils";
 
 chai.use(sinonChai);
 

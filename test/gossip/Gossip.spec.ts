@@ -3,28 +3,18 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { KeyManager } from "../../src/keyManager/KeyManager";
-import { MessageType } from "../../src/networkCommunication/Messages";
+import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
+import { aPrepareMessage } from "../builders/MessagesBuilder";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 import { Gossip } from "./Gossip";
 import { GossipDiscovery } from "./GossipDiscovery";
+import { messageToGossip } from "./GossipTestUtils";
 
 chai.use(sinonChai);
 
 function aDummyMessage(keyManager: KeyManager) {
-    return JSON.stringify({
-        content: JSON.stringify({
-            sender: {
-                signature: `DUMMY_SIGNATURE`,
-                senderPublicKey: keyManager.getMyPublicKey()
-            },
-            signedHeader: {
-                messageType: MessageType.PREPARE,
-                blockHeight: Math.floor(Math.random() * 1_000_000)
-            }
-        })
-    });
+    return messageToGossip(aPrepareMessage(keyManager, 100, 1, aBlock(theGenesisBlock)));
 }
-
 
 describe("Gossip", () => {
     const genPk = () => Math.random().toString();
