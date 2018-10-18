@@ -364,9 +364,10 @@ export class PBFTTerm {
 
     private checkElected(blockHeight: number, view: number): void {
         if (this.newViewLocally < view) {
-            const viewChangeMessages = this.pbftStorage.getViewChangeMessages(blockHeight, view, this.getF());
-            if (viewChangeMessages) {
-                this.onElected(view, viewChangeMessages);
+            const viewChangeMessages = this.pbftStorage.getViewChangeMessages(blockHeight, view);
+            const minimumNodes = this.getF() * 2 + 1;
+            if (viewChangeMessages && viewChangeMessages.length >= minimumNodes) {
+                this.onElected(view, viewChangeMessages.slice(0, minimumNodes));
             }
         }
     }

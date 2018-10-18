@@ -8,20 +8,20 @@ import { CommitMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage } f
 //
 export interface PBFTStorage {
     storePrePrepare(message: PrePrepareMessage): boolean;
-    getPrePrepareBlock(blockHeight: number, view: number): Block;
     getPrePrepareMessage(blockHeight: number, view: number): PrePrepareMessage;
-
-    storePrepare(message: PrepareMessage): boolean;
-    getPrepareSendersPks(blockHeight: number, view: number, blockHash: Buffer): string[];
-    getPrepareMessages(blockHeight: number, view: number, blockHash: Buffer): PrepareMessage[];
+    getPrePrepareBlock(blockHeight: number, view: number): Block;
     getLatestPrePrepare(blockHeight: number): PrePrepareMessage;
 
+    storePrepare(message: PrepareMessage): boolean;
+    getPrepareMessages(blockHeight: number, view: number, blockHash: Buffer): PrepareMessage[];
+    getPrepareSendersPks(blockHeight: number, view: number, blockHash: Buffer): string[];
+
     storeCommit(message: CommitMessage): boolean;
-    getCommitSendersPks(blockHeight: number, view: number, blockHash: Buffer): string[];
     getCommitMessages(blockHeight: number, view: number, blockHash: Buffer): CommitMessage[];
+    getCommitSendersPks(blockHeight: number, view: number, blockHash: Buffer): string[];
 
     storeViewChange(message: ViewChangeMessage): boolean;
-    getViewChangeMessages(blockHeight: number, view: number, f: number): ViewChangeMessage[];
+    getViewChangeMessages(blockHeight: number, view: number): ViewChangeMessage[];
 
     clearBlockHeightLogs(blockHeight: number): void;
 }

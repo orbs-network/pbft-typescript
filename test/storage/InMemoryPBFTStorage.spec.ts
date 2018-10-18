@@ -15,8 +15,8 @@ chai.use(sinonChai);
 describe("PBFT In Memory Storage", () => {
     const logger: Logger = new SilentLogger();
 
-    describe("Simple storage", () => {
-        it("stores a preprepare on the storage", () => {
+    describe("Simple store/fetch", () => {
+        it("preprepare", () => {
             const storage = new InMemoryPBFTStorage(logger);
             const blockHeight = Math.floor(Math.random() * 1000);
             const view = Math.floor(Math.random() * 1000);
@@ -29,11 +29,15 @@ describe("PBFT In Memory Storage", () => {
             const preprepageMessage2: PrePrepareMessage = aPrePrepareMessage(keyManager2, blockHeight, view, block);
             storage.storePrePrepare(preprepageMessage1);
             storage.storePrePrepare(preprepageMessage2);
-            const actual = storage.getPrePrepareMessage(blockHeight, view);
-            expect(actual).to.deep.equal(preprepageMessage1);
+
+            const actualPrePrepareMessage = storage.getPrePrepareMessage(blockHeight, view);
+            const actualPrePrepareBlock = storage.getPrePrepareBlock(blockHeight, view);
+
+            expect(actualPrePrepareMessage).to.deep.equal(preprepageMessage1);
+            expect(actualPrePrepareBlock).to.deep.equal(block);
         });
 
-        it("stores a prepare on the storage", () => {
+        it("prepare", () => {
             const storage = new InMemoryPBFTStorage(logger);
             const blockHeight1 = Math.floor(Math.random() * 1000);
             const blockHeight2 = Math.floor(Math.random() * 1000);
@@ -48,17 +52,27 @@ describe("PBFT In Memory Storage", () => {
             const block1 = aBlock(theGenesisBlock);
             const block2 = aBlock(theGenesisBlock);
             const block1Hash = block1.getBlockHash();
-            storage.storePrepare(aPrepareMessage(keyManager1, blockHeight1, view1, block1));
-            storage.storePrepare(aPrepareMessage(keyManager2, blockHeight1, view1, block1));
-            storage.storePrepare(aPrepareMessage(keyManager2, blockHeight1, view1, block2));
-            storage.storePrepare(aPrepareMessage(keyManager3, blockHeight1, view2, block1));
-            storage.storePrepare(aPrepareMessage(keyManager3, blockHeight2, view1, block2));
-            const actual = storage.getPrepareSendersPks(blockHeight1, view1, block1Hash);
-            const expected = [sender1Id, sender2Id];
-            expect(actual).to.deep.equal(expected);
+            const message1 = aPrepareMessage(keyManager1, blockHeight1, view1, block1);
+            const message2 = aPrepareMessage(keyManager2, blockHeight1, view1, block1);
+            const message3 = aPrepareMessage(keyManager3, blockHeight1, view1, block1);
+            const message4 = aPrepareMessage(keyManager1, blockHeight2, view1, block1); // other height
+            const message5 = aPrepareMessage(keyManager1, blockHeight1, view2, block1); // other view
+            const message6 = aPrepareMessage(keyManager1, blockHeight1, view1, block2); // other block
+            storage.storePrepare(message1);
+            storage.storePrepare(message2);
+            storage.storePrepare(message3);
+            storage.storePrepare(message4);
+            storage.storePrepare(message5);
+            storage.storePrepare(message6);
+
+            const actualPrepareMessage = storage.getPrepareMessages(blockHeight1, view1, block1Hash);
+            const actualPrepareSendersPks = storage.getPrepareSendersPks(blockHeight1, view1, block1Hash);
+
+            expect(actualPrepareMessage).to.deep.equal([message1, message2, message3]);
+            expect(actualPrepareSendersPks).to.deep.equal([sender1Id, sender2Id, sender3Id]);
         });
 
-        it("stores a commit on the storage", () => {
+        it("commit", () => {
             const storage = new InMemoryPBFTStorage(logger);
             const blockHeight1 = Math.floor(Math.random() * 1000);
             const blockHeight2 = Math.floor(Math.random() * 1000);
@@ -73,15 +87,75 @@ describe("PBFT In Memory Storage", () => {
             const block1 = aBlock(theGenesisBlock);
             const block2 = aBlock(theGenesisBlock);
             const block1Hash = block1.getBlockHash();
-            storage.storeCommit(aCommitMessage(keyManager1, blockHeight1, view1, block1));
-            storage.storeCommit(aCommitMessage(keyManager2, blockHeight1, view1, block1));
-            storage.storeCommit(aCommitMessage(keyManager3, blockHeight1, view2, block1));
-            storage.storeCommit(aCommitMessage(keyManager3, blockHeight2, view1, block2));
-            const actual = storage.getCommitSendersPks(blockHeight1, view1, block1Hash);
-            const expected = [sender1Id, sender2Id];
-            expect(actual).to.deep.equal(expected);
+            const message1 = aCommitMessage(keyManager1, blockHeight1, view1, block1);
+            const message2 = aCommitMessage(keyManager2, blockHeight1, view1, block1);
+            const message3 = aCommitMessage(keyManager3, blockHeight1, view1, block1);
+            const message4 = aCommitMessage(keyManager1, blockHeight2, view1, block1); // other height
+            const message5 = aCommitMessage(keyManager1, blockHeight1, view2, block1); // other view
+            const message6 = aCommitMessage(keyManager1, blockHeight1, view1, block2); // other block
+            storage.storeCommit(message1);
+            storage.storeCommit(message2);
+            storage.storeCommit(message3);
+            storage.storeCommit(message4);
+            storage.storeCommit(message5);
+            storage.storeCommit(message6);
+
+            const actualCommitMessage = storage.getCommitMessages(blockHeight1, view1, block1Hash);
+            const actualCommitSendersPks = storage.getCommitSendersPks(blockHeight1, view1, block1Hash);
+
+            expect(actualCommitMessage).to.deep.equal([message1, message2, message3]);
+            expect(actualCommitSendersPks).to.deep.equal([sender1Id, sender2Id, sender3Id]);
         });
 
+        it("view change", () => {
+            const storage = new InMemoryPBFTStorage(logger);
+            const blockHeight1 = Math.floor(Math.random() * 1000);
+            const blockHeight2 = Math.floor(Math.random() * 1000);
+            const view1 = Math.floor(Math.random() * 1000);
+            const view2 = Math.floor(Math.random() * 1000);
+            const sender1Id = Math.random().toString();
+            const sender2Id = Math.random().toString();
+            const sender3Id = Math.random().toString();
+            const keyManager1: KeyManager = new KeyManagerMock(sender1Id);
+            const keyManager2: KeyManager = new KeyManagerMock(sender2Id);
+            const keyManager3: KeyManager = new KeyManagerMock(sender3Id);
+            const block1 = aBlock(theGenesisBlock);
+            const block1Hash = block1.getBlockHash();
+            const message1 = aViewChangeMessage(keyManager1, blockHeight1, view1);
+            const message2 = aViewChangeMessage(keyManager2, blockHeight1, view1);
+            const message3 = aViewChangeMessage(keyManager3, blockHeight1, view1);
+            const message4 = aViewChangeMessage(keyManager1, blockHeight2, view1); // other height
+            const message5 = aViewChangeMessage(keyManager1, blockHeight1, view2); // other view
+            const message6 = aViewChangeMessage(keyManager1, blockHeight1, view1); // other block
+            storage.storeViewChange(message1);
+            storage.storeViewChange(message2);
+            storage.storeViewChange(message3);
+            storage.storeViewChange(message4);
+            storage.storeViewChange(message5);
+            storage.storeViewChange(message6);
+
+            const actualViewChangeMessages = storage.getViewChangeMessages(blockHeight1, view1);
+
+            expect(actualViewChangeMessages).to.deep.equal([message1, message2, message3]);
+        });
+    });
+
+    it("latest preprepare", () => {
+        const storage = new InMemoryPBFTStorage(logger);
+        const blockHeight = Math.floor(Math.random() * 1000);
+        const sender1Id = Math.random().toString();
+        const sender2Id = Math.random().toString();
+        const keyManager1: KeyManager = new KeyManagerMock(sender1Id);
+        const keyManager2: KeyManager = new KeyManagerMock(sender2Id);
+        const block = aBlock(theGenesisBlock);
+        const preprepageMessage_on_view_3: PrePrepareMessage = aPrePrepareMessage(keyManager1, blockHeight, 3, block);
+        const preprepageMessage_on_view_2: PrePrepareMessage = aPrePrepareMessage(keyManager2, blockHeight, 2, block);
+        storage.storePrePrepare(preprepageMessage_on_view_3);
+        storage.storePrePrepare(preprepageMessage_on_view_2);
+
+        const actualLatestPrePrepareMessage = storage.getLatestPrePrepare(blockHeight);
+
+        expect(actualLatestPrePrepareMessage).to.deep.equal(preprepageMessage_on_view_3);
     });
 
     describe("Duplications", () => {
@@ -147,30 +221,6 @@ describe("PBFT In Memory Storage", () => {
         });
     });
 
-    describe("Proofs", () => {
-        describe("View-Change", () => {
-            it("should return the view-change proof", () => {
-                const storage = new InMemoryPBFTStorage(logger);
-                const blockHeight1 = Math.floor(Math.random() * 1000);
-                const blockHeight2 = Math.floor(Math.random() * 1000);
-                const view1 = Math.floor(Math.random() * 1000);
-                const sender1Id = Math.random().toString();
-                const sender2Id = Math.random().toString();
-                const sender3Id = Math.random().toString();
-                const sender1KeyManager: KeyManager = new KeyManagerMock(sender1Id);
-                const sender2KeyManager: KeyManager = new KeyManagerMock(sender2Id);
-                const sender3KeyManager: KeyManager = new KeyManagerMock(sender3Id);
-                storage.storeViewChange(aViewChangeMessage(sender1KeyManager, blockHeight1, view1));
-                storage.storeViewChange(aViewChangeMessage(sender2KeyManager, blockHeight1, view1));
-                storage.storeViewChange(aViewChangeMessage(sender3KeyManager, blockHeight1, view1));
-                storage.storeViewChange(aViewChangeMessage(sender3KeyManager, blockHeight2, view1));
-                const actual = storage.getViewChangeMessages(blockHeight1, view1, 1);
-                const expected = 1 * 2 + 1;
-                expect(actual.length).to.deep.equal(expected);
-            });
-        });
-    });
-
     it("should clear all storage data after calling clearBlockHeightLogs", () => {
         const storage = new InMemoryPBFTStorage(logger);
         const blockHeight = Math.floor(Math.random() * 1000);
@@ -192,7 +242,7 @@ describe("PBFT In Memory Storage", () => {
         expect(storage.getPrePrepareMessage(blockHeight, view)).to.not.be.undefined;
         expect(storage.getPrepareMessages(blockHeight, view, blockHash).length).to.equal(1);
         expect(storage.getCommitSendersPks(blockHeight, view, blockHash).length).to.equal(1);
-        expect(storage.getViewChangeMessages(blockHeight, view, 0).length).to.equal(1);
+        expect(storage.getViewChangeMessages(blockHeight, view).length).to.equal(1);
 
         // clearing
         storage.clearBlockHeightLogs(blockHeight);
@@ -200,7 +250,7 @@ describe("PBFT In Memory Storage", () => {
         expect(storage.getPrePrepareMessage(blockHeight, view)).to.be.undefined;
         expect(storage.getPrepareMessages(blockHeight, view, blockHash).length).to.equal(0);
         expect(storage.getCommitSendersPks(blockHeight, view, blockHash).length).to.equal(0);
-        expect(storage.getViewChangeMessages(blockHeight, view, 0)).to.be.undefined;
+        expect(storage.getViewChangeMessages(blockHeight, view).length).to.equal(0);
     });
 
 });

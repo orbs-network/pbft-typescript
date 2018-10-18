@@ -239,7 +239,6 @@ describe("Leader Election", () => {
 
         await blockUtils.provideNextBlock();
         node0.triggerElection();
-        node1.triggerElection();
         node2.triggerElection();
         node3.triggerElection();
 
@@ -258,7 +257,7 @@ describe("Leader Election", () => {
         expect(spy2).to.have.been.calledWith(node1.pk, messageToGossip(node2VCMessage));
 
         const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, 2, 1, block3);
-        const VCProof: ViewChangeMessage[] = node1.config.pbftStorage.getViewChangeMessages(2, 1, 1);
+        const VCProof: ViewChangeMessage[] = node1.config.pbftStorage.getViewChangeMessages(2, 1);
         const node1NVExpectedMessage: NewViewMessage = aNewViewMessage(node1.config.keyManager, 2, 1, PPMessage, VCProof);
         expect(spy1).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], messageToGossip(node1NVExpectedMessage));
 

@@ -216,15 +216,16 @@ export class InMemoryPBFTStorage implements PBFTStorage {
         return true;
     }
 
-    getViewChangeMessages(blockHeight: number, view: number, f: number): ViewChangeMessage[] {
+    getViewChangeMessages(blockHeight: number, view: number): ViewChangeMessage[] {
         const viewsMap = this.viewChangeStorage.get(blockHeight);
         if (viewsMap) {
             const sendersMap = viewsMap.get(view);
-            const minimumNodes = f * 2 + 1;
-            if (sendersMap && sendersMap.size >= minimumNodes) {
-                return Array.from(sendersMap.values()).slice(0, minimumNodes);
+            if (sendersMap) {
+                return Array.from(sendersMap.values());
             }
         }
+
+        return [];
     }
 
     clearBlockHeightLogs(blockHeight: number): void {
