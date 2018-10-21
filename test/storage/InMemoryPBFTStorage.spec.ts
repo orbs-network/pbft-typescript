@@ -119,20 +119,16 @@ describe("PBFT In Memory Storage", () => {
             const keyManager1: KeyManager = new KeyManagerMock(sender1Id);
             const keyManager2: KeyManager = new KeyManagerMock(sender2Id);
             const keyManager3: KeyManager = new KeyManagerMock(sender3Id);
-            const block1 = aBlock(theGenesisBlock);
-            const block1Hash = block1.getBlockHash();
             const message1 = aViewChangeMessage(keyManager1, blockHeight1, view1);
             const message2 = aViewChangeMessage(keyManager2, blockHeight1, view1);
             const message3 = aViewChangeMessage(keyManager3, blockHeight1, view1);
             const message4 = aViewChangeMessage(keyManager1, blockHeight2, view1); // other height
             const message5 = aViewChangeMessage(keyManager1, blockHeight1, view2); // other view
-            const message6 = aViewChangeMessage(keyManager1, blockHeight1, view1); // other block
             storage.storeViewChange(message1);
             storage.storeViewChange(message2);
             storage.storeViewChange(message3);
             storage.storeViewChange(message4);
             storage.storeViewChange(message5);
-            storage.storeViewChange(message6);
 
             const actualViewChangeMessages = storage.getViewChangeMessages(blockHeight1, view1);
 

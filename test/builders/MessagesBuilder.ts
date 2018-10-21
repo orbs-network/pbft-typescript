@@ -29,6 +29,6 @@ export function aViewChangeMessage(keyManager: KeyManager, blockHeight: number, 
 
 export function aNewViewMessage(keyManager: KeyManager, blockHeight: number, view: number, preprepareMessage: PrePrepareMessage, viewChangeMessages: ViewChangeMessage[]): NewViewMessage {
     const mf: MessagesFactory = new MessagesFactory(keyManager);
-    const votes: ViewChangeContent[] = viewChangeMessages.map(vc => ({ signedHeader: vc.content.signedHeader, sender: vc.content.sender }));
+    const votes: ViewChangeContent[] = viewChangeMessages.map(vc => vc.content);
     return mf.createNewViewMessage(blockHeight, view, preprepareMessage, votes);
 }
