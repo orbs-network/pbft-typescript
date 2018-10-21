@@ -4,7 +4,7 @@ import { BlockUtils } from "./blockUtils/BlockUtils";
 import { ElectionTrigger } from "./electionTrigger/ElectionTrigger";
 import { KeyManager } from "./keyManager/KeyManager";
 import { Logger } from "./logger/Logger";
-import { CommitMessage, NewViewMessage, PrepareMessage, PrePrepareMessage, SenderSignature, ViewChangeHeader, ViewChangeMessage, serializeMessageContent, ViewChangeContent } from "./networkCommunication/Messages";
+import { CommitMessage, NewViewMessage, PrepareMessage, PrePrepareMessage, SenderSignature, ViewChangeHeader, ViewChangeMessage, serializeMessageContent, ViewChangeContent, MessageType } from "./networkCommunication/Messages";
 import { NetworkCommunication, ConsensusRawMessage } from "./networkCommunication/NetworkCommunication";
 import { validatePreparedProof } from "./proofsValidator/ProofsValidator";
 import { PBFTStorage } from "./storage/PBFTStorage";
@@ -131,6 +131,7 @@ export class PBFTTerm {
 
     private sendPrePrepare(message: PrePrepareMessage): void {
         const consesnsusRawMessage: ConsensusRawMessage = {
+            messageType: MessageType.PREPREPARE,
             content: serializeMessageContent(message.content),
             block: message.block
         };
@@ -149,6 +150,7 @@ export class PBFTTerm {
 
     private sendPrepare(message: PrepareMessage): void {
         const consesnsusRawMessage: ConsensusRawMessage = {
+            messageType: MessageType.PREPARE,
             content: serializeMessageContent(message.content)
         };
         this.networkCommunication.sendMessage(this.otherCommitteeMembersPKs, consesnsusRawMessage);
@@ -166,6 +168,7 @@ export class PBFTTerm {
 
     private sendCommit(message: CommitMessage): void {
         const consesnsusRawMessage: ConsensusRawMessage = {
+            messageType: MessageType.COMMIT,
             content: serializeMessageContent(message.content)
         };
         this.networkCommunication.sendMessage(this.otherCommitteeMembersPKs, consesnsusRawMessage);
@@ -183,6 +186,7 @@ export class PBFTTerm {
 
     private sendViewChange(message: ViewChangeMessage): void {
         const consesnsusRawMessage: ConsensusRawMessage = {
+            messageType: MessageType.VIEW_CHANGE,
             content: serializeMessageContent(message.content),
             block: message.block
         };
@@ -200,6 +204,7 @@ export class PBFTTerm {
 
     private sendNewView(message: NewViewMessage): void {
         const consesnsusRawMessage: ConsensusRawMessage = {
+            messageType: MessageType.NEW_VIEW,
             content: serializeMessageContent(message.content),
             block: message.block
         };

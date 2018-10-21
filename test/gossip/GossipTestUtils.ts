@@ -16,6 +16,7 @@ export function extractSenderPublicKeyFromConsensusRawMessage(consensusRawMessag
 
 export function messageToGossip(message: PrePrepareMessage | PrepareMessage | CommitMessage | ViewChangeMessage | NewViewMessage): ConsensusRawMessage {
     return {
+        messageType: message.content.signedHeader.messageType,
         content: serializeMessageContent(message.content),
         block: (message as any).block
     };
