@@ -5,7 +5,7 @@ export function validatePreparedProof(
     targetBlockHeight: number,
     targetView: number,
     preparedProof: PreparedProof,
-    f: number,
+    q: number,
     keyManager: KeyManager,
     membersPKs: string[],
     calcLeaderPk: (view: number) => string): boolean {
@@ -28,7 +28,7 @@ export function validatePreparedProof(
         return false;
     }
 
-    if (prepareSenders.length < 2 * f) {
+    if (prepareSenders.length < q - 1) {
         return false;
     }
 

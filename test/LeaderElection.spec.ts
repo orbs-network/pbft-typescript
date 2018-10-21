@@ -30,7 +30,8 @@ describe("Leader Election", () => {
         node0.triggerElection(); node2.triggerElection(); node3.triggerElection();
         await blockUtils.resolveAllValidations(true);
 
-        const node0Prepared: PreparedMessages = extractPreparedMessages(1, node0.config.pbftStorage, 1);
+        const q = 3;
+        const node0Prepared: PreparedMessages = extractPreparedMessages(1, node0.config.pbftStorage, q);
         const newViewMessage = aViewChangeMessage(node0.config.keyManager, 1, 1, node0Prepared);
         expect(sendToNodeSpy).to.have.been.calledWith(node1.pk, messageToGossip(newViewMessage));
 
@@ -248,11 +249,12 @@ describe("Leader Election", () => {
         await blockUtils.provideNextBlock();
         await nextTick(); // await for blockChain.getLastBlockHash
 
-        const node0Prepared: PreparedMessages = extractPreparedMessages(2, node0.config.pbftStorage, 1);
+        const q = 3;
+        const node0Prepared: PreparedMessages = extractPreparedMessages(2, node0.config.pbftStorage, q);
         const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.config.keyManager, 2, 1, node0Prepared);
         expect(spy0).to.have.been.calledWith(node1.pk, messageToGossip(node0VCMessage));
 
-        const node2Prepared: PreparedMessages = extractPreparedMessages(2, node2.config.pbftStorage, 1);
+        const node2Prepared: PreparedMessages = extractPreparedMessages(2, node2.config.pbftStorage, q);
         const node2VCMessage: ViewChangeMessage = aViewChangeMessage(node2.config.keyManager, 2, 1, node2Prepared);
         expect(spy2).to.have.been.calledWith(node1.pk, messageToGossip(node2VCMessage));
 
