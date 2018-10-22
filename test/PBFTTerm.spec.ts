@@ -570,7 +570,8 @@ describe("PBFTTerm", () => {
         triggerElection();
         nextTick();
 
-        const prepared: PreparedMessages = extractPreparedMessages(0, node1Config.pbftStorage, 1);
+        const q = 3;
+        const prepared: PreparedMessages = extractPreparedMessages(0, node1Config.pbftStorage, q);
         const latestPreparedProof: PreparedProof = aPreparedProofByMessages(prepared.preprepareMessage, prepared.prepareMessages);
 
         const content: ViewChangeContent = deserializeMessageContent(spy.args[0][1].content);

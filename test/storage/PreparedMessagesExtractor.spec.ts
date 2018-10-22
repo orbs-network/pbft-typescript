@@ -37,7 +37,8 @@ describe("Prepared Messages Extractor", () => {
             preprepareMessage,
             prepareMessages: [prepareMessage1, prepareMessage2]
         };
-        const actual: PreparedMessages = extractPreparedMessages(blockHeight, storage, 1);
+        const q = 3;
+        const actual: PreparedMessages = extractPreparedMessages(blockHeight, storage, q);
         expect(actual).to.deep.equal(expectedProof);
     });
 
@@ -85,7 +86,8 @@ describe("Prepared Messages Extractor", () => {
             preprepareMessage: prePrepareMessage30,
             prepareMessages: [prepareMessage30_1, prepareMessage30_2]
         };
-        const actual: PreparedMessages = extractPreparedMessages(1, storage, 1);
+        const q = 3;
+        const actual: PreparedMessages = extractPreparedMessages(1, storage, q);
         expect(actual).to.deep.equal(expected);
     });
 
@@ -94,7 +96,8 @@ describe("Prepared Messages Extractor", () => {
         storage.storePrepare(prepareMessage1);
         storage.storePrepare(prepareMessage2);
 
-        const actual: PreparedMessages = extractPreparedMessages(blockHeight, storage, 1);
+        const q = 3;
+        const actual: PreparedMessages = extractPreparedMessages(blockHeight, storage, q);
         expect(actual).to.be.undefined;
     });
 
@@ -102,7 +105,8 @@ describe("Prepared Messages Extractor", () => {
         const storage = new InMemoryPBFTStorage(logger);
         storage.storePrePrepare(preprepareMessage);
 
-        const actual: PreparedMessages = extractPreparedMessages(blockHeight, storage, 1);
+        const q = 3;
+        const actual: PreparedMessages = extractPreparedMessages(blockHeight, storage, q);
         expect(actual).to.be.undefined;
     });
 

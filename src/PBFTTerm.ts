@@ -119,7 +119,7 @@ export class PBFTTerm {
         this.setView(this.view + 1);
         this.logger.log({ subject: "Flow", FlowType: "LeaderChange", leaderPk: this.leaderPk, blockHeight: this.blockHeight, newView: this.view });
 
-        const prepared: PreparedMessages = extractPreparedMessages(this.blockHeight, this.pbftStorage, this.getF());
+        const prepared: PreparedMessages = extractPreparedMessages(this.blockHeight, this.pbftStorage, this.getQuorumSize());
         const message: ViewChangeMessage = this.messagesFactory.createViewChangeMessage(this.blockHeight, this.view, prepared);
         this.pbftStorage.storeViewChange(message);
         if (this.isLeader()) {
@@ -353,7 +353,7 @@ export class PBFTTerm {
             return false;
         }
 
-        if (preparedProof && validatePreparedProof(this.blockHeight, newView, preparedProof, this.getF(), this.keyManager, this.committeeMembersPKs, (view: number) => this.calcLeaderPk(view)) === false) {
+        if (preparedProof && validatePreparedProof(this.blockHeight, newView, preparedProof, this.getQuorumSize(), this.keyManager, this.committeeMembersPKs, (view: number) => this.calcLeaderPk(view)) === false) {
             this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the preparedProof is invalid` });
             return false;
         }
@@ -370,7 +370,7 @@ export class PBFTTerm {
     private checkElected(blockHeight: number, view: number): void {
         if (this.newViewLocally < view) {
             const viewChangeMessages = this.pbftStorage.getViewChangeMessages(blockHeight, view);
-            const minimumNodes = this.getF() * 2 + 1;
+            const minimumNodes = this.getQuorumSize();
             if (viewChangeMessages && viewChangeMessages.length >= minimumNodes) {
                 this.onElected(view, viewChangeMessages.slice(0, minimumNodes));
             }
@@ -407,7 +407,7 @@ export class PBFTTerm {
                     countPrepared
                 };
                 this.logger.log({ subject: "Info", message: `counting`, metaData });
-                if (countPrepared >= this.getF() * 2) {
+                if (countPrepared >= this.getQuorumSize() - 1) {
                     this.onPrepared(blockHeight, view, blockHash);
                 }
             }
@@ -441,7 +441,7 @@ export class PBFTTerm {
         if (!this.committedLocally) {
             if (this.isPrePrepared(blockHeight, view, blockHash)) {
                 const commits = this.pbftStorage.getCommitSendersPks(blockHeight, view, blockHash).length;
-                if (commits >= this.getF() * 2 + 1) {
+                if (commits >= this.getQuorumSize()) {
                     const block = this.pbftStorage.getPrePrepareBlock(blockHeight, view);
                     this.commitBlock(block, blockHash);
                 }
@@ -454,7 +454,7 @@ export class PBFTTerm {
             return false;
         }
 
-        if (votes.length < this.getF() * 2 + 1) {
+        if (votes.length < this.getQuorumSize()) {
             return false;
         }
 
@@ -552,8 +552,9 @@ export class PBFTTerm {
         }
     }
 
-    private getF(): number {
-        return Math.floor((this.committeeMembersPKs.length - 1) / 3);
+    private getQuorumSize(): number {
+        const f = Math.floor((this.committeeMembersPKs.length - 1) / 3);
+        return this.committeeMembersPKs.length - f;
     }
 
     public isLeader(): boolean {
