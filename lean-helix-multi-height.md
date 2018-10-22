@@ -42,7 +42,7 @@
         * `Communication.OnConsensusMessage(message)` - relay message to filtering by height. 
     
     * KeyManager: Note - assume it obtains private key for 'height' 
-        * `KeyManager.GetPublicKey(memberID, height, KeyType) : PublicKey` - map memberID used in _(KEY_TYPES := Consensus, RandomSeed, ...)_ to PublicKey _(for signature verification)_.
+        * `KeyManager.GetPublicKey(memberID, height, KeyType) : PublicKey` - map memberID used in _(KEY_TYPES := Consensus, RandomSeed, ...)_ to PublicKey _(for signature verification - where memberID is 0 refers to Master Public Key)_.
         * `KeyManager.Sign(object, height, KeyType) : signature` - sign using private key number KeyType _(KEY_TYPES := Consensus, RandomSeed, ...)_
         * `KeyManager.Verify(object, signature, PublicKey, height, KeyType) : valid` - verify validity of member signature at a given height 
         * `KeyManager.Aggregate(signature_list, public_keys_list) : signature` - aggregate the signatures on random_seed where each signature has a unique index - mapped in KeyManager with matching PublicKey _(necessary for aggregation)_.
@@ -99,12 +99,12 @@
  #### State
 > Stores the current state variables.
 * State variables: 
-  * OneHeightContext:
-      * Current_block_height (-1)
-      * Prev_block_hash ({})
-      * Random_seed (0)
-  * OneHeight  _(current instance of LeanHelixOneHeight(Current_block_height))_
-
+    * OneHeightContext:
+        * Current_block_height (-1)
+        * Prev_block_hash ({})
+        * Random_seed (0)
+    * OneHeight  _(current instance of LeanHelixOneHeight(Current_block_height))_
+    * StopHeight (MAX)
   
 
 
@@ -115,13 +115,14 @@
 > Demux message and filter by height. 
 #### Filter message by block height 
 * Current_block_height = my_state.OneHeightContext.Current_block_height
+* If Current_block_height >= my_state.StopHeight Return  _(stop process at StopHeight)_.
 * If message.Block_height > Current_block_height + configurable future_block_height_window - discard.
 * If message.Block_height > Current_block_height - store in Future Messages Cache.
 * If message.Block_height < Current_block_height - discard. 
 #### Demux message and pass to One Height PBFT, strip random_seed info from COMMIT
 * Determine the message type 
 * If message type COMMIT:
-    * KeyType = Get KeyType to sign for KeyManager.KEY_TYPES.RandomSeed
+    * KeyType = Get KeyType to verify for KeyManager.KEY_TYPES.RandomSeed
     * PublicKey = `KeyManager.GetPublicKey(message.Signer, message.Block_height, KeyType)`
     * Random_seed = my_state.OneHeightContext.Random_seed
     * Validate the random_seed _(current block_height)_ signature by calling `KeyManager.Verify(Random_seed, message.Random_seed_share, PublicKey)`. If failed validation - discard.  
@@ -132,23 +133,25 @@
  
 
 &nbsp;
-## `UpdateState(contextBlockHeaders)`
+## `UpdateState(previousBlockProof)`
 > Start infinite consensus at a given context. \
-> Derive next height, prevBlockHash and random_seed from contextBlockHeaders (called by the ConsensusService). \
+> Derive next height, prevBlockHash and random_seed from previousBlockProof (called by the ConsensusService). \
 > Clear old cache. \
 > Derive next committee and instantiate a consensus round. \
+> Note: StopHeight has to be higher than next consensus round to run 
 #### Clear old Cache
 * Clear Messages Cache based on Block_height
 * my_state.OneHeight.Dispose()
+* If previousBlockProof.Block_height + 1 >= my_state.StopHeight Return  _(stop process at StopHeight)_.
 #### Reset context for consensus
 * Set my_state.OneHeightContext:
-    * Current_block_height = contextBlockHeaders.Block_height + 1
-    * Prev_block_hash = contextBlockHeaders.context.Block_hash
+    * Current_block_height = previousBlockProof.Block_height + 1
+    * Prev_block_hash = previousBlockProof.context.Block_hash
     * Calculate the random seed for the upcoming block:
-      * Random_seed = SHA256(contextBlockHeaders.Random_seed_signature).
+        * Random_seed = SHA256(previousBlockProof.Random_seed_signature).
 * MyID = Get by calling `Membership.MyID(block_height)`
 #### Get Committee 
-* Committee = Get an ordered list of committee members by calling `Membership.RequestOrderedCommittee(Current_block_height, Random_seed, Config.Committee_size)`
+* Committee = Get an ordered list of committee members by calling `Membership.RequestOrderedCommittee(Current_block_height, Random_seed, Config.Committee_size(Current_block_height))`
 #### setup OneHeight config. Override BlockUtils, Communication and KeyManager - embed context
 * Generate OneHeight Config _(Pass\\override functionalities from Config)_:  
   * `CommitBlock(Block, commits_list)` - Callback on OneHeight.committedLocally.
@@ -173,11 +176,21 @@
 
 
 &nbsp;
-## `ValidateBlock(block)`
+## `ValidateBloc(block)`
 > Override BlockUtils.ValidateBlock for OneHeight consensus.
 #### Check the hash pointers
-* If block.Block_height does not match my_state.OneHeightContext.Current_block_height Return False.
-* If block.prev_block_hash does not match my_state.OneHeightContext.Prev_block_hash Return False.
+* Height = my_state.OneHeightContext.Current_block_height.
+* Prev_block_hash = my_state.OneHeightContext.Prev_block_hash
+* Return `ValidateBlockHelper(block, Height, Prev_block_hash)`
+
+
+
+&nbsp;
+## `ValidateBlockHelper(block, height, prev_block_hash)`
+> Override BlockUtils.ValidateBlock for OneHeight consensus.
+#### Check the hash pointers
+* If block.Block_height does not match height Return False.
+* If block.prev_block_hash does not match prev_block_hash Return False.
 * Return `BlockUtils.ValidateBlock(block.Block_height, block)`
 
 &nbsp;
@@ -195,9 +208,9 @@
 
 ## `Verify(object, signature, memberID)` 
 > Override KeyManager.Verify - PublicKey mapped as MemberID - for OneHeight consensus.
-* PublicKey = Get PublicKey by calling `Config.Membership.GetPublicKey(my_state.OneHeightContext.Current_block_height, memberID)`
 * Height = my_state.OneHeightContext.Current_block_height
-* KeyType = Get KeyType to sign for KeyManager.KEY_TYPES.Consensus
+* KeyType = Get KeyType to verify for KeyManager.KEY_TYPES.Consensus
+* PublicKey = Get PublicKey by calling `Config.KeyManager.GetPublicKey(memberID, Height, KeyType)`
 * Return `Config.KeyManager.Verify(object, signature, PublicKey, Height, KeyType)`
 
 
@@ -218,10 +231,7 @@
     * Add Random_seed_share to message  
         * message.Random_seed_share = Get signature on random_seed by calling `Config.KeyManager.Sign(RandomSeed, height, KeyType)`
 * Call `Communication.SendConsensusMessage(height, member_list, message)`
- 
-
-
-
+  
 
 
 &nbsp;
@@ -232,13 +242,7 @@
 * Append the corresponding LeanHelixBlockProof to block.
 * Commit the BlockPair to consuming service by calling `Config.ConsensusService.Commit(block)`
 * Broadcast to all nodes message with block by calling `Config.Communication.BroadcastPostConsensusMessage(height, message(block))`
-#### Trigger the next block height consensus round
-* Cache the required fields from the block headers for the next block_height:
-      * contextBlockHeaders:
-        * Current_block_height = block.Block_height + 1 
-        * Prev_block_hash = `Config.BlockUtils.CalcBlockHash(Current_block_height, block)`
-        * Random_seed = SHA256(LeanHelixBlockProof.random_seed_signature)
-* Call `UpdateState(contextBlockHeaders)`
+* Trigger next consensus round by Calling `UpdateState(LeanHelixBlockProof)` 
 
 
 
@@ -247,48 +251,83 @@
 ## `GenerateLeanHelixBlockProof(commits_list)`
 > Generates a block_proof.
 #### Generate PBFT proof 
-* Signers, Signature_pair_list = From COMMIT messages in commits_list Extract Signers and list of pairs (Signer, Signature)
 * From first _(any)_ COMMIT message Extract (Block_height, View, Block_hash) 
+* Signers, Signature_pair_list = From COMMIT messages in commits_list Extract Signers and list of pairs (Signer, Signature)
 * Generate PBFT_proof:
-    * opaque_message_type = COMMIT
+    <!-- * opaque_message_type = COMMIT -->
     * Block_height
     * View
     * Block_hash
-    * Signatures = Signature_pair_list
+    * SignaturesPairs = Signature_pair_list
 #### Generate random seed with proof
 * From random_seed_data extract list of pairs (PublicKey, Random_seed_share) 
-    * RandomSeedShare_list, PublicKeys_list, RandomSeed_signature_pair_list = Get from random_seed_data(Block_height, Signers_(from the commits_list)_)
+    * RandomSeedShare_list, PublicKeys_list = Get from random_seed_data(Block_height, Signers_(from the commits_list)_)
 * Aggregate the threshold signatrue
-    * RandomSeed_signature = Get by calling `KeyManager.Aggregate(RandomSeedShare_list, PublicKeys_list)`
-* Generate random seed signature proof:
-    * RandomSeed_signature_pair_list
+    * RandomSeed_signature = Get by calling `KeyManager.Aggregate(RandomSeedShares_list, PublicKeys_list)`
 #### Generate LeanHelixBlockProof  
 * Generate a LeanHelixBlockProof
-  * pbft_proof = PBFT_proof
-  * random_seed_signature = RandomSeed_signature
-  * random_seed_proof = RandomSeed_signature_pair_list
+  * PBFT_proof
+  * RandomSeed_signature
  &nbsp; 
 * Return LeanHelixBlockProof
 
 
+&nbsp;
+## `QuoromSize(numMemebers)`
+> Calculate the quorum size based on number of participating members.
+* f = Floor[(numMemebers-1)/3]
+* QuorumSize = numMemebers - f
+* Return QuorumSize
+
 
 
 &nbsp;
-## `VerifyBlockConsensus (block, contextBlockHeaders, blockProof)`
+## `ValidateBlockConsensus (block, blockProof, prevBlockProof)`
 > Called by the ConsensusService - e.g. by blockstorage as part of block sync. \
-> Assumes block valid , verifies the blockProof is valid.
-* s
-* 
+> Assumes block content valid , verifies the blockProof is valid.
+* From blockProof Extract (Block_height, View, Block_hash, SignaturesPairs) 
+* If block.Block_height does not match Block_height Return False.
+* Calculate the random seed from prevBlockProof:
+    * Random_seed = SHA256(prevBlockProof.Random_seed_signature).
+#### Get Committee 
+* Committee = Get an ordered list of committee members by calling `Membership.RequestOrderedCommittee(Block_height, Random_seed, Config.Committee_size(BlockHeight))`
+* QuorumSize = `QuoromSize(Committee.length)`
+#### validate PBFT signatures
+* If SignaturesPairs are not QuorumSize of all unique Signers Return False.
+* KeyType = Get KeyType to verify for KeyManager.KEY_TYPES.Consensus
+*  Generate the signature data - COMMIT_HEADER:
+    * Message_Type = COMMIT
+    * Block_height
+    * View
+    * Block_hash
+* For each SignaturePair in SignaturesPairs:
+    * If SignaturePair.Signer is not in Committee Return False.
+    * PublicKey = Get PublicKey by calling `Config.KeyManager.GetPublicKey(SignaturePair.Signer, Block_height, KeyType)`
+    * If `Config.KeyManager.Verify(COMMIT_HEADER, SignaturePair.Signature, PublicKey, Block_height, KeyType)` fails Return False.
+#### validate random seed signature
+* KeyType = Get KeyType to verify for KeyManager.KEY_TYPES.RandomSeed
+* Random_seed_signature = blockProof.Random_seed_signature 
+* Random_seed  _(calc above)_
+* Get master public key:
+    * PublicKey = call `KeyManager.GetPublicKey(memberID = 0, Block_height, KeyType)`
+* If `Config.KeyManager.Verify(Random_seed, Random_seed_signature, PublicKey, Block_height, KeyType)` fails Return False.
+#### validate block 
+* If `ValidateBlockHelper(block, Block_height, prevBlockProof.Block_hash)` fails Return False.
+* Passed all validation Return Valid
 
 
+ 
 &nbsp;
-## `Stop(height)`
+## `StopAt(height)`
 > Stops consensus performed on blocks when reaching height. 
-* s
-* 
+* my_state.StopHeight = height
+* If my_state.OneHeightContext.Current_block_height >= my_state.StopHeight
+    * Stop the OneHeight consensus round by calling `my_state.OneHeight.Dispose()`
 
+ 
 
-
+ 
+ 
 
 
 <!-- 

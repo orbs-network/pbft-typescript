@@ -145,7 +145,7 @@
 
 ## `IsMember(ID)` 
 > Confirm ID is a node in Members
-* Return ID in my_state.Memebers
+* Return ID in my_state.Members
 
 
 &nbsp;
