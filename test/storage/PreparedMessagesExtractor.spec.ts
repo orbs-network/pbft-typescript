@@ -42,20 +42,6 @@ describe("Prepared Messages Extractor", () => {
         expect(actual).to.deep.equal(expectedProof);
     });
 
-    it("should return the latest (heighest view) preprepare message", () => {
-        const storage = new InMemoryPBFTStorage(logger);
-        const prePrepareMessage10: PrePrepareMessage = aPrePrepareMessage(leaderKeyManager, 1, 10, block);
-        const prePrepareMessage20: PrePrepareMessage = aPrePrepareMessage(leaderKeyManager, 1, 20, block);
-        const prePrepareMessage30: PrePrepareMessage = aPrePrepareMessage(leaderKeyManager, 1, 30, block);
-
-        storage.storePrePrepare(prePrepareMessage10);
-        storage.storePrePrepare(prePrepareMessage30);
-        storage.storePrePrepare(prePrepareMessage20);
-
-        const actual: PrePrepareMessage = storage.getLatestPrePrepare(1);
-        expect(actual).to.deep.equal(prePrepareMessage30);
-    });
-
     it("should return the latest (heighest view) prepare proof", () => {
         const storage = new InMemoryPBFTStorage(logger);
         const prePrepareMessage10: PrePrepareMessage = aPrePrepareMessage(leaderKeyManager, 1, 10, block);
