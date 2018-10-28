@@ -33,7 +33,7 @@ export function validatePreparedProof(
     }
 
     const signedPreprepareBlockRef = JSON.stringify(preprepareBlockRef);
-    if (keyManager.verify(signedPreprepareBlockRef, preprepareSender) === false) {
+    if (keyManager.verify(signedPreprepareBlockRef, preprepareSender.senderPublicKey, preprepareSender.signature) === false) {
         return false;
     }
 
@@ -58,7 +58,7 @@ export function validatePreparedProof(
     }
 
     const signedPrepareBlockRef = JSON.stringify(prepareBlockRef);
-    if (prepareSenders.every(sender => keyManager.verify(signedPrepareBlockRef, sender)) === false) {
+    if (prepareSenders.every(sender => keyManager.verify(signedPrepareBlockRef, sender.senderPublicKey, sender.signature)) === false) {
         return false;
     }
 

@@ -2,7 +2,7 @@ import * as chai from "chai";
 import { expect } from "chai";
 import * as sinonChai from "sinon-chai";
 import { KeyManager } from "../../src";
-import { BlockRef, CommitMessage, MessageType, NewViewHeader, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage, ViewChangeHeader, ViewChangeContent } from "../../src/networkCommunication/Messages";
+import { BlockRef, CommitMessage, MessageType, NewViewHeader, NewViewMessage, PrepareMessage, PrePrepareMessage, ViewChangeMessage, ViewChangeHeader, ViewChangeContent, SenderSignature } from "../../src/networkCommunication/Messages";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 import { PreparedMessages } from "../../src/storage/PreparedMessagesExtractor";
@@ -21,10 +21,14 @@ describe("Messages Factory", () => {
     it("should be able to construct a PrePrepare message", async () => {
         const signedHeader: BlockRef = { messageType: MessageType.PREPREPARE, blockHeight, view, blockHash };
         const dataToSign: string = JSON.stringify(signedHeader);
+        const sender: SenderSignature = {
+            senderPublicKey: keyManager.getMyPublicKey(),
+            signature: keyManager.sign(dataToSign)
+        };
         const expectedMessage: PrePrepareMessage = {
             content: {
                 signedHeader,
-                sender: keyManager.sign(dataToSign),
+                sender,
             },
             block
         };
@@ -35,10 +39,14 @@ describe("Messages Factory", () => {
     it("should be able to construct a Prepare message", async () => {
         const signedHeader: BlockRef = { messageType: MessageType.PREPARE, blockHeight, view, blockHash };
         const dataToSign: string = JSON.stringify(signedHeader);
+        const sender: SenderSignature = {
+            senderPublicKey: keyManager.getMyPublicKey(),
+            signature: keyManager.sign(dataToSign)
+        };
         const expectedMessage: PrepareMessage = {
             content: {
                 signedHeader,
-                sender: keyManager.sign(dataToSign)
+                sender
             }
         };
         const actualMessage: PrepareMessage = messagesFactory.createPrepareMessage(blockHeight, view, blockHash);
@@ -48,10 +56,14 @@ describe("Messages Factory", () => {
     it("should be able to construct a Commit message", async () => {
         const signedHeader: BlockRef = { messageType: MessageType.COMMIT, blockHeight, view, blockHash };
         const dataToSign: string = JSON.stringify(signedHeader);
+        const sender: SenderSignature = {
+            senderPublicKey: keyManager.getMyPublicKey(),
+            signature: keyManager.sign(dataToSign)
+        };
         const expectedMessage: CommitMessage = {
             content: {
                 signedHeader,
-                sender: keyManager.sign(dataToSign)
+                sender
             }
         };
         const actualMessage: CommitMessage = messagesFactory.createCommitMessage(blockHeight, view, blockHash);
@@ -61,10 +73,14 @@ describe("Messages Factory", () => {
     it("should be able to construct a ViewChange message without prepared proof", async () => {
         const signedHeader: ViewChangeHeader = { messageType: MessageType.VIEW_CHANGE, blockHeight, view, preparedProof: undefined };
         const dataToSign: string = JSON.stringify(signedHeader);
+        const sender: SenderSignature = {
+            senderPublicKey: keyManager.getMyPublicKey(),
+            signature: keyManager.sign(dataToSign)
+        };
         const expectedMessage: ViewChangeMessage = {
             content: {
                 signedHeader,
-                sender: keyManager.sign(dataToSign),
+                sender,
             },
             block: undefined
         };
@@ -87,10 +103,14 @@ describe("Messages Factory", () => {
             preparedProof: aPreparedProofByMessages(preprepareMessage, preparedMessages.prepareMessages)
         };
         const dataToSign: string = JSON.stringify(signedHeader);
+        const sender: SenderSignature = {
+            senderPublicKey: keyManager.getMyPublicKey(),
+            signature: keyManager.sign(dataToSign)
+        };
         const expectedMessage: ViewChangeMessage = {
             content: {
                 signedHeader,
-                sender: keyManager.sign(dataToSign),
+                sender,
             },
             block
         };
@@ -108,10 +128,14 @@ describe("Messages Factory", () => {
 
         const signedHeader: NewViewHeader = { messageType: MessageType.NEW_VIEW, blockHeight, view, viewChangeConfirmations };
         const dataToSign: string = JSON.stringify(signedHeader);
+        const sender: SenderSignature = {
+            senderPublicKey: keyManager.getMyPublicKey(),
+            signature: keyManager.sign(dataToSign)
+        };
         const expectedMessage: NewViewMessage = {
             content: {
                 signedHeader,
-                sender: keyManager.sign(dataToSign),
+                sender,
                 preprepareContent: preprepareMessage.content
             },
             block

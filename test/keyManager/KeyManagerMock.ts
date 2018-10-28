@@ -7,18 +7,12 @@ export class KeyManagerMock implements KeyManager {
     constructor(private myPublicKey: string, private rejectedPKs: string[] = []) {
     }
 
-    sign(data: string): SenderSignature {
-        const signature = `${PRIVATE_KEY_PREFIX}-${this.myPublicKey}-${data}`;
-        return {
-            senderPublicKey: this.myPublicKey,
-            signature
-        };
+    sign(data: string): string {
+        return `${PRIVATE_KEY_PREFIX}-${this.myPublicKey}-${data}`;
     }
 
-    verify(signedData: string, sender: SenderSignature): boolean {
-        const { signature, senderPublicKey } = sender;
-
-        if (this.rejectedPKs.indexOf(senderPublicKey) > -1) {
+    verify(signedData: string, publicKey: string, signature: string): boolean {
+        if (this.rejectedPKs.indexOf(publicKey) > -1) {
             return false;
         }
 
@@ -27,11 +21,11 @@ export class KeyManagerMock implements KeyManager {
         }
 
         const withoutPrefix = signature.substr(PRIVATE_KEY_PREFIX.length + 1);
-        if (withoutPrefix.indexOf(senderPublicKey) === -1) {
+        if (withoutPrefix.indexOf(publicKey) === -1) {
             return false;
         }
 
-        const withoutPublicKey = withoutPrefix.substr(senderPublicKey.length + 1);
+        const withoutPublicKey = withoutPrefix.substr(publicKey.length + 1);
         if (signedData !== withoutPublicKey) {
             return false;
         }

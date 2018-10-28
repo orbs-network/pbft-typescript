@@ -22,9 +22,17 @@ export function aPreparedProof(leader: Node, members: Node[], blockHeight: numbe
 
     return {
         preprepareBlockRef,
-        preprepareSender: leader.config.keyManager.sign(JSON.stringify(preprepareBlockRef)),
+        preprepareSender: {
+            senderPublicKey: leader.config.keyManager.getMyPublicKey(),
+            signature: leader.config.keyManager.sign(JSON.stringify(preprepareBlockRef))
+        },
         prepareBlockRef,
-        prepareSenders: members.map(member => member.config.keyManager.sign(JSON.stringify(prepareBlockRef)))
+        prepareSenders: members.map(member => {
+            return {
+                senderPublicKey: member.config.keyManager.getMyPublicKey(),
+                signature: member.config.keyManager.sign(JSON.stringify(prepareBlockRef))
+            };
+        })
     };
 }
 

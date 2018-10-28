@@ -8,7 +8,10 @@ export class MessagesFactory {
     createPreprepareMessage(blockHeight: number, view: number, block: Block): PrePrepareMessage {
         const signedHeader: BlockRef = { messageType: MessageType.PREPREPARE, blockHeight, view, blockHash: block.getBlockHash() };
         const dataToSign: string = JSON.stringify(signedHeader);
-        const sender: SenderSignature = this.keyManager.sign(dataToSign);
+        const sender: SenderSignature = {
+            senderPublicKey: this.keyManager.getMyPublicKey(),
+            signature: this.keyManager.sign(dataToSign)
+        };
         return {
             content: {
                 signedHeader,
@@ -21,7 +24,10 @@ export class MessagesFactory {
     createPrepareMessage(blockHeight: number, view: number, blockHash: Buffer): PrepareMessage {
         const signedHeader: BlockRef = { messageType: MessageType.PREPARE, blockHeight, view, blockHash };
         const dataToSign: string = JSON.stringify(signedHeader);
-        const sender: SenderSignature = this.keyManager.sign(dataToSign);
+        const sender: SenderSignature = {
+            senderPublicKey: this.keyManager.getMyPublicKey(),
+            signature: this.keyManager.sign(dataToSign)
+        };
         return {
             content: {
                 sender,
@@ -33,7 +39,10 @@ export class MessagesFactory {
     createCommitMessage(blockHeight: number, view: number, blockHash: Buffer): CommitMessage {
         const signedHeader: BlockRef = { messageType: MessageType.COMMIT, blockHeight, view, blockHash };
         const dataToSign: string = JSON.stringify(signedHeader);
-        const sender: SenderSignature = this.keyManager.sign(dataToSign);
+        const sender: SenderSignature = {
+            senderPublicKey: this.keyManager.getMyPublicKey(),
+            signature: this.keyManager.sign(dataToSign)
+        };
         return {
             content: {
                 sender,
@@ -62,7 +71,10 @@ export class MessagesFactory {
 
         const signedHeader: ViewChangeHeader = { messageType: MessageType.VIEW_CHANGE, blockHeight, view, preparedProof };
         const dataToSign: string = JSON.stringify(signedHeader);
-        const sender: SenderSignature = this.keyManager.sign(dataToSign);
+        const sender: SenderSignature = {
+            senderPublicKey: this.keyManager.getMyPublicKey(),
+            signature: this.keyManager.sign(dataToSign)
+        };
         return {
             content: {
                 signedHeader,
@@ -75,7 +87,10 @@ export class MessagesFactory {
     createNewViewMessage(blockHeight: number, view: number, preprepareMessage: PrePrepareMessage, viewChangeConfirmations: ViewChangeContent[]): NewViewMessage {
         const signedHeader: NewViewHeader = { messageType: MessageType.NEW_VIEW, blockHeight, view, viewChangeConfirmations };
         const dataToSign: string = JSON.stringify(signedHeader);
-        const sender: SenderSignature = this.keyManager.sign(dataToSign);
+        const sender: SenderSignature = {
+            senderPublicKey: this.keyManager.getMyPublicKey(),
+            signature: this.keyManager.sign(dataToSign)
+        };
         return {
             content: {
                 signedHeader,

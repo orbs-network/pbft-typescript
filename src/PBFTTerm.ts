@@ -243,29 +243,29 @@ export class PBFTTerm {
     private async validatePrePreapare(message: PrePrepareMessage): Promise<boolean> {
         const { block, content } = message;
         const { signedHeader, sender } = content;
-        const { senderPublicKey: senderPk } = sender;
+        const { senderPublicKey, signature } = sender;
         const { view, blockHeight, blockHash } = signedHeader;
 
         if (this.hasPrePrepare(blockHeight, view)) {
-            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceivePrePrepare from "${senderPk}", already prepared` });
+            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceivePrePrepare from "${senderPublicKey}", already prepared` });
             return false;
         }
 
         const signedData = JSON.stringify(signedHeader);
-        if (!this.keyManager.verify(signedData, sender)) {
-            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], validatePrePreapare from "${senderPk}", ignored because the signature verification failed` });
+        if (!this.keyManager.verify(signedData, senderPublicKey, signature)) {
+            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], validatePrePreapare from "${senderPublicKey}", ignored because the signature verification failed` });
             return;
         }
 
         const wanaBeLeaderId = this.calcLeaderPk(view);
-        if (wanaBeLeaderId !== senderPk) {
-            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceivePrePrepare from "${senderPk}", block rejected because it was not sent by the current leader (${view})` });
+        if (wanaBeLeaderId !== senderPublicKey) {
+            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceivePrePrepare from "${senderPublicKey}", block rejected because it was not sent by the current leader (${view})` });
             return false;
         }
 
         const givenBlockHash = this.blockUtils.calculateBlockHash(block);
         if (givenBlockHash.equals(blockHash) === false) {
-            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceivePrePrepare from "${senderPk}", block rejected because it doesn't match the given blockHash (${view})` });
+            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceivePrePrepare from "${senderPublicKey}", block rejected because it doesn't match the given blockHash (${view})` });
             return false;
         }
 
@@ -275,7 +275,7 @@ export class PBFTTerm {
         }
 
         if (!isValidBlock) {
-            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceivePrePrepare from "${senderPk}", block is invalid` });
+            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceivePrePrepare from "${senderPublicKey}", block is invalid` });
             return false;
         }
 
@@ -288,19 +288,19 @@ export class PBFTTerm {
 
     public onReceivePrepare(message: PrepareMessage): void {
         const { sender, signedHeader } = message.content;
-        const { senderPublicKey: senderPk } = sender;
+        const { senderPublicKey, signature } = sender;
         const { blockHeight, view, blockHash } = signedHeader;
         const metaData = {
             method: "onReceivePrepare",
             blockHeight,
             view,
             blockHash,
-            senderPk
+            senderPk: senderPublicKey
         };
 
         const signedData = JSON.stringify(signedHeader);
-        if (!this.keyManager.verify(signedData, sender)) {
-            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceivePrepare from "${senderPk}", ignored because the signature verification failed` });
+        if (!this.keyManager.verify(signedData, senderPublicKey, signature)) {
+            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceivePrepare from "${senderPublicKey}", ignored because the signature verification failed` });
             return;
         }
 
@@ -309,7 +309,7 @@ export class PBFTTerm {
             return;
         }
 
-        if (this.leaderPk === senderPk) {
+        if (this.leaderPk === senderPublicKey) {
             this.logger.log({ subject: "Warning", message: `prepare received from leader is forbidden`, metaData });
             return;
         }
@@ -339,28 +339,28 @@ export class PBFTTerm {
 
     private isViewChangeValid(targetLeaderPk: string, view: number, message: { signedHeader: ViewChangeHeader, sender: SenderSignature }): boolean {
         const { signedHeader, sender } = message;
-        const { senderPublicKey: senderPk } = sender;
+        const { senderPublicKey, signature } = sender;
         const { view: newView, blockHeight, preparedProof } = signedHeader;
 
         const signedData = JSON.stringify(signedHeader);
-        if (!this.keyManager.verify(signedData, sender)) {
-            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the signature verification failed` });
+        if (!this.keyManager.verify(signedData, senderPublicKey, signature)) {
+            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${newView}], onReceiveViewChange from "${senderPublicKey}", ignored because the signature verification failed` });
             return false;
         }
 
         if (view > newView) {
-            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because of unrelated view` });
+            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${newView}], onReceiveViewChange from "${senderPublicKey}", ignored because of unrelated view` });
             return false;
         }
 
         if (preparedProof && validatePreparedProof(this.blockHeight, newView, preparedProof, this.getQuorumSize(), this.keyManager, this.committeeMembersPKs, (view: number) => this.calcLeaderPk(view)) === false) {
-            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the preparedProof is invalid` });
+            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${newView}], onReceiveViewChange from "${senderPublicKey}", ignored because the preparedProof is invalid` });
             return false;
         }
 
         const leaderToBePk = this.calcLeaderPk(newView);
         if (leaderToBePk !== targetLeaderPk) {
-            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], newView:[${newView}], onReceiveViewChange from "${senderPk}", ignored because the newView doesn't match the target leader` });
+            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], newView:[${newView}], onReceiveViewChange from "${senderPublicKey}", ignored because the newView doesn't match the target leader` });
             return false;
         }
 
@@ -424,12 +424,12 @@ export class PBFTTerm {
 
     public onReceiveCommit(message: CommitMessage): void {
         const { signedHeader, sender } = message.content;
-        const { senderPublicKey: senderPk } = sender;
+        const { senderPublicKey, signature } = sender;
         const { view, blockHeight, blockHash } = signedHeader;
 
         const signedData = JSON.stringify(signedHeader);
-        if (!this.keyManager.verify(signedData, sender)) {
-            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveCommit from "${senderPk}", ignored because the signature verification failed` });
+        if (!this.keyManager.verify(signedData, senderPublicKey, signature)) {
+            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveCommit from "${senderPublicKey}", ignored because the signature verification failed` });
             return;
         }
 
@@ -491,38 +491,38 @@ export class PBFTTerm {
     public async onReceiveNewView(message: NewViewMessage): Promise<void> {
         const { block, content } = message;
         const { signedHeader, sender, preprepareContent } = content;
-        const { senderPublicKey: senderPk } = sender;
+        const { senderPublicKey, signature } = sender;
         const { view, blockHeight, viewChangeConfirmations } = signedHeader;
 
         const signedData = JSON.stringify(signedHeader);
-        if (!this.keyManager.verify(signedData, sender)) {
-            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveNewView from "${senderPk}", ignored because the signature verification failed` });
+        if (!this.keyManager.verify(signedData, senderPublicKey, signature)) {
+            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveNewView from "${senderPublicKey}", ignored because the signature verification failed` });
             return;
         }
 
         const futureLeaderId = this.calcLeaderPk(view);
-        if (futureLeaderId !== senderPk) {
-            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveNewView from "${senderPk}", rejected because it match the new id (${view})` });
+        if (futureLeaderId !== senderPublicKey) {
+            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveNewView from "${senderPublicKey}", rejected because it match the new id (${view})` });
             return;
         }
 
         if (this.validateViewChangeVotes(blockHeight, view, viewChangeConfirmations) === false) {
-            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveNewView from "${senderPk}", votes is invalid` });
+            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveNewView from "${senderPublicKey}", votes is invalid` });
             return;
         }
 
         if (this.view > view) {
-            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveNewView from "${senderPk}", view is from the past` });
+            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveNewView from "${senderPublicKey}", view is from the past` });
             return;
         }
 
         if (view !== preprepareContent.signedHeader.view) {
-            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveNewView from "${senderPk}", view doesn't match PP.view` });
+            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveNewView from "${senderPublicKey}", view doesn't match PP.view` });
             return;
         }
 
         if (blockHeight !== preprepareContent.signedHeader.blockHeight) {
-            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveNewView from "${senderPk}", blockHeight doesn't match PP.blockHeight` });
+            this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveNewView from "${senderPublicKey}", blockHeight doesn't match PP.blockHeight` });
             return;
         }
 
@@ -530,7 +530,7 @@ export class PBFTTerm {
         if (latestVote !== undefined) {
             const viewChangeMessageValid = this.isViewChangeValid(futureLeaderId, view, latestVote);
             if (!viewChangeMessageValid) {
-                this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveNewView from "${senderPk}", view change votes are invalid` });
+                this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveNewView from "${senderPublicKey}", view change votes are invalid` });
                 return;
             }
 
@@ -538,7 +538,7 @@ export class PBFTTerm {
             if (latestVoteBlockHash) {
                 const ppBlockHash = this.blockUtils.calculateBlockHash(block);
                 if (latestVoteBlockHash.equals(ppBlockHash) === false) {
-                    this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveNewView from "${senderPk}", the given block (PP.block) doesn't match the best block from the VCProof` });
+                    this.logger.log({ subject: "Warning", message: `blockHeight:[${blockHeight}], view:[${view}], onReceiveNewView from "${senderPublicKey}", the given block (PP.block) doesn't match the best block from the VCProof` });
                     return;
                 }
             }
