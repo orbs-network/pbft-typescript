@@ -1,15 +1,15 @@
 import { Block } from "../../src/Block";
+import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 import { Node } from "../network/Node";
-import { BlockMock } from "../builders/BlockBuilder";
 
 export const blockMatcher = (chai: any, utils: any) => {
-    chai.Assertion.addMethod("agreeOnBlock", function (block: BlockMock) {
+    chai.Assertion.addMethod("agreeOnBlock", function (block: Block) {
         const nodes: Node[] = this._obj;
-        const blockHash: Buffer = block.calculateBlockHash();
+        const blockHash: Buffer = calculateBlockHash(block);
 
         const results = nodes.map(node => {
-            const latestBlock: BlockMock = node.getLatestCommittedBlock() as BlockMock;
-            const latestBlockHash = latestBlock.calculateBlockHash();
+            const latestBlock: Block = node.getLatestCommittedBlock();
+            const latestBlockHash = calculateBlockHash(latestBlock);
             return latestBlockHash.equals(blockHash);
           });
         const hasConsensus = results.every(r => r);

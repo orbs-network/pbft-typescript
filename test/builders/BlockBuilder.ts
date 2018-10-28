@@ -1,5 +1,5 @@
 import { Block } from "../../src/Block";
-import { createHash } from "crypto";
+import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 
 let globalCounter: number = 0;
 const genBody = () => `Block ${(globalCounter++).toString()}`;
@@ -10,7 +10,7 @@ export class BlockMock implements Block {
     constructor(private readonly height: number, private readonly body: string) {
         this.height = height;
         this.body = body;
-        this.blockHash = this.calculateBlockHash();
+        this.blockHash = calculateBlockHash(this);
     }
 
     getHeight(): number {
@@ -21,8 +21,8 @@ export class BlockMock implements Block {
         return this.blockHash;
     }
 
-    calculateBlockHash(): Buffer {
-        return createHash("sha256").update(this.height.toString()).update(this.body).digest();
+    getBody(): string {
+        return this.body;
     }
 }
 
