@@ -27,7 +27,8 @@ export class BlockMock implements Block {
 }
 
 export function aBlock(previousBlock: Block, body: string = genBody()): Block {
-    return new BlockMock(previousBlock.getHeight() + 1, body);
+    const height = previousBlock ? previousBlock.getHeight() + 1 : 0;
+    return new BlockMock(height, body);
 }
 
-export const theGenesisBlock: Block = new BlockMock(0, "The Genesis Block");
+export const theGenesisBlock: Block = aBlock(undefined, "The Genesis Block");
