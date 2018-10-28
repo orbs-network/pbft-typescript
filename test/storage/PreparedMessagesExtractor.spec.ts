@@ -44,17 +44,17 @@ describe("Prepared Messages Extractor", () => {
 
     it("should return the latest (heighest view) prepare proof", () => {
         const storage = new InMemoryPBFTStorage(logger);
-        const prePrepareMessage10: PrePrepareMessage = aPrePrepareMessage(leaderKeyManager, 1, 10, block);
-        const prepareMessage10_1: PrepareMessage = aPrepareMessage(sender1KeyManager, 1, 10, block);
-        const prepareMessage10_2: PrepareMessage = aPrepareMessage(sender2KeyManager, 1, 10, block);
+        const prePrepareMessage10: PrePrepareMessage = aPrePrepareMessage(leaderKeyManager, blockHeight, 10, block);
+        const prepareMessage10_1: PrepareMessage = aPrepareMessage(sender1KeyManager, blockHeight, 10, block);
+        const prepareMessage10_2: PrepareMessage = aPrepareMessage(sender2KeyManager, blockHeight, 10, block);
 
-        const prePrepareMessage20: PrePrepareMessage = aPrePrepareMessage(leaderKeyManager, 1, 20, block);
-        const prepareMessage20_1: PrepareMessage = aPrepareMessage(sender1KeyManager, 1, 20, block);
-        const prepareMessage20_2: PrepareMessage = aPrepareMessage(sender2KeyManager, 1, 20, block);
+        const prePrepareMessage20: PrePrepareMessage = aPrePrepareMessage(leaderKeyManager, blockHeight, 20, block);
+        const prepareMessage20_1: PrepareMessage = aPrepareMessage(sender1KeyManager, blockHeight, 20, block);
+        const prepareMessage20_2: PrepareMessage = aPrepareMessage(sender2KeyManager, blockHeight, 20, block);
 
-        const prePrepareMessage30: PrePrepareMessage = aPrePrepareMessage(leaderKeyManager, 1, 30, block);
-        const prepareMessage30_1: PrepareMessage = aPrepareMessage(sender1KeyManager, 1, 30, block);
-        const prepareMessage30_2: PrepareMessage = aPrepareMessage(sender2KeyManager, 1, 30, block);
+        const prePrepareMessage30: PrePrepareMessage = aPrePrepareMessage(leaderKeyManager, blockHeight, 30, block);
+        const prepareMessage30_1: PrepareMessage = aPrepareMessage(sender1KeyManager, blockHeight, 30, block);
+        const prepareMessage30_2: PrepareMessage = aPrepareMessage(sender2KeyManager, blockHeight, 30, block);
 
         storage.storePrePrepare(prePrepareMessage10);
         storage.storePrepare(prepareMessage10_1);
@@ -73,7 +73,7 @@ describe("Prepared Messages Extractor", () => {
             prepareMessages: [prepareMessage30_1, prepareMessage30_2]
         };
         const q = 3;
-        const actual: PreparedMessages = extractPreparedMessages(1, storage, q);
+        const actual: PreparedMessages = extractPreparedMessages(blockHeight, storage, q);
         expect(actual).to.deep.equal(expected);
     });
 
