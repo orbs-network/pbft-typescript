@@ -120,8 +120,9 @@ describe("PBFTTerm", () => {
 
     describe("signature verifications", () => {
         let node1PbftTerm: PBFTTerm;
-        const block: Block = aBlock(theGenesisBlock);
+        let block: Block;
         beforeEach(() => {
+            block = aBlock(theGenesisBlock);
             node1PbftTerm = createPBFTTerm(node1Config);
             expect(node1PbftTerm.getView()).to.equal(0);
             triggerElection();

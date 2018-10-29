@@ -49,6 +49,7 @@ describe("PBFT", () => {
 
     it("should start a network, append a block, and make sure that all nodes recived it", async () => {
         const { testNetwork, blocksPool } = aSimpleTestNetwork();
+        const firstBlock = blocksPool[0];
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
@@ -57,7 +58,7 @@ describe("PBFT", () => {
         await testNetwork.resolveAllValidations(true);
         await nextTick();
 
-        expect(testNetwork.nodes).to.agreeOnBlock(blocksPool[0]);
+        expect(testNetwork.nodes).to.agreeOnBlock(firstBlock);
         testNetwork.shutDown();
     });
 
@@ -80,6 +81,7 @@ describe("PBFT", () => {
 
     it("should ignore suggested block if they are not from the leader", async () => {
         const { testNetwork, blocksPool } = aSimpleTestNetwork();
+        const firstBlock = blocksPool[0];
 
         testNetwork.nodes[3].startConsensus(); // pretending to be the leader
         await testNetwork.provideNextBlock();
@@ -87,7 +89,7 @@ describe("PBFT", () => {
         await testNetwork.resolveAllValidations(true);
         await nextTick();
 
-        expect(testNetwork.nodes).to.not.agreeOnBlock(blocksPool[0]);
+        expect(testNetwork.nodes).to.not.agreeOnBlock(firstBlock);
         testNetwork.shutDown();
     });
 
@@ -124,6 +126,7 @@ describe("PBFT", () => {
 
     it("should reach consensus, in a network of 5 nodes, where one of the nodes is byzantine and the others are loyal", async () => {
         const { testNetwork, blocksPool } = aSimpleTestNetwork(5);
+        const firstBlock = blocksPool[0];
 
         const byzantineNode = testNetwork.nodes[4];
         const gossip = testNetwork.getNodeGossip(byzantineNode.publicKey);
@@ -136,7 +139,7 @@ describe("PBFT", () => {
         await testNetwork.resolveAllValidations(true);
         await nextTick();
 
-        expect(testNetwork.nodes.splice(0, 3)).to.agreeOnBlock(blocksPool[0]);
+        expect(testNetwork.nodes.splice(0, 3)).to.agreeOnBlock(firstBlock);
     });
 
     it("should reach consensus, even when a byzantine node is sending a bad block several times", async () => {
@@ -167,6 +170,7 @@ describe("PBFT", () => {
 
     it("should reach consensus, in a network of 7 nodes, where two of the nodes is byzantine and the others are loyal", async () => {
         const { testNetwork, blocksPool } = aSimpleTestNetwork(7);
+        const firstBlock = blocksPool[0];
 
         const byzantineNode1 = testNetwork.nodes[5];
         const byzantineNode2 = testNetwork.nodes[6];
@@ -182,7 +186,7 @@ describe("PBFT", () => {
         await testNetwork.resolveAllValidations(true);
         await nextTick();
 
-        expect(testNetwork.nodes.splice(0, 4)).to.agreeOnBlock(blocksPool[0]);
+        expect(testNetwork.nodes.splice(0, 4)).to.agreeOnBlock(firstBlock);
         testNetwork.shutDown();
     });
 
@@ -239,14 +243,14 @@ describe("PBFT", () => {
     it("should reach consensus, on ALL nodes after one of the node was stuck (Saving future messages)", async () => {
         const block1 = aBlock(theGenesisBlock, "block 1");
         const block2 = aBlock(block1, "block 2");
-        const blockUtils = new BlockUtilsMock([block1, block2]);
+        const blocksPool = [block1, block2];
 
-        const hangingBlockUtils: BlockUtilsMock = new BlockUtilsMock([block1, block2]);
+        const hangingBlockUtils: BlockUtilsMock = new BlockUtilsMock(blocksPool);
         const hangingNodeBuilder = aNode()
             .gettingBlocksVia(hangingBlockUtils);
 
             const testNetwork = aTestNetwork()
-            .gettingBlocksVia(blockUtils)
+            .withBlocksPool(blocksPool)
             .with(3).nodes
             .withCustomNode(hangingNodeBuilder)
             .build();

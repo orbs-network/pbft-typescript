@@ -19,7 +19,7 @@ export class BlockUtilsMock implements BlockUtils {
 
     public constructor(upCommingBlocks?: Block[]) {
         if (upCommingBlocks !== undefined) {
-            this.upCommingBlocks = [...upCommingBlocks];
+            this.upCommingBlocks = upCommingBlocks;
         }
     }
 

@@ -8,19 +8,18 @@ import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aTestNetwork } from "./builders/TestNetworkBuilder";
 import { TestNetwork } from "./network/TestNetwork";
 import { nextTick } from "./timeUtils";
+import { Node } from "./network/Node";
 
 chai.use(sinonChai);
 
 describe("Block Validation", () => {
     let block: Block;
-    let blockUtils: BlockUtilsMock;
     let testNetwork: TestNetwork;
 
     beforeEach(() => {
         block = aBlock(theGenesisBlock);
-        blockUtils = new BlockUtilsMock([block]);
         testNetwork = aTestNetwork()
-            .gettingBlocksVia(blockUtils)
+            .withBlocksPool([block])
             .with(4).nodes
             .build();
     });
@@ -30,7 +29,8 @@ describe("Block Validation", () => {
     });
 
     it("should call validateBlock on onPrepare", async () => {
-        const spy = sinon.spy(blockUtils, "validateBlock");
+        const node1: Node = testNetwork.nodes[1];
+        const spy = sinon.spy(node1.blockUtils, "validateBlock");
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
         await testNetwork.provideNextBlock();

@@ -2,7 +2,7 @@ import { Block } from "../../src/Block";
 import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 
 let globalCounter: number = 0;
-const genBody = () => `Block ${(globalCounter++).toString()}`;
+const genBody = () => `Block ${(++globalCounter).toString()}`;
 
 export class BlockMock implements Block {
     private readonly blockHash: Buffer;

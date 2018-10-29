@@ -21,7 +21,7 @@ describe("Prepared Messages Extractor", () => {
     const leaderKeyManager: KeyManager = new KeyManagerMock(leaderId);
     const sender1KeyManager: KeyManager = new KeyManagerMock(senderId1);
     const sender2KeyManager: KeyManager = new KeyManagerMock(senderId2);
-    const block = aBlock(theGenesisBlock);
+    const block = aBlock(theGenesisBlock, "Messages Extractor Block");
 
     const preprepareMessage: PrePrepareMessage = aPrePrepareMessage(leaderKeyManager, blockHeight, view, block);
     const prepareMessage1: PrepareMessage = aPrepareMessage(sender1KeyManager, blockHeight, view, block);

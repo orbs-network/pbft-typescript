@@ -1,6 +1,5 @@
 import { Block } from "../../src/Block";
 import { Logger } from "../../src/logger/Logger";
-import { SocketsLogger } from "../../src/logger/SocketsLogger";
 import { BlockUtilsMock } from "../blockUtils/BlockUtilsMock";
 import { Gossip } from "../gossip/Gossip";
 import { GossipDiscovery } from "../gossip/GossipDiscovery";
@@ -11,7 +10,7 @@ import { TestNetwork } from "../network/TestNetwork";
 import { aBlock, theGenesisBlock } from "./BlockBuilder";
 import { aNode, NodeBuilder } from "./NodeBuilder";
 export interface LoggerConstructor {
-    new (id: string): Logger;
+    new(id: string): Logger;
 }
 export class With {
     constructor(private testNetworkBuilder: TestNetworkBuilder, private count: number) {
@@ -26,7 +25,7 @@ export class With {
 class TestNetworkBuilder {
     private loggerCtor: LoggerConstructor = SilentLogger;
     private customNodes: NodeBuilder[] = [];
-    private sharedBlockUtils: BlockUtilsMock;
+    private blocksPool: Block[];
     private testNetwork: TestNetwork;
 
     public countOfNodes: number = 0;
@@ -50,9 +49,9 @@ class TestNetworkBuilder {
         return this;
     }
 
-    public gettingBlocksVia(sharedBlockUtils: BlockUtilsMock): this {
-        if (!this.sharedBlockUtils) {
-            this.sharedBlockUtils = sharedBlockUtils;
+    public withBlocksPool(blocksPool: Block[]): this {
+        if (!this.blocksPool) {
+            this.blocksPool = blocksPool;
         }
         return this;
     }
@@ -66,7 +65,7 @@ class TestNetworkBuilder {
 
     private buildNode(builder: NodeBuilder, publicKey: string, discovery: GossipDiscovery): Node {
         const logger: Logger = new this.loggerCtor(publicKey);
-        const blockUtils: BlockUtilsMock = this.sharedBlockUtils ? this.sharedBlockUtils : new BlockUtilsMock();
+        const blockUtils: BlockUtilsMock = new BlockUtilsMock(this.blocksPool);
         const gossip = new Gossip(discovery);
         discovery.registerGossip(publicKey, gossip);
         return builder
@@ -93,15 +92,15 @@ class TestNetworkBuilder {
 
 export const aTestNetwork = () => new TestNetworkBuilder();
 export const aSimpleTestNetwork = (countOfNodes: number = 4, blocksPool?: Block[]) => {
-    const block1 = aBlock(theGenesisBlock);
-    const block2 = aBlock(block1);
-    const block3 = aBlock(block2);
-    const block4 = aBlock(block3);
-    blocksPool = blocksPool || [block1, block2, block3, block4];
-    const blockUtils = new BlockUtilsMock(blocksPool);
+    if (!blocksPool) {
+        const block1 = aBlock(theGenesisBlock);
+        const block2 = aBlock(block1);
+        const block3 = aBlock(block2);
+        const block4 = aBlock(block3);
+        blocksPool = blocksPool || [block1, block2, block3, block4];
+    }
     const testNetwork = aTestNetwork()
-        .gettingBlocksVia(blockUtils)
-        .thatLogsToCustomeLogger(SocketsLogger)
+        .withBlocksPool(blocksPool)
         .with(countOfNodes).nodes
         .build();
 

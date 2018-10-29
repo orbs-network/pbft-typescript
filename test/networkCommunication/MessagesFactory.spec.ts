@@ -14,7 +14,7 @@ describe("Messages Factory", () => {
     const keyManager: KeyManager = new KeyManagerMock("My PK");
     const blockHeight = Math.floor(Math.random() * 1_000_000);
     const view = Math.floor(Math.random() * 1_000_000);
-    const block = aBlock(theGenesisBlock);
+    const block = aBlock(theGenesisBlock, "Messages Factory Block");
     const blockHash = block.getBlockHash();
     const messagesFactory: MessagesFactory = new MessagesFactory(keyManager);
 
