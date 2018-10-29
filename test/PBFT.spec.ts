@@ -19,7 +19,7 @@ chai.use(blockMatcher);
 
 describe("PBFT", () => {
     it("should send pre-prepare only if it's the leader", async () => {
-        const { testNetwork, blockUtils } = aSimpleTestNetwork();
+        const { testNetwork } = aSimpleTestNetwork();
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
         const node2 = testNetwork.nodes[2];
@@ -35,8 +35,8 @@ describe("PBFT", () => {
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
-        await blockUtils.provideNextBlock();
-        await blockUtils.resolveAllValidations(true);
+        await testNetwork.provideNextBlock();
+        await testNetwork.resolveAllValidations(true);
         await nextTick(); // await for notifyCommitted
 
         expect(gossipMessageCounter(spy0, MessageType.PREPREPARE)).to.equal(1);
@@ -48,42 +48,43 @@ describe("PBFT", () => {
     });
 
     it("should start a network, append a block, and make sure that all nodes recived it", async () => {
-        const { testNetwork, blockUtils, blocksPool } = aSimpleTestNetwork();
+        const { testNetwork, blocksPool } = aSimpleTestNetwork();
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
-        await blockUtils.provideNextBlock();
+        await testNetwork.provideNextBlock();
         await nextTick();
-        await blockUtils.resolveAllValidations(true);
+        await testNetwork.resolveAllValidations(true);
         await nextTick();
 
         expect(testNetwork.nodes).to.agreeOnBlock(blocksPool[0]);
         testNetwork.shutDown();
     });
 
-    it("should reach consesnsus after 5 blocks", async () => {
-        const { testNetwork, blockUtils } = aSimpleTestNetwork(4);
+    it("should reach consesnsus after 8 blocks", async () => {
+        const { testNetwork } = aSimpleTestNetwork(4);
 
         testNetwork.startConsensusOnAllNodes();
         for (const i of [0, 1, 2, 3, 4, 5, 6, 7]) {
             await nextTick();
-            await blockUtils.provideNextBlock();
+            await testNetwork.provideNextBlock();
             await nextTick();
-            await blockUtils.resolveAllValidations(true);
+            await testNetwork.resolveAllValidations(true);
             await nextTick();
         }
 
-        expect(testNetwork.nodes).to.agreeOnBlock(blockUtils.getLatestBlock());
+        const node0 = testNetwork.nodes[0];
+        expect(testNetwork.nodes).to.agreeOnBlock(node0.blockUtils.getLatestBlock());
         testNetwork.shutDown();
     });
 
     it("should ignore suggested block if they are not from the leader", async () => {
-        const { testNetwork, blockUtils, blocksPool } = aSimpleTestNetwork();
+        const { testNetwork, blocksPool } = aSimpleTestNetwork();
 
         testNetwork.nodes[3].startConsensus(); // pretending to be the leader
-        await blockUtils.provideNextBlock();
+        await testNetwork.provideNextBlock();
         await nextTick(); // await for blockChain.getLastBlockHash
-        await blockUtils.resolveAllValidations(true);
+        await testNetwork.resolveAllValidations(true);
         await nextTick();
 
         expect(testNetwork.nodes).to.not.agreeOnBlock(blocksPool[0]);
@@ -93,7 +94,7 @@ describe("PBFT", () => {
     it("should reach consensus, in a network of 4 nodes, where the leader is byzantine and the other 3 nodes are loyal", async () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
-        const { testNetwork, blockUtils } = aSimpleTestNetwork(4, [block1, block2]);
+        const { testNetwork } = aSimpleTestNetwork(4, [block1, block2]);
 
         const leader = testNetwork.nodes[0];
         const leaderGossip = testNetwork.getNodeGossip(leader.publicKey);
@@ -102,17 +103,17 @@ describe("PBFT", () => {
         leaderGossip.setOutGoingWhiteListPKs([testNetwork.nodes[1].publicKey, testNetwork.nodes[2].publicKey]);
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
-        await blockUtils.provideNextBlock();
+        await testNetwork.provideNextBlock();
         await nextTick(); // await for blockChain.getLastBlockHash
-        await blockUtils.resolveAllValidations(true);
+        await testNetwork.resolveAllValidations(true);
 
         // suggest block 2 to node 3.
         leaderGossip.setOutGoingWhiteListPKs([testNetwork.nodes[3].publicKey]);
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
-        await blockUtils.provideNextBlock();
+        await testNetwork.provideNextBlock();
         await nextTick(); // await for blockChain.getLastBlockHash
-        await blockUtils.resolveAllValidations(true);
+        await testNetwork.resolveAllValidations(true);
         await nextTick(); // await for notifyCommitted
 
         expect(await testNetwork.nodes[1].getLatestCommittedBlock()).to.deep.equal(block1);
@@ -122,7 +123,7 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, in a network of 5 nodes, where one of the nodes is byzantine and the others are loyal", async () => {
-        const { testNetwork, blockUtils, blocksPool } = aSimpleTestNetwork(5);
+        const { testNetwork, blocksPool } = aSimpleTestNetwork(5);
 
         const byzantineNode = testNetwork.nodes[4];
         const gossip = testNetwork.getNodeGossip(byzantineNode.publicKey);
@@ -130,16 +131,16 @@ describe("PBFT", () => {
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
-        await blockUtils.provideNextBlock();
+        await testNetwork.provideNextBlock();
         await nextTick();
-        await blockUtils.resolveAllValidations(true);
+        await testNetwork.resolveAllValidations(true);
         await nextTick();
 
         expect(testNetwork.nodes.splice(0, 3)).to.agreeOnBlock(blocksPool[0]);
     });
 
     it("should reach consensus, even when a byzantine node is sending a bad block several times", async () => {
-        const { testNetwork, blockUtils, blocksPool } = aSimpleTestNetwork();
+        const { testNetwork, blocksPool } = aSimpleTestNetwork();
         const goodBlock = blocksPool[0];
         const fakeBlock = aBlock(theGenesisBlock);
 
@@ -155,9 +156,9 @@ describe("PBFT", () => {
         gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(byzantineNode.keyManager, 1, 0, fakeBlock)));
 
         await nextTick();
-        await blockUtils.provideNextBlock();
+        await testNetwork.provideNextBlock();
         await nextTick();
-        await blockUtils.resolveAllValidations(true);
+        await testNetwork.resolveAllValidations(true);
         await nextTick();
 
         expect(testNetwork.nodes).to.agreeOnBlock(goodBlock);
@@ -165,7 +166,7 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, in a network of 7 nodes, where two of the nodes is byzantine and the others are loyal", async () => {
-        const { testNetwork, blockUtils, blocksPool } = aSimpleTestNetwork(7);
+        const { testNetwork, blocksPool } = aSimpleTestNetwork(7);
 
         const byzantineNode1 = testNetwork.nodes[5];
         const byzantineNode2 = testNetwork.nodes[6];
@@ -176,9 +177,9 @@ describe("PBFT", () => {
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
-        await blockUtils.provideNextBlock();
+        await testNetwork.provideNextBlock();
         await nextTick();
-        await blockUtils.resolveAllValidations(true);
+        await testNetwork.resolveAllValidations(true);
         await nextTick();
 
         expect(testNetwork.nodes.splice(0, 4)).to.agreeOnBlock(blocksPool[0]);
@@ -190,7 +191,7 @@ describe("PBFT", () => {
         const block2 = aBlock(block1);
         const block3 = aBlock(block1);
         const block4 = aBlock(block3);
-        const { testNetwork, blockUtils } = aSimpleTestNetwork(4, [block1, block2, block3, block4]);
+        const { testNetwork } = aSimpleTestNetwork(4, [block1, block2, block3, block4]);
 
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -208,14 +209,14 @@ describe("PBFT", () => {
         expect(node3.isLeader()).to.be.false;
 
         // processing block1, should be agreed by all nodes
-        await blockUtils.provideNextBlock();
+        await testNetwork.provideNextBlock();
         await nextTick();
-        await blockUtils.resolveAllValidations(true);
+        await testNetwork.resolveAllValidations(true);
         await nextTick();
         expect(testNetwork.nodes).to.agreeOnBlock(block1);
 
         // processing block 2
-        await blockUtils.provideNextBlock();
+        await testNetwork.provideNextBlock();
         await nextTick(); // await for notifyCommitted
 
         // force leader election before the block was verified, goes to block 3
@@ -224,11 +225,11 @@ describe("PBFT", () => {
         expect(node1.isLeader()).to.be.true;
         expect(node2.isLeader()).to.be.false;
         expect(node3.isLeader()).to.be.false;
-        await blockUtils.resolveAllValidations(true);
+        await testNetwork.resolveAllValidations(true);
 
-        await blockUtils.provideNextBlock();
+        await testNetwork.provideNextBlock();
         await nextTick();
-        await blockUtils.resolveAllValidations(true);
+        await testNetwork.resolveAllValidations(true);
         await nextTick();
         expect(testNetwork.nodes).to.agreeOnBlock(block3);
 
@@ -241,27 +242,29 @@ describe("PBFT", () => {
         const blockUtils = new BlockUtilsMock([block1, block2]);
 
         const hangingBlockUtils: BlockUtilsMock = new BlockUtilsMock([block1, block2]);
-        const hangingNode = aNode()
+        const hangingNodeBuilder = aNode()
             .gettingBlocksVia(hangingBlockUtils);
 
-        const testNetwork = aTestNetwork()
+            const testNetwork = aTestNetwork()
             .gettingBlocksVia(blockUtils)
             .with(3).nodes
-            .withCustomNode(hangingNode)
+            .withCustomNode(hangingNodeBuilder)
             .build();
 
-        // suggest block 1
+        const hangingNode = testNetwork.nodes[3];
         testNetwork.startConsensusOnAllNodes();
+
+        // suggest block 1
         await nextTick();
-        await blockUtils.provideNextBlock();
+        await testNetwork.provideNextBlock();
         await nextTick();
-        await blockUtils.resolveAllValidations(true);
+        await testNetwork.resolveAllValidations(true, [hangingNode]);
 
         // suggest block 2
         await nextTick();
-        await blockUtils.provideNextBlock();
+        await testNetwork.provideNextBlock();
         await nextTick();
-        await blockUtils.resolveAllValidations(true);
+        await testNetwork.resolveAllValidations(true, [hangingNode]);
         await nextTick();
 
         expect(await testNetwork.nodes[0].getLatestCommittedBlock()).to.deep.equal(block2);

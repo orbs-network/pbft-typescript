@@ -107,7 +107,6 @@ export const aSimpleTestNetwork = (countOfNodes: number = 4, blocksPool?: Block[
 
     return {
         testNetwork,
-        blockUtils,
         blocksPool
     };
 };

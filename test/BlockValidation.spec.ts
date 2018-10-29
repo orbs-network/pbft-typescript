@@ -32,10 +32,10 @@ describe("Block Validation", () => {
     it("should call validateBlock on onPrepare", async () => {
         const spy = sinon.spy(blockUtils, "validateBlock");
         testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockChain.getBlockChainHeight();
-        await blockUtils.provideNextBlock();
         await nextTick();
-        await blockUtils.resolveAllValidations(true);
+        await testNetwork.provideNextBlock();
+        await nextTick();
+        await testNetwork.resolveAllValidations(true);
         await nextTick();
 
         expect(spy).to.have.been.calledWithMatch(block);
@@ -44,9 +44,9 @@ describe("Block Validation", () => {
 
     it("should not reach consensus if validateBlock returned false", async () => {
         testNetwork.startConsensusOnAllNodes();
-        await nextTick(); // await for blockChain.getBlockChainHeight();
-        await blockUtils.provideNextBlock();
-        await blockUtils.resolveAllValidations(false);
+        await nextTick();
+        await testNetwork.provideNextBlock();
+        await testNetwork.resolveAllValidations(false);
         await nextTick();
 
         expect(testNetwork.nodes).to.not.agreeOnBlock(block);

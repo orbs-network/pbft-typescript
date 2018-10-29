@@ -1,12 +1,24 @@
 import { Node } from "./Node";
 import { GossipDiscovery } from "../gossip/GossipDiscovery";
 import { Gossip } from "../gossip/Gossip";
+import { BlockUtilsMock } from "../blockUtils/BlockUtilsMock";
 
 export class TestNetwork {
     public nodes: Node[] = [];
 
     constructor(public gossipDiscovery: GossipDiscovery) {
 
+    }
+
+    async provideNextBlock(): Promise<any> {
+        return Promise.all(this.nodes.map(n => n.blockUtils.provideNextBlock()));
+    }
+
+    async resolveAllValidations(isValid: boolean, excludedNodes: Node[] = []): Promise<any> {
+        const relevantNodes: Node[] = this.nodes.filter(n => excludedNodes.indexOf(n) === -1);
+        const blockUtilsList: BlockUtilsMock[] = relevantNodes.map(n => n.blockUtils);
+        const promises = blockUtilsList.map(bu => bu.resolveAllValidations(isValid));
+        return Promise.all(promises);
     }
 
     getNodeGossip(nodePublicKey: string): Gossip {

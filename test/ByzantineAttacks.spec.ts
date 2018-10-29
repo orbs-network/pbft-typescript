@@ -14,7 +14,7 @@ describe("Byzantine Attacks", () => {
     it("Block validation is completed after new election, old validation should be ignored", async () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
-        const { testNetwork, blockUtils } = aSimpleTestNetwork(4, [block1, block2]);
+        const { testNetwork } = aSimpleTestNetwork(4, [block1, block2]);
 
         const leader = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -25,7 +25,7 @@ describe("Byzantine Attacks", () => {
         leaderGossip.setOutGoingWhiteListPKs([node1.publicKey, node2.publicKey]);
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
-        await blockUtils.provideNextBlock();
+        await testNetwork.provideNextBlock();
         await nextTick();
 
         node1.triggerElection();
@@ -33,9 +33,9 @@ describe("Byzantine Attacks", () => {
         node3.triggerElection();
 
         await nextTick();
-        await blockUtils.provideNextBlock();
+        await testNetwork.provideNextBlock();
         await nextTick();
-        await blockUtils.resolveAllValidations(true);
+        await testNetwork.resolveAllValidations(true);
 
         expect(await node1.getLatestCommittedBlock()).to.deep.equal(block2);
         expect(await node2.getLatestCommittedBlock()).to.deep.equal(block2);
@@ -84,7 +84,7 @@ describe("Byzantine Attacks", () => {
 
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
-        const { testNetwork, blockUtils } = aSimpleTestNetwork(4, [block1, block2]);
+        const { testNetwork } = aSimpleTestNetwork(4, [block1, block2]);
 
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -103,9 +103,9 @@ describe("Byzantine Attacks", () => {
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
-        await blockUtils.provideNextBlock();
+        await testNetwork.provideNextBlock();
         await nextTick();
-        await blockUtils.resolveAllValidations(true);
+        await testNetwork.resolveAllValidations(true);
 
         expect(await node0.getLatestCommittedBlock()).to.deep.equal(theGenesisBlock);
         expect(await node1.getLatestCommittedBlock()).to.deep.equal(theGenesisBlock);
@@ -122,11 +122,11 @@ describe("Byzantine Attacks", () => {
         node0.triggerElection();
         node2.triggerElection();
         node3.triggerElection();
-        await blockUtils.resolveAllValidations(true);
+        await testNetwork.resolveAllValidations(true);
 
-        await blockUtils.provideNextBlock();
+        await testNetwork.provideNextBlock();
         await nextTick();
-        await blockUtils.resolveAllValidations(true);
+        await testNetwork.resolveAllValidations(true);
 
         expect(await node0.getLatestCommittedBlock()).to.deep.equal(block2);
         expect(await node1.getLatestCommittedBlock()).to.deep.equal(block2);
@@ -142,7 +142,6 @@ describe("Byzantine Attacks", () => {
             .nodes
             .build();
 
-        const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
         const node2 = testNetwork.nodes[2];
         const gossip1 = testNetwork.getNodeGossip(node1.publicKey);
