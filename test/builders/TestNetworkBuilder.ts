@@ -1,6 +1,5 @@
 import { Block } from "../../src/Block";
 import { Logger } from "../../src/logger/Logger";
-import { BlockUtilsMock } from "../blockUtils/BlockUtilsMock";
 import { Gossip } from "../gossip/Gossip";
 import { GossipDiscovery } from "../gossip/GossipDiscovery";
 import { ConsoleLogger } from "../logger/ConsoleLogger";
@@ -22,7 +21,7 @@ export class With {
     }
 }
 
-class TestNetworkBuilder {
+export class TestNetworkBuilder {
     private loggerCtor: LoggerConstructor = SilentLogger;
     private customNodes: NodeBuilder[] = [];
     private blocksPool: Block[];
@@ -57,54 +56,54 @@ class TestNetworkBuilder {
     }
 
     public build(): TestNetwork {
+        const blocksPool: Block[] = this.buildBlocksPool();
         const discovery = new GossipDiscovery();
-        this.testNetwork = new TestNetwork(discovery);
-        this.createNodes(discovery);
+        this.testNetwork = new TestNetwork(discovery, blocksPool);
+        this.createNodes(discovery, blocksPool);
         return this.testNetwork;
     }
 
-    private buildNode(builder: NodeBuilder, publicKey: string, discovery: GossipDiscovery): Node {
+    private buildBlocksPool(): Block[] {
+        let blocksPool = this.blocksPool;
+        if (!blocksPool) {
+            const block1 = aBlock(theGenesisBlock);
+            const block2 = aBlock(block1);
+            const block3 = aBlock(block2);
+            const block4 = aBlock(block3);
+            blocksPool = [block1, block2, block3, block4];
+        }
+        return blocksPool;
+    }
+
+    private buildNode(builder: NodeBuilder, publicKey: string, discovery: GossipDiscovery, blocksPool: Block[]): Node {
         const logger: Logger = new this.loggerCtor(publicKey);
         const gossip = new Gossip(discovery);
         discovery.registerGossip(publicKey, gossip);
         return builder
             .thatIsPartOf(gossip)
-            .withBlocksPool(this.blocksPool)
+            .withBlocksPool(blocksPool)
             .withPk(publicKey)
             .thatLogsTo(logger)
             .build();
     }
 
-    private createNodes(discovery: GossipDiscovery): void {
+    private createNodes(discovery: GossipDiscovery, blocksPool: Block[]): void {
         const nodes: Node[] = [];
 
         for (let i = 0; i < this.countOfNodes; i++) {
-            const node = this.buildNode(aNode(), `Node ${i}`, discovery);
+            const node = this.buildNode(aNode(), `Node ${i}`, discovery, blocksPool);
             nodes.push(node);
         }
 
-        const customNodes = this.customNodes.map((nodeBuilder, idx) => this.buildNode(nodeBuilder, `Custom-Node ${idx}`, discovery));
+        const customNodes = this.customNodes.map((nodeBuilder, idx) => this.buildNode(nodeBuilder, `Custom-Node ${idx}`, discovery, blocksPool));
         nodes.push(...customNodes);
         this.testNetwork.registerNodes(nodes);
     }
 }
 
-export const aTestNetwork = () => new TestNetworkBuilder();
-export const aSimpleTestNetwork = (countOfNodes: number = 4, blocksPool?: Block[]) => {
-    if (!blocksPool) {
-        const block1 = aBlock(theGenesisBlock);
-        const block2 = aBlock(block1);
-        const block3 = aBlock(block2);
-        const block4 = aBlock(block3);
-        blocksPool = blocksPool || [block1, block2, block3, block4];
-    }
-    const testNetwork = aTestNetwork()
+export const aTestNetwork = (countOfNodes: number = 4, blocksPool?: Block[]) => {
+    return new TestNetworkBuilder()
         .withBlocksPool(blocksPool)
         .with(countOfNodes).nodes
         .build();
-
-    return {
-        testNetwork,
-        blocksPool
-    };
 };

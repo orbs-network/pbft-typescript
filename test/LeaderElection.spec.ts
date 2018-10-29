@@ -7,7 +7,7 @@ import { extractPreparedMessages, PreparedMessages } from "../src/storage/Prepar
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aNewViewMessage, aPrePrepareMessage, aViewChangeMessage } from "./builders/MessagesBuilder";
 import { aPrepared } from "./builders/ProofBuilder";
-import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
+import { aTestNetwork } from "./builders/TestNetworkBuilder";
 import { nextTick } from "./timeUtils";
 import { messageToGossip, gossipMessageCounter } from "./gossip/GossipTestUtils";
 
@@ -15,7 +15,7 @@ chai.use(sinonChai);
 
 describe("Leader Election", () => {
     it("should notify the next leader when the timeout expired", async () => {
-        const { testNetwork } = aSimpleTestNetwork();
+        const testNetwork = aTestNetwork();
 
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -39,7 +39,7 @@ describe("Leader Election", () => {
     });
 
     it("should cycle back to the first node on view-change", async () => {
-        const { testNetwork } = aSimpleTestNetwork();
+        const testNetwork = aTestNetwork();
 
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -89,7 +89,7 @@ describe("Leader Election", () => {
     it("should count 2f+1 view-change to be elected", async () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(block1);
-        const { testNetwork } = aSimpleTestNetwork(4, [block1, block2]);
+        const testNetwork = aTestNetwork(4, [block1, block2]);
 
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -123,7 +123,7 @@ describe("Leader Election", () => {
 
     it("should offer the latest prepared VC when elected", async () => {
         const block1 = aBlock(theGenesisBlock);
-        const { testNetwork } = aSimpleTestNetwork(4, [block1]);
+        const testNetwork = aTestNetwork(4, [block1]);
 
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -170,7 +170,7 @@ describe("Leader Election", () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(block1);
         const block3 = aBlock(block1);
-        const { testNetwork } = aSimpleTestNetwork(4, [block1, block2, block3]);
+        const testNetwork = aTestNetwork(4, [block1, block2, block3]);
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
         const node2 = testNetwork.nodes[2];
@@ -211,7 +211,7 @@ describe("Leader Election", () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(block1);
         const block3 = aBlock(block1);
-        const { testNetwork } = aSimpleTestNetwork(4, [block1, block2, block3]);
+        const testNetwork = aTestNetwork(4, [block1, block2, block3]);
 
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -267,7 +267,7 @@ describe("Leader Election", () => {
     });
 
     it("should not fire new-view if count of view-change is less than 2f+1", async () => {
-        const { testNetwork } = aSimpleTestNetwork();
+        const testNetwork = aTestNetwork();
         const node1 = testNetwork.nodes[1];
         const gossip = testNetwork.getNodeGossip(node1.publicKey);
         const multicastSpy = sinon.spy(gossip, "sendMessage");
@@ -284,7 +284,7 @@ describe("Leader Election", () => {
     });
 
     it("should not count view-change votes from the same node", async () => {
-        const { testNetwork } = aSimpleTestNetwork();
+        const testNetwork = aTestNetwork();
         const leader = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
 

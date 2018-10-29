@@ -2,11 +2,12 @@ import { Node } from "./Node";
 import { GossipDiscovery } from "../gossip/GossipDiscovery";
 import { Gossip } from "../gossip/Gossip";
 import { BlockUtilsMock } from "../blockUtils/BlockUtilsMock";
+import { Block } from "../../src";
 
 export class TestNetwork {
     public nodes: Node[] = [];
 
-    constructor(public gossipDiscovery: GossipDiscovery) {
+    constructor(public gossipDiscovery: GossipDiscovery, public blocksPool: Block[]) {
 
     }
 

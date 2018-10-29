@@ -14,7 +14,7 @@ import { BlockUtilsMock } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aCommitMessage, aNewViewMessage, aPrepareMessage, aPrePrepareMessage, aViewChangeMessage } from "./builders/MessagesBuilder";
 import { aPrepared, aPreparedProofByMessages } from "./builders/ProofBuilder";
-import { aSimpleTestNetwork } from "./builders/TestNetworkBuilder";
+import { aTestNetwork } from "./builders/TestNetworkBuilder";
 import { blockMatcher } from "./matchers/blockMatcher";
 import { Node } from "./network/Node";
 import { TestNetwork } from "./network/TestNetwork";
@@ -42,9 +42,7 @@ describe("PBFTTerm", () => {
     let node3KeyManager: KeyManager;
 
     beforeEach(() => {
-        const testNetworkData = aSimpleTestNetwork(4);
-
-        testNetwork = testNetworkData.testNetwork;
+        testNetwork = aTestNetwork(4);
         triggerElection = () => {
             node0.triggerElection();
             node1.triggerElection();

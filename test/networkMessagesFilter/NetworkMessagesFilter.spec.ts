@@ -8,7 +8,7 @@ import { MessagesHandler } from "../../src/networkCommunication/MessagesHandler"
 import { NetworkMessagesFilter } from "../../src/networkCommunication/NetworkMessagesFilter";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { aCommitMessage, aNewViewMessage, aPrepareMessage, aPrePrepareMessage, aViewChangeMessage } from "../builders/MessagesBuilder";
-import { aSimpleTestNetwork } from "../builders/TestNetworkBuilder";
+import { aTestNetwork } from "../builders/TestNetworkBuilder";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 import { PBFTMessagesHandlerMock } from "./PBFTMessagesHandlerMock";
 import { messageToGossip } from "../gossip/GossipTestUtils";
@@ -18,7 +18,7 @@ chai.use(sinonChai);
 describe("Network Messages Filter", () => {
     it("should be able to set the blockHeight and recive messages from gossip", async () => {
         // a network with 4 nodes
-        const { testNetwork } = aSimpleTestNetwork();
+        const testNetwork = aTestNetwork();
         const nodeUnderTest = testNetwork.nodes[0];
         const senderNode = testNetwork.nodes[1];
 
@@ -51,7 +51,7 @@ describe("Network Messages Filter", () => {
 
     it("should ignore messages if not the in current blockHeight", async () => {
         // a network with 4 nodes
-        const { testNetwork } = aSimpleTestNetwork();
+        const testNetwork = aTestNetwork();
         const nodeUnderTest = testNetwork.nodes[0];
         const senderNode = testNetwork.nodes[1];
 
@@ -84,7 +84,7 @@ describe("Network Messages Filter", () => {
 
     it("should ignore messages with my public key", async () => {
         // a network with 4 nodes
-        const { testNetwork } = aSimpleTestNetwork();
+        const testNetwork = aTestNetwork();
         const nodeUnderTest = testNetwork.nodes[0];
 
         const gossipFilter: NetworkMessagesFilter = new NetworkMessagesFilter(nodeUnderTest.gossip, nodeUnderTest.publicKey);
@@ -116,7 +116,7 @@ describe("Network Messages Filter", () => {
 
     it("should ignore messages that are not part of the network", async () => {
         // a network with 4 nodes
-        const { testNetwork } = aSimpleTestNetwork();
+        const testNetwork = aTestNetwork();
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
 

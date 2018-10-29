@@ -5,11 +5,10 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { MessageType } from "../src/networkCommunication/Messages";
-import { BlockUtilsMock } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aPrePrepareMessage } from "./builders/MessagesBuilder";
 import { aNode } from "./builders/NodeBuilder";
-import { aSimpleTestNetwork, aTestNetwork } from "./builders/TestNetworkBuilder";
+import { aTestNetwork, TestNetworkBuilder } from "./builders/TestNetworkBuilder";
 import { gossipMessageCounter, messageToGossip } from "./gossip/GossipTestUtils";
 import { blockMatcher } from "./matchers/blockMatcher";
 import { nextTick } from "./timeUtils";
@@ -19,7 +18,7 @@ chai.use(blockMatcher);
 
 describe("PBFT", () => {
     it("should send pre-prepare only if it's the leader", async () => {
-        const { testNetwork } = aSimpleTestNetwork();
+        const testNetwork = aTestNetwork();
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
         const node2 = testNetwork.nodes[2];
@@ -48,8 +47,8 @@ describe("PBFT", () => {
     });
 
     it("should start a network, append a block, and make sure that all nodes recived it", async () => {
-        const { testNetwork, blocksPool } = aSimpleTestNetwork();
-        const firstBlock = blocksPool[0];
+        const testNetwork = aTestNetwork();
+        const firstBlock = testNetwork.blocksPool[0];
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
@@ -63,7 +62,7 @@ describe("PBFT", () => {
     });
 
     it("should reach consesnsus after 8 blocks", async () => {
-        const { testNetwork } = aSimpleTestNetwork(4);
+        const testNetwork = aTestNetwork(4);
 
         testNetwork.startConsensusOnAllNodes();
         for (const i of [0, 1, 2, 3, 4, 5, 6, 7]) {
@@ -80,8 +79,8 @@ describe("PBFT", () => {
     });
 
     it("should ignore suggested block if they are not from the leader", async () => {
-        const { testNetwork, blocksPool } = aSimpleTestNetwork();
-        const firstBlock = blocksPool[0];
+        const testNetwork = aTestNetwork();
+        const firstBlock = testNetwork.blocksPool[0];
 
         testNetwork.nodes[3].startConsensus(); // pretending to be the leader
         await testNetwork.provideNextBlock();
@@ -96,7 +95,7 @@ describe("PBFT", () => {
     it("should reach consensus, in a network of 4 nodes, where the leader is byzantine and the other 3 nodes are loyal", async () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
-        const { testNetwork } = aSimpleTestNetwork(4, [block1, block2]);
+        const testNetwork = aTestNetwork(4, [block1, block2]);
 
         const leader = testNetwork.nodes[0];
         const leaderGossip = testNetwork.getNodeGossip(leader.publicKey);
@@ -125,8 +124,8 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, in a network of 5 nodes, where one of the nodes is byzantine and the others are loyal", async () => {
-        const { testNetwork, blocksPool } = aSimpleTestNetwork(5);
-        const firstBlock = blocksPool[0];
+        const testNetwork = aTestNetwork(5);
+        const firstBlock = testNetwork.blocksPool[0];
 
         const byzantineNode = testNetwork.nodes[4];
         const gossip = testNetwork.getNodeGossip(byzantineNode.publicKey);
@@ -143,8 +142,8 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, even when a byzantine node is sending a bad block several times", async () => {
-        const { testNetwork, blocksPool } = aSimpleTestNetwork();
-        const goodBlock = blocksPool[0];
+        const testNetwork = aTestNetwork();
+        const goodBlock = testNetwork.blocksPool[0];
         const fakeBlock = aBlock(theGenesisBlock);
 
         const byzantineNode = testNetwork.nodes[3];
@@ -169,8 +168,8 @@ describe("PBFT", () => {
     });
 
     it("should reach consensus, in a network of 7 nodes, where two of the nodes is byzantine and the others are loyal", async () => {
-        const { testNetwork, blocksPool } = aSimpleTestNetwork(7);
-        const firstBlock = blocksPool[0];
+        const testNetwork = aTestNetwork(7);
+        const firstBlock = testNetwork.blocksPool[0];
 
         const byzantineNode1 = testNetwork.nodes[5];
         const byzantineNode2 = testNetwork.nodes[6];
@@ -195,7 +194,7 @@ describe("PBFT", () => {
         const block2 = aBlock(block1);
         const block3 = aBlock(block1);
         const block4 = aBlock(block3);
-        const { testNetwork } = aSimpleTestNetwork(4, [block1, block2, block3, block4]);
+        const testNetwork = aTestNetwork(4, [block1, block2, block3, block4]);
 
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -247,7 +246,7 @@ describe("PBFT", () => {
 
         const hangingNodeBuilder = aNode().withBlocksPool(blocksPool);
 
-        const testNetwork = aTestNetwork()
+        const testNetwork = new TestNetworkBuilder()
             .withBlocksPool(blocksPool)
             .with(3).nodes
             .withCustomNode(hangingNodeBuilder)

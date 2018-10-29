@@ -3,12 +3,11 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { Block } from "../src/Block";
-import { BlockUtilsMock } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aTestNetwork } from "./builders/TestNetworkBuilder";
+import { Node } from "./network/Node";
 import { TestNetwork } from "./network/TestNetwork";
 import { nextTick } from "./timeUtils";
-import { Node } from "./network/Node";
 
 chai.use(sinonChai);
 
@@ -18,10 +17,7 @@ describe("Block Validation", () => {
 
     beforeEach(() => {
         block = aBlock(theGenesisBlock);
-        testNetwork = aTestNetwork()
-            .withBlocksPool([block])
-            .with(4).nodes
-            .build();
+        testNetwork = aTestNetwork(4, [block]);
     });
 
     afterEach(() => {

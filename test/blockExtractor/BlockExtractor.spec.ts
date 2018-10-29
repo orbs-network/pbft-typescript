@@ -8,7 +8,7 @@ import { Block, KeyManager } from "../../src";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
 import { ViewChangeMessage } from "../../src/networkCommunication/Messages";
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
-import { aSimpleTestNetwork } from "../builders/TestNetworkBuilder";
+import { aTestNetwork } from "../builders/TestNetworkBuilder";
 import { PreparedMessages } from "../../src/storage/PreparedMessagesExtractor";
 chai.use(sinonChai);
 
@@ -35,7 +35,7 @@ describe("Block Extractor", () => {
     });
 
     it("ViewChangeMessages should return the latest view block", async () => {
-        const { testNetwork } = aSimpleTestNetwork();
+        const testNetwork = aTestNetwork();
 
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];

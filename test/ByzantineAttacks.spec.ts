@@ -4,7 +4,7 @@ import * as sinonChai from "sinon-chai";
 import { CommitMessage, PrepareMessage, PrePrepareMessage } from "../src/networkCommunication/Messages";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aCommitMessage, aPrepareMessage, aPrePrepareMessage } from "./builders/MessagesBuilder";
-import { aSimpleTestNetwork, aTestNetwork } from "./builders/TestNetworkBuilder";
+import { aTestNetwork } from "./builders/TestNetworkBuilder";
 import { nextTick } from "./timeUtils";
 import { messageToGossip } from "./gossip/GossipTestUtils";
 
@@ -14,7 +14,7 @@ describe("Byzantine Attacks", () => {
     it("Block validation is completed after new election, old validation should be ignored", async () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
-        const { testNetwork } = aSimpleTestNetwork(4, [block1, block2]);
+        const testNetwork = aTestNetwork(4, [block1, block2]);
 
         const leader = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -84,7 +84,7 @@ describe("Byzantine Attacks", () => {
 
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
-        const { testNetwork } = aSimpleTestNetwork(4, [block1, block2]);
+        const testNetwork = aTestNetwork(4, [block1, block2]);
 
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
@@ -137,10 +137,7 @@ describe("Byzantine Attacks", () => {
     });
 
     it("should not process gossip messages from nodes that are not part of the network (isMember = false)", async () => {
-        const testNetwork = aTestNetwork()
-            .with(4)
-            .nodes
-            .build();
+        const testNetwork = aTestNetwork();
 
         const node1 = testNetwork.nodes[1];
         const node2 = testNetwork.nodes[2];
