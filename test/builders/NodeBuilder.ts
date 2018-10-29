@@ -11,22 +11,21 @@ import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 import { ConsoleLogger } from "../logger/ConsoleLogger";
 import { SilentLogger } from "../logger/SilentLogger";
 import { Node } from "../network/Node";
+import { Gossip } from "../gossip/Gossip";
 
 export class NodeBuilder {
-    private networkCommunication: NetworkCommunication;
+    private gossip: Gossip;
     private publicKey: string;
-    private pbftStorage: PBFTStorage;
     private logger: Logger;
-    private electionTrigger: ElectionTrigger;
-    private blockUtils: BlockUtils;
+    private blockUtils: BlockUtilsMock;
     private logsToConsole: boolean = false;
 
     constructor() {
     }
 
-    public thatIsPartOf(networkCommunication: NetworkCommunication): this {
-        if (!this.networkCommunication) {
-            this.networkCommunication = networkCommunication;
+    public thatIsPartOf(gossip: Gossip): this {
+        if (!this.gossip) {
+            this.gossip = gossip;
         }
         return this;
     }
@@ -38,13 +37,6 @@ export class NodeBuilder {
         return this;
     }
 
-    public storingOn(pbftStorage: PBFTStorage): this {
-        if (!this.pbftStorage) {
-            this.pbftStorage = pbftStorage;
-        }
-        return this;
-    }
-
     public thatLogsTo(logger: Logger): this {
         if (!this.logger) {
             this.logger = logger;
@@ -52,16 +44,9 @@ export class NodeBuilder {
         return this;
     }
 
-    public gettingBlocksVia(blockUtils: BlockUtils): this {
+    public gettingBlocksVia(blockUtils: BlockUtilsMock): this {
         if (!this.blockUtils) {
             this.blockUtils = blockUtils;
-        }
-        return this;
-    }
-
-    public electingLeaderUsing(electionTrigger: ElectionTrigger): this {
-        if (!this.electionTrigger) {
-            this.electionTrigger = electionTrigger;
         }
         return this;
     }
@@ -72,24 +57,11 @@ export class NodeBuilder {
     }
 
     public build(): Node {
-        return new Node(this.publicKey, this.buildConfig());
-    }
+        const publicKey: string = this.publicKey ? this.publicKey : "Dummy PublicKey";
+        const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(publicKey) : new SilentLogger();
+        const blockUtils: BlockUtilsMock = this.blockUtils ? this.blockUtils : new BlockUtilsMock();
 
-    private buildConfig(): Config {
-        const electionTrigger: ElectionTrigger = this.electionTrigger ? this.electionTrigger : new ElectionTriggerMock();
-        const blockUtils: BlockUtils = this.blockUtils ? this.blockUtils : new BlockUtilsMock();
-        const keyManager: KeyManager = new KeyManagerMock(this.publicKey);
-        const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(keyManager.getMyPublicKey()) : new SilentLogger();
-        const pbftStorage: PBFTStorage = this.pbftStorage ? this.pbftStorage : new InMemoryPBFTStorage(logger);
-
-        return {
-            networkCommunication: this.networkCommunication,
-            logger,
-            pbftStorage,
-            electionTrigger,
-            blockUtils,
-            keyManager
-        };
+        return new Node(this.publicKey, logger, this.gossip, blockUtils);
     }
 }
 

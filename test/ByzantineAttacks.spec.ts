@@ -21,8 +21,8 @@ describe("Byzantine Attacks", () => {
         const node2 = testNetwork.nodes[2];
         const node3 = testNetwork.nodes[3];
 
-        const leaderGossip = testNetwork.getNodeGossip(leader.pk);
-        leaderGossip.setOutGoingWhiteListPKs([node1.pk, node2.pk]);
+        const leaderGossip = testNetwork.getNodeGossip(leader.publicKey);
+        leaderGossip.setOutGoingWhiteListPKs([node1.publicKey, node2.publicKey]);
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
         await blockUtils.provideNextBlock();
@@ -91,13 +91,13 @@ describe("Byzantine Attacks", () => {
         const node2 = testNetwork.nodes[2];
         const node3 = testNetwork.nodes[3];
 
-        const gossip0 = testNetwork.getNodeGossip(node0.pk);
-        const gossip1 = testNetwork.getNodeGossip(node1.pk);
-        const gossip2 = testNetwork.getNodeGossip(node2.pk);
-        const gossip3 = testNetwork.getNodeGossip(node3.pk);
+        const gossip0 = testNetwork.getNodeGossip(node0.publicKey);
+        const gossip1 = testNetwork.getNodeGossip(node1.publicKey);
+        const gossip2 = testNetwork.getNodeGossip(node2.publicKey);
+        const gossip3 = testNetwork.getNodeGossip(node3.publicKey);
 
-        gossip0.setOutGoingWhiteListPKs([node1.pk, node2.pk]);
-        gossip1.setOutGoingWhiteListPKs([node2.pk]);
+        gossip0.setOutGoingWhiteListPKs([node1.publicKey, node2.publicKey]);
+        gossip1.setOutGoingWhiteListPKs([node2.publicKey]);
         gossip2.setOutGoingWhiteListPKs([]);
         gossip3.setOutGoingWhiteListPKs([]);
 
@@ -145,14 +145,14 @@ describe("Byzantine Attacks", () => {
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
         const node2 = testNetwork.nodes[2];
-        const gossip1 = testNetwork.getNodeGossip(node1.pk);
-        const gossip2 = testNetwork.getNodeGossip(node2.pk);
+        const gossip1 = testNetwork.getNodeGossip(node1.publicKey);
+        const gossip2 = testNetwork.getNodeGossip(node2.publicKey);
 
         // node0, if faking other messages
         const block1 = aBlock(theGenesisBlock);
-        const PPmessage1: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, 1, 0, block1);
-        const Pmessage1: PrepareMessage = aPrepareMessage(node1.config.keyManager, 1, 0, block1);
-        const Cmessage1: CommitMessage = aCommitMessage(node1.config.keyManager, 1, 0, block1);
+        const PPmessage1: PrePrepareMessage = aPrePrepareMessage(node1.keyManager, 1, 0, block1);
+        const Pmessage1: PrepareMessage = aPrepareMessage(node1.keyManager, 1, 0, block1);
+        const Cmessage1: CommitMessage = aCommitMessage(node1.keyManager, 1, 0, block1);
         gossip1.onRemoteMessage(messageToGossip(PPmessage1)); // node1 causing preprepare on node1
         gossip1.onRemoteMessage(messageToGossip(Pmessage1)); // node1 pretending to send prepare as node1000
         gossip1.onRemoteMessage(messageToGossip(Pmessage1)); // node1 pretending to send prepare as node2000
@@ -160,9 +160,9 @@ describe("Byzantine Attacks", () => {
         gossip1.onRemoteMessage(messageToGossip(Cmessage1)); // node1 pretending to send commit as node2000
 
         const block2 = aBlock(theGenesisBlock);
-        const PPmessage2: PrePrepareMessage = aPrePrepareMessage(node2.config.keyManager, 1, 0, block2);
-        const Pmessage2: PrepareMessage = aPrepareMessage(node2.config.keyManager, 1, 0, block2);
-        const Cmessge2: CommitMessage = aCommitMessage(node2.config.keyManager, 1, 0, block2);
+        const PPmessage2: PrePrepareMessage = aPrePrepareMessage(node2.keyManager, 1, 0, block2);
+        const Pmessage2: PrepareMessage = aPrepareMessage(node2.keyManager, 1, 0, block2);
+        const Cmessge2: CommitMessage = aCommitMessage(node2.keyManager, 1, 0, block2);
         gossip2.onRemoteMessage(messageToGossip(PPmessage2)); // node1 causing preprepare on node2
         gossip2.onRemoteMessage(messageToGossip(Pmessage2)); // node1 pretending to send prepare as node1000
         gossip2.onRemoteMessage(messageToGossip(Pmessage2)); // node1 pretending to send prepare as node2000

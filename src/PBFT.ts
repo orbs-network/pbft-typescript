@@ -1,29 +1,27 @@
 import { Block } from "./Block";
 import { Config } from "./Config";
 import { NetworkMessagesFilter } from "./networkCommunication/NetworkMessagesFilter";
-import { PBFTTerm, TermConfig } from "./PBFTTerm";
+import { PBFTTerm } from "./PBFTTerm";
 import { InMemoryPBFTStorage } from "./storage/InMemoryPBFTStorage";
 
 export type onCommittedCB = (block: Block) => void;
 
 export class PBFT {
     private readonly onCommittedListeners: onCommittedCB[];
-    private readonly pbftTermConfig: TermConfig;
     private pbftTerm: PBFTTerm;
     private networkMessagesFilter: NetworkMessagesFilter;
 
-    constructor(config: Config) {
+    constructor(private readonly config: Config) {
         this.onCommittedListeners = [];
 
-        this.pbftTermConfig = PBFT.buildTermConfig(config);
         this.networkMessagesFilter = new NetworkMessagesFilter(config.networkCommunication, config.keyManager.getMyPublicKey());
     }
 
-    public static buildTermConfig(config: Config): TermConfig {
+    public static buildTermConfig(config: Config): Config {
         return {
             electionTrigger: config.electionTrigger,
             networkCommunication: config.networkCommunication,
-            pbftStorage: config.pbftStorage || new InMemoryPBFTStorage(config.logger),
+            pbftStorage: config.pbftStorage,
             keyManager: config.keyManager,
             logger: config.logger,
             blockUtils: config.blockUtils
@@ -42,7 +40,7 @@ export class PBFT {
     }
 
     private createPBFTTerm(height: number): void {
-        this.pbftTerm = new PBFTTerm(this.pbftTermConfig, height, block => {
+        this.pbftTerm = new PBFTTerm(this.config, height, block => {
             this.notifyCommitted(block);
             this.start(block.getHeight() + 1);
         });

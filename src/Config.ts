@@ -11,5 +11,5 @@ export interface Config {
     keyManager: KeyManager;
     logger: Logger;
     electionTrigger: ElectionTrigger;
-    pbftStorage?: PBFTStorage;
+    pbftStorage: PBFTStorage;
 }

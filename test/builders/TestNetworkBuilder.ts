@@ -29,8 +29,7 @@ export class With {
 class TestNetworkBuilder {
     private loggerCtor: LoggerConstructor = SilentLogger;
     private customNodes: NodeBuilder[] = [];
-    private electionTriggerFactory: () => ElectionTrigger;
-    private blockUtils: BlockUtils;
+    private blockUtils: BlockUtilsMock;
     private blocksPool: Block[];
     private testNetwork: TestNetwork;
 
@@ -43,11 +42,6 @@ class TestNetworkBuilder {
 
     public thatLogsToCustomeLogger(ctor: LoggerConstructor): this {
         this.loggerCtor = ctor;
-        return this;
-    }
-
-    public electingLeaderUsing(electionTriggerFactory: () => ElectionTrigger): this {
-        this.electionTriggerFactory = electionTriggerFactory;
         return this;
     }
 
@@ -65,7 +59,7 @@ class TestNetworkBuilder {
         return this;
     }
 
-    public gettingBlocksVia(blockUtils: BlockUtils): this {
+    public gettingBlocksVia(blockUtils: BlockUtilsMock): this {
         if (!this.blockUtils) {
             this.blockUtils = blockUtils;
         }
@@ -81,14 +75,12 @@ class TestNetworkBuilder {
 
     private buildNode(builder: NodeBuilder, pk: string, discovery: GossipDiscovery): Node {
         const logger: Logger = new this.loggerCtor(pk);
-        const electionTrigger: ElectionTrigger = this.electionTriggerFactory ? this.electionTriggerFactory() : new ElectionTriggerMock();
-        const blockUtils: BlockUtils = this.blockUtils ? this.blockUtils : new BlockUtilsMock();
+        const blockUtils: BlockUtilsMock = this.blockUtils ? this.blockUtils : new BlockUtilsMock();
         const gossip = new Gossip(discovery);
         discovery.registerGossip(pk, gossip);
         return builder
             .thatIsPartOf(gossip)
             .gettingBlocksVia(blockUtils)
-            .electingLeaderUsing(electionTrigger)
             .withPk(pk)
             .thatLogsTo(logger)
             .build();

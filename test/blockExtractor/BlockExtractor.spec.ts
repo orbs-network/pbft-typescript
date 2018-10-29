@@ -44,11 +44,11 @@ describe("Block Extractor", () => {
 
         const blockOnView3 = aBlock(theGenesisBlock, "Block on View 3");
         const preparedOnView3: PreparedMessages = aPrepared(node3, [node1, node2], 1, 3, blockOnView3);
-        const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.config.keyManager, 1, 5, preparedOnView3);
+        const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.keyManager, 1, 5, preparedOnView3);
 
         const blockOnView4 = aBlock(theGenesisBlock, "Block on View 4");
         const preparedOnView4: PreparedMessages = aPrepared(node0, [node1, node2], 1, 4, blockOnView4);
-        const node2VCMessage: ViewChangeMessage = aViewChangeMessage(node2.config.keyManager, 1, 5, preparedOnView4);
+        const node2VCMessage: ViewChangeMessage = aViewChangeMessage(node2.keyManager, 1, 5, preparedOnView4);
 
         const actual = getLatestBlockFromViewChangeMessages([node0VCMessage, node2VCMessage]);
         expect(actual).to.deep.equal(blockOnView4);

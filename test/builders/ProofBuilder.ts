@@ -23,14 +23,14 @@ export function aPreparedProof(leader: Node, members: Node[], blockHeight: numbe
     return {
         preprepareBlockRef,
         preprepareSender: {
-            senderPublicKey: leader.config.keyManager.getMyPublicKey(),
-            signature: leader.config.keyManager.sign(JSON.stringify(preprepareBlockRef))
+            senderPublicKey: leader.keyManager.getMyPublicKey(),
+            signature: leader.keyManager.sign(JSON.stringify(preprepareBlockRef))
         },
         prepareBlockRef,
         prepareSenders: members.map(member => {
             return {
-                senderPublicKey: member.config.keyManager.getMyPublicKey(),
-                signature: member.config.keyManager.sign(JSON.stringify(prepareBlockRef))
+                senderPublicKey: member.keyManager.getMyPublicKey(),
+                signature: member.keyManager.sign(JSON.stringify(prepareBlockRef))
             };
         })
     };
@@ -47,8 +47,8 @@ export function aPreparedProofByMessages(PPMessage: PrePrepareMessage, PMessages
 
 export function aPrepared(leader: Node, members: Node[], blockHeight: number, view: number, block: Block): PreparedMessages {
     const result: PreparedMessages = {
-        preprepareMessage: aPrePrepareMessage(leader.config.keyManager, blockHeight, view, block),
-        prepareMessages: members.map(m => aPrepareMessage(m.config.keyManager, blockHeight, view, block))
+        preprepareMessage: aPrePrepareMessage(leader.keyManager, blockHeight, view, block),
+        prepareMessages: members.map(m => aPrepareMessage(m.keyManager, blockHeight, view, block))
     };
 
     return result;

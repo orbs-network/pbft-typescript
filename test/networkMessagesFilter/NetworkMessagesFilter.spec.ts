@@ -19,10 +19,10 @@ describe("Network Messages Filter", () => {
     it("should be able to set the blockHeight and recive messages from gossip", async () => {
         // a network with 4 nodes
         const { testNetwork } = aSimpleTestNetwork();
-        const node0 = testNetwork.nodes[0];
-        const node1 = testNetwork.nodes[1];
+        const nodeUnderTest = testNetwork.nodes[0];
+        const senderNode = testNetwork.nodes[1];
 
-        const gossipFilter: NetworkMessagesFilter = new NetworkMessagesFilter(node0.config.networkCommunication, node0.pk);
+        const gossipFilter: NetworkMessagesFilter = new NetworkMessagesFilter(nodeUnderTest.gossip, nodeUnderTest.publicKey);
         const messagesHandler: MessagesHandler = new PBFTMessagesHandlerMock();
 
         const PPSpy = sinon.spy(messagesHandler, "onReceivePrePrepare");
@@ -34,13 +34,13 @@ describe("Network Messages Filter", () => {
         gossipFilter.setBlockHeight(3, messagesHandler);
 
         const block: Block = aBlock(theGenesisBlock);
-        const gossip = testNetwork.getNodeGossip(node1.pk);
+        const senderGossip = testNetwork.getNodeGossip(senderNode.publicKey);
         const pks = testNetwork.gossipDiscovery.getAllGossipsPks();
-        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(node1.config.keyManager, 3, 0, block)));
-        gossip.sendMessage(pks, messageToGossip(aPrepareMessage(node1.config.keyManager, 3, 0, block)));
-        gossip.sendMessage(pks, messageToGossip(aCommitMessage(node1.config.keyManager, 3, 0, block)));
-        gossip.sendMessage(pks, messageToGossip(aViewChangeMessage(node1.config.keyManager, 3, 0)));
-        gossip.sendMessage(pks, messageToGossip(aNewViewMessage(node1.config.keyManager, 3, 0, aPrePrepareMessage(node1.config.keyManager, 3, 0, block), [])));
+        senderGossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(senderNode.keyManager, 3, 0, block)));
+        senderGossip.sendMessage(pks, messageToGossip(aPrepareMessage(senderNode.keyManager, 3, 0, block)));
+        senderGossip.sendMessage(pks, messageToGossip(aCommitMessage(senderNode.keyManager, 3, 0, block)));
+        senderGossip.sendMessage(pks, messageToGossip(aViewChangeMessage(senderNode.keyManager, 3, 0)));
+        senderGossip.sendMessage(pks, messageToGossip(aNewViewMessage(senderNode.keyManager, 3, 0, aPrePrepareMessage(senderNode.keyManager, 3, 0, block), [])));
 
         expect(PPSpy).to.have.been.calledOnce;
         expect(PSpy).to.have.been.calledOnce;
@@ -52,10 +52,10 @@ describe("Network Messages Filter", () => {
     it("should ignore messages if not the in current blockHeight", async () => {
         // a network with 4 nodes
         const { testNetwork } = aSimpleTestNetwork();
-        const node0 = testNetwork.nodes[0];
-        const node1 = testNetwork.nodes[1];
+        const nodeUnderTest = testNetwork.nodes[0];
+        const senderNode = testNetwork.nodes[1];
 
-        const gossipFilter: NetworkMessagesFilter = new NetworkMessagesFilter(node0.config.networkCommunication, node0.pk);
+        const gossipFilter: NetworkMessagesFilter = new NetworkMessagesFilter(nodeUnderTest.gossip, nodeUnderTest.publicKey);
         const messagesHandler: MessagesHandler = new PBFTMessagesHandlerMock();
 
         const PPSpy = sinon.spy(messagesHandler, "onReceivePrePrepare");
@@ -67,27 +67,27 @@ describe("Network Messages Filter", () => {
         gossipFilter.setBlockHeight(2, messagesHandler);
 
         const block: Block = aBlock(theGenesisBlock);
-        const gossip = testNetwork.getNodeGossip(node1.pk);
+        const senderGossip = testNetwork.getNodeGossip(senderNode.publicKey);
         const pks = testNetwork.gossipDiscovery.getAllGossipsPks();
-        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(node1.config.keyManager, 3, 0, block)));
-        gossip.sendMessage(pks, messageToGossip(aPrepareMessage(node1.config.keyManager, 3, 0, block)));
-        gossip.sendMessage(pks, messageToGossip(aCommitMessage(node1.config.keyManager, 3, 0, block)));
-        gossip.sendMessage(pks, messageToGossip(aViewChangeMessage(node1.config.keyManager, 3, 0)));
-        gossip.sendMessage(pks, messageToGossip(aNewViewMessage(node1.config.keyManager, 3, 0, aPrePrepareMessage(node1.config.keyManager, 3, 0, block), [])));
+        senderGossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(senderNode.keyManager, 3, 0, block)));
+        senderGossip.sendMessage(pks, messageToGossip(aPrepareMessage(senderNode.keyManager, 3, 0, block)));
+        senderGossip.sendMessage(pks, messageToGossip(aCommitMessage(senderNode.keyManager, 3, 0, block)));
+        senderGossip.sendMessage(pks, messageToGossip(aViewChangeMessage(senderNode.keyManager, 3, 0)));
+        senderGossip.sendMessage(pks, messageToGossip(aNewViewMessage(senderNode.keyManager, 3, 0, aPrePrepareMessage(senderNode.keyManager, 3, 0, block), [])));
 
-        expect(PPSpy).to.not.have.been.calledOnce;
-        expect(PSpy).to.not.have.been.calledOnce;
-        expect(CSpy).to.not.have.been.calledOnce;
-        expect(VCSpy).to.not.have.been.calledOnce;
-        expect(NVSpy).to.not.have.been.calledOnce;
+        expect(PPSpy).to.not.have.been.called;
+        expect(PSpy).to.not.have.been.called;
+        expect(CSpy).to.not.have.been.called;
+        expect(VCSpy).to.not.have.been.called;
+        expect(NVSpy).to.not.have.been.called;
     });
 
     it("should ignore messages with my public key", async () => {
         // a network with 4 nodes
         const { testNetwork } = aSimpleTestNetwork();
-        const node0 = testNetwork.nodes[0];
+        const nodeUnderTest = testNetwork.nodes[0];
 
-        const gossipFilter: NetworkMessagesFilter = new NetworkMessagesFilter(node0.config.networkCommunication, node0.pk);
+        const gossipFilter: NetworkMessagesFilter = new NetworkMessagesFilter(nodeUnderTest.gossip, nodeUnderTest.publicKey);
         const messagesHandler: MessagesHandler = new PBFTMessagesHandlerMock();
 
         const PPSpy = sinon.spy(messagesHandler, "onReceivePrePrepare");
@@ -99,19 +99,19 @@ describe("Network Messages Filter", () => {
         gossipFilter.setBlockHeight(3, messagesHandler);
 
         const block: Block = aBlock(theGenesisBlock);
-        const gossip = testNetwork.getNodeGossip(node0.pk);
+        const gossip = testNetwork.getNodeGossip(nodeUnderTest.publicKey);
         const pks = testNetwork.gossipDiscovery.getAllGossipsPks();
-        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(node0.config.keyManager, 3, 0, block)));
-        gossip.sendMessage(pks, messageToGossip(aPrepareMessage(node0.config.keyManager, 3, 0, block)));
-        gossip.sendMessage(pks, messageToGossip(aCommitMessage(node0.config.keyManager, 3, 0, block)));
-        gossip.sendMessage(pks, messageToGossip(aViewChangeMessage(node0.config.keyManager, 3, 0)));
-        gossip.sendMessage(pks, messageToGossip(aNewViewMessage(node0.config.keyManager, 3, 0, aPrePrepareMessage(node0.config.keyManager, 3, 0, block), [])));
+        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(nodeUnderTest.keyManager, 3, 0, block)));
+        gossip.sendMessage(pks, messageToGossip(aPrepareMessage(nodeUnderTest.keyManager, 3, 0, block)));
+        gossip.sendMessage(pks, messageToGossip(aCommitMessage(nodeUnderTest.keyManager, 3, 0, block)));
+        gossip.sendMessage(pks, messageToGossip(aViewChangeMessage(nodeUnderTest.keyManager, 3, 0)));
+        gossip.sendMessage(pks, messageToGossip(aNewViewMessage(nodeUnderTest.keyManager, 3, 0, aPrePrepareMessage(nodeUnderTest.keyManager, 3, 0, block), [])));
 
-        expect(PPSpy).to.not.have.been.calledOnce;
-        expect(PSpy).to.not.have.been.calledOnce;
-        expect(CSpy).to.not.have.been.calledOnce;
-        expect(VCSpy).to.not.have.been.calledOnce;
-        expect(NVSpy).to.not.have.been.calledOnce;
+        expect(PPSpy).to.not.have.been.called;
+        expect(PSpy).to.not.have.been.called;
+        expect(CSpy).to.not.have.been.called;
+        expect(VCSpy).to.not.have.been.called;
+        expect(NVSpy).to.not.have.been.called;
     });
 
     it("should ignore messages that are not part of the network", async () => {
@@ -120,7 +120,7 @@ describe("Network Messages Filter", () => {
         const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
 
-        const gossipFilter: NetworkMessagesFilter = new NetworkMessagesFilter(node0.config.networkCommunication, node0.pk);
+        const gossipFilter: NetworkMessagesFilter = new NetworkMessagesFilter(node0.gossip, node0.publicKey);
         const messagesHandler: MessagesHandler = new PBFTMessagesHandlerMock();
 
         const PPSpy = sinon.spy(messagesHandler, "onReceivePrePrepare");
@@ -132,7 +132,7 @@ describe("Network Messages Filter", () => {
         gossipFilter.setBlockHeight(3, messagesHandler);
 
         const block: Block = aBlock(theGenesisBlock);
-        const gossip = testNetwork.getNodeGossip(node1.pk);
+        const gossip = testNetwork.getNodeGossip(node1.publicKey);
         const keyManager: KeyManager = new KeyManagerMock("External Node Pk");
         const pks = testNetwork.gossipDiscovery.getAllGossipsPks();
 
@@ -142,10 +142,10 @@ describe("Network Messages Filter", () => {
         gossip.sendMessage(pks, messageToGossip(aViewChangeMessage(keyManager, 3, 0)));
         gossip.sendMessage(pks, messageToGossip(aNewViewMessage(keyManager, 3, 0, aPrePrepareMessage(keyManager, 3, 0, block), [])));
 
-        expect(PPSpy).to.not.have.been.calledOnce;
-        expect(PSpy).to.not.have.been.calledOnce;
-        expect(CSpy).to.not.have.been.calledOnce;
-        expect(VCSpy).to.not.have.been.calledOnce;
-        expect(NVSpy).to.not.have.been.calledOnce;
+        expect(PPSpy).to.not.have.been.called;
+        expect(PSpy).to.not.have.been.called;
+        expect(CSpy).to.not.have.been.called;
+        expect(VCSpy).to.not.have.been.called;
+        expect(NVSpy).to.not.have.been.called;
     });
 });

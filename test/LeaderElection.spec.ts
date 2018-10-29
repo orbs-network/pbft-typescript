@@ -21,7 +21,7 @@ describe("Leader Election", () => {
         const node1 = testNetwork.nodes[1];
         const node2 = testNetwork.nodes[2];
         const node3 = testNetwork.nodes[3];
-        const gossip = testNetwork.getNodeGossip(node0.pk);
+        const gossip = testNetwork.getNodeGossip(node0.publicKey);
         const sendToNodeSpy = sinon.spy(gossip, "sendToNode");
 
         testNetwork.startConsensusOnAllNodes();
@@ -31,9 +31,9 @@ describe("Leader Election", () => {
         await blockUtils.resolveAllValidations(true);
 
         const q = 3;
-        const node0Prepared: PreparedMessages = extractPreparedMessages(1, node0.config.pbftStorage, q);
-        const newViewMessage = aViewChangeMessage(node0.config.keyManager, 1, 1, node0Prepared);
-        expect(sendToNodeSpy).to.have.been.calledWith(node1.pk, messageToGossip(newViewMessage));
+        const node0Prepared: PreparedMessages = extractPreparedMessages(1, node0.pbftStorage, q);
+        const newViewMessage = aViewChangeMessage(node0.keyManager, 1, 1, node0Prepared);
+        expect(sendToNodeSpy).to.have.been.calledWith(node1.publicKey, messageToGossip(newViewMessage));
 
         testNetwork.shutDown();
     });
@@ -96,16 +96,16 @@ describe("Leader Election", () => {
         const node2 = testNetwork.nodes[2];
         const node3 = testNetwork.nodes[3];
 
-        const gossip = testNetwork.getNodeGossip(node1.pk);
+        const gossip = testNetwork.getNodeGossip(node1.publicKey);
         const multicastSpy = sinon.spy(gossip, "sendMessage");
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
         await blockUtils.provideNextBlock();
         await nextTick();
 
-        const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.config.keyManager, 1, 1);
-        const node2VCMessage: ViewChangeMessage = aViewChangeMessage(node2.config.keyManager, 1, 1);
-        const node3VCMessage: ViewChangeMessage = aViewChangeMessage(node3.config.keyManager, 1, 1);
+        const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.keyManager, 1, 1);
+        const node2VCMessage: ViewChangeMessage = aViewChangeMessage(node2.keyManager, 1, 1);
+        const node3VCMessage: ViewChangeMessage = aViewChangeMessage(node3.keyManager, 1, 1);
         gossip.onRemoteMessage(messageToGossip(node0VCMessage));
         gossip.onRemoteMessage(messageToGossip(node2VCMessage));
         gossip.onRemoteMessage(messageToGossip(node3VCMessage));
@@ -113,11 +113,11 @@ describe("Leader Election", () => {
         await blockUtils.provideNextBlock();
         await nextTick();
 
-        const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, 1, 1, block2);
+        const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.keyManager, 1, 1, block2);
         const VCProof: ViewChangeMessage[] = [node0VCMessage, node2VCMessage, node3VCMessage];
-        const message: NewViewMessage = aNewViewMessage(node1.config.keyManager, 1, 1, PPMessage, VCProof);
+        const message: NewViewMessage = aNewViewMessage(node1.keyManager, 1, 1, PPMessage, VCProof);
 
-        expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], messageToGossip(message));
+        expect(multicastSpy).to.have.been.calledWith([node0.publicKey, node2.publicKey, node3.publicKey], messageToGossip(message));
         testNetwork.shutDown();
     });
 
@@ -130,7 +130,7 @@ describe("Leader Election", () => {
         const node2 = testNetwork.nodes[2];
         const node3 = testNetwork.nodes[3];
 
-        const node1Gossip = testNetwork.getNodeGossip(node1.pk);
+        const node1Gossip = testNetwork.getNodeGossip(node1.publicKey);
         const multicastSpy = sinon.spy(node1Gossip, "sendMessage");
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
@@ -140,15 +140,15 @@ describe("Leader Election", () => {
         // VC with prepared proof on view 3
         const blockOnView3 = aBlock(block1, "Block on View 3");
         const preparedOnView3: PreparedMessages = aPrepared(node3, [node1, node2], 1, 3, blockOnView3);
-        const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.config.keyManager, 1, 5, preparedOnView3);
+        const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.keyManager, 1, 5, preparedOnView3);
 
         // VC with prepared proof on view 4
         const blockOnView4 = aBlock(block1, "Block on View 4");
         const preparedOnView4: PreparedMessages = aPrepared(node0, [node1, node2], 1, 4, blockOnView4);
-        const node2VCMessage: ViewChangeMessage = aViewChangeMessage(node2.config.keyManager, 1, 5, preparedOnView4);
+        const node2VCMessage: ViewChangeMessage = aViewChangeMessage(node2.keyManager, 1, 5, preparedOnView4);
 
         // VC with no prepared proof
-        const node3VCMessage: ViewChangeMessage = aViewChangeMessage(node3.config.keyManager, 1, 5);
+        const node3VCMessage: ViewChangeMessage = aViewChangeMessage(node3.keyManager, 1, 5);
 
         // send the view-change
         node1Gossip.onRemoteMessage(messageToGossip(node0VCMessage));
@@ -158,11 +158,11 @@ describe("Leader Election", () => {
         await blockUtils.provideNextBlock();
         await nextTick();
 
-        const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, 1, 5, blockOnView4);
+        const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.keyManager, 1, 5, blockOnView4);
         const votes: ViewChangeMessage[] = [node0VCMessage, node2VCMessage, node3VCMessage];
-        const newViewMessage: NewViewMessage = aNewViewMessage(node1.config.keyManager, 1, 5, PPMessage, votes);
+        const newViewMessage: NewViewMessage = aNewViewMessage(node1.keyManager, 1, 5, PPMessage, votes);
 
-        expect(multicastSpy).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], messageToGossip(newViewMessage));
+        expect(multicastSpy).to.have.been.calledWith([node0.publicKey, node2.publicKey, node3.publicKey], messageToGossip(newViewMessage));
         testNetwork.shutDown();
     });
 
@@ -230,9 +230,9 @@ describe("Leader Election", () => {
         expect(node2.isLeader()).to.false;
         expect(node3.isLeader()).to.false;
 
-        const gossip0 = testNetwork.getNodeGossip(node0.pk);
-        const gossip1 = testNetwork.getNodeGossip(node1.pk);
-        const gossip2 = testNetwork.getNodeGossip(node2.pk);
+        const gossip0 = testNetwork.getNodeGossip(node0.publicKey);
+        const gossip1 = testNetwork.getNodeGossip(node1.publicKey);
+        const gossip2 = testNetwork.getNodeGossip(node2.publicKey);
 
         const spy0 = sinon.spy(gossip0, "sendToNode");
         const spy1 = sinon.spy(gossip1, "sendMessage");
@@ -250,18 +250,18 @@ describe("Leader Election", () => {
         await nextTick(); // await for blockChain.getLastBlockHash
 
         const q = 3;
-        const node0Prepared: PreparedMessages = extractPreparedMessages(2, node0.config.pbftStorage, q);
-        const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.config.keyManager, 2, 1, node0Prepared);
-        expect(spy0).to.have.been.calledWith(node1.pk, messageToGossip(node0VCMessage));
+        const node0Prepared: PreparedMessages = extractPreparedMessages(2, node0.pbftStorage, q);
+        const node0VCMessage: ViewChangeMessage = aViewChangeMessage(node0.keyManager, 2, 1, node0Prepared);
+        expect(spy0).to.have.been.calledWith(node1.publicKey, messageToGossip(node0VCMessage));
 
-        const node2Prepared: PreparedMessages = extractPreparedMessages(2, node2.config.pbftStorage, q);
-        const node2VCMessage: ViewChangeMessage = aViewChangeMessage(node2.config.keyManager, 2, 1, node2Prepared);
-        expect(spy2).to.have.been.calledWith(node1.pk, messageToGossip(node2VCMessage));
+        const node2Prepared: PreparedMessages = extractPreparedMessages(2, node2.pbftStorage, q);
+        const node2VCMessage: ViewChangeMessage = aViewChangeMessage(node2.keyManager, 2, 1, node2Prepared);
+        expect(spy2).to.have.been.calledWith(node1.publicKey, messageToGossip(node2VCMessage));
 
-        const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.config.keyManager, 2, 1, block3);
-        const VCProof: ViewChangeMessage[] = node1.config.pbftStorage.getViewChangeMessages(2, 1);
-        const node1NVExpectedMessage: NewViewMessage = aNewViewMessage(node1.config.keyManager, 2, 1, PPMessage, VCProof);
-        expect(spy1).to.have.been.calledWith([node0.pk, node2.pk, node3.pk], messageToGossip(node1NVExpectedMessage));
+        const PPMessage: PrePrepareMessage = aPrePrepareMessage(node1.keyManager, 2, 1, block3);
+        const VCProof: ViewChangeMessage[] = node1.pbftStorage.getViewChangeMessages(2, 1);
+        const node1NVExpectedMessage: NewViewMessage = aNewViewMessage(node1.keyManager, 2, 1, PPMessage, VCProof);
+        expect(spy1).to.have.been.calledWith([node0.publicKey, node2.publicKey, node3.publicKey], messageToGossip(node1NVExpectedMessage));
 
         testNetwork.shutDown();
     });
@@ -269,14 +269,14 @@ describe("Leader Election", () => {
     it("should not fire new-view if count of view-change is less than 2f+1", async () => {
         const { testNetwork, blockUtils } = aSimpleTestNetwork();
         const node1 = testNetwork.nodes[1];
-        const gossip = testNetwork.getNodeGossip(node1.pk);
+        const gossip = testNetwork.getNodeGossip(node1.publicKey);
         const multicastSpy = sinon.spy(gossip, "sendMessage");
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
         await blockUtils.provideNextBlock();
-        gossip.onRemoteMessage(messageToGossip(aViewChangeMessage(node1.config.keyManager, 1, 1)));
-        gossip.onRemoteMessage(messageToGossip(aViewChangeMessage(node1.config.keyManager, 1, 1)));
+        gossip.onRemoteMessage(messageToGossip(aViewChangeMessage(node1.keyManager, 1, 1)));
+        gossip.onRemoteMessage(messageToGossip(aViewChangeMessage(node1.keyManager, 1, 1)));
         await blockUtils.resolveAllValidations(true);
 
         expect(gossipMessageCounter(multicastSpy, MessageType.NEW_VIEW)).to.equal(0);
@@ -288,15 +288,15 @@ describe("Leader Election", () => {
         const leader = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
 
-        const gossip = testNetwork.getNodeGossip(node1.pk);
+        const gossip = testNetwork.getNodeGossip(node1.publicKey);
         const multicastSpy = sinon.spy(gossip, "sendMessage");
 
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
         await blockUtils.provideNextBlock();
-        gossip.onRemoteMessage(messageToGossip(aViewChangeMessage(node1.config.keyManager, 1, 1)));
-        gossip.onRemoteMessage(messageToGossip(aViewChangeMessage(node1.config.keyManager, 1, 1)));
-        gossip.onRemoteMessage(messageToGossip(aViewChangeMessage(node1.config.keyManager, 1, 1)));
+        gossip.onRemoteMessage(messageToGossip(aViewChangeMessage(node1.keyManager, 1, 1)));
+        gossip.onRemoteMessage(messageToGossip(aViewChangeMessage(node1.keyManager, 1, 1)));
+        gossip.onRemoteMessage(messageToGossip(aViewChangeMessage(node1.keyManager, 1, 1)));
         await blockUtils.resolveAllValidations(true);
 
         expect(gossipMessageCounter(multicastSpy, MessageType.NEW_VIEW)).to.equal(0);

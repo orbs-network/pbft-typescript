@@ -24,10 +24,10 @@ describe("PBFT", () => {
         const node1 = testNetwork.nodes[1];
         const node2 = testNetwork.nodes[2];
         const node3 = testNetwork.nodes[3];
-        const gossip0 = testNetwork.getNodeGossip(node0.pk);
-        const gossip1 = testNetwork.getNodeGossip(node1.pk);
-        const gossip2 = testNetwork.getNodeGossip(node2.pk);
-        const gossip3 = testNetwork.getNodeGossip(node3.pk);
+        const gossip0 = testNetwork.getNodeGossip(node0.publicKey);
+        const gossip1 = testNetwork.getNodeGossip(node1.publicKey);
+        const gossip2 = testNetwork.getNodeGossip(node2.publicKey);
+        const gossip3 = testNetwork.getNodeGossip(node3.publicKey);
         const spy0 = sinon.spy(gossip0, "sendMessage");
         const spy1 = sinon.spy(gossip1, "sendMessage");
         const spy2 = sinon.spy(gossip2, "sendMessage");
@@ -96,10 +96,10 @@ describe("PBFT", () => {
         const { testNetwork, blockUtils } = aSimpleTestNetwork(4, [block1, block2]);
 
         const leader = testNetwork.nodes[0];
-        const leaderGossip = testNetwork.getNodeGossip(leader.pk);
+        const leaderGossip = testNetwork.getNodeGossip(leader.publicKey);
 
         // suggest block 1 to nodes 1 and 2
-        leaderGossip.setOutGoingWhiteListPKs([testNetwork.nodes[1].pk, testNetwork.nodes[2].pk]);
+        leaderGossip.setOutGoingWhiteListPKs([testNetwork.nodes[1].publicKey, testNetwork.nodes[2].publicKey]);
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
         await blockUtils.provideNextBlock();
@@ -107,7 +107,7 @@ describe("PBFT", () => {
         await blockUtils.resolveAllValidations(true);
 
         // suggest block 2 to node 3.
-        leaderGossip.setOutGoingWhiteListPKs([testNetwork.nodes[3].pk]);
+        leaderGossip.setOutGoingWhiteListPKs([testNetwork.nodes[3].publicKey]);
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
         await blockUtils.provideNextBlock();
@@ -125,7 +125,7 @@ describe("PBFT", () => {
         const { testNetwork, blockUtils, blocksPool } = aSimpleTestNetwork(5);
 
         const byzantineNode = testNetwork.nodes[4];
-        const gossip = testNetwork.getNodeGossip(byzantineNode.pk);
+        const gossip = testNetwork.getNodeGossip(byzantineNode.publicKey);
         gossip.setIncomingWhiteListPKs([]); // prevent incomming gossip messages
 
         testNetwork.startConsensusOnAllNodes();
@@ -148,11 +148,11 @@ describe("PBFT", () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
         const pks = testNetwork.gossipDiscovery.getAllGossipsPks();
-        const gossip = testNetwork.getNodeGossip(byzantineNode.pk);
-        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock)));
-        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock)));
-        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock)));
-        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(byzantineNode.config.keyManager, 1, 0, fakeBlock)));
+        const gossip = testNetwork.getNodeGossip(byzantineNode.publicKey);
+        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(byzantineNode.keyManager, 1, 0, fakeBlock)));
+        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(byzantineNode.keyManager, 1, 0, fakeBlock)));
+        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(byzantineNode.keyManager, 1, 0, fakeBlock)));
+        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(byzantineNode.keyManager, 1, 0, fakeBlock)));
 
         await nextTick();
         await blockUtils.provideNextBlock();
@@ -169,8 +169,8 @@ describe("PBFT", () => {
 
         const byzantineNode1 = testNetwork.nodes[5];
         const byzantineNode2 = testNetwork.nodes[6];
-        const gossip1 = testNetwork.getNodeGossip(byzantineNode1.pk);
-        const gossip2 = testNetwork.getNodeGossip(byzantineNode2.pk);
+        const gossip1 = testNetwork.getNodeGossip(byzantineNode1.publicKey);
+        const gossip2 = testNetwork.getNodeGossip(byzantineNode2.publicKey);
         gossip1.setIncomingWhiteListPKs([]);
         gossip2.setIncomingWhiteListPKs([]);
 

@@ -10,17 +10,9 @@ import { validatePreparedProof } from "./proofsValidator/ProofsValidator";
 import { PBFTStorage } from "./storage/PBFTStorage";
 import { extractPreparedMessages, PreparedMessages } from "./storage/PreparedMessagesExtractor";
 import { MessagesFactory } from "./networkCommunication/MessagesFactory";
+import { Config } from "./Config";
 
 export type onNewBlockCB = (block: Block) => void;
-
-export interface TermConfig {
-    electionTrigger: ElectionTrigger;
-    networkCommunication: NetworkCommunication;
-    pbftStorage: PBFTStorage;
-    keyManager: KeyManager;
-    logger: Logger;
-    blockUtils: BlockUtils;
-}
 
 export class PBFTTerm {
     private readonly electionTrigger: ElectionTrigger;
@@ -42,7 +34,7 @@ export class PBFTTerm {
     private committedLocally: boolean = false;
 
 
-    constructor(config: TermConfig, private readonly blockHeight: number, private onCommittedBlock: (block: Block) => void) {
+    constructor(config: Config, private readonly blockHeight: number, private onCommittedBlock: (block: Block) => void) {
         // config
         this.keyManager = config.keyManager;
         this.networkCommunication = config.networkCommunication;
