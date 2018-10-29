@@ -65,12 +65,11 @@ class TestNetworkBuilder {
 
     private buildNode(builder: NodeBuilder, publicKey: string, discovery: GossipDiscovery): Node {
         const logger: Logger = new this.loggerCtor(publicKey);
-        const blockUtils: BlockUtilsMock = new BlockUtilsMock(this.blocksPool);
         const gossip = new Gossip(discovery);
         discovery.registerGossip(publicKey, gossip);
         return builder
             .thatIsPartOf(gossip)
-            .gettingBlocksVia(blockUtils)
+            .withBlocksPool(this.blocksPool)
             .withPk(publicKey)
             .thatLogsTo(logger)
             .build();

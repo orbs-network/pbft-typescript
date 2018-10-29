@@ -245,11 +245,9 @@ describe("PBFT", () => {
         const block2 = aBlock(block1, "block 2");
         const blocksPool = [block1, block2];
 
-        const hangingBlockUtils: BlockUtilsMock = new BlockUtilsMock(blocksPool);
-        const hangingNodeBuilder = aNode()
-            .gettingBlocksVia(hangingBlockUtils);
+        const hangingNodeBuilder = aNode().withBlocksPool(blocksPool);
 
-            const testNetwork = aTestNetwork()
+        const testNetwork = aTestNetwork()
             .withBlocksPool(blocksPool)
             .with(3).nodes
             .withCustomNode(hangingNodeBuilder)
@@ -277,9 +275,9 @@ describe("PBFT", () => {
         expect(await testNetwork.nodes[3].getLatestCommittedBlock()).to.deep.equal(theGenesisBlock);
 
         // release the hanging node for block 1
-        await hangingBlockUtils.resolveAllValidations(true);
+        await hangingNode.blockUtils.resolveAllValidations(true);
         // release the hanging node for block 2
-        await hangingBlockUtils.resolveAllValidations(true);
+        await hangingNode.blockUtils.resolveAllValidations(true);
 
         // expect the hangking node to catch up (Saving future messages)
         expect(await testNetwork.nodes[0].getLatestCommittedBlock()).to.deep.equal(block2);

@@ -1,23 +1,16 @@
-import { BlockUtils, NetworkCommunication } from "../../src";
-import { Config } from "../../src/Config";
-import { ElectionTrigger } from "../../src/electionTrigger/ElectionTrigger";
-import { KeyManager } from "../../src/keyManager/KeyManager";
+import { Block } from "../../src";
 import { Logger } from "../../src/logger/Logger";
-import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
-import { PBFTStorage } from "../../src/storage/PBFTStorage";
 import { BlockUtilsMock } from "../blockUtils/BlockUtilsMock";
-import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
-import { KeyManagerMock } from "../keyManager/KeyManagerMock";
+import { Gossip } from "../gossip/Gossip";
 import { ConsoleLogger } from "../logger/ConsoleLogger";
 import { SilentLogger } from "../logger/SilentLogger";
 import { Node } from "../network/Node";
-import { Gossip } from "../gossip/Gossip";
 
 export class NodeBuilder {
     private gossip: Gossip;
+    private blocksPool: Block[];
     private publicKey: string;
     private logger: Logger;
-    private blockUtils: BlockUtilsMock;
     private logsToConsole: boolean = false;
 
     constructor() {
@@ -44,9 +37,9 @@ export class NodeBuilder {
         return this;
     }
 
-    public gettingBlocksVia(blockUtils: BlockUtilsMock): this {
-        if (!this.blockUtils) {
-            this.blockUtils = blockUtils;
+    public withBlocksPool(blocksPool: Block[]): this {
+        if (!this.blocksPool) {
+            this.blocksPool = blocksPool;
         }
         return this;
     }
@@ -59,7 +52,7 @@ export class NodeBuilder {
     public build(): Node {
         const publicKey: string = this.publicKey ? this.publicKey : "Dummy PublicKey";
         const logger: Logger = this.logger ? this.logger : this.logsToConsole ? new ConsoleLogger(publicKey) : new SilentLogger();
-        const blockUtils: BlockUtilsMock = this.blockUtils ? this.blockUtils : new BlockUtilsMock();
+        const blockUtils: BlockUtilsMock = new BlockUtilsMock(this.blocksPool);
 
         return new Node(this.publicKey, logger, this.gossip, blockUtils);
     }
