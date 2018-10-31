@@ -1,25 +1,24 @@
-import { Config, ElectionTrigger, PBFTStorage, Logger } from "../../src";
+import { Config, Logger, KeyManager, PBFTStorage } from "../../src";
 import { Block } from "../../src/Block";
 import { PBFT } from "../../src/PBFT";
-import { InMemoryBlockChain } from "../InMemoryBlockChain/InMemoryBlockChain";
-import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
-import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 import { InMemoryPBFTStorage } from "../../src/storage/InMemoryPBFTStorage";
 import { BlockUtilsMock } from "../blockUtils/BlockUtilsMock";
+import { ElectionTriggerMock } from "../electionTrigger/ElectionTriggerMock";
 import { Gossip } from "../gossip/Gossip";
-import { PBFTMessagesHandlerMock } from "../networkMessagesFilter/PBFTMessagesHandlerMock";
+import { InMemoryBlockChain } from "../InMemoryBlockChain/InMemoryBlockChain";
+import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 
 export class Node {
     public publicKey: string;
-    public keyManager: KeyManagerMock;
-    public pbftStorage: InMemoryPBFTStorage;
-    public electionTrigger: ElectionTriggerMock;
+    public keyManager: KeyManager;
+    public pbftStorage: PBFTStorage;
     public blockUtils: BlockUtilsMock;
     public gossip: Gossip;
 
     private logger: Logger;
     private pbft: PBFT;
     private blockChain: InMemoryBlockChain;
+    private electionTrigger: ElectionTriggerMock;
 
     constructor(publicKey: string, logger: Logger, gossip: Gossip, blockUtils: BlockUtilsMock) {
         this.publicKey = publicKey;
