@@ -7,7 +7,7 @@ import { SilentLogger } from "../logger/SilentLogger";
 import { Node } from "../network/Node";
 import { TestNetwork } from "../network/TestNetwork";
 import { aBlock, theGenesisBlock } from "./BlockBuilder";
-import { aNode, NodeBuilder } from "./NodeBuilder";
+import { NodeBuilder } from "./NodeBuilder";
 export interface LoggerConstructor {
     new(id: string): Logger;
 }
@@ -25,7 +25,6 @@ export class TestNetworkBuilder {
     private loggerCtor: LoggerConstructor = SilentLogger;
     private customNodes: NodeBuilder[] = [];
     private blocksPool: Block[];
-    private testNetwork: TestNetwork;
 
     public countOfNodes: number = 0;
 
@@ -58,9 +57,10 @@ export class TestNetworkBuilder {
     public build(): TestNetwork {
         const blocksPool: Block[] = this.buildBlocksPool();
         const discovery = new GossipDiscovery();
-        this.testNetwork = new TestNetwork(discovery, blocksPool);
-        this.createNodes(discovery, blocksPool);
-        return this.testNetwork;
+        const nodes = this.createNodes(discovery, blocksPool);
+        const testNetwork = new TestNetwork(discovery, blocksPool);
+        testNetwork.registerNodes(nodes);
+        return testNetwork;
     }
 
     private buildBlocksPool(): Block[] {
@@ -87,17 +87,18 @@ export class TestNetworkBuilder {
             .build();
     }
 
-    private createNodes(discovery: GossipDiscovery, blocksPool: Block[]): void {
+    private createNodes(discovery: GossipDiscovery, blocksPool: Block[]): Node[] {
         const nodes: Node[] = [];
 
         for (let i = 0; i < this.countOfNodes; i++) {
-            const node = this.buildNode(aNode(), `Node ${i}`, discovery, blocksPool);
+            const nodeBuilder = new NodeBuilder();
+            const node = this.buildNode(nodeBuilder, `Node ${i}`, discovery, blocksPool);
             nodes.push(node);
         }
 
         const customNodes = this.customNodes.map((nodeBuilder, idx) => this.buildNode(nodeBuilder, `Custom-Node ${idx}`, discovery, blocksPool));
         nodes.push(...customNodes);
-        this.testNetwork.registerNodes(nodes);
+        return nodes;
     }
 }
 

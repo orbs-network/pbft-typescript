@@ -7,7 +7,7 @@ import * as sinonChai from "sinon-chai";
 import { MessageType } from "../src/networkCommunication/Messages";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aPrePrepareMessage } from "./builders/MessagesBuilder";
-import { aNode } from "./builders/NodeBuilder";
+import { NodeBuilder } from "./builders/NodeBuilder";
 import { aTestNetwork, TestNetworkBuilder } from "./builders/TestNetworkBuilder";
 import { gossipMessageCounter, messageToGossip } from "./gossip/GossipTestUtils";
 import { blockMatcher } from "./matchers/blockMatcher";
@@ -62,7 +62,7 @@ describe("PBFT", () => {
     });
 
     it("should reach consesnsus after 8 blocks", async () => {
-        const testNetwork = aTestNetwork(4);
+        const testNetwork = aTestNetwork();
 
         testNetwork.startConsensusOnAllNodes();
         for (const i of [0, 1, 2, 3, 4, 5, 6, 7]) {
@@ -244,7 +244,7 @@ describe("PBFT", () => {
         const block2 = aBlock(block1, "block 2");
         const blocksPool = [block1, block2];
 
-        const hangingNodeBuilder = aNode().withBlocksPool(blocksPool);
+        const hangingNodeBuilder = new NodeBuilder().withBlocksPool(blocksPool);
 
         const testNetwork = new TestNetworkBuilder()
             .withBlocksPool(blocksPool)

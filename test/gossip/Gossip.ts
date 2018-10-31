@@ -56,11 +56,6 @@ export class Gossip implements NetworkCommunication {
         this.subscriptions.delete(subscriptionToken);
     }
 
-
-
-
-
-
     onRemoteMessage(gossipMessage: ConsensusRawMessage): void {
         this.subscriptions.forEach(subscription => {
             if (this.inComingWhiteListPKs !== undefined) {

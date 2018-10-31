@@ -2,7 +2,7 @@ import * as chai from "chai";
 import * as sinonChai from "sinon-chai";
 import { expect } from "chai";
 import { getLatestBlockFromViewChangeMessages } from "../../src/blockExtractor/BlockExtractor";
-import { aViewChangeMessage } from "../builders/MessagesBuilder";
+import { aViewChangeMessage, aPrePrepareMessage, aPrepareMessage } from "../builders/MessagesBuilder";
 import { aPrepared } from "../builders/ProofBuilder";
 import { Block, KeyManager } from "../../src";
 import { aBlock, theGenesisBlock } from "../builders/BlockBuilder";
@@ -18,7 +18,7 @@ describe("Block Extractor", () => {
         expect(actual).to.be.undefined;
     });
 
-    it("ViewChangeMessages without block should be ignored", async () => {
+    it("ViewChangeMessages without content should be ignored", async () => {
         const keyManager: KeyManager = new KeyManagerMock("My PK");
         const VCMessage: ViewChangeMessage = aViewChangeMessage(keyManager, 1, 2);
 
@@ -26,9 +26,21 @@ describe("Block Extractor", () => {
         expect(actual).to.be.undefined;
     });
 
-    it("ViewChangeMessages without content should be ignored", async () => {
-        const keyManager: KeyManager = new KeyManagerMock("My PK");
-        const VCMessage: ViewChangeMessage = aViewChangeMessage(keyManager, 1, 2);
+    it("ViewChangeMessages without block should be ignored", async () => {
+        const keyManager1: KeyManager = new KeyManagerMock("PublicKey 1");
+        const keyManager2: KeyManager = new KeyManagerMock("PublicKey 2");
+        const keyManager3: KeyManager = new KeyManagerMock("PublicKey 3");
+        const block = aBlock(theGenesisBlock);
+
+        const preparedMessages: PreparedMessages = {
+            preprepareMessage: undefined,
+            prepareMessages: [
+                aPrepareMessage(keyManager1, 1, 2, block),
+                aPrepareMessage(keyManager2, 1, 2, block),
+            ]
+        };
+
+        const VCMessage: ViewChangeMessage = aViewChangeMessage(keyManager3, 1, 2, preparedMessages);
 
         const actual = getLatestBlockFromViewChangeMessages([VCMessage]);
         expect(actual).to.be.undefined;

@@ -57,5 +57,3 @@ export class NodeBuilder {
         return new Node(this.publicKey, logger, this.gossip, blockUtils);
     }
 }
-
-export const aNode = () => new NodeBuilder();

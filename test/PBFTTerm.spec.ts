@@ -12,7 +12,7 @@ import { PBFTTerm } from "../src/PBFTTerm";
 import { extractPreparedMessages, PreparedMessages } from "../src/storage/PreparedMessagesExtractor";
 import { BlockUtilsMock } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { aCommitMessage, aNewViewMessage, aPrepareMessage, aPrePrepareMessage, aViewChangeMessage } from "./builders/MessagesBuilder";
+import { aCommitMessage, aNewViewMessage, aPrepareMessage, aPrePrepareMessage, aViewChangeMessage, aValidNewViewMessage } from "./builders/MessagesBuilder";
 import { aPrepared, aPreparedProofByMessages } from "./builders/ProofBuilder";
 import { aTestNetwork } from "./builders/TestNetworkBuilder";
 import { blockMatcher } from "./matchers/blockMatcher";
@@ -42,7 +42,7 @@ describe("PBFTTerm", () => {
     let node3KeyManager: KeyManager;
 
     beforeEach(() => {
-        testNetwork = aTestNetwork(4);
+        testNetwork = aTestNetwork();
         triggerElection = () => {
             node0.triggerElection();
             node1.triggerElection();
@@ -68,8 +68,7 @@ describe("PBFTTerm", () => {
     });
 
     function createPBFTTerm(config: Config): PBFTTerm {
-        const pbftTerm: PBFTTerm = new PBFTTerm(config, 0, () => { });
-        return pbftTerm;
+        return new PBFTTerm(config, 0, () => { });
     }
 
     it("onNewView should not accept views from the past", async () => {
@@ -79,10 +78,18 @@ describe("PBFTTerm", () => {
         expect(pbftTerm.getView()).to.equal(1);
 
         const block: Block = aBlock(theGenesisBlock);
-        const preprepareMessage: PrePrepareMessage = aPrePrepareMessage(node0KeyManager, 1, 0, block);
-        const newViewMessage: NewViewMessage = aNewViewMessage(node0KeyManager, 1, 0, preprepareMessage, []);
-        pbftTerm.onReceiveNewView(newViewMessage);
-        expect(pbftTerm.getView()).to.equal(1);
+
+        // next view 8 => valid
+        const newViewMessageOnView8: NewViewMessage = aValidNewViewMessage(node0, [node1, node2, node3], 1, 8, block);
+        pbftTerm.onReceiveNewView(newViewMessageOnView8);
+        await node0BlockUtils.resolveAllValidations(true);
+        expect(pbftTerm.getView()).to.equal(8);
+
+        // next view 4 => invalid (view is valid, but from the past)
+        const newViewMessageOnView4: NewViewMessage = aValidNewViewMessage(node0, [node1, node2, node3], 1, 4, block);
+        pbftTerm.onReceiveNewView(newViewMessageOnView4);
+        await node0BlockUtils.resolveAllValidations(true);
+        expect(pbftTerm.getView()).to.equal(8);  // unchanged
     });
 
     it("onViewChange should not accept views from the past", async () => {
@@ -179,17 +186,11 @@ describe("PBFTTerm", () => {
             const node0PbftTerm: PBFTTerm = createPBFTTerm(node0Config);
 
             const block: Block = aBlock(theGenesisBlock);
-            const viewChange0: ViewChangeMessage = aViewChangeMessage(node0.keyManager, 1, 1);
-            const viewChange1: ViewChangeMessage = aViewChangeMessage(node1.keyManager, 1, 1);
-            const viewChange2: ViewChangeMessage = aViewChangeMessage(node2.keyManager, 1, 1);
-            const votes: ViewChangeMessage[] = [viewChange0, viewChange1, viewChange2];
-
-            const NVMessage: NewViewMessage = aNewViewMessage(node1KeyManager, 1, 2, aPrePrepareMessage(node1KeyManager, 1, 1, block), votes);
+            const NVMessage: NewViewMessage = aValidNewViewMessage(node1, [node0, node2, node3], 1, 1, block);
 
             // destorying the signature => invalid, should be ignored
             NVMessage.content.sender.signature = "FAKE_SIGNATURE";
             node0PbftTerm.onReceiveNewView(NVMessage);
-            await nextTick();
             await node0BlockUtils.resolveAllValidations(true);
             expect(node0PbftTerm.getView()).to.equal(0);
         });

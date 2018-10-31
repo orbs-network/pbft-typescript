@@ -56,6 +56,7 @@ export class Node {
             electionTrigger: this.electionTrigger,
         };
     }
+
     private onNewBlock(block: Block): void {
         this.blockChain.appendBlockToChain(block);
     }

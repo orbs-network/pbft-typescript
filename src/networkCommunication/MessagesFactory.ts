@@ -66,7 +66,7 @@ export class MessagesFactory {
         let block: Block;
         if (preparedMessages) {
             preparedProof = this.generatePreparedProof(preparedMessages);
-            block = preparedMessages.preprepareMessage.block;
+            block = preparedMessages.preprepareMessage ? preparedMessages.preprepareMessage.block : undefined;
         }
 
         const signedHeader: ViewChangeHeader = { messageType: MessageType.VIEW_CHANGE, blockHeight, view, preparedProof };
