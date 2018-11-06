@@ -38,6 +38,16 @@ describe("Block Validation", () => {
         expect(testNetwork.nodes).to.agreeOnBlock(block);
     });
 
+    it("should reach consensus if validateBlock returned true", async () => {
+        testNetwork.startConsensusOnAllNodes();
+        await nextTick();
+        await testNetwork.provideNextBlock();
+        await testNetwork.resolveAllValidations(true);
+        await nextTick();
+
+        expect(testNetwork.nodes).to.agreeOnBlock(block);
+    });
+
     it("should not reach consensus if validateBlock returned false", async () => {
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
