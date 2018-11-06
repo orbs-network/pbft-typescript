@@ -17,17 +17,6 @@ export class PBFT {
         this.networkMessagesFilter = new NetworkMessagesFilter(config.networkCommunication, config.keyManager.getMyPublicKey());
     }
 
-    public static buildTermConfig(config: Config): Config {
-        return {
-            electionTrigger: config.electionTrigger,
-            networkCommunication: config.networkCommunication,
-            pbftStorage: config.pbftStorage,
-            keyManager: config.keyManager,
-            logger: config.logger,
-            blockUtils: config.blockUtils
-        };
-    }
-
     private notifyCommitted(block: Block): void {
         this.onCommittedListeners.map(cb => cb(block));
     }
@@ -45,6 +34,7 @@ export class PBFT {
             this.start(block.getHeight() + 1);
         });
         this.networkMessagesFilter.setBlockHeight(height, this.pbftTerm);
+        this.pbftTerm.startTerm();
     }
 
     public isLeader(): boolean {

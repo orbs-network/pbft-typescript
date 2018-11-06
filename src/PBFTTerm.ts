@@ -47,11 +47,9 @@ export class PBFTTerm {
         this.committeeMembersPKs = this.networkCommunication.requestOrderedCommittee(blockHeight);
         this.otherCommitteeMembersPKs = this.committeeMembersPKs.filter(pk => pk !== this.myPk);
         this.messagesFactory = new MessagesFactory(this.keyManager);
-
-        this.startTerm();
     }
 
-    private async startTerm(): Promise<void> {
+    public async startTerm(): Promise<void> {
         this.initView(0);
         let metaData = {
             method: "startTerm",

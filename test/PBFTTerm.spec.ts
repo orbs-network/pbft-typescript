@@ -68,7 +68,9 @@ describe("PBFTTerm", () => {
     });
 
     function createPBFTTerm(config: Config): PBFTTerm {
-        return new PBFTTerm(config, 0, () => { });
+        const result: PBFTTerm = new PBFTTerm(config, 0, () => { });
+        result.startTerm();
+        return result;
     }
 
     it("onNewView should not accept views from the past", async () => {
@@ -238,6 +240,7 @@ describe("PBFTTerm", () => {
 
     it("onReceivePrePrepare should accept views that match its current view", async () => {
         const node1PbftTerm: PBFTTerm = new PBFTTerm(node1Config, 0, () => { });
+        node1PbftTerm.startTerm();
         expect(node1PbftTerm.getView()).to.equal(0);
         triggerElection();
         expect(node1PbftTerm.getView()).to.equal(1);
