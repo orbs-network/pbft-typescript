@@ -11,14 +11,20 @@ import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 chai.use(sinonChai);
 
 describe("Proofs Validator", () => {
-    const keyManager: KeyManager = new KeyManagerMock("Dummy PK");
-    const leaderKeyManager: KeyManager = new KeyManagerMock("Leader PK");
-    const node1KeyManager: KeyManager = new KeyManagerMock("Node 1");
-    const node2KeyManager: KeyManager = new KeyManagerMock("Node 2");
-    const membersPKs: string[] = ["Leader PK", "Node 1", "Node 2", "Node 3"];
+    const keyManager: KeyManager = new KeyManagerMock("My PublicKey");
+    const leaderPK = "Leader PK";
+    const node1PK = "Node 1";
+    const node2PK = "Node 2";
+    const node3PK = "Node 3";
+    const leaderKeyManager: KeyManager = new KeyManagerMock(leaderPK);
+    const node1KeyManager: KeyManager = new KeyManagerMock(node1PK);
+    const node2KeyManager: KeyManager = new KeyManagerMock(node2PK);
+    const node3KeyManager: KeyManager = new KeyManagerMock(node3PK);
+    const membersPKs: string[] = [leaderPK, node1PK, node2PK, node3PK];
 
-    const f = Math.floor(4 / 3);
-    const q = 4 - f;
+    const nodeCount = 4;
+    const f = Math.floor(nodeCount / 3);
+    const q = nodeCount - f;
     const blockHeight = 0;
     const view = 0;
     const targetBlockHeight = blockHeight;
@@ -27,56 +33,62 @@ describe("Proofs Validator", () => {
     const preprepareMessage = aPrePrepareMessage(leaderKeyManager, blockHeight, view, block);
     const prepareMessage1 = aPrepareMessage(node1KeyManager, blockHeight, view, block);
     const prepareMessage2 = aPrepareMessage(node2KeyManager, blockHeight, view, block);
-    const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1, prepareMessage2]);
+    const prepareMessage3 = aPrepareMessage(node3KeyManager, blockHeight, view, block);
+    const goodPrepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1, prepareMessage2, prepareMessage3]);
     const calcLeaderPk = (view: number) => membersPKs[view];
 
+    it("should approve a proof that qualify", async () => {
+        const actual = validatePreparedProof(targetBlockHeight, targetView, goodPrepareProof, q, keyManager, membersPKs, calcLeaderPk);
+        expect(actual).to.be.true;
+    });
+
     it("should reject a proof that did not have a preprepare", async () => {
-        const prepareProof: PreparedProof = aPreparedProofByMessages(undefined, [prepareMessage1, prepareMessage2]);
-        const actual = validatePreparedProof(targetBlockHeight, targetView, prepareProof, q, keyManager, membersPKs, calcLeaderPk);
+        const preparedProofWithoutPP: PreparedProof = aPreparedProofByMessages(undefined, [prepareMessage1, prepareMessage2, prepareMessage3]);
+        const actual = validatePreparedProof(targetBlockHeight, targetView, preparedProofWithoutPP, q, keyManager, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
 
     it("should reject a proof that did not have a prepare", async () => {
-        const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, undefined);
-        const actual = validatePreparedProof(targetBlockHeight, targetView, prepareProof, q, keyManager, membersPKs, calcLeaderPk);
+        const preparedProofWithoutP: PreparedProof = aPreparedProofByMessages(preprepareMessage, undefined);
+        const actual = validatePreparedProof(targetBlockHeight, targetView, preparedProofWithoutP, q, keyManager, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
 
-    it("should reject a proof that did not pass the preprepare signature validation", async () => {
-        const keyManager = new KeyManagerMock("DUMMY PK", ["Leader PK"]);
-        const actual = validatePreparedProof(targetBlockHeight, targetView, prepareProof, q, keyManager, membersPKs, calcLeaderPk);
-        expect(actual).to.be.false;
-    });
-
-    it("should reject a proof that did not pass the prepare signature validation", async () => {
-        const keyManager = new KeyManagerMock("DUMMY PK", ["Node 2"]);
-        const actual = validatePreparedProof(targetBlockHeight, targetView, prepareProof, q, keyManager, membersPKs, calcLeaderPk);
-        expect(actual).to.be.false;
-    });
-
-    it("should approve a proof that had no preprepare no no prepare", async () => {
+    it("should approve a proof that had no preprepare nor prepare", async () => {
         const actual = validatePreparedProof(0, 0, undefined, q, keyManager, membersPKs, calcLeaderPk);
         expect(actual).to.be.true;
     });
 
     it("should reject a proof that did not have enough prepares", async () => {
-        const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1]);
-        const actual = validatePreparedProof(targetBlockHeight, targetView, prepareProof, q, keyManager, membersPKs, calcLeaderPk);
+        const preparedProofWithNotEnoughP: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1]);
+        const actual = validatePreparedProof(targetBlockHeight, targetView, preparedProofWithNotEnoughP, q, keyManager, membersPKs, calcLeaderPk);
+        expect(actual).to.be.false;
+    });
+
+    it("should reject a proof that did not pass the preprepare signature validation", async () => {
+        const keyManager = new KeyManagerMock("DUMMY PK", [leaderPK]);
+        const actual = validatePreparedProof(targetBlockHeight, targetView, goodPrepareProof, q, keyManager, membersPKs, calcLeaderPk);
+        expect(actual).to.be.false;
+    });
+
+    it("should reject a proof that did not pass the prepare signature validation", async () => {
+        const keyManager = new KeyManagerMock("DUMMY PK", [node2PK]);
+        const actual = validatePreparedProof(targetBlockHeight, targetView, goodPrepareProof, q, keyManager, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
 
     it("should reject a proof with mismatching targetBlockHeight", async () => {
-        const actual = validatePreparedProof(666, targetView, prepareProof, q, keyManager, membersPKs, calcLeaderPk);
+        const actual = validatePreparedProof(666, targetView, goodPrepareProof, q, keyManager, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
 
     it("should reject a proof with equal targetView", async () => {
-        const actual = validatePreparedProof(targetBlockHeight, view, prepareProof, q, keyManager, membersPKs, calcLeaderPk);
+        const actual = validatePreparedProof(targetBlockHeight, view, goodPrepareProof, q, keyManager, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
 
     it("should reject a proof with smaller targetView", async () => {
-        const actual = validatePreparedProof(targetBlockHeight, targetView - 1, prepareProof, q, keyManager, membersPKs, calcLeaderPk);
+        const actual = validatePreparedProof(targetBlockHeight, targetView - 1, goodPrepareProof, q, keyManager, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
 
@@ -94,15 +106,16 @@ describe("Proofs Validator", () => {
         const preprepareMessage = aPrePrepareMessage(leaderKeyManager, blockHeight, view, block);
         const prepareMessage1 = aPrepareMessage(leaderKeyManager, blockHeight, view, block);
         const prepareMessage2 = aPrepareMessage(node2KeyManager, blockHeight, view, block);
+        const prepareMessage3 = aPrepareMessage(node3KeyManager, blockHeight, view, block);
 
-        const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1, prepareMessage2]);
+        const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1, prepareMessage2, prepareMessage3]);
         const actual = validatePreparedProof(targetBlockHeight, targetView, prepareProof, q, keyManager, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
 
     it("should reject a proof with a mismatching view to leader", async () => {
         const calcLeaderPk = (view: number) => "Some other node PK";
-        const actual = validatePreparedProof(targetBlockHeight, targetView, prepareProof, q, keyManager, membersPKs, calcLeaderPk);
+        const actual = validatePreparedProof(targetBlockHeight, targetView, goodPrepareProof, q, keyManager, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
     });
 
@@ -117,6 +130,7 @@ describe("Proofs Validator", () => {
             [
                 aPrepareMessage(node1KeyManager, blockHeight, view, block),
                 aPrepareMessage(node2KeyManager, blockHeight, view, block),
+                aPrepareMessage(node3KeyManager, blockHeight, view, block),
             ]);
         const actualGood = validatePreparedProof(targetBlockHeight, targetView, goodPrepareProof, q, keyManager, membersPKs, calcLeaderPk);
         expect(actualGood).to.be.true;
@@ -127,6 +141,7 @@ describe("Proofs Validator", () => {
             [
                 aPrepareMessage(node1KeyManager, blockHeight, view, block),
                 aPrepareMessage(node2KeyManager, 666, view, block),
+                aPrepareMessage(node3KeyManager, blockHeight, view, block),
             ]);
         const actualBadHeight = validatePreparedProof(targetBlockHeight, targetView, badHeightPrepareProof, q, keyManager, membersPKs, calcLeaderPk);
         expect(actualBadHeight).to.be.false;
@@ -137,6 +152,7 @@ describe("Proofs Validator", () => {
             [
                 aPrepareMessage(node1KeyManager, blockHeight, view, block),
                 aPrepareMessage(node2KeyManager, blockHeight, 666, block),
+                aPrepareMessage(node3KeyManager, blockHeight, view, block),
             ]);
         const actualBadView = validatePreparedProof(targetBlockHeight, targetView, badViewPrepareProof, q, keyManager, membersPKs, calcLeaderPk);
         expect(actualBadView).to.be.false;
@@ -148,7 +164,8 @@ describe("Proofs Validator", () => {
             aPrePrepareMessage(leaderKeyManager, blockHeight, view, block),
             [
                 aPrepareMessage(node1KeyManager, blockHeight, view, block),
-                aPrepareMessage(node2KeyManager, blockHeight, view, block)
+                aPrepareMessage(node2KeyManager, blockHeight, view, block),
+                aPrepareMessage(node3KeyManager, blockHeight, view, block),
             ]);
         badBlockHashPrepareProof.prepareBlockRef.blockHash = Buffer.from("XXXX");
         const actualBadBlockHash = validatePreparedProof(targetBlockHeight, targetView, badBlockHashPrepareProof, q, keyManager, membersPKs, calcLeaderPk);
@@ -161,14 +178,9 @@ describe("Proofs Validator", () => {
             [
                 aPrepareMessage(node1KeyManager, blockHeight, view, block),
                 aPrepareMessage(node1KeyManager, blockHeight, view, block),
+                aPrepareMessage(node3KeyManager, blockHeight, view, block),
             ]);
         const actual = validatePreparedProof(targetBlockHeight, targetView, prepareProof, q, keyManager, membersPKs, calcLeaderPk);
         expect(actual).to.be.false;
-    });
-
-    it("should approve a proof that qualify", async () => {
-        const prepareProof: PreparedProof = aPreparedProofByMessages(preprepareMessage, [prepareMessage1, prepareMessage2]);
-        const actual = validatePreparedProof(targetBlockHeight, targetView, prepareProof, q, keyManager, membersPKs, calcLeaderPk);
-        expect(actual).to.be.true;
     });
 });
