@@ -5,8 +5,8 @@ import { PreparedMessages } from "../storage/PreparedMessagesExtractor";
 export class MessagesFactory {
     constructor(private keyManager: KeyManager) { }
 
-    createPreprepareMessage(blockHeight: number, view: number, block: Block): PrePrepareMessage {
-        const signedHeader: BlockRef = { messageType: MessageType.PREPREPARE, blockHeight, view, blockHash: block.getBlockHash() };
+    createPreprepareMessage(blockHeight: number, view: number, block: Block, blockHash: Buffer): PrePrepareMessage {
+        const signedHeader: BlockRef = { messageType: MessageType.PREPREPARE, blockHeight, view, blockHash };
         const dataToSign: string = JSON.stringify(signedHeader);
         const sender: SenderSignature = {
             senderPublicKey: this.keyManager.getMyPublicKey(),

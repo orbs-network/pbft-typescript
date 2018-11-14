@@ -3,6 +3,7 @@ import { BlockRefContent, CommitMessage, NewViewMessage, PrepareMessage, PrePrep
 import { PreparedMessages } from "../../src/storage/PreparedMessagesExtractor";
 import { MessagesFactory } from "../../src/networkCommunication/MessagesFactory";
 import { Node } from "../network/Node";
+import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 
 export function blockRefMessageFromPP(preprepareMessage: PrePrepareMessage): BlockRefContent {
     return { sender: preprepareMessage.content.sender, signedHeader: preprepareMessage.content.signedHeader };
@@ -10,17 +11,17 @@ export function blockRefMessageFromPP(preprepareMessage: PrePrepareMessage): Blo
 
 export function aPrePrepareMessage(keyManager: KeyManager, blockHeight: number, view: number, block: Block): PrePrepareMessage {
     const mf: MessagesFactory = new MessagesFactory(keyManager);
-    return mf.createPreprepareMessage(blockHeight, view, block);
+    return mf.createPreprepareMessage(blockHeight, view, block, calculateBlockHash(block));
 }
 
 export function aPrepareMessage(keyManager: KeyManager, blockHeight: number, view: number, block: Block): PrepareMessage {
     const mf: MessagesFactory = new MessagesFactory(keyManager);
-    return mf.createPrepareMessage(blockHeight, view, block.getBlockHash());
+    return mf.createPrepareMessage(blockHeight, view, calculateBlockHash(block));
 }
 
 export function aCommitMessage(keyManager: KeyManager, blockHeight: number, view: number, block: Block): CommitMessage {
     const mf: MessagesFactory = new MessagesFactory(keyManager);
-    return mf.createCommitMessage(blockHeight, view, block.getBlockHash());
+    return mf.createCommitMessage(blockHeight, view, calculateBlockHash(block));
 }
 
 export function aViewChangeMessage(keyManager: KeyManager, blockHeight: number, view: number, preparedMessages?: PreparedMessages): ViewChangeMessage {

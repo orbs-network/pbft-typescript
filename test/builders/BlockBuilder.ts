@@ -10,15 +10,10 @@ export class BlockMock implements Block {
     constructor(private readonly height: number, private readonly body: string) {
         this.height = height;
         this.body = body;
-        this.blockHash = calculateBlockHash(this);
     }
 
     getHeight(): number {
         return this.height;
-    }
-
-    getBlockHash(): Buffer {
-        return this.blockHash;
     }
 
     getBody(): string {

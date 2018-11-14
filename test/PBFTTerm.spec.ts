@@ -10,7 +10,7 @@ import { Config } from "../src/Config";
 import { deserializeMessageContent, NewViewMessage, PreparedProof, PrePrepareMessage, ViewChangeMessage, ViewChangeContent } from "../src/networkCommunication/Messages";
 import { PBFTTerm } from "../src/PBFTTerm";
 import { extractPreparedMessages, PreparedMessages } from "../src/storage/PreparedMessagesExtractor";
-import { BlockUtilsMock } from "./blockUtils/BlockUtilsMock";
+import { BlockUtilsMock, calculateBlockHash } from "./blockUtils/BlockUtilsMock";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
 import { aCommitMessage, aNewViewMessage, aPrepareMessage, aPrePrepareMessage, aViewChangeMessage, aValidNewViewMessage } from "./builders/MessagesBuilder";
 import { aPrepared, aPreparedProofByMessages } from "./builders/ProofBuilder";
@@ -646,7 +646,9 @@ describe("PBFTTerm", () => {
             await nextTick();
             await node1BlockUtils.resolveAllValidations(true);
 
-            expect(storePrePrepareSpy.args[0][0].block.getBlockHash()).to.equal(blockOnView4.getBlockHash());
+            const expectedBlockHash = calculateBlockHash(blockOnView4);
+            const actualBlockHash = calculateBlockHash(storePrePrepareSpy.args[0][0].block);
+            expect(actualBlockHash).to.deep.equal(expectedBlockHash);
         });
 
         it("onNewView should reject a new-view if the offered (On PP) block is not the heighest block on the VCProof", async () => {

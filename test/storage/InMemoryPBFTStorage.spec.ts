@@ -9,6 +9,7 @@ import { aCommitMessage, aPrepareMessage, aPrePrepareMessage, aViewChangeMessage
 import { KeyManagerMock } from "../keyManager/KeyManagerMock";
 import { SilentLogger } from "../logger/SilentLogger";
 import { PrePrepareMessage } from "../../src/networkCommunication/Messages";
+import { calculateBlockHash } from "../blockUtils/BlockUtilsMock";
 
 chai.use(sinonChai);
 
@@ -51,7 +52,7 @@ describe("PBFT In Memory Storage", () => {
             const keyManager3: KeyManager = new KeyManagerMock(sender3Id);
             const block1 = aBlock(theGenesisBlock);
             const block2 = aBlock(theGenesisBlock);
-            const block1Hash = block1.getBlockHash();
+            const block1Hash = calculateBlockHash(block1);
             const message1 = aPrepareMessage(keyManager1, blockHeight1, view1, block1);
             const message2 = aPrepareMessage(keyManager2, blockHeight1, view1, block1);
             const message3 = aPrepareMessage(keyManager3, blockHeight1, view1, block1);
@@ -86,7 +87,7 @@ describe("PBFT In Memory Storage", () => {
             const keyManager3: KeyManager = new KeyManagerMock(sender3Id);
             const block1 = aBlock(theGenesisBlock);
             const block2 = aBlock(theGenesisBlock);
-            const block1Hash = block1.getBlockHash();
+            const block1Hash = calculateBlockHash(block1);
             const message1 = aCommitMessage(keyManager1, blockHeight1, view1, block1);
             const message2 = aCommitMessage(keyManager2, blockHeight1, view1, block1);
             const message3 = aCommitMessage(keyManager3, blockHeight1, view1, block1);
@@ -222,7 +223,7 @@ describe("PBFT In Memory Storage", () => {
         const blockHeight = Math.floor(Math.random() * 1000);
         const view = Math.floor(Math.random() * 1000);
         const block = aBlock(theGenesisBlock);
-        const blockHash = block.getBlockHash();
+        const blockHash = calculateBlockHash(block);
         const keyManager: KeyManager = new KeyManagerMock("PK");
         const PPMessage = aPrePrepareMessage(keyManager, blockHeight, view, block);
         const PMessage = aPrepareMessage(keyManager, blockHeight, view, block);

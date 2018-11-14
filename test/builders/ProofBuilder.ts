@@ -4,9 +4,7 @@ import { Node } from "../network/Node";
 import { aPrePrepareMessage, aPrepareMessage, blockRefMessageFromPP } from "./MessagesBuilder";
 import { PreparedMessages } from "../../src/storage/PreparedMessagesExtractor";
 
-export function aPreparedProof(leader: Node, members: Node[], blockHeight: number, view: number, block: Block): PreparedProof {
-    const blockHash: Buffer = block.getBlockHash();
-
+export function aPreparedProof(leader: Node, members: Node[], blockHeight: number, view: number, block: Block, blockHash: Buffer): PreparedProof {
     const preprepareBlockRef: BlockRef = {
         messageType: MessageType.PREPREPARE,
         blockHeight,

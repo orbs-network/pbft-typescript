@@ -68,7 +68,8 @@ export class PBFTTerm {
                 return;
             }
 
-            const message: PrePrepareMessage = this.messagesFactory.createPreprepareMessage(this.blockHeight, this.view, block);
+            const blockHash = this.blockUtils.calculateBlockHash(block);
+            const message: PrePrepareMessage = this.messagesFactory.createPreprepareMessage(this.blockHeight, this.view, block, blockHash);
             this.pbftStorage.storePrePrepare(message);
             this.sendPrePrepare(message);
         }
@@ -88,7 +89,7 @@ export class PBFTTerm {
         this.preparedLocally = false;
         this.view = view;
         this.leaderPk = this.calcLeaderPk(this.view);
-        this.electionTrigger.registerOnTrigger(this.view, view => this.onLeaderChange(view));
+        this.electionTrigger.registerOnTrigger(this.view, view => this.moveToNextLeader(view));
     }
 
     public dispose(): void {
@@ -102,10 +103,7 @@ export class PBFTTerm {
         return this.committeeMembersPKs[index];
     }
 
-    private onLeaderChange(view: number): void {
-        if (view !== this.view) {
-            return;
-        }
+    private moveToNextLeader(view: number): void {
         this.setView(this.view + 1);
         this.logger.log({ subject: "Flow", FlowType: "LeaderChange", leaderPk: this.leaderPk, blockHeight: this.blockHeight, newView: this.view });
 
@@ -379,7 +377,7 @@ export class PBFTTerm {
             }
         }
 
-        const preprepareMessage: PrePrepareMessage = this.messagesFactory.createPreprepareMessage(this.blockHeight, view, block);
+        const preprepareMessage: PrePrepareMessage = this.messagesFactory.createPreprepareMessage(this.blockHeight, view, block, this.blockUtils.calculateBlockHash(block));
         const viewChangeVotes: ViewChangeContent[] = viewChangeMessages.map(vc => ({ signedHeader: vc.content.signedHeader, sender: vc.content.sender }));
         const newViewMessage: NewViewMessage = this.messagesFactory.createNewViewMessage(this.blockHeight, view, preprepareMessage, viewChangeVotes);
         this.pbftStorage.storePrePrepare(preprepareMessage);
@@ -556,9 +554,9 @@ export class PBFTTerm {
     }
 
     private isPrePrepared(blockHeight: number, view: number, blockHash: Buffer): boolean {
-        const prePreparedBlock: Block = this.pbftStorage.getPrePrepareBlock(blockHeight, view);
-        if (prePreparedBlock) {
-            const prePreparedBlockHash = this.blockUtils.calculateBlockHash(prePreparedBlock);
+        const ppm = this.pbftStorage.getPrePrepareMessage(blockHeight, view);
+        if (ppm) {
+            const prePreparedBlockHash = ppm.content.signedHeader.blockHash;
             const metaData = {
                 method: "isPrePrepared",
                 height: this.blockHeight,
