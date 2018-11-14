@@ -175,4 +175,101 @@ describe("Byzantine Attacks", () => {
         testNetwork.shutDown();
     });
 
+    it("should reach consensus, in a network of 4 nodes, where the leader is byzantine and the other 3 nodes are loyal", async () => {
+        const block1 = aBlock(theGenesisBlock);
+        const block2 = aBlock(theGenesisBlock);
+        const testNetwork = aTestNetwork(4, [block1, block2]);
+
+        const leader = testNetwork.nodes[0];
+        const leaderGossip = testNetwork.getNodeGossip(leader.publicKey);
+
+        // suggest block 1 to nodes 1 and 2
+        leaderGossip.setOutGoingWhiteListPKs([testNetwork.nodes[1].publicKey, testNetwork.nodes[2].publicKey]);
+        testNetwork.startConsensusOnAllNodes();
+        await nextTick();
+        await testNetwork.provideNextBlock();
+        await nextTick(); // await for blockChain.getLastBlockHash
+        await testNetwork.resolveAllValidations(true);
+
+        // suggest block 2 to node 3.
+        leaderGossip.setOutGoingWhiteListPKs([testNetwork.nodes[3].publicKey]);
+        testNetwork.startConsensusOnAllNodes();
+        await nextTick();
+        await testNetwork.provideNextBlock();
+        await nextTick(); // await for blockChain.getLastBlockHash
+        await testNetwork.resolveAllValidations(true);
+        await nextTick(); // await for notifyCommitted
+
+        expect(await testNetwork.nodes[1].getLatestCommittedBlock()).to.deep.equal(block1);
+        expect(await testNetwork.nodes[2].getLatestCommittedBlock()).to.deep.equal(block1);
+        expect(await testNetwork.nodes[3].getLatestCommittedBlock()).to.deep.equal(theGenesisBlock);
+        testNetwork.shutDown();
+    });
+
+    it("should reach consensus, in a network of 5 nodes, where one of the nodes is byzantine and the others are loyal", async () => {
+        const testNetwork = aTestNetwork(5);
+        const firstBlock = testNetwork.blocksPool[0];
+
+        const byzantineNode = testNetwork.nodes[4];
+        const gossip = testNetwork.getNodeGossip(byzantineNode.publicKey);
+        gossip.setIncomingWhiteListPKs([]); // prevent incomming gossip messages
+
+        testNetwork.startConsensusOnAllNodes();
+        await nextTick();
+        await testNetwork.provideNextBlock();
+        await nextTick();
+        await testNetwork.resolveAllValidations(true);
+        await nextTick();
+
+        expect(testNetwork.nodes.splice(0, 3)).to.agreeOnBlock(firstBlock);
+    });
+
+    it("should reach consensus, even when a byzantine node is sending a bad block several times", async () => {
+        const testNetwork = aTestNetwork();
+        const goodBlock = testNetwork.blocksPool[0];
+        const fakeBlock = aBlock(theGenesisBlock);
+
+        const byzantineNode = testNetwork.nodes[3];
+
+        testNetwork.startConsensusOnAllNodes();
+        await nextTick();
+        const pks = testNetwork.gossipDiscovery.getAllGossipsPks();
+        const gossip = testNetwork.getNodeGossip(byzantineNode.publicKey);
+        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(byzantineNode.keyManager, 1, 0, fakeBlock)));
+        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(byzantineNode.keyManager, 1, 0, fakeBlock)));
+        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(byzantineNode.keyManager, 1, 0, fakeBlock)));
+        gossip.sendMessage(pks, messageToGossip(aPrePrepareMessage(byzantineNode.keyManager, 1, 0, fakeBlock)));
+
+        await nextTick();
+        await testNetwork.provideNextBlock();
+        await nextTick();
+        await testNetwork.resolveAllValidations(true);
+        await nextTick();
+
+        expect(testNetwork.nodes).to.agreeOnBlock(goodBlock);
+        testNetwork.shutDown();
+    });
+
+    it("should reach consensus, in a network of 7 nodes, where two of the nodes is byzantine and the others are loyal", async () => {
+        const testNetwork = aTestNetwork(7);
+        const firstBlock = testNetwork.blocksPool[0];
+
+        const byzantineNode1 = testNetwork.nodes[5];
+        const byzantineNode2 = testNetwork.nodes[6];
+        const gossip1 = testNetwork.getNodeGossip(byzantineNode1.publicKey);
+        const gossip2 = testNetwork.getNodeGossip(byzantineNode2.publicKey);
+        gossip1.setIncomingWhiteListPKs([]);
+        gossip2.setIncomingWhiteListPKs([]);
+
+        testNetwork.startConsensusOnAllNodes();
+        await nextTick();
+        await testNetwork.provideNextBlock();
+        await nextTick();
+        await testNetwork.resolveAllValidations(true);
+        await nextTick();
+
+        expect(testNetwork.nodes.splice(0, 4)).to.agreeOnBlock(firstBlock);
+        testNetwork.shutDown();
+    });
+
 });

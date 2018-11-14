@@ -86,6 +86,56 @@ describe("Leader Election", () => {
         testNetwork.shutDown();
     });
 
+    it("should change the leader on timeout (no commits for too long)", async () => {
+        const block1 = aBlock(theGenesisBlock);
+        const block2 = aBlock(block1);
+        const block3 = aBlock(block1);
+        const block4 = aBlock(block3);
+        const testNetwork = aTestNetwork(4, [block1, block2, block3, block4]);
+
+        const node0 = testNetwork.nodes[0];
+        const node1 = testNetwork.nodes[1];
+        const node2 = testNetwork.nodes[2];
+        const node3 = testNetwork.nodes[3];
+
+        // block 1
+        testNetwork.startConsensusOnAllNodes();
+        await nextTick();
+
+        // (only) node0 is the leader
+        expect(node0.isLeader()).to.be.true;
+        expect(node1.isLeader()).to.be.false;
+        expect(node2.isLeader()).to.be.false;
+        expect(node3.isLeader()).to.be.false;
+
+        // processing block1, should be agreed by all nodes
+        await testNetwork.provideNextBlock();
+        await nextTick();
+        await testNetwork.resolveAllValidations(true);
+        await nextTick();
+        expect(testNetwork.nodes).to.agreeOnBlock(block1);
+
+        // processing block 2
+        await testNetwork.provideNextBlock();
+        await nextTick(); // await for notifyCommitted
+
+        // force leader election before the block was verified, goes to block 3
+        node0.triggerElection(); node2.triggerElection(); node3.triggerElection();
+        expect(node0.isLeader()).to.be.false;
+        expect(node1.isLeader()).to.be.true;
+        expect(node2.isLeader()).to.be.false;
+        expect(node3.isLeader()).to.be.false;
+        await testNetwork.resolveAllValidations(true);
+
+        await testNetwork.provideNextBlock();
+        await nextTick();
+        await testNetwork.resolveAllValidations(true);
+        await nextTick();
+        expect(testNetwork.nodes).to.agreeOnBlock(block3);
+
+        testNetwork.shutDown();
+    });
+
     it("should count 2f+1 view-change to be elected", async () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(block1);
