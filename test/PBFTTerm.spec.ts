@@ -74,7 +74,7 @@ describe("PBFTTerm", () => {
     }
 
     it("onNewView should not accept views from the past", async () => {
-        const pbftTerm: PBFTTerm = createPBFTTerm(node0Config);
+        const pbftTerm: PBFTTerm = createPBFTTerm(node1Config);
         expect(pbftTerm.getView()).to.equal(0);
         triggerElection();
         expect(pbftTerm.getView()).to.equal(1);
@@ -84,13 +84,13 @@ describe("PBFTTerm", () => {
         // next view 8 => valid
         const newViewMessageOnView8: NewViewMessage = aValidNewViewMessage(node0, [node1, node2, node3], 1, 8, block);
         pbftTerm.onReceiveNewView(newViewMessageOnView8);
-        await node0BlockUtils.resolveAllValidations(true);
+        await node1BlockUtils.resolveAllValidations(true);
         expect(pbftTerm.getView()).to.equal(8);
 
         // next view 4 => invalid (view is valid, but from the past)
         const newViewMessageOnView4: NewViewMessage = aValidNewViewMessage(node0, [node1, node2, node3], 1, 4, block);
         pbftTerm.onReceiveNewView(newViewMessageOnView4);
-        await node0BlockUtils.resolveAllValidations(true);
+        await node1BlockUtils.resolveAllValidations(true);
         expect(pbftTerm.getView()).to.equal(8);  // unchanged
     });
 
