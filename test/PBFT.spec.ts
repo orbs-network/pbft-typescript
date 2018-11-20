@@ -6,7 +6,6 @@ import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
 import { MessageType } from "../src/networkCommunication/Messages";
 import { aBlock, theGenesisBlock } from "./builders/BlockBuilder";
-import { NodeBuilder } from "./builders/NodeBuilder";
 import { aTestNetwork, TestNetworkBuilder } from "./builders/TestNetworkBuilder";
 import { gossipMessageCounter } from "./gossip/GossipTestUtils";
 import { blockMatcher } from "./matchers/blockMatcher";
@@ -77,31 +76,13 @@ describe("PBFT", () => {
         testNetwork.shutDown();
     });
 
-    it("should ignore suggested block if they are not from the leader", async () => {
-        const testNetwork = aTestNetwork();
-        const firstBlock = testNetwork.blocksPool[0];
-
-        testNetwork.nodes[3].startConsensus(); // pretending to be the leader
-        await testNetwork.provideNextBlock();
-        await nextTick(); // await for blockChain.getLastBlockHash
-        await testNetwork.resolveAllValidations(true);
-        await nextTick();
-
-        expect(testNetwork.nodes).to.not.agreeOnBlock(firstBlock);
-        testNetwork.shutDown();
-    });
-
     it("should reach consensus, on ALL nodes after one of the node was stuck (Saving future messages)", async () => {
         const block1 = aBlock(theGenesisBlock, "block 1");
         const block2 = aBlock(block1, "block 2");
-        const blocksPool = [block1, block2];
-
-        const hangingNodeBuilder = new NodeBuilder().withBlocksPool(blocksPool);
 
         const testNetwork = new TestNetworkBuilder()
-            .withBlocksPool(blocksPool)
-            .with(3).nodes
-            .withCustomNode(hangingNodeBuilder)
+            .withBlocksPool([block1, block2])
+            .with(4).nodes
             .build();
 
         const hangingNode = testNetwork.nodes[3];
