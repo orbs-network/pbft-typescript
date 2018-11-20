@@ -272,4 +272,17 @@ describe("Byzantine Attacks", () => {
         testNetwork.shutDown();
     });
 
+    it("should ignore suggested block if they are not from the leader", async () => {
+        const testNetwork = aTestNetwork();
+        const firstBlock = testNetwork.blocksPool[0];
+
+        testNetwork.nodes[3].startConsensus(); // pretending to be the leader
+        await testNetwork.provideNextBlock();
+        await nextTick(); // await for blockChain.getLastBlockHash
+        await testNetwork.resolveAllValidations(true);
+        await nextTick();
+
+        expect(testNetwork.nodes).to.not.agreeOnBlock(firstBlock);
+        testNetwork.shutDown();
+    });
 });
