@@ -238,7 +238,7 @@ describe("PBFTTerm", () => {
         expect(spy).to.not.have.been.called;
     });
 
-    it("onReceivePrePrepare should accept views that match its current view", async () => {
+    it("onReceivePrePrepare should only accept views that match its current view", async () => {
         const node1PbftTerm: PBFTTerm = new PBFTTerm(node1Config, 0, () => { });
         node1PbftTerm.startTerm();
         expect(node1PbftTerm.getView()).to.equal(0);
@@ -413,55 +413,6 @@ describe("PBFTTerm", () => {
         expect(node0PbftTerm.getView()).to.equal(1);
     });
 
-    it("onReceiveNewView should not accept messages that don't pass validation", async () => {
-        const node0PbftTerm: PBFTTerm = createPBFTTerm(node0Config);
-
-        const block: Block = aBlock(theGenesisBlock);
-        const viewChange0: ViewChangeMessage = aViewChangeMessage(node0.keyManager, 1, 1);
-        const viewChange1: ViewChangeMessage = aViewChangeMessage(node1.keyManager, 1, 1);
-        const viewChange2: ViewChangeMessage = aViewChangeMessage(node2.keyManager, 1, 1);
-        const VCProof: ViewChangeMessage[] = [viewChange0, viewChange1, viewChange2];
-
-        // pass validation => ok
-        node0PbftTerm.onReceiveNewView(aNewViewMessage(node1KeyManager, 1, 1, aPrePrepareMessage(node1KeyManager, 1, 1, block), VCProof));
-        await nextTick();
-        await node0BlockUtils.resolveAllValidations(true);
-        expect(node0PbftTerm.getView()).to.equal(1);
-
-        // doesn't pass validation => ignore
-        node0PbftTerm.onReceiveNewView(aNewViewMessage(node2KeyManager, 1, 2, aPrePrepareMessage(node2KeyManager, 1, 2, block), VCProof));
-        await nextTick();
-        await node0BlockUtils.resolveAllValidations(false);
-        expect(node0PbftTerm.getView()).to.equal(1);
-    });
-
-    it("onReceiveNewView should not accept messages with VCProof with duplicate sender", async () => {
-        const node0PbftTerm: PBFTTerm = createPBFTTerm(node0Config);
-
-        const block: Block = aBlock(theGenesisBlock);
-        const viewChange0_good: ViewChangeMessage = aViewChangeMessage(node0.keyManager, 1, 1);
-        const viewChange1_good: ViewChangeMessage = aViewChangeMessage(node1.keyManager, 1, 1);
-        const viewChange2_good: ViewChangeMessage = aViewChangeMessage(node2.keyManager, 1, 1);
-        const VCProofGood: ViewChangeMessage[] = [viewChange0_good, viewChange1_good, viewChange2_good];
-
-        // unique senders => ok
-        node0PbftTerm.onReceiveNewView(aNewViewMessage(node1KeyManager, 1, 1, aPrePrepareMessage(node1KeyManager, 1, 1, block), VCProofGood));
-        await nextTick();
-        await node0BlockUtils.resolveAllValidations(true);
-        expect(node0PbftTerm.getView()).to.equal(1);
-
-        const viewChange0_bad: ViewChangeMessage = aViewChangeMessage(node0.keyManager, 1, 2);
-        const viewChange1_bad: ViewChangeMessage = aViewChangeMessage(node0.keyManager, 1, 2);
-        const viewChange2_bad: ViewChangeMessage = aViewChangeMessage(node1.keyManager, 1, 2);
-        const VCProofBad: ViewChangeMessage[] = [viewChange0_bad, viewChange1_bad, viewChange2_bad];
-
-        // Duplicted sender (viewChange0_bad and viewChange1_bad are from node 0) => ignore
-        node0PbftTerm.onReceiveNewView(aNewViewMessage(node2KeyManager, 1, 2, aPrePrepareMessage(node2KeyManager, 1, 2, block), VCProofBad));
-        await nextTick();
-        await node0BlockUtils.resolveAllValidations(true);
-        expect(node0PbftTerm.getView()).to.equal(1);
-    });
-
     it("onReceiveNewView should not accept messages with VCProof dont have matching blockHeight", async () => {
         const node0PbftTerm: PBFTTerm = createPBFTTerm(node0Config);
 
@@ -529,6 +480,55 @@ describe("PBFTTerm", () => {
         node0PbftTerm.onReceiveNewView(aNewViewMessage(node1KeyManager, 1, 1, aPrePrepareMessage(node1KeyManager, 1, 1, block), VCProofGood));
         await nextTick();
         await node0BlockUtils.resolveAllValidations(true);
+        expect(node0PbftTerm.getView()).to.equal(1);
+    });
+
+    it("onReceiveNewView should not accept messages with VCProof with duplicate sender", async () => {
+        const node0PbftTerm: PBFTTerm = createPBFTTerm(node0Config);
+
+        const block: Block = aBlock(theGenesisBlock);
+        const viewChange0_good: ViewChangeMessage = aViewChangeMessage(node0.keyManager, 1, 1);
+        const viewChange1_good: ViewChangeMessage = aViewChangeMessage(node1.keyManager, 1, 1);
+        const viewChange2_good: ViewChangeMessage = aViewChangeMessage(node2.keyManager, 1, 1);
+        const VCProofGood: ViewChangeMessage[] = [viewChange0_good, viewChange1_good, viewChange2_good];
+
+        // unique senders => ok
+        node0PbftTerm.onReceiveNewView(aNewViewMessage(node1KeyManager, 1, 1, aPrePrepareMessage(node1KeyManager, 1, 1, block), VCProofGood));
+        await nextTick();
+        await node0BlockUtils.resolveAllValidations(true);
+        expect(node0PbftTerm.getView()).to.equal(1);
+
+        const viewChange0_bad: ViewChangeMessage = aViewChangeMessage(node0.keyManager, 1, 2);
+        const viewChange1_bad: ViewChangeMessage = aViewChangeMessage(node0.keyManager, 1, 2);
+        const viewChange2_bad: ViewChangeMessage = aViewChangeMessage(node1.keyManager, 1, 2);
+        const VCProofBad: ViewChangeMessage[] = [viewChange0_bad, viewChange1_bad, viewChange2_bad];
+
+        // Duplicted sender (viewChange0_bad and viewChange1_bad are from node 0) => ignore
+        node0PbftTerm.onReceiveNewView(aNewViewMessage(node2KeyManager, 1, 2, aPrePrepareMessage(node2KeyManager, 1, 2, block), VCProofBad));
+        await nextTick();
+        await node0BlockUtils.resolveAllValidations(true);
+        expect(node0PbftTerm.getView()).to.equal(1);
+    });
+
+    it("onReceiveNewView should not accept messages that don't pass validation", async () => {
+        const node0PbftTerm: PBFTTerm = createPBFTTerm(node0Config);
+
+        const block: Block = aBlock(theGenesisBlock);
+        const viewChange0: ViewChangeMessage = aViewChangeMessage(node0.keyManager, 1, 1);
+        const viewChange1: ViewChangeMessage = aViewChangeMessage(node1.keyManager, 1, 1);
+        const viewChange2: ViewChangeMessage = aViewChangeMessage(node2.keyManager, 1, 1);
+        const VCProof: ViewChangeMessage[] = [viewChange0, viewChange1, viewChange2];
+
+        // pass validation => ok
+        node0PbftTerm.onReceiveNewView(aNewViewMessage(node1KeyManager, 1, 1, aPrePrepareMessage(node1KeyManager, 1, 1, block), VCProof));
+        await nextTick();
+        await node0BlockUtils.resolveAllValidations(true);
+        expect(node0PbftTerm.getView()).to.equal(1);
+
+        // doesn't pass validation => ignore
+        node0PbftTerm.onReceiveNewView(aNewViewMessage(node2KeyManager, 1, 2, aPrePrepareMessage(node2KeyManager, 1, 2, block), VCProof));
+        await nextTick();
+        await node0BlockUtils.resolveAllValidations(false);
         expect(node0PbftTerm.getView()).to.equal(1);
     });
 
