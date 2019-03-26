@@ -30,10 +30,8 @@ describe("Leader Election", () => {
         node0.triggerElection(); node2.triggerElection(); node3.triggerElection();
         await testNetwork.resolveAllValidations(true);
 
-        const q = 3;
-        const node0Prepared: PreparedMessages = extractPreparedMessages(1, node0.pbftStorage, q);
-        const newViewMessage = aViewChangeMessage(node0.keyManager, 1, 1, node0Prepared);
-        expect(sendToNodeSpy).to.have.been.calledWith(node1.publicKey, messageToGossip(newViewMessage));
+        const viewChangeMessage = aViewChangeMessage(node0.keyManager, 1, 1);
+        expect(sendToNodeSpy).to.have.been.calledWith(node1.publicKey, messageToGossip(viewChangeMessage));
 
         testNetwork.shutDown();
     });
@@ -86,7 +84,7 @@ describe("Leader Election", () => {
         testNetwork.shutDown();
     });
 
-    it("should change the leader on timeout (no commits for too long)", async () => {
+    it("should not use a block that was not accepted", async () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(block1);
         const block3 = aBlock(block1);
@@ -119,7 +117,7 @@ describe("Leader Election", () => {
         await testNetwork.provideNextBlock();
         await nextTick(); // await for notifyCommitted
 
-        // force leader election before the block was verified, goes to block 3
+        // force leader election before the block 2 was verified, goes to block 3
         node0.triggerElection(); node2.triggerElection(); node3.triggerElection();
         expect(node0.isLeader()).to.be.false;
         expect(node1.isLeader()).to.be.true;
@@ -257,7 +255,7 @@ describe("Leader Election", () => {
         testNetwork.shutDown();
     });
 
-    it("should cycle back to the first node on view-change", async () => {
+    it("should send all the proper messages on election", async () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(block1);
         const block3 = aBlock(block1);

@@ -16,12 +16,12 @@ describe("Byzantine Attacks", () => {
         const block2 = aBlock(theGenesisBlock);
         const testNetwork = aTestNetwork(4, [block1, block2]);
 
-        const leader = testNetwork.nodes[0];
+        const node0 = testNetwork.nodes[0];
         const node1 = testNetwork.nodes[1];
         const node2 = testNetwork.nodes[2];
         const node3 = testNetwork.nodes[3];
 
-        const leaderGossip = testNetwork.getNodeGossip(leader.publicKey);
+        const leaderGossip = testNetwork.getNodeGossip(node0.publicKey);
         leaderGossip.setOutGoingWhiteListPKs([node1.publicKey, node2.publicKey]);
         testNetwork.startConsensusOnAllNodes();
         await nextTick();
@@ -37,9 +37,9 @@ describe("Byzantine Attacks", () => {
         await nextTick();
         await testNetwork.resolveAllValidations(true);
 
+        expect(await node0.getLatestCommittedBlock()).to.deep.equal(block2);
         expect(await node1.getLatestCommittedBlock()).to.deep.equal(block2);
-        expect(await node2.getLatestCommittedBlock()).to.deep.equal(block2);
-        expect(await node3.getLatestCommittedBlock()).to.deep.equal(block2);
+        expect(await node2.getLatestCommittedBlock()).to.deep.equal(theGenesisBlock);
         expect(await node3.getLatestCommittedBlock()).to.deep.equal(block2);
         testNetwork.shutDown();
     });
@@ -75,9 +75,9 @@ describe("Byzantine Attacks", () => {
         //
         //
         // * Election is triggered, and node 1 is the new leader.
-        // * node 1 (The new leader) is constructing a new block B` and sends PP[B`] to 0, 2 and 3.
+        // * node 1 (The new leader) is constructing a new block X and sends PP[X] to 0, 2 and 3.
         // * 2 rejects the block (Already prepared on B)
-        // * 1, 0, and 3 accepts the new block B`
+        // * 1, 0, and 3 accepts the new block X
         // * we have a fork!
         // The solution is to have a commit phase.
         //
@@ -114,12 +114,14 @@ describe("Byzantine Attacks", () => {
 
         gossip0.clearOutGoingWhiteListPKs();
         gossip1.clearOutGoingWhiteListPKs();
-        gossip2.clearOutGoingWhiteListPKs();
         gossip3.clearOutGoingWhiteListPKs();
-        gossip3.setIncomingWhiteListPKs([]);
+
+        gossip2.setOutGoingWhiteListPKs([]); // will not notify view-change with a prepared proof on block1
+        gossip2.setIncomingWhiteListPKs([]);
 
         // elect node1 as the leader
         node0.triggerElection();
+        node1.triggerElection();
         node2.triggerElection();
         node3.triggerElection();
         await testNetwork.resolveAllValidations(true);
@@ -130,8 +132,8 @@ describe("Byzantine Attacks", () => {
 
         expect(await node0.getLatestCommittedBlock()).to.deep.equal(block2);
         expect(await node1.getLatestCommittedBlock()).to.deep.equal(block2);
-        expect(await node2.getLatestCommittedBlock()).to.deep.equal(block2);
-        expect(await node3.getLatestCommittedBlock()).to.deep.equal(theGenesisBlock);
+        expect(await node2.getLatestCommittedBlock()).to.deep.equal(theGenesisBlock);
+        expect(await node3.getLatestCommittedBlock()).to.deep.equal(block2);
 
         testNetwork.shutDown();
     });
@@ -175,7 +177,7 @@ describe("Byzantine Attacks", () => {
         testNetwork.shutDown();
     });
 
-    it("should reach consensus, in a network of 4 nodes, where the leader is byzantine and the other 3 nodes are loyal", async () => {
+    it("XX should reach consensus, in a network of 4 nodes, where the leader is byzantine and the other 3 nodes are loyal", async () => {
         const block1 = aBlock(theGenesisBlock);
         const block2 = aBlock(theGenesisBlock);
         const testNetwork = aTestNetwork(4, [block1, block2]);
@@ -272,7 +274,7 @@ describe("Byzantine Attacks", () => {
         testNetwork.shutDown();
     });
 
-    it("should ignore suggested block if they are not from the leader", async () => {
+    it("XX should ignore suggested block if they are not from the leader", async () => {
         const testNetwork = aTestNetwork();
         const firstBlock = testNetwork.blocksPool[0];
 
